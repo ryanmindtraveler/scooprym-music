@@ -1,0 +1,32 @@
+import { notFound } from 'next/navigation';
+import type { Locale } from 'next-intl';
+
+export const revalidate = false;
+
+interface DocPageProps {
+  params: Promise<{
+    slug?: string[];
+    locale: Locale;
+  }>;
+}
+
+export function generateStaticParams() {
+   return [];
+}
+
+export async function generateMetadata({ params }: DocPageProps) {
+  return {
+    title: 'Documentation',
+    description: 'Documentation is temporarily unavailable.',
+  };
+}
+
+export default async function DocPage({ params }: DocPageProps) {
+  const { slug, locale } = await params;
+  return (
+    <div className="container mx-auto py-12 px-4">
+      <h1 className="text-3xl font-bold mb-6">Documentation</h1>
+      <p className="text-muted-foreground">Documentation content is temporarily unavailable while we perform system upgrades. Please check back later.</p>
+    </div>
+  );
+}
