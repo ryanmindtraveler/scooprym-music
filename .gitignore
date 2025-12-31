@@ -31,10 +31,12 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 
+# certificates
 certificates
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -66,3 +68,98 @@ next-env.d.ts
 .dev.vars
 .dev.vars*
 !.dev.vars.example
+
+# IDE and editor files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Sensitive data
+*.key
+*.crt
+*.cert
+secrets/
+credentials/
+config/local.*
+config/secret.*
+
+# Temporary files
+temp/
+tmp/
+uploads/
+downloads/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# AI music generation specific
+# Generated audio files (temporary storage)
+/generated-audio/
+/generated-music/
+/generated-covers/
+
+# AI model cache
+.cache/
+model-cache/
+
+# Database files (if using local SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Large files
+*.mp3
+*.wav
+*.flac
+*.ogg
+*.aac
+
+# Backup files
+*.bak
+*.backup
+
+# System files
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
