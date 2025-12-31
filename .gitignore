@@ -21,7 +21,6 @@
 /build
 
 # misc
-.DS_Store
 *.pem
 
 # debug
@@ -32,7 +31,7 @@ yarn-error.log*
 *.log
 
 # certificates
-certificates
+certificates/
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -52,7 +51,6 @@ certificates
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # content collections
 .content-collections
@@ -87,11 +85,7 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Local environment files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Local environment files (covered by .env* above)
 
 # Sensitive data
 *.key
@@ -111,7 +105,7 @@ downloads/
 # Package managers
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
+# pnpm-lock.yaml  # 使用 pnpm，应该提交以锁定依赖
 bun.lockb
 
 # Testing
@@ -154,7 +148,6 @@ model-cache/
 *.backup
 
 # System files
-.DS_Store
 ._*
 .Spotlight-V100
 .Trashes
