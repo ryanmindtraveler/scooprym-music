@@ -70,11 +70,8 @@ next-env.d.ts
 !.dev.vars.example
 
 # IDE and editor files
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.cursor/
+.vscode/
 .idea/
 *.swp
 *.swo
