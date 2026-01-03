@@ -36,6 +36,9 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
         creditsDeducted: songTable.creditsDeducted,
         processingStatus: songTable.processingStatus,
         creditError: songTable.creditError,
+        newsSummary: songTable.newsSummary,
+        sourceText: songTable.sourceText,
+        sourceUrl: songTable.sourceUrl,
       })
       .from(songTable)
       .where(eq(songTable.id, params.id));
@@ -95,6 +98,12 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
         musicStatus = 'uploaded';
         coverStatus = song.coverImageUrl ? 'completed' : 'failed';
         break;
+      case 'failed_generation':
+        status = 'failed';
+        message = '音乐生成失败';
+        musicStatus = 'failed';
+        coverStatus = 'skipped';
+        break;
       default:
         // 回退到旧的判断逻辑（向后兼容）
         if (!song.audioKey) {
@@ -142,6 +151,9 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
         coverImageUrl: song.coverImageUrl,
         createdAt: song.createdAt,
         updatedAt: song.updatedAt,
+        newsSummary: song.newsSummary,
+        sourceText: song.sourceText,
+        sourceUrl: song.sourceUrl,
       },
       details: {
         hasAudioKey: !!song.audioKey,

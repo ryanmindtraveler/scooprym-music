@@ -30,11 +30,26 @@ export interface ProcessMusicOptions {
  * 4. Deduct Credits
  * 5. Update Database Status
  */
+export interface BackgroundProcessResult {
+  success: boolean;
+  audioUrl?: string;
+  coverImageUrl?: string;
+  error?: string;
+}
+
+/**
+ * Background task to handle post-generation steps:
+ * 1. Download/Parse audio
+ * 2. Upload to Storage (Audio)
+ * 3. Wait for Cover Image & Upload to Storage
+ * 4. Deduct Credits
+ * 5. Update Database Status
+ */
 export async function processMusicBackground(
   audioContent: string,
   options: ProcessMusicOptions,
   coverImagePromise: Promise<string | null>
-): Promise<void> {
+): Promise<BackgroundProcessResult> {
   const bgStartTime = performance.now();
   const { userId, songId, title, outputFormat, audioFormat } = options;
 
@@ -67,7 +82,7 @@ export async function processMusicBackground(
           } else {
             // Download with timeout
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 30_000); // 30s timeout
+            const timeout = setTimeout(() => controller.abort(), 60_000); // Increased timeout for larger files
 
             const audioRes = await fetch(audioContent, { signal: controller.signal });
             clearTimeout(timeout);
@@ -165,6 +180,13 @@ export async function processMusicBackground(
 
         console.log(`[song-workflow] Background processing succeeded for ${songId}. Status: ${finalStatus}`);
         console.log(`[Performance] Background worker for ${songId} total time: ${(performance.now() - bgStartTime).toFixed(2)}ms`);
+
+        return {
+            success: true,
+            audioUrl: audioUploadResult.value.url,
+            coverImageUrl: (coverGenerateResult.status === 'fulfilled' && coverGenerateResult.value) ? coverGenerateResult.value.url : undefined
+        };
+
       } catch (creditError) {
         console.error(`[song-workflow] Credit deduction failed for ${songId}:`, creditError);
         await db
@@ -175,13 +197,43 @@ export async function processMusicBackground(
             processingStatus: 'failed_credit_deduction',
           })
           .where(eq(songTable.id, songId));
+
+        // Even if credit deduction failed, we still have the audio
+        return {
+            success: true,
+            audioUrl: audioUploadResult.value.url,
+            error: 'Credit deduction failed'
+        };
       }
     } else {
       // Audio failed
       console.error(`[song-workflow] Audio upload failed for ${songId}:`, audioUploadResult.reason);
       await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
+      return {
+          success: false,
+          error: `Audio upload failed: ${audioUploadResult.reason}`
+      };
     }
-  } catch (globalError) {
+  } catch (globalError: any) {
     console.error(`[song-workflow] Fatal background error for ${songId}:`, globalError);
+
+    // Attempt to update DB to prevent zombie state
+    try {
+        await db
+          .update(songTable)
+          .set({
+            processingStatus: 'failed_internal_error',
+            creditError: globalError.message || 'Fatal workflow error'
+          })
+          .where(eq(songTable.id, songId));
+    } catch (dbError) {
+        // If DB connection is also dead, just log it.
+        console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);
+    }
+
+    return {
+        success: false,
+        error: globalError.message || 'Fatal background workflow error'
+    };
   }
 }

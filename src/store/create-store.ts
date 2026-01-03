@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
 
 interface CreateState {
   // Inputs
@@ -36,6 +37,10 @@ interface CreateState {
   processingTaskId: string | null; // For resuming polling in the background
   setProcessingTaskId: (id: string | null) => void;
 
+  // Auto-start generation signal
+  shouldAutoGenerate: boolean;
+  setShouldAutoGenerate: (flag: boolean) => void;
+
   // Actions
   reset: () => void;
 }
@@ -51,8 +56,8 @@ export const useCreateStore = create<CreateState>()(
       newsSummary: '',
       setNewsSummary: (newsSummary) => set({ newsSummary }),
 
-      // Default Prompt matches the initial state in previous hook (Breaking Trap)
-      musicPrompt: 'UK Drill, Deep Voice, Aggressive, Police Sirens, 808 Slides, Orchestral Hits, Fast Tempo',
+      // Default Prompt set to 'Viral Pop' (Custom Vibe)
+      musicPrompt: DEFAULT_CUSTOM_VIBE_PROMPT,
       setMusicPrompt: (musicPrompt) => set({ musicPrompt }),
 
       musicTitle: '',
@@ -75,6 +80,10 @@ export const useCreateStore = create<CreateState>()(
       processingTaskId: null,
       setProcessingTaskId: (processingTaskId) => set({ processingTaskId }),
 
+      // Auto-start generation signal
+      shouldAutoGenerate: false,
+      setShouldAutoGenerate: (shouldAutoGenerate) => set({ shouldAutoGenerate }),
+
       reset: () =>
         set({
           newsLink: '',
@@ -88,7 +97,8 @@ export const useCreateStore = create<CreateState>()(
           musicCoverUrl: null,
           musicId: null,
           processingTaskId: null,
-          musicPrompt: 'UK Drill, Deep Voice, Aggressive, Police Sirens, 808 Slides, Orchestral Hits, Fast Tempo',
+          musicPrompt: DEFAULT_CUSTOM_VIBE_PROMPT, // Reset to 'Viral Pop' default
+          shouldAutoGenerate: false,
         }),
     }),
     {

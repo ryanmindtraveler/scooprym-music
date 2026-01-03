@@ -208,12 +208,12 @@ export default function GallerySection({ songs = [] }: GallerySectionProps) {
       id="gallery"
       className="relative z-20 px-4 pt-32 pb-32 md:pt-48 md:pb-48 overflow-visible selection:bg-pink-200 selection:text-pink-900"
     >
-      {/* 1. Universal Fluid Mesh Background */}
+      {/* 1. Static Gradient Background (Cyan -> Pink) - Matching User Image */}
       <div className="absolute inset-0 z-0">
         <div
-          className="absolute inset-0 opacity-100 animate-gradient-xy"
+          className="absolute inset-0 opacity-100"
           style={{
-            background: 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)',
+            background: 'linear-gradient(90deg, #38bdf8 0%, #e11d48 100%)', // Sky Blue -> Rose Red
           }}
         />
       </div>

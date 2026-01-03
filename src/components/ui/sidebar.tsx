@@ -47,7 +47,20 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.")
+    // During SSR, return a default state to avoid throwing errors
+    // Since this is a client component, it will re-render on the client with the proper context.
+    if (typeof window === 'undefined') {
+      return {
+        state: 'expanded',
+        open: true,
+        setOpen: () => {},
+        openMobile: false,
+        setOpenMobile: () => {},
+        isMobile: false,
+        toggleSidebar: () => {},
+      } as SidebarContextProps;
+    }
+    throw new Error('useSidebar must be used within a SidebarProvider.')
   }
 
   return context

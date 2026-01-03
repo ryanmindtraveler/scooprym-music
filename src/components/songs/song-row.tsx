@@ -55,7 +55,9 @@ export function SongRow({
     return `${m}:${s}`;
   };
 
-  const hasAudio = Boolean(item.audioUrl);
+  const isPending = item.audioUrl === 'pending-stream' || item.processingStatus === 'processing';
+  const isFailed = item.processingStatus?.startsWith('failed');
+  const hasAudio = Boolean(item.audioUrl) && !isPending && !isFailed;
 
   return (
     <div
@@ -79,13 +81,25 @@ export function SongRow({
               </div>
             </div>
           )}
+
+          {/* Status Overlay */}
+          {(isPending || isFailed) && (
+             <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px]">
+                {isPending ? (
+                  <Loader2 className="size-5 text-white animate-spin" />
+                ) : (
+                  <div className="text-[10px] font-bold text-red-400 bg-red-950/80 px-1 py-0.5 rounded">FAILED</div>
+                )}
+             </div>
+          )}
         </div>
 
-        {/* Play Overlay */}
+        {/* Play Overlay - Only show if valid audio */}
+        {hasAudio && (
         <div
           className={cn(
             'absolute inset-0 flex items-center justify-center rounded-xl transition-all duration-200',
-            isPlaying ? 'bg-black/40 opacity-100' : 'bg-black/10 opacity-100 hover:bg-black/40'
+            isPlaying ? 'bg-black/40 opacity-100' : 'bg-black/10 opacity-0 group-hover/cover:opacity-100'
           )}
         >
           <Button
@@ -102,6 +116,7 @@ export function SongRow({
             {isPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
           </Button>
         </div>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <button

@@ -39,6 +39,7 @@ export default async function MySongsPage() {
     sourceText: r.sourceText,
     sourceUrl: r.sourceUrl,
     newsSummary: r.newsSummary,
+    processingStatus: r.processingStatus,
   }));
 
   // 读取服务端持久化的最近播放记录（按播放时间倒序去重）
@@ -53,7 +54,7 @@ export default async function MySongsPage() {
       .from(songPlay)
       .where(eq(songPlay.userId, userId))
       .orderBy(desc(songPlay.createdAt))
-      .limit(20); // Still fetch a bit more for de-duplication if needed, but 20 is enough for page 1
+      .limit(50); // Fetch more to ensure we get 9 unique songs after deduplication
 
     const recentSongIdsOrdered = Array.from(new Set(recentPlays.map((p) => p.songId)));
 
@@ -79,7 +80,9 @@ export default async function MySongsPage() {
           sourceText: r!.sourceText,
           sourceUrl: r!.sourceUrl,
           newsSummary: r!.newsSummary,
-        }));
+          processingStatus: r!.processingStatus,
+        }))
+        .slice(0, 9);
     }
 
     const favoriteRows = await db
@@ -116,6 +119,7 @@ export default async function MySongsPage() {
           sourceText: r!.sourceText,
           sourceUrl: r!.sourceUrl,
           newsSummary: r!.newsSummary,
+          processingStatus: r!.processingStatus,
         }));
     }
   }

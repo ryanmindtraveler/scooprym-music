@@ -9,8 +9,8 @@ import { performance } from 'perf_hooks';
 import { generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { generateMusic } from '@/ai/music/lib/generation';
 import { processMusicBackground } from '@/lib/song-workflow';
-import { createStreamEntry, pushToStream, finishStream } from '@/lib/stream-cache';
 import { eq } from 'drizzle-orm';
+import { mapGenerationError } from '@/lib/music/error-handler';
 
 // Removed global DECODER to prevent race conditions
 
@@ -37,12 +37,11 @@ type GenerateMusicBody = {
  * 5. Trigger background task (Song Service) for downloads, storage, and credits
  */
 export async function POST(req: Request) {
+  let songId: string | null = null;
   const startTime = performance.now();
   console.log('[Performance] generate-music: New Request');
 
   try {
-    // Instantiate local decoder to prevent state pollution in concurrent requests
-    const decoder = new TextDecoder();
     // 1. Validation
     const body: GenerateMusicBody = await req.json();
     const {
@@ -54,35 +53,43 @@ export async function POST(req: Request) {
       sourceText,
       sourceUrl,
       newsSummary,
-      useStream = true, // Default to true for best UX
-    } = body;
+      useStream = true,
+      songId: clientSongId, // Optional Client-Side ID
+    } = body as GenerateMusicBody & { songId?: string };
 
     if (!lyrics || lyrics.trim().length < 10) {
-      return NextResponse.json({ success: false, error: 'Lyrics required (min 10 chars)' }, { status: 400 });
+      const unifiedError = mapGenerationError({ success: false, error: 'Lyrics required (min 10 chars)', statusCode: 400 });
+      return NextResponse.json(unifiedError, { status: 400 });
     }
 
     // 2. Auth
     const apiKey = process.env.MINIMAXI_API_KEY || process.env.MINIMAX_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ success: false, error: 'Service configuration error (API Key)' }, { status: 500 });
+      const unifiedError = mapGenerationError({ success: false, error: 'Service configuration error (API Key)', statusCode: 500 });
+      return NextResponse.json(unifiedError, { status: 500 });
     }
 
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) {
-      return NextResponse.json({ success: false, error: 'Unauthorized: Please login first' }, { status: 401 });
+      const unifiedError = mapGenerationError({ success: false, error: 'Unauthorized: Please login first', statusCode: 401 });
+      return NextResponse.json(unifiedError, { status: 401 });
     }
 
     // 2.2 Credit Check (Pre-check to prevent unpaid AI costs)
     const { hasEnoughCredits } = await import('@/credits/credits');
     const hasCredits = await hasEnoughCredits({ userId, requiredCredits: 2 });
     if (!hasCredits) {
-      return NextResponse.json({ success: false, error: 'Insufficient credits (Code: 1008)' }, { status: 402 });
+      const unifiedError = mapGenerationError({ success: false, error: 'Insufficient credits (Code: 1010)', statusCode: 402 });
+      return NextResponse.json(unifiedError, { status: 402 });
     }
 
     // Prepare Title
     const effectiveTitle =
       title?.trim() || (lyrics.split('\n').find((l) => l.trim().length > 0) || 'Generated Track').slice(0, 50);
+
+    // Use Client ID if valid, otherwise generate new
+    songId = (clientSongId && /^[0-9a-f-]{36}$/i.test(clientSongId)) ? clientSongId : randomUUID();
 
     // 2.1 Start Cover Generation (Parallel, Non-blocking)
     console.log('[Performance] Starting parallel cover generation...');
@@ -101,34 +108,35 @@ export async function POST(req: Request) {
     const effectivePrompt =
       prompt && prompt.trim().length >= 10 ? prompt.trim() : 'Auto, dynamic, emotional, based on lyrics context';
 
+    // Force non-streaming mode for reliability
+    const useStreamLocal = false;
+
     const musicResult = await generateMusic({
       apiKey,
       prompt: effectivePrompt,
       lyrics,
-      outputFormat,
+      outputFormat: 'url', // Request URL for non-streaming
       audioFormat,
-      stream: useStream, // Pass the control parameter
+      stream: useStreamLocal,
     });
 
     if (!musicResult.success || (!musicResult.audioContent && !musicResult.stream)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Music Generation Failed: ${musicResult.error} (Code: ${musicResult.statusCode})`,
-          details: musicResult.details,
-          code: musicResult.statusCode,
-        },
-        { status: musicResult.statusCode || 500 }
-      );
+      const unifiedError = mapGenerationError(musicResult as any);
+
+      const httpStatus = unifiedError.code && unifiedError.code >= 200 && unifiedError.code <= 599
+        ? unifiedError.code
+        : 500;
+
+      return NextResponse.json(unifiedError, { status: httpStatus });
     }
 
     // --- Persistence (Initial Record) ---
     const db = await getDb();
-    const songId = randomUUID();
+    // songId is already assigned above
     const dbStartTime = performance.now();
 
     await db.insert(songTable).values({
-      id: songId,
+      id: songId!,
       userId,
       title: effectiveTitle,
       lyrics,
@@ -136,126 +144,102 @@ export async function POST(req: Request) {
       sourceText,
       sourceUrl,
       newsSummary,
-      audioUrl: 'pending-stream',
+      audioUrl: 'processing', // Placeholder, not pending-stream
       processingStatus: 'processing',
       creditsDeducted: false,
       isAdminGenerated: session?.user?.role === 'admin',
     });
     console.log(`[Performance] Initial DB record created in ${(performance.now() - dbStartTime).toFixed(2)}ms`);
 
-    // --- MODE A: Streaming Flow ---
-    if (useStream && musicResult.stream) {
-      createStreamEntry(songId);
 
-      (async () => {
-        const reader = musicResult.stream!.getReader();
-        let fullAudioHex = '';
-        let buffer = '';
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+    // --- MODE B: Non-Streaming Flow (Standard: Play First, Save Later) ---
+    console.log('[Non-Streaming] Starting optimistic generation flow...');
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep partial line in buffer
+    const tempAudioUrl = musicResult.audioContent;
+    if (!tempAudioUrl || typeof tempAudioUrl !== 'string') {
+        throw new Error('Invalid audio URL received from provider');
+    }
 
-            for (const line of lines) {
-              if (line.trim().startsWith('data:')) {
-                try {
-                  const jsonStr = line.replace('data:', '').trim();
-                  const json = JSON.parse(jsonStr);
-                  const hex = json?.data?.audio;
-                  if (hex) {
-                    fullAudioHex += hex;
-                    const bytes = new Uint8Array(hex.match(/.{1,2}/g)!.map((b: string) => Number.parseInt(b, 16)));
-                    pushToStream(songId, bytes);
-                  }
-                } catch (pErr) {
-                  console.error('[Streaming] Parse error inside chunk:', pErr);
-                }
-              }
-            }
-          }
-          console.log(`[Streaming] Finished. SongId: ${songId}, Size: ${fullAudioHex.length}`);
-          finishStream(songId);
+    // [OPTIMIZATION] FIRE AND FORGET Strategy
+    // Return temp URL immediately. Persist to DB/S3 in background.
 
-          // Trigger background persistence
-          processMusicBackground(fullAudioHex, {
+    const backgroundWork = async () => {
+      try {
+        console.log(`[Background] Starting persistence for song ${songId}`);
+        const result = await processMusicBackground(
+          tempAudioUrl,
+          {
             lyrics, prompt, title: effectiveTitle, sourceText, sourceUrl,
-            outputFormat: 'hex', audioFormat, songId, userId
-          }, coverImagePromise)
-          .catch(bgErr => console.error('[Streaming] BG error:', bgErr));
-        } catch (sErr: any) {
-          console.error('[Streaming] Error:', sErr);
-          finishStream(songId);
-          // Mark as failed in DB
-          const db = await getDb();
-          await db.update(songTable).set({
-            processingStatus: 'failed_streaming',
-            creditError: sErr.message // Log error message in creditError field as fallback
-          }).where(eq(songTable.id, songId)).catch(e => console.error('Failed to update DB error:', e));
-        }
-      })();
-
-      return NextResponse.json({
-        success: true,
-        audio: `/api/songs/${songId}/stream`,
-        song: { id: songId, title: effectiveTitle, audioUrl: `/api/songs/${songId}/stream` },
-        meta: { songId, format: 'url' }
-      });
-    }
-
-    // --- MODE B: Non-Streaming Flow ---
-    console.log('[Non-Streaming] Waiting for full generation...');
-    let finalAudioHex = musicResult.audioContent || '';
-
-    if (!finalAudioHex && musicResult.stream) {
-      const reader = musicResult.stream.getReader();
-      let buffer = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        for (const line of lines) {
-          if (line.trim().startsWith('data:')) {
-            try {
-              const hex = JSON.parse(line.replace('data:', '').trim())?.data?.audio;
-              if (hex) finalAudioHex += hex;
-            } catch {}
-          }
-        }
+            outputFormat: 'url', audioFormat, songId: songId!, userId
+          },
+          coverImagePromise
+        );
+        console.log(`[Background] Success for ${songId}. Final Audio: ${result.audioUrl}`);
+      } catch (err) {
+        console.error(`[Background] Failed for ${songId}:`, err);
+        // DB status is updated inside separate try/catch blocks within processMusicBackground
       }
+    };
+
+    // Execute background task
+    // Note: Vercel/Next.js Serverless functions may freeze execution after response.
+    // We attempt to use `waitUntil` if available on the request context or global scope.
+    const taskPromise = backgroundWork();
+
+    // @ts-ignore
+    if (typeof waitUntil === 'function') {
+         // Cloudflare Workers / Edge
+        // @ts-ignore
+        waitUntil(taskPromise);
+    } else if ((req as any).waitUntil) {
+        // Vercel / Next.js Request extension
+        (req as any).waitUntil(taskPromise);
+    } else {
+        // Node.js fallback: Let it float.
+        // In local/VPS logic, this runs fine. In strict Lambda, this is a race condition.
+        // Accepted tradeoff for "Instant Playback".
     }
 
-    // Trigger background persistence (Async, don't await to speed up response)
-    processMusicBackground(
-      finalAudioHex,
-      {
-        lyrics, prompt, title: effectiveTitle, sourceText, sourceUrl,
-        outputFormat: 'hex', audioFormat, songId, userId
-      },
-      coverImagePromise
-    ).catch(e => console.error('[Non-Streaming] BG Error:', e));
+    console.log(`[Performance] Optimistic Response sent in ${(performance.now() - startTime).toFixed(2)}ms`);
 
     return NextResponse.json({
       success: true,
-      audio: finalAudioHex,
+      audio: tempAudioUrl,
       song: {
         id: songId,
         title: effectiveTitle,
-        audioUrl: null, // Client will use the HEX data for now
+        audioUrl: tempAudioUrl, // Immediate playback
+        coverImageUrl: null     // Cover arrives later
       },
       meta: {
         songId,
-        format: 'hex',
-        mode: 'non-streaming'
+        format: 'url',
+        mode: 'optimistic',
+        info: 'Background processing started. Credits will be deducted upon completion.'
       }
     });
+
   } catch (error: any) {
     console.error('[generate-music] Handler Exception:', error);
-    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
+
+    // Attempt to mark the song as failed in DB if we created a record
+    if (songId) {
+      try {
+        const db = await getDb();
+        await db.update(songTable)
+           .set({ processingStatus: 'failed_generation', creditError: error.message })
+           .where(eq(songTable.id, songId));
+        console.log(`[generate-music] Marked song ${songId} as failed_generation`);
+      } catch (dbError) {
+        console.error('[generate-music] Failed to update DB status on error:', dbError);
+      }
+    }
+
+    const unifiedError = mapGenerationError(error);
+    const httpStatus = unifiedError.code && unifiedError.code >= 200 && unifiedError.code <= 599
+      ? unifiedError.code
+      : 500;
+
+    return NextResponse.json(unifiedError, { status: httpStatus });
   }
 }

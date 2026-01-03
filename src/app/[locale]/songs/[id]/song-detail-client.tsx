@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store/player-store';
 import { format } from 'date-fns';
-import { Calendar, Clock, Heart, Pause, Play, Share2 } from 'lucide-react';
+import { Calendar, Clock, Heart, Newspaper, Pause, Play, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +20,9 @@ interface SongDetailClientProps {
     createdAt: Date;
     durationSec?: number | null;
     lyrics?: string | null;
+    newsSummary?: string | null;
+    sourceText?: string | null;
+    sourceUrl?: string | null;
   };
   initialIsFavorite: boolean;
 }
@@ -188,6 +191,39 @@ export function SongDetailClient({ song, initialIsFavorite }: SongDetailClientPr
                 </div>
               </div>
             </div>
+
+            {/* News Background Section */}
+            {(song.newsSummary || song.sourceText) && (
+              <div className="p-6 md:p-8 rounded-[32px] bg-white/80 dark:bg-zinc-900/40 border border-white/50 dark:border-white/5 shadow-lg backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-2 mb-4 opacity-70">
+                  <div className="flex items-center gap-2">
+                    <Newspaper className="size-5 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-sm font-bold tracking-tight text-indigo-950 dark:text-indigo-50">
+                      News Background | 新闻背景
+                    </span>
+                  </div>
+                  {/* Source Link / Search */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
+                      window.open(
+                        song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+                        '_blank'
+                      );
+                    }}
+                    className="h-8 gap-2 rounded-full bg-indigo-50 dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 px-3"
+                  >
+                    <span className="text-xs font-semibold">{song.sourceUrl ? 'View Source' : 'Search news'}</span>
+                    <span>🍿</span>
+                  </Button>
+                </div>
+                <p className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
+                  {song.newsSummary || song.sourceText}
+                </p>
+              </div>
+            )}
 
             {/* Bottom Section: Lyrics (Ported from LyricsDisplay) */}
             <div className="relative flex flex-col min-h-[500px] rounded-[32px] bg-linear-to-br from-white/95 to-purple-50/50 dark:from-zinc-900/95 dark:to-zinc-900/80 border border-white/60 dark:border-white/5 backdrop-blur-xl shadow-lg overflow-hidden">

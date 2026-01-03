@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  overflow-y: scroll;
+}
+
 /*
  * 1. Themes Documentation
  * https://mksaas.com/docs/themes
@@ -441,10 +445,64 @@ div[class*="border-t"][class*="bg-fd-secondary"]:not(:has(*)):not([data-content]
   background-size: 400% 400%;
   animation: gradient-xy 15s ease infinite;
 }
+
+.animate-hue-rotate {
+  animation: hue-rotate 10s linear infinite;
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
 @utility no-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Shake Animation */
+@keyframes button-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-6px) rotate(-6deg); }
+  30% { transform: translateX(6px) rotate(6deg); }
+  50% { transform: translateX(-4px) rotate(-3deg); }
+  70% { transform: translateX(4px) rotate(3deg); }
+  90% { transform: translateX(-2px) rotate(0deg); }
+}
+
+.animate-button-shake {
+  animation: button-shake 0.5s ease-in-out;
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
 }

@@ -13,4 +13,5 @@ export interface SongItem {
   sourceUrl?: string | null;
   newsSummary?: string | null;
   isPublished?: boolean;
+  processingStatus?: string | null;
 }

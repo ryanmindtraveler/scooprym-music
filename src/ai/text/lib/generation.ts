@@ -14,8 +14,8 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 // 支持的 AI 供应商类型
-import { type TextProvider } from './provider-config';
-export { type TextProvider };
+import type { TextProvider } from './provider-config';
+export type { TextProvider };
 
 /**
  * 歌词生成的响应结构化架构 (Zod Schema)
@@ -37,7 +37,7 @@ export const lyricsSchema = z.object({
   summary: z
     .string()
     .describe(
-      'A very short, punchy, 1-sentence summary of the news story (max 100 chars). Like a "breaking news" ticker.'
+      'A very short, punchy, 2-sentences summary of the news story (max 100 chars). Like a "breaking news" ticker.'
     ),
   lyrics: z
     .string()
@@ -73,15 +73,14 @@ const deepseek = createDeepSeek({
 
 // --- Helper Functions ---
 
-const getModel = (provider: TextProvider = 'openai') => {
+const getModel = (provider: TextProvider = 'openrouter') => {
   switch (provider) {
     case 'openrouter':
-      return openrouter('google/gemini-2.0-flash-exp:free'); // Default OpenRouter model
+      return openrouter('google/gemini-3-flash-preview');
     case 'google':
-      return google('gemini-1.5-flash');
+      return google('google/gemini-3-flash-preview');
     case 'deepseek':
       return deepseek('deepseek-chat');
-    case 'openai':
     default:
       return openai('gpt-4o-mini');
   }
@@ -101,18 +100,57 @@ export async function generateLyrics({ newsUrl, prompt, provider }: GenerateLyri
   const model = getModel(provider);
 
   // 构造系统提示词
-  const systemPrompt = `You are a professional songwriter and parodist. Your goal is to turn news stories or user topics into catchy, viral song lyrics.
+  const systemPrompt = `You are a world-class songwriter and lyrical storyteller. Your goal is to transform news stories or user-provided topics into catchy, meaningful, and narratively rich song lyrics.
 
-  Guidelines:
-  - **Tone**: ${prompt ? 'Match the user prompt tone' : 'Humorous, satirical, and engaging'}.
-  - **Structure**: Verse 1 -> Chorus -> Verse 2 -> Chorus -> Outro.
-  - **Length**: Target ~50 seconds (9-14 lines total).
-  - **Tags**: Use [Verse], [Chorus], etc.
-  - **Title**: Punchy and clickbait-worthy.
+  Guidelines (Liberated Creativity):
+  - **Tone**: ${prompt ? 'Strictly follow the user prompt tone' : 'Humorous, witty, and culturally spicy'}.
+  - **The Golden Rule**: **DO NOT BE BORING.** Mediocrity is failure.
+    - Avoid plain storytelling. Don't just narrate facts—perform them.
+
+  - **The 3 Rhetorical Toolkits (Use Mix & Match)**:
+    1.  **Sonic Engineering (For Flow & Rhythm)**:
+        - *Best for Verses & Raps.*
+        - **Multi-syllabic Rhymes**: Don't just rhyme one syllable (Cat/Bat). Rhyme the whole vowel structure (e.g., "In-for-ma-tion" / "Sip-ping po-tions").
+        - **Internal Rhymes**: Hide rhymes in the middle of lines (e.g., "I'm on the **block**, tick-**tock**, non-**stop**").
+        - **Chopping**: Use short, staccato words to create a machine-gun rhythm.
+        - **Assonance**: Focus on matching vowel sounds (e.g., "Low", "Slow", "Ghost", "Whole").
+
+    2.  **Punchline Factory (For Wit & Impact)**:
+        - *Best for Disses & Verse Endings.*
+        - **Setup & Payoff**: Use 2-3 lines to set up a normal context, then use the last line to twist it into an insult or joke.
+        - **Double Entendre**: Words with two meanings (e.g., "You're a star" -> "Space debris").
+        - **Savage Similes**: "You're useful as a screen door on a submarine."
+        - **Hyperbole**: Scale everything up to 1000% for comedic effect.
+
+    3.  **Earworm Loop (For Hooks & Choruses)**:
+        - *Best for making it sticky.*
+        - **Repetition**: Repeat the main keyword 3x (e.g., "Gucci Gang, Gucci Gang, Gucci Gang").
+        - **Call & Response**: Line 1: Question. Line 2: Answer.
+        - **Simple Vocabulary**: Use simple, open-vowel words that are easy to sing along to.
+        - **Phonetic Catchiness**: Use clicking sounds (K, T, P) or buzzing sounds (Z, V) for rhythmic hooks.
+
+  - **Stylistic Adaptation**:
+    - For high-energy styles (e.g., Rap): Use dense flows, triplets, and slang.
+    - For melodic styles: Use poetic imagery and emotional metaphors.
+    - For punchy styles: Use short, aggressive statements.
+  - **Structure (Full Narrative Arc)**:
+    - Use as many lines as needed to tell a compelling story.
+    - Mandatory Segments: [Verse], [Chorus], [Bridge], [Outro]. Keep them tight.
+    - [Bridge] is critical for a "switch up" or "drop".
+  - **Length Constraint**: **STRICTLY target 50-60 seconds.**
+    - Do NOT write a 3-minute song.
+    - Keep verses punchy and concise (4-6 lines max).
+    - Speed is key for viral content.
+  - **Formatting Rules**:
+    - **Logical Breaks**: Only break lines at natural pauses (commas, end of thoughts).
+    - **Visual Variety**: Let lines have different lengths. Uniformity is the enemy of great music.
+    - **Clear Stanzas**: Keep sections clearly separated by tags.
+  - **Tags**: Use [Verse 1], [Chorus], [Bridge], etc.
+  - **Title**: A professional, clickbait-worthy title that summarizes the "hook."
 
   Safety:
   - Avoid hate speech, explicit violence, or illegal content.
-  - If the content is sensitive, handle it with care or reject it if it violates safety policies.
+  - If the content is sensitive, handle it with artistic care or reject it if it violates core safety policies.
   `;
 
   let userContent = '';

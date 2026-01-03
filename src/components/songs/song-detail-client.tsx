@@ -316,37 +316,46 @@ export function SongDetailClient({
           {/* Actions - Removed from here (Moved to Top Right) */}
 
           {/* News Summary */}
-          {song.newsSummary && (
+          {(song.newsSummary || song.sourceText) && (
             <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2 mb-3 opacity-50 w-full">
                 <div className="flex items-center gap-2">
                   <Newspaper className="size-4" />
-                  <span className="text-xs font-bold tracking-widest">Background</span>
+                  <span className="text-xs font-bold tracking-widest">News Background | 新闻背景</span>
                 </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="relative flex items-center justify-center size-8 cursor-pointer group" onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(song.newsSummary || '')}`, '_blank')}>
+                    <div
+                      className="relative flex items-center justify-center size-8 cursor-pointer group"
+                      onClick={() => {
+                        const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
+                        window.open(
+                          song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+                          '_blank'
+                        );
+                      }}
+                    >
                       {/* Explosive Effects */}
-                       <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75 animate-ping duration-1000 group-hover:animate-none" />
-                       <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-200 opacity-50 animate-ping delay-150 duration-1000 group-hover:animate-none" />
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75 animate-ping duration-1000 group-hover:animate-none" />
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-200 opacity-50 animate-ping delay-150 duration-1000 group-hover:animate-none" />
 
                       {/* Icon */}
                       <button
                         type="button"
-                        className="relative z-10 transition-transform text-lg bg-transparent p-0 border-none drop-shadow-md group-hover:scale-125 group-hover:animate-none"
+                        className="relative z-10 transition-transform bg-transparent p-0 border-none drop-shadow-md group-hover:scale-125 group-hover:animate-none flex items-center justify-center text-xl"
                         style={{ animation: 'wiggle 0.3s ease-in-out infinite' }}
                       >
-                        馃嵖
+                        🍿
                       </button>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Search on Google</p>
+                    <p>{song.sourceUrl ? 'View Source' : 'Search on Google'}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
               <p className="text-sm text-white/80 leading-relaxed font-light text-left">
-                {song.newsSummary}
+                {song.newsSummary || song.sourceText}
               </p>
             </div>
           )}

@@ -1,49 +1,38 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { usePlayerStore } from '@/store/player-store';
 import { useEffect, useRef, useState } from 'react';
 
 export function SpectrumLoader({ className }: { className?: string }) {
   // We'll create a dynamic, randomized spectrum effect
   const [bars, setBars] = useState<number[]>(new Array(20).fill(10));
+  const isPlaying = usePlayerStore((state) => state.isPlaying);
 
   useEffect(() => {
-    // Animate bars randomly to simulate audio analysis
+    // ONLY animate during generation (when isPlaying is false but it's mounted in the loading overlay)
+    // Actually, following the 'No animation during playback' rule strictly:
+    if (isPlaying) {
+      setBars(new Array(20).fill(10));
+      return;
+    }
+
+    // Simulate generation activity
     const interval = setInterval(() => {
       setBars((prev) => prev.map(() => Math.random() * 80 + 20));
-    }, 100);
+    }, 120);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPlaying]);
 
   return (
-    <div className={cn('relative flex items-center justify-center p-8', className)}>
-      {/* 1. The Core (Pulsing Brain) - REMOVED per user request to reduce obstruction */}
-      {/* <div className="absolute z-20 flex flex-col items-center justify-center"> ... </div> */}
-
-      {/* 2. Holographic Spectrum - REMOVED per user request */}
-      {/* <div className="relative size-64 flex items-center justify-center"> ... </div> */}
-
-      <style jsx>{`
-        @keyframes ping-slow {
-            75%, 100% {
-                transform: scale(1.5);
-                opacity: 0;
-            }
-        }
-        .animate-ping-slow {
-            animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        .animate-pulse-slow {
-             animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        .animate-spin-slower {
-            animation: spin 8s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-      `}</style>
+    <div className={cn('relative flex items-center gap-1 h-12', className)}>
+       {bars.map((height, i) => (
+         <div
+           key={i}
+           className="w-1 bg-indigo-500/40 rounded-full transition-all duration-150"
+           style={{ height: `${height}%` }}
+         />
+       ))}
     </div>
   );
 }

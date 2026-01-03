@@ -10,6 +10,8 @@ export interface Song {
   prompt?: string | null;
   category?: string | null;
   sourceText?: string | null;
+  sourceUrl?: string | null;
   newsSummary?: string | null;
   isLiked?: boolean;
+  processingStatus?: string | null;
 }

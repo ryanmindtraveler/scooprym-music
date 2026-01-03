@@ -136,22 +136,25 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         className={cn(
-          'fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-full max-w-5xl px-4 pointer-events-none',
+          'fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-7xl px-4 pointer-events-none',
           className
         )}
       >
         <motion.div
           layout
           className={cn(
-            'mx-auto pointer-events-auto relative overflow-hidden transition-all duration-500 rounded-[28px] border border-white/5 bg-[#4A4A4A] shadow-2xl',
-            isExpanded ? 'w-full pt-6 pb-4 px-6 md:px-8' : 'w-[220px] h-14 px-3 flex items-center justify-center'
+            'mx-auto pointer-events-auto relative overflow-hidden transition-all duration-500 rounded-[32px] border border-white/5 bg-[#4A4A4A] shadow-2xl',
+            isExpanded ? 'w-full py-4 px-6 md:px-8' : 'w-[220px] h-14 px-3 flex items-center justify-center'
           )}
         >
           {isExpanded ? (
-            <div className="flex flex-col gap-5">
-              <div className="flex items-center gap-5">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
                 {/* Left Side: Song Info */}
-                <div className="flex items-center gap-4 min-w-0 max-w-[30%]">
+                <div className={cn(
+                  "flex items-center gap-4 min-w-0 transition-all duration-300",
+                  showGeneratingUI ? "max-w-[50%]" : "max-w-[35%]"
+                )}>
                   <div
                     className={cn(
                       'size-14 rounded-xl overflow-hidden bg-zinc-800 border border-white/5 shadow-lg flex items-center justify-center shrink-0',
@@ -174,12 +177,17 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h4 className="text-white font-bold truncate text-base leading-normal pb-1">
+                    <h4 className={cn(
+                      "text-white font-bold text-base leading-normal pb-1",
+                      !showGeneratingUI && "truncate"
+                    )}>
                       {showGeneratingUI ? (
-                        <LoadingTicker
-                          messages={FUNNY_LOADING_MESSAGES}
-                          className="font-bold font-mono tracking-wider animate-pulse text-indigo-300"
-                        />
+                        <div className="flex items-center gap-2">
+                          <LoadingTicker
+                            messages={FUNNY_LOADING_MESSAGES}
+                            className="font-bold font-mono tracking-wider animate-pulse text-indigo-300 whitespace-nowrap"
+                          />
+                        </div>
                       ) : (
                         currentSong?.title
                       )}
@@ -262,9 +270,18 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => {
-                        navigator.clipboard.writeText(activeShareUrl);
-                        toast.success('Link copied!');
+                      onClick={async () => {
+                        if (!activeShareUrl) {
+                          toast.error('No share link available');
+                          return;
+                        }
+                        try {
+                          await navigator.clipboard.writeText(activeShareUrl);
+                          toast.success('Link copied to clipboard!');
+                        } catch (err) {
+                          console.error('Failed to copy:', err);
+                          toast.error('Failed to copy link');
+                        }
                       }}
                       className="size-9 rounded-full text-white/40 hover:text-white hover:bg-white/5"
                     >
@@ -283,9 +300,28 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                 </div>
               </div>
 
-              {/* Bottom: Progress Bar (Expanded Only) */}
-              {!showGeneratingUI && (
-                <div className="flex flex-col gap-2 mt-1">
+              {/* Bottom: Progress Bar / Generation Status */}
+              <div className="flex flex-col gap-2 mt-1">
+                {showGeneratingUI ? (
+                  <div className="flex items-center gap-4 px-1">
+                    <span className="text-[11px] font-mono text-white/10 tabular-nums min-w-[35px] text-right">
+                      0:00
+                    </span>
+                    <div className="flex-1 relative h-6 flex items-center">
+                      <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                        <motion.div
+                          initial={{ width: "0%" }}
+                          animate={{ width: "95%" }}
+                          transition={{ duration: 45, ease: "linear" }}
+                          className="absolute inset-y-0 left-0 bg-linear-to-r from-indigo-500/40 via-purple-500/40 to-pink-500/40 rounded-full"
+                        />
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-mono text-white/10 tabular-nums min-w-[35px]">
+                      1:00
+                    </span>
+                  </div>
+                ) : (
                   <div className="flex items-center gap-4 group px-1">
                     <span className="text-[11px] font-mono text-white/30 tabular-nums min-w-[35px] text-right">
                       {formatTime(currentTime)}
@@ -303,8 +339,8 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                       {formatTime(duration)}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ) : (
             // MINIMIZED MODE: Compact floating pill

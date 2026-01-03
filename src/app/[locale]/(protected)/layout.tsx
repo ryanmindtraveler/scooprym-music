@@ -1,3 +1,4 @@
+'use client';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import type { PropsWithChildren } from 'react';

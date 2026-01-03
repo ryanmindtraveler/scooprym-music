@@ -2,6 +2,7 @@
 
 import { usePlayerStore } from '@/store/player-store';
 import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 export function GlobalPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -84,10 +85,41 @@ export function GlobalPlayer() {
       }
     };
 
+    const handleError = (e: Event) => {
+      const target = e.target as HTMLAudioElement;
+      console.error('Global Player Audio Error:', target.error, 'Src:', target.src, 'CurrentSrc:', target.currentSrc);
+
+      let message = 'Playback error';
+      if (target.error) {
+        switch (target.error.code) {
+          case target.error.MEDIA_ERR_ABORTED:
+            message = 'Playback aborted';
+            break;
+          case target.error.MEDIA_ERR_NETWORK:
+            message = 'Network error during playback';
+            break;
+          case target.error.MEDIA_ERR_DECODE:
+            message = 'Audio decoding failed';
+            break;
+          case target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            message = 'Audio format not supported or file not found';
+            // Specific user error match
+            break;
+          default:
+            message = `Playback error: ${target.error.message}`;
+        }
+      }
+
+      // Since this is a component, we can import { toast } from 'sonner'
+      toast.error(message);
+      pause();
+    };
+
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.pause();
@@ -95,18 +127,26 @@ export function GlobalPlayer() {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('error', handleError);
       audio.src = '';
     };
   }, [setCurrentTime, setDuration, pause]);
+
+  // Track the currently loaded URL to avoid infinite re-loading if `audio.src` (absolute) != `audioUrl` (relative)
+  const currentUrlRef = useRef<string | null>(null);
 
   // Handle Play/Pause & Source Change
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (currentSong) {
+    // Check if we effectively have a song (must have a valid URL)
+    const hasValidAudio = currentSong && currentSong.audioUrl;
+
+    if (hasValidAudio) {
       // 1. New Song Loaded
-      if (audio.src !== currentSong.audioUrl) {
+      if (currentUrlRef.current !== currentSong.audioUrl) {
+        currentUrlRef.current = currentSong.audioUrl;
         audio.src = currentSong.audioUrl;
         audio.load();
       }
@@ -120,11 +160,17 @@ export function GlobalPlayer() {
         void safePause(audio);
       }
     } else {
-      // 3. No Song (Stop/Clear)
+      // 3. No Valid Song (Stop/Clear) because no URL or no song object
       void safePause(audio);
       if (audio.src) {
-        audio.src = '';
-        audio.currentTime = 0;
+        // Only clear if not already cleared to avoid redundant events
+        // And don't set to empty string if it causes issues, but usually removing attribute is hard in raw JS prop.
+        // Setting to empty string is standard but we must ensure we don't 'load' it.
+        audio.removeAttribute('src');
+        audio.load(); // Needed to drop the previous buffer? Or just pause is enough?
+        // Actually best to just pause and reset time. Setting src='' can trigger the error we saw if we call load().
+        // So we just pause.
+        currentUrlRef.current = null;
       }
     }
   }, [currentSong, isPlaying]);
