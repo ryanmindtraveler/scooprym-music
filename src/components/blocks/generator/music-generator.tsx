@@ -96,7 +96,7 @@ export function MusicGeneratorBlock() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #22d3ee 0%, #3b82f6 30%, #ec4899 70%, #f43f5e 100%)',
+            background: 'linear-gradient(135deg, #06b6d4 0%, #a78bfa 50%, #d8b4fe 100%)',
           }}
         />
         {/* Soft Glass Wash to blend with page */}
@@ -360,7 +360,7 @@ export function MusicGeneratorBlock() {
                            // Navigate to Studio
                            router.push(Routes.Create);
                         }}
-                        className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-none"
+                        className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black"
                       >
                        {/* ... Content ... */}
                           {/* Shimmer Element - Moved INSIDE LocaleLink to satisfy asChild single-child rule */}
@@ -413,7 +413,7 @@ export function MusicGeneratorBlock() {
                         }
                       >
                          <Button
-                          className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-none"
+                          className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black"
                           onClick={(e) => {
                             if (!newsContent.trim()) {
                               e.preventDefault();

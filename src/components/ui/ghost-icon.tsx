@@ -86,7 +86,7 @@ export function GhostIcon({
       whileTap={{ scale: 0.95 }}
 
       className={cn(
-        "absolute z-[60] select-none will-change-transform touch-none flex items-center justify-center",
+        "absolute z-60 select-none will-change-transform touch-none flex items-center justify-center",
         // Pass classNames for sizing
         size
       )}
@@ -120,13 +120,16 @@ export function GhostIcon({
                     filter: 'blur(0px)'
                   }
                 : {
-                    // STATE: "LIVELY WAVE" (Continuous Rising & Falling)
-                    // Cycle: Float Up -> Float Down -> Float Up (No static pause)
-                    opacity: [0.1, 1, 1, 0.1], // Never fully disappear! Just fade slightly
-                    scale: [0.9, 1.1, 0.9, 0.9], // Constant breathing
-                    y: [60, -60, 60], // HUGE 120px Range (Deep breathing)
-                    rotate: [rotate - 20, rotate + 20, rotate - 20], // Drunken wobble
-                    filter: ['blur(4px)', 'blur(0px)', 'blur(0px)', 'blur(4px)']
+                    // STATE: "PHANTOM CYCLE" (10s Loop)
+                    // 0-1s: Appear
+                    // 1-5s: Float & Stay
+                    // 5-6s: Disappear
+                    // 6-10s: Void (Wait)
+                    opacity: [0, 1, 1, 0, 0],
+                    scale: [0.8, 1, 1.1, 1.2, 0.8], // Grow slightly as it floats away
+                    y: [40, 0, -20, -40, 40], // Float Upwards continuously
+                    rotate: [rotate - 10, rotate, rotate + 10, rotate + 20, rotate - 10],
+                    filter: ['blur(10px)', 'blur(0px)', 'blur(0px)', 'blur(10px)', 'blur(10px)']
                   }
             }
             transition={
@@ -138,13 +141,12 @@ export function GhostIcon({
                     damping: 20
                   }
                 : {
-                    // Continuous Wave
-                    duration: randomDuration,
+                    // 10s Infinite Loop
+                    duration: 10,
                     repeat: Infinity,
                     delay: delay,
-                    ease: "easeInOut",
-                    // Continuous motion, no pauses
-                    times: [0, 0.5, 0.8, 1]
+                    ease: "linear",
+                    times: [0, 0.1, 0.5, 0.6, 1]
                   }
             }
         >

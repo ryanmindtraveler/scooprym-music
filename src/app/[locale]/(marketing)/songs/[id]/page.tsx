@@ -1,5 +1,5 @@
 import HomePage from '@/app/[locale]/(marketing)/(home)/page';
-import MarketingLayout from '@/app/[locale]/(marketing)/layout';
+
 import { SongDetailModal } from '@/components/songs/song-detail-modal';
 import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
@@ -42,23 +42,21 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   // Note: MarketingLayout expects children.
 
   return (
-    <MarketingLayout>
-      <div className="relative">
-        {/* Render Home Page as Background */}
-        <HomePage params={Promise.resolve({ locale: resolvedParams.locale })} />
+    <div className="relative">
+      {/* Render Home Page as Background */}
+      <HomePage params={Promise.resolve({ locale: resolvedParams.locale })} />
 
-        {/* Render Modal Overlay */}
-        <SongDetailModal
-          song={{
-            ...song,
-            createdAt: new Date(song.createdAt).toISOString(),
-          }}
-          initialIsFavorite={isFavorite}
-          defaultOpen={true}
-          navigationMode="hard"
-          autoPlay={true}
-        />
-      </div>
-    </MarketingLayout>
+      {/* Render Modal Overlay */}
+      <SongDetailModal
+        song={{
+          ...song,
+          createdAt: new Date(song.createdAt).toISOString(),
+        }}
+        initialIsFavorite={isFavorite}
+        defaultOpen={true}
+        navigationMode="hard"
+        autoPlay={true}
+      />
+    </div>
   );
 }

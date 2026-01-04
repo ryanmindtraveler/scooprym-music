@@ -120,9 +120,14 @@ export function SongDetailClient({
   return (
     <div className="relative flex size-full flex-col overflow-hidden text-white selection:bg-pink-500/30">
       <style>{`
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(-8deg); }
-          50% { transform: rotate(8deg); }
+        @keyframes ring {
+          0% { transform: rotate(0); }
+          10% { transform: rotate(-15deg); }
+          20% { transform: rotate(15deg); }
+          30% { transform: rotate(-15deg); }
+          40% { transform: rotate(15deg); }
+          50% { transform: rotate(0); }
+          100% { transform: rotate(0); }
         }
       `}</style>
       {/* --- Dynamic Gradient Background --- */}
@@ -130,12 +135,12 @@ export function SongDetailClient({
         className="absolute inset-0 z-0 transition-all duration-1000 ease-out"
         style={{
           background: colorsLoading
-            ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)'
+            ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%)' // Neutral Midnight: Slate-900 -> Indigo-950 -> Black
             : `
               radial-gradient(ellipse at 20% 20%, ${primary}40 0%, transparent 50%),
               radial-gradient(ellipse at 80% 80%, ${secondary}30 0%, transparent 50%),
               radial-gradient(ellipse at 50% 50%, ${muted}20 0%, transparent 70%),
-              linear-gradient(180deg, ${darkMuted} 0%, #0a0a0f 100%)
+              linear-gradient(180deg, ${darkMuted || '#0a0a0f'} 0%, #0a0a0f 100%)
             `,
         }}
       />
@@ -249,7 +254,7 @@ export function SongDetailClient({
 
           {/* Song Meta */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none">
               {song.title}
             </h1>
             <div className="flex items-center justify-center gap-2 text-sm text-white/50">
@@ -317,16 +322,23 @@ export function SongDetailClient({
 
           {/* News Summary */}
           {(song.newsSummary || song.sourceText) && (
-            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
-              <div className="flex items-center justify-between gap-2 mb-3 opacity-50 w-full">
-                <div className="flex items-center gap-2">
-                  <Newspaper className="size-4" />
-                  <span className="text-xs font-bold tracking-widest">News Background | 新闻背景</span>
+            <div className="group/news relative w-full overflow-hidden rounded-2xl bg-white/3 hover:bg-white/6 border border-white/10 p-5 backdrop-blur-md transition-colors duration-500">
+              {/* Subtle Gradient Glow */}
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none group-hover/news:bg-indigo-400/30 transition-colors duration-500" />
+
+              <div className="relative z-10 flex items-center justify-between gap-2 mb-4 w-full">
+                <div className="flex items-center gap-2.5 text-white/40 group-hover/news:text-white/60 transition-colors">
+                  <div className="p-1.5 rounded-md bg-white/5">
+                    <Newspaper className="size-3.5" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Background</span>
                 </div>
+
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div
-                      className="relative flex items-center justify-center size-8 cursor-pointer group"
+                    <button
+                      type="button"
+                      className="flex items-center justify-center size-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white hover:scale-105 transition-all border border-white/5 shadow-sm"
                       onClick={() => {
                         const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
                         window.open(
@@ -335,28 +347,25 @@ export function SongDetailClient({
                         );
                       }}
                     >
-                      {/* Explosive Effects */}
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75 animate-ping duration-1000 group-hover:animate-none" />
-                      <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-200 opacity-50 animate-ping delay-150 duration-1000 group-hover:animate-none" />
-
-                      {/* Icon */}
-                      <button
-                        type="button"
-                        className="relative z-10 transition-transform bg-transparent p-0 border-none drop-shadow-md group-hover:scale-125 group-hover:animate-none flex items-center justify-center text-xl"
-                        style={{ animation: 'wiggle 0.3s ease-in-out infinite' }}
+                      <span
+                        className="text-lg leading-none mb-0.5 inline-block origin-bottom"
+                        style={{ animation: 'ring 1.5s ease-in-out infinite' }}
                       >
                         🍿
-                      </button>
-                    </div>
+                      </span>
+                    </button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{song.sourceUrl ? 'View Source' : 'Search on Google'}</p>
+                  <TooltipContent side="left" className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white">
+                    <p>{song.sourceUrl ? 'Read Source' : 'Search Topic'}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <p className="text-sm text-white/80 leading-relaxed font-light text-left">
-                {song.newsSummary || song.sourceText}
-              </p>
+
+              <div className="relative z-10">
+                <p className="text-sm text-white/80 leading-relaxed font-light text-left tracking-wide opacity-90">
+                  {song.newsSummary || song.sourceText}
+                </p>
+              </div>
             </div>
           )}
           </div>
@@ -364,7 +373,7 @@ export function SongDetailClient({
        </div>
 
         {/* Right: Lyrics With Card Style */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm">
+        <div className="flex-1 flex flex-col min-h-0 bg-white/3 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-md">
           {/* Header - Fixed at top */}
           <div className="flex-none px-6 py-4 flex items-center justify-between z-10 border-b border-white/5">
             <span className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">

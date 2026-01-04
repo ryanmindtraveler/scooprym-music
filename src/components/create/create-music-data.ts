@@ -141,7 +141,7 @@ export const MUSIC_STYLE_CATEGORIES: StyleCategory[] = [
   },
 ];
 
-export const DEFAULT_CUSTOM_VIBE_PROMPT = 'Modern Pop, Melodic Trap, Catchy Hook, Auto-Tune, Upbeat, Heavy Bass, Synthesizer, Male Vocals';
+export const DEFAULT_CUSTOM_VIBE_PROMPT = 'Trap Rhythm, Goofy Ahh Beat, Funny, Catchy Hook, Fast Tempo, Ad-libs';
 
 export const VIBE_PERSONAS = [
   {

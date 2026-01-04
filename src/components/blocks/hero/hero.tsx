@@ -9,10 +9,10 @@ export default async function HeroSection() {
       title="ScoopRYM"
       subtitle={
         <>
-          Turning <span className="font-extrabold text-indigo-900">news</span>,{' '}
-          <span className="font-extrabold text-purple-900">entertainment</span>, and{' '}
-          <span className="font-extrabold text-pink-900">gossip</span> into{' '}
-          <span className="bg-linear-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent font-black text-[1.3em] drop-shadow-sm">
+          Turning <span className="font-extrabold text-cyan-600 drop-shadow-sm">news</span>,{' '}
+          <span className="font-extrabold text-pink-600 drop-shadow-sm">entertainment</span>, and{' '}
+          <span className="font-extrabold text-orange-600 drop-shadow-sm">gossip</span> into{' '}
+          <span className="text-slate-900 drop-shadow-md font-black text-[1.3em]">
             Music Beats
           </span>
           .

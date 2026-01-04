@@ -13,11 +13,11 @@ export interface ImageColors {
 }
 
 const DEFAULT_COLORS: Omit<ImageColors, 'isLoading' | 'error'> = {
-  primary: '#6366f1', // Indigo fallback
-  secondary: '#8b5cf6', // Violet fallback
-  muted: '#1e1b4b', // Dark indigo
-  darkMuted: '#0f0a1a', // Near black
-  lightMuted: '#c7d2fe', // Light indigo
+  primary: '#64748b', // Slate-500 (Neutral Blue-Grey)
+  secondary: '#475569', // Slate-600
+  muted: '#1e293b', // Slate-800
+  darkMuted: '#020617', // Slate-950 (Deepest Midnight)
+  lightMuted: '#94a3b8', // Slate-400
 };
 
 /**

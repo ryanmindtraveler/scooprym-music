@@ -12,6 +12,24 @@ const nextConfig: NextConfig = {
   /* config options here */
   devIndicators: false,
 
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@tabler/icons-react',
+      'date-fns',
+      'recharts',
+      'framer-motion',
+      '@radix-ui/react-icons',
+      '@base-ui-components/react',
+      '@ai-sdk/react',
+      'fumadocs-ui',
+      'shiki',
+      'canvas-confetti',
+      '@stripe/stripe-js',
+      'better-auth',
+    ],
+  },
+
   // https://nextjs.org/docs/architecture/nextjs-compiler#remove-console
   // Remove all console.* calls in production only
   compiler: {

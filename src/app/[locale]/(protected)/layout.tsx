@@ -1,15 +1,19 @@
-'use client';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { cookies } from 'next/headers';
 import type { PropsWithChildren } from 'react';
 
 /**
  * inspired by dashboard-01
  * https://ui.shadcn.com/blocks
  */
-export default function DashboardLayout({ children }: PropsWithChildren) {
+export default async function DashboardLayout({ children }: PropsWithChildren) {
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === 'true';
+
   return (
     <SidebarProvider
+      defaultOpen={defaultOpen}
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 72)',
