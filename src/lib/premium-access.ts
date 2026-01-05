@@ -1,7 +1,6 @@
 import { getDb } from '@/db';
 import { payment } from '@/db/schema';
-import { findPlanByPriceId, getAllPricePlans } from '@/lib/price-plan';
-import { PaymentScenes, PaymentTypes } from '@/payment/types';
+import { PaymentScenes, PaymentTypes, findPlanByPriceId, getAllPricePlans } from '@/payment';
 import { and, desc, eq, or } from 'drizzle-orm';
 
 /**
@@ -43,7 +42,6 @@ export async function checkPremiumAccess(userId: string): Promise<boolean> {
       .orderBy(desc(payment.createdAt));
 
     if (!result || result.length === 0) {
-      console.log('Check premium access, not payments for user:', userId);
       return false;
     }
 
@@ -57,7 +55,6 @@ export async function checkPremiumAccess(userId: string): Promise<boolean> {
       if (paymentRecord.type === PaymentTypes.ONE_TIME && paymentRecord.status === 'completed') {
         const plan = findPlanByPriceId(paymentRecord.priceId);
         const isLifetimePlan = plan && lifetimePlanIds.includes(plan.id);
-        console.log('Check premium access, isLifetimePlan:', isLifetimePlan);
         return isLifetimePlan;
       }
 
@@ -66,12 +63,10 @@ export async function checkPremiumAccess(userId: string): Promise<boolean> {
         paymentRecord.type === PaymentTypes.SUBSCRIPTION &&
         (paymentRecord.status === 'active' || paymentRecord.status === 'trialing')
       ) {
-        console.log('Check premium access, subscription is active/trialing');
         return true;
       }
 
       // For other cases, return false (free plan)
-      console.log('Check premium access, free plan');
       return false;
     });
   } catch (error) {

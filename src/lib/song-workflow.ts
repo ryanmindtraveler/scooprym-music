@@ -4,10 +4,11 @@
  */
 
 import { dataUrlToImageBuffer } from '@/ai/image/lib/cover-generation';
+import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
 import { getDb } from '@/db/index';
-import { song as songTable } from '@/db/schema';
+import { creditTransaction, song as songTable } from '@/db/schema';
 import { uploadFile } from '@/storage';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 
 export interface ProcessMusicOptions {
@@ -159,11 +160,41 @@ export async function processMusicBackground(
         // Dynamic import to avoid circular dependency issues if any, or just for cleanliness
         const { consumeCredits } = await import('@/credits/credits');
 
-        await consumeCredits({
-          userId,
-          amount: 2,
-          description: `Generate music: ${effectiveTitle}`,
-        });
+        // Idempotency Check: Verify if we already deducted for this song
+        // We check BOTH the song status AND the credit transaction history for maximum safety
+        const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
+
+        // Parallel check
+        const [existingRecordRows, existingTransactionRows] = await Promise.all([
+             db.select({ creditsDeducted: songTable.creditsDeducted })
+               .from(songTable)
+               .where(eq(songTable.id, songId))
+               .limit(1),
+             db.select({ id: creditTransaction.id })
+               .from(creditTransaction)
+               .where(
+                  and(
+                      eq(creditTransaction.userId, userId),
+                      eq(creditTransaction.description, uniqueDescription),
+                      eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.USAGE)
+                  )
+               )
+               .limit(1)
+        ]);
+
+        // Using "Rows" suffix clearly indicates these are arrays from the select result
+        const existingRecord = existingRecordRows[0];
+        const existingTransaction = existingTransactionRows[0];
+
+        if (existingRecord?.creditsDeducted || existingTransaction) {
+           console.log(`[song-workflow] Credits already deducted for ${songId} (Transaction/Status found). Skipping charge.`);
+        } else {
+            await consumeCredits({
+              userId,
+              amount: 2,
+              description: uniqueDescription,
+            });
+        }
 
         // Determine final status
         const coverSuccess = coverGenerateResult.status === 'fulfilled' && !!coverGenerateResult.value;

@@ -36,7 +36,7 @@ export async function generateMusic(opt: MiniMaxRequestOptions): Promise<Generat
 
   const apiUrl = process.env.MINIMAX_API_HOST
     ? `${process.env.MINIMAX_API_HOST}/v1/music_generation`
-    : 'https://api.minimax.chat/v1/music_generation';
+    : 'https://api.minimaxi.com/v1/music_generation';
 
   console.log(`[music-generation] Calling MiniMax API (Streaming: ${stream})...`);
   const apiStartTime = performance.now();

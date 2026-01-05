@@ -5,7 +5,7 @@ import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { format } from 'date-fns';
 import { Clock, Loader2, Music2, Pause, Play } from 'lucide-react';

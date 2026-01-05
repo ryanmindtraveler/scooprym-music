@@ -20,11 +20,6 @@ export const docs = defineDocs({
   },
 });
 
-/**
- * Changelog
- *
- * title is required, but description is optional in frontmatter
- */
 export const changelog = defineCollections({
   type: 'doc',
   dir: 'content/changelog',
@@ -35,11 +30,6 @@ export const changelog = defineCollections({
   }),
 });
 
-/**
- * Pages, like privacy policy, terms of service, etc.
- *
- * title is required, but description is optional in frontmatter
- */
 export const pages = defineCollections({
   type: 'doc',
   dir: 'content/pages',
@@ -49,11 +39,6 @@ export const pages = defineCollections({
   }),
 });
 
-/**
- * Blog authors
- *
- * description is optional in frontmatter, but we must add it to the schema
- */
 export const author = defineCollections({
   type: 'doc',
   dir: 'content/author',
@@ -64,11 +49,6 @@ export const author = defineCollections({
   }),
 });
 
-/**
- * Blog categories
- *
- * description is optional in frontmatter, but we must add it to the schema
- */
 export const category = defineCollections({
   type: 'doc',
   dir: 'content/category',
@@ -78,11 +58,6 @@ export const category = defineCollections({
   }),
 });
 
-/**
- * Blog posts
- *
- * title is required, but description is optional in frontmatter
- */
 export const blog = defineCollections({
   type: 'doc',
   dir: 'content/blog',

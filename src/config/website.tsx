@@ -1,4 +1,4 @@
-import { PaymentTypes, PlanIntervals } from '@/payment/types';
+import { PaymentTypes, PlanIntervals } from '@/payment';
 import type { WebsiteConfig } from '@/types';
 
 /**
@@ -191,7 +191,6 @@ export const websiteConfig: WebsiteConfig = {
       expireDays: 30,
     },
     packages: {
-    packages: {
       // basic: {
       //   id: 'basic',
       //   popular: false,
@@ -240,7 +239,6 @@ export const websiteConfig: WebsiteConfig = {
       //     allowPromotionCode: true,
       //   },
       // },
-    },
     },
   },
 };

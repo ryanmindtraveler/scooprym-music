@@ -30,6 +30,6 @@ export default function VerifyEmail({ url, name, locale, messages }: VerifyEmail
 VerifyEmail.PreviewProps = {
   locale: routing.defaultLocale,
   messages: defaultMessages,
-  url: 'https://mksaas.com',
+  url: 'https://scooprym.com',
   name: 'username',
 };

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-import { useCreateStore } from '@/store/create-store';
+import { useCreateStore } from '@/store';
 
 export function QuickGenerateForm() {
   const router = useRouter();

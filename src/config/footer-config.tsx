@@ -11,7 +11,7 @@ import { websiteConfig } from './website';
  * NOTICE: used in client components only
  *
  * docs:
- * https://mksaas.com/docs/config/footer
+ * https://scooprym.com/docs/config/footer
  *
  * @returns The footer config with translated titles
  */
@@ -67,6 +67,11 @@ export function useFooterLinks(): NestedMenuItem[] {
           title: tLegal('items.termsOfService'),
           href: Routes.TermsOfService,
           external: false,
+        },
+        {
+          title: tLegal('items.companyEmail'),
+          href: 'mailto:contact@900mounts.com',
+          external: true,
         },
       ],
     },

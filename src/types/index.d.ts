@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { PricePlan } from '@/payment/types';
+import type { PricePlan } from '@/payment';
 import type { CreditPackage } from '@/credits/types';
 
 /**
@@ -195,7 +195,7 @@ export interface CreditsConfig {
     amount: number;                  // The amount of credits to give to the user
     expireDays?: number;             // The number of days to expire the credits, undefined means no expire
   };
-  packages?: Record<string, CreditPackage>;  // Packages indexed by ID
+  packages: Record<string, CreditPackage>;  // Packages indexed by ID
 }
 
 /**

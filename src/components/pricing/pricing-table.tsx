@@ -3,7 +3,7 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { usePricePlans } from '@/config/price-config';
 import { cn } from '@/lib/utils';
-import { PaymentTypes, type PlanInterval, PlanIntervals, type PricePlan } from '@/payment/types';
+import { PaymentTypes, type PlanInterval, PlanIntervals, type PricePlan } from '@/payment';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { PricingCard } from './pricing-card';

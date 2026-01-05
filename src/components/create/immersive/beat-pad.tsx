@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 
 // === AUDIO SYNTHESIS ENGINE (V7 Expanded) ===
 class DrumSynth {
@@ -621,7 +621,11 @@ function VisualPad({
     <button
       ref={ref}
       type="button"
-      onClick={() => onClick(label, ref.current?.getBoundingClientRect())}
+      onPointerDown={(e) => {
+        // Trigger instantly on touch/click, preventing ghost clicks if needed by logic,
+        // but here we just want fast response.
+        onClick(label, ref.current?.getBoundingClientRect());
+      }}
       style={{
         boxShadow: active
           ? 'none' // Pressed: No shadow
@@ -635,7 +639,7 @@ function VisualPad({
             : 'translateY(0) scale(1)', // Normal
       }}
       className={cn(
-        'group relative shrink-0 size-11 sm:size-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-100 ease-out outline-none select-none',
+        'group relative shrink-0 size-11 sm:size-12 rounded-2xl flex flex-col items-center justify-center transition-all duration-100 ease-out outline-none select-none touch-manipulation',
         styles,
         // Active State Colors overrides
         active && `bg-${color}-500 text-white`,

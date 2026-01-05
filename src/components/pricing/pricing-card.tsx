@@ -13,7 +13,7 @@ import {
   PlanIntervals,
   type Price,
   type PricePlan,
-} from '@/payment/types';
+} from '@/payment';
 import { Check, CheckCircleIcon, Sparkles, XCircleIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LoginWrapper } from '../auth/login-wrapper';

@@ -9,6 +9,7 @@ import { song as songTable, user } from '@/db/schema';
 import { songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
+import type { Song } from '@/types/song';
 import { and, desc, eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
@@ -37,6 +38,7 @@ export async function generateMetadata({
 
 interface HomePageProps {
   params: Promise<{ locale: Locale }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function HomePage(props: HomePageProps) {
@@ -77,6 +79,35 @@ export default async function HomePage(props: HomePageProps) {
     updatedAt: song.updatedAt ? song.updatedAt.toISOString() : new Date().toISOString(),
   }));
 
+  // Handle shared song via query param ?s=xxxx
+  const searchParams = await props.searchParams;
+  const sharedSongId = searchParams.s as string | undefined;
+  let sharedSong: Song | null = null;
+
+  if (sharedSongId) {
+    const [foundSong] = await db
+      .select()
+      .from(songTable)
+      .where(eq(songTable.id, sharedSongId))
+      .limit(1);
+
+    if (foundSong) {
+      // Check if logged in user liked this shared song
+      let isSharedSongLiked = false;
+      if (userId) {
+        // We already have likedSongIds set, utilize it
+        isSharedSongLiked = likedSongIds.has(foundSong.id);
+      }
+
+      sharedSong = {
+        ...foundSong,
+        isLiked: isSharedSongLiked,
+        createdAt: foundSong.createdAt ? foundSong.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: foundSong.updatedAt ? foundSong.updatedAt.toISOString() : new Date().toISOString(),
+      } as unknown as Song;
+    }
+  }
+
   return (
     <>
       <div className="flex flex-col">
@@ -85,8 +116,8 @@ export default async function HomePage(props: HomePageProps) {
         {/* Music Generator Section */}
         <MusicGeneratorSection />
 
-        {/* Gallery Section */}
-        <GallerySection songs={serializedSongs} />
+        {/* Gallery Section with potential initial modal */}
+        <GallerySection songs={serializedSongs} initialSelectedSong={sharedSong} />
 
         <Features3Section />
 

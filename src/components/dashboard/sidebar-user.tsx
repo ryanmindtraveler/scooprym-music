@@ -18,7 +18,7 @@ import { LocaleLink, useLocalePathname, useLocaleRouter } from '@/i18n/navigatio
 import { LOCALES, routing } from '@/i18n/routing';
 import { authClient } from '@/lib/auth-client';
 import { Routes } from '@/routes';
-import { useLocaleStore } from '@/stores/locale-store';
+import { useLocaleStore } from '@/store';
 import type { User } from 'better-auth';
 import { ChevronsUpDown, Languages, LaptopIcon, LogOut, MoonIcon, SunIcon } from 'lucide-react';
 import { type Locale, useTranslations } from 'next-intl';

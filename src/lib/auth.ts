@@ -10,14 +10,14 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, oneTap } from 'better-auth/plugins';
 import { parse as parseCookies } from 'cookie';
 import type { Locale } from 'next-intl';
-import { getAllPricePlans } from './price-plan';
+import { getAllPricePlans } from '@/payment';
 import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from './urls/urls';
 
 /**
  * Better Auth configuration
  *
  * docs:
- * https://mksaas.com/docs/auth
+ * https://scooprym.com/docs/auth
  * https://www.better-auth.com/docs/reference/options
  */
 export const auth = betterAuth({

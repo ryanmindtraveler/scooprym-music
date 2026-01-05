@@ -12,7 +12,7 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ locale, post }: BlogCardProps) {
-  const { date, title, description, image, author, categories } = post.data;
+  const { date, title, description, image, author, categories, premium } = post.data as any;
   const publishDate = formatDate(new Date(date));
   const blogAuthor = authorSource.getPage([author], locale);
   const blogCategories = categorySource
@@ -28,7 +28,7 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
             <BlogImage src={image} alt={title || 'image for blog post'} title={title || 'image for blog post'} />
 
             {/* Premium badge - top right */}
-            {post.data.premium && (
+            {premium && (
               <div className="absolute top-2 right-2 z-20">
                 <PremiumBadge size="sm" />
               </div>
@@ -43,7 +43,7 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
                       key={`${category?.slugs[0]}-${index}`}
                       className="text-xs font-medium text-white bg-black/50 bg-opacity-50 px-2 py-1 rounded-md"
                     >
-                      {category?.data.name}
+                      {(category?.data as any).name}
                     </span>
                   ))}
                 </div>
@@ -68,16 +68,16 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
           <div className="mt-4 pt-4 border-t flex items-center justify-between space-x-4 text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="relative h-8 w-8 shrink-0">
-                {blogAuthor?.data.avatar && (
+                {(blogAuthor?.data as any)?.avatar && (
                   <Image
-                    src={blogAuthor?.data.avatar}
-                    alt={`avatar for ${blogAuthor?.data.name}`}
+                    src={(blogAuthor?.data as any).avatar}
+                    alt={`avatar for ${(blogAuthor?.data as any).name}`}
                     className="rounded-full object-cover border"
                     fill
                   />
                 )}
               </div>
-              <span className="truncate text-sm">{blogAuthor?.data.name}</span>
+              <span className="truncate text-sm">{(blogAuthor?.data as any)?.name}</span>
             </div>
 
             <time className="truncate text-sm" dateTime={date}>

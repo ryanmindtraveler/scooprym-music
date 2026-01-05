@@ -1,8 +1,9 @@
+
 import { randomUUID } from 'crypto';
 import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
 import { creditTransaction, userCredit } from '@/db/schema';
-import { findPlanByPlanId, findPlanByPriceId } from '@/lib/price-plan';
+import { findPlanByPlanId, findPlanByPriceId, getAllPricePlans } from '@/payment';
 import { addDays, isAfter } from 'date-fns';
 import { and, asc, eq, gt, isNull, not, or, sql } from 'drizzle-orm';
 import { CREDIT_TRANSACTION_TYPE } from './types';
@@ -204,53 +205,74 @@ export async function consumeCredits({
   }
   // FIFO consumption: consume from the earliest unexpired credits first
   const db = await getDb();
-  const now = new Date();
-  const transactions = await db
-    .select()
-    .from(creditTransaction)
-    .where(
-      and(
-        eq(creditTransaction.userId, userId),
-        // Exclude usage and expire records (these are consumption/expiration logs)
-        not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.USAGE)),
-        not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.EXPIRE)),
-        // Only include transactions with remaining amount > 0
-        gt(creditTransaction.remainingAmount, 0),
-        // Only include unexpired credits (either no expiration date or not yet expired)
-        or(isNull(creditTransaction.expirationDate), gt(creditTransaction.expirationDate, now))
+
+  await db.transaction(async (tx) => {
+    const now = new Date();
+    const transactions = await tx
+      .select()
+      .from(creditTransaction)
+      .where(
+        and(
+          eq(creditTransaction.userId, userId),
+          // Exclude usage and expire records (these are consumption/expiration logs)
+          not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.USAGE)),
+          not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.EXPIRE)),
+          // Only include transactions with remaining amount > 0
+          gt(creditTransaction.remainingAmount, 0),
+          // Only include unexpired credits (either no expiration date or not yet expired)
+          or(isNull(creditTransaction.expirationDate), gt(creditTransaction.expirationDate, now))
+        )
       )
-    )
-    .orderBy(asc(creditTransaction.expirationDate), asc(creditTransaction.createdAt));
-  // Consume credits
-  let remainingToDeduct = amount;
-  for (const transaction of transactions) {
-    if (remainingToDeduct <= 0) break;
-    const remainingAmount = transaction.remainingAmount || 0;
-    if (remainingAmount <= 0) continue;
-    // credits to consume at most in this transaction
-    const deductFromThis = Math.min(remainingAmount, remainingToDeduct);
-    await db
-      .update(creditTransaction)
-      .set({
-        remainingAmount: remainingAmount - deductFromThis,
-        updatedAt: new Date(),
-      })
-      .where(eq(creditTransaction.id, transaction.id));
-    remainingToDeduct -= deductFromThis;
-  }
-  // Update balance
-  const current = await db.select().from(userCredit).where(eq(userCredit.userId, userId)).limit(1);
-  const newBalance = (current[0]?.currentCredits || 0) - amount;
-  await db
-    .update(userCredit)
-    .set({ currentCredits: newBalance, updatedAt: new Date() })
-    .where(eq(userCredit.userId, userId));
-  // Write usage record
-  await saveCreditTransaction({
-    userId,
-    type: CREDIT_TRANSACTION_TYPE.USAGE,
-    amount: -amount,
-    description,
+      .orderBy(asc(creditTransaction.expirationDate), asc(creditTransaction.createdAt));
+
+    // Check total available in transaction before proceeding (double check inside transaction)
+    const available = transactions.reduce((sum, t) => sum + (t.remainingAmount || 0), 0);
+    // Note: This relies on transactions sum being consistent with userCredit. Not strictly enforcing userCredit balance here,
+    // but relying on detailed transaction history is safer.
+
+    // Validate again inside transaction to be safe against race conditions
+    // Actually, simply processing the deduction is enough. If we run out of transaction credits, we stop.
+    // The balance check at the start of function is a "fast fail".
+
+    // Consume credits
+    let remainingToDeduct = amount;
+    for (const transaction of transactions) {
+      if (remainingToDeduct <= 0) break;
+      const remainingAmount = transaction.remainingAmount || 0;
+      if (remainingAmount <= 0) continue;
+      // credits to consume at most in this transaction
+      const deductFromThis = Math.min(remainingAmount, remainingToDeduct);
+      await tx
+        .update(creditTransaction)
+        .set({
+          remainingAmount: remainingAmount - deductFromThis,
+          updatedAt: new Date(),
+        })
+        .where(eq(creditTransaction.id, transaction.id));
+      remainingToDeduct -= deductFromThis;
+    }
+
+    // Update balance
+    // We fetch the current record inside the transaction to ensure we have the locked/latest value if isolation level permits
+    const current = await tx.select().from(userCredit).where(eq(userCredit.userId, userId)).limit(1);
+    const newBalance = (current[0]?.currentCredits || 0) - amount;
+
+    await tx
+      .update(userCredit)
+      .set({ currentCredits: newBalance, updatedAt: new Date() })
+      .where(eq(userCredit.userId, userId));
+
+    // Write usage record
+    await tx.insert(creditTransaction).values({
+      id: randomUUID(),
+      userId,
+      type: CREDIT_TRANSACTION_TYPE.USAGE,
+      amount: -amount,
+      remainingAmount: null, // Usage has no remaining
+      description,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
   });
 }
 

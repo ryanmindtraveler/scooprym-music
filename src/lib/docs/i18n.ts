@@ -9,6 +9,6 @@ import type { I18nConfig } from 'fumadocs-core/i18n';
 export const docsI18nConfig = {
   defaultLanguage: DEFAULT_LOCALE,
   languages: LOCALES,
-  hideLocale: 'default-locale',
-  parser: 'dot' as const,
+  hideLocale: 'never',
+  // parser: 'dot' as const,
 } satisfies I18nConfig;

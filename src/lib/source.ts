@@ -1,5 +1,4 @@
 import { type InferPageType, loader } from 'fumadocs-core/source';
-import { createMDXSource } from 'fumadocs-mdx';
 import * as LucideIcons from 'lucide-react';
 import { createElement } from 'react';
 import { author, blog, category, changelog, docs, pages } from '../../.source';
@@ -11,10 +10,37 @@ import { docsI18nConfig } from './docs/i18n';
  *
  * https://fumadocs.dev/docs/headless/source-api
  */
+// Helper to transform built-in MDX output to VirtualFile
+function toVirtualFiles(files: any[]) {
+  return files
+    .map((file) => {
+      if (!file) return null;
+      if (file.info) {
+        return {
+          path: file.info.path,
+          data: file.data,
+          type: file.info.type,
+        };
+      }
+      if (file._file) {
+        return {
+          path: file._file.path,
+          data: file,
+          type: 'page', // Most likely a content page
+        };
+      }
+      // Fallback if already in VirtualFile-like format or unknown
+      return file;
+    })
+    .filter((f) => f && f.path); // Filter out invalid items
+}
+
 export const source = loader({
   baseUrl: '/docs',
   i18n: docsI18nConfig,
-  source: docs.toFumadocsSource(),
+  source: {
+    files: toVirtualFiles([...(docs.docs as any[]), ...(docs.meta as any[])]),
+  },
   icon(iconName) {
     if (!iconName) {
       return undefined;
@@ -36,7 +62,9 @@ export const source = loader({
 export const changelogSource = loader({
   baseUrl: '/changelog',
   i18n: docsI18nConfig,
-  source: createMDXSource(changelog),
+  source: {
+    files: toVirtualFiles(changelog as any[]),
+  },
 });
 
 /**
@@ -47,7 +75,9 @@ export const changelogSource = loader({
 export const pagesSource = loader({
   baseUrl: '/pages',
   i18n: docsI18nConfig,
-  source: createMDXSource(pages),
+  source: {
+    files: toVirtualFiles(pages as any[]),
+  },
 });
 
 /**
@@ -56,7 +86,9 @@ export const pagesSource = loader({
 export const authorSource = loader({
   baseUrl: '/author',
   i18n: docsI18nConfig,
-  source: createMDXSource(author),
+  source: {
+    files: toVirtualFiles(author as any[]),
+  },
 });
 
 /**
@@ -65,7 +97,9 @@ export const authorSource = loader({
 export const categorySource = loader({
   baseUrl: '/category',
   i18n: docsI18nConfig,
-  source: createMDXSource(category),
+  source: {
+    files: toVirtualFiles(category as any[]),
+  },
 });
 
 /**
@@ -74,7 +108,9 @@ export const categorySource = loader({
 export const blogSource = loader({
   baseUrl: '/blog',
   i18n: docsI18nConfig,
-  source: createMDXSource(blog),
+  source: {
+    files: toVirtualFiles(blog as any[]),
+  },
 });
 
 export type ChangelogType = InferPageType<typeof changelogSource>;
@@ -82,3 +118,4 @@ export type PagesType = InferPageType<typeof pagesSource>;
 export type AuthorType = InferPageType<typeof authorSource>;
 export type CategoryType = InferPageType<typeof categorySource>;
 export type BlogType = InferPageType<typeof blogSource>;
+

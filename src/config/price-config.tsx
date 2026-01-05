@@ -1,6 +1,6 @@
 'use client';
 
-import type { PricePlan } from '@/payment/types';
+import type { PricePlan } from '@/payment';
 import { useTranslations } from 'next-intl';
 import { websiteConfig } from './website';
 
@@ -12,7 +12,7 @@ import { websiteConfig } from './website';
  * Use this function when showing the pricing table or the billing card to the user.
  *
  * docs:
- * https://mksaas.com/docs/config/price
+ * https://scooprym.com/docs/config/price
  *
  * @returns The price plans with translated content
  */
@@ -33,6 +33,7 @@ export function usePricePlans(): Record<string, PricePlan> {
         t('free.features.feature-2'),
         t('free.features.feature-3'),
         t('free.features.feature-4'),
+        t('free.features.feature-5'),
       ],
       limits: [t('free.limits.limit-1'), t('free.limits.limit-2'), t('free.limits.limit-3')],
     };
@@ -69,6 +70,7 @@ export function usePricePlans(): Record<string, PricePlan> {
         t('advanced.features.feature-3'),
         t('advanced.features.feature-4'),
         t('advanced.features.feature-5'),
+        t('advanced.features.feature-6'),
       ],
       limits: [t('advanced.limits.limit-1'), t('advanced.limits.limit-2')],
     };

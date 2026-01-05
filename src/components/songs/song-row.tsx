@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { SongItem } from '@/app/[locale]/(protected)/songs/types';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
@@ -18,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Clock, Loader2, Music2, Pause, Play, Trash2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SongRowProps {
   index: number;
@@ -33,7 +35,7 @@ interface SongRowProps {
   hideDefaultActions?: boolean;
 }
 
-export function SongRow({
+function SongRowBase({
   index,
   item,
   isPlaying,
@@ -68,7 +70,7 @@ export function SongRow({
           : 'bg-linear-to-r from-white/90 to-purple-50/40 dark:from-zinc-900/90 dark:to-zinc-900/50 border-purple-100/60 dark:border-white/5 hover:border-purple-200 dark:hover:border-white/10'
       )}
     >
-      <div className="w-8 shrink-0 text-center text-sm font-medium text-muted-foreground">{index}</div>
+      <div className="hidden sm:block w-8 shrink-0 text-center text-sm font-medium text-muted-foreground">{index}</div>
       <div className="relative group/cover shrink-0">
         <div className="flex size-14 items-center justify-center rounded-xl bg-linear-to-br from-indigo-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800 text-indigo-400 dark:text-indigo-300 overflow-hidden shadow-sm border border-white/50 dark:border-white/5">
           {item.coverImageUrl ? (
@@ -126,17 +128,25 @@ export function SongRow({
         >
           {item.title}
         </button>
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 text-xs text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 sm:gap-x-4 text-[10px] sm:text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="size-3" />
-            {new Date(item.createdAt).toLocaleDateString(undefined, {
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-            })}
+            <span className="hidden xs:inline">
+              {new Date(item.createdAt).toLocaleDateString(undefined, {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+              })}
+            </span>
+            <span className="xs:hidden">
+              {new Date(item.createdAt).toLocaleDateString(undefined, {
+                month: '2-digit',
+                day: '2-digit',
+              })}
+            </span>
           </span>
           {item.durationSec ? <span>{formatDuration(item.durationSec)}</span> : null}
-          <span className="flex items-center gap-1">
+          <span className="hidden sm:flex items-center gap-1">
             <Play className="size-3" /> {item.plays} plays
           </span>
         </div>
@@ -144,11 +154,11 @@ export function SongRow({
       <div className="ml-auto flex items-center gap-2">
         {actionEnd}
         {!hideDefaultActions && (
-          <>
-            <LikeButton songId={item.id} initialIsLiked={isLiked} className="size-9" />
-            <ShareButton songId={item.id} className="size-9" />
-            <DownloadButton audioUrl={item.audioUrl} title={item.title} className="size-9" />
-          </>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <LikeButton songId={item.id} initialIsLiked={isLiked} className="size-8 sm:size-9" />
+            <ShareButton songId={item.id} className="size-8 sm:size-9" />
+            <DownloadButton audioUrl={item.audioUrl} title={item.title} className="size-8 sm:size-9" />
+          </div>
         )}
 
         {onDelete && (
@@ -159,6 +169,7 @@ export function SongRow({
                 size="icon"
                 className="size-9 rounded-full hover:bg-red-50 hover:text-red-500 transition-colors"
                 disabled={isDeleting}
+                aria-label="Delete song"
               >
                 {isDeleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               </Button>
@@ -186,6 +197,44 @@ export function SongRow({
             </AlertDialogContent>
           </AlertDialog>
         )}
+      </div>
+    </div>
+  );
+}
+
+export const SongRow = memo(SongRowBase, (prev, next) => {
+  return (
+    prev.index === next.index &&
+    prev.item === next.item &&
+    prev.isPlaying === next.isPlaying &&
+    prev.isDeleting === next.isDeleting &&
+    prev.isLiked === next.isLiked &&
+    prev.hideDefaultActions === next.hideDefaultActions
+  );
+});
+
+export function SongRowSkeleton() {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border p-3 border-purple-100/60 dark:border-white/5 bg-linear-to-r from-white/90 to-purple-50/40 dark:from-zinc-900/90 dark:to-zinc-900/50">
+      <div className="hidden sm:flex w-8 shrink-0 justify-center">
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </div>
+      <div className="relative shrink-0">
+        <Skeleton className="size-14 rounded-xl" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="h-5 w-48 mb-2">
+           <Skeleton className="h-full w-full" />
+        </div>
+        <div className="flex gap-4">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
       </div>
     </div>
   );

@@ -11,9 +11,9 @@ interface ReleaseCardProps {
 }
 
 export function ReleaseCard({ releaseItem }: ReleaseCardProps) {
-  const { title, description, date, version } = releaseItem.data;
+  const { title, description, date, version } = releaseItem.data as any;
   const formattedDate = formatDate(new Date(date));
-  const MDX = releaseItem.data.body;
+  const MDX = (releaseItem.data as any).body;
 
   return (
     <Card className="mb-8">

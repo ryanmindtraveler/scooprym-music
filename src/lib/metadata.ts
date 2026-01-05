@@ -46,6 +46,7 @@ export function constructMetadata({
   return {
     title,
     description,
+    keywords: ['AI Music', 'Suno', 'Music Generator', 'Text to Song', 'ScoopRYM', 'Free Music AI', 'AI Song Maker'],
     alternates,
     openGraph: {
       type: 'website',

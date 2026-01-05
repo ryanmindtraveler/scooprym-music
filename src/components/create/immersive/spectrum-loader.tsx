@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import { useEffect, useRef, useState } from 'react';
 
 export function SpectrumLoader({ className }: { className?: string }) {

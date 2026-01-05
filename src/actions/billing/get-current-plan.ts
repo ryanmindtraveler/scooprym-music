@@ -3,7 +3,6 @@
 import { getDb } from '@/db';
 import { payment } from '@/db/schema';
 import type { User } from '@/lib/auth-types';
-import { findPlanByPriceId, getAllPricePlans } from '@/lib/price-plan';
 import { userActionClient } from '@/lib/safe-action';
 import {
   PaymentScenes,
@@ -12,7 +11,9 @@ import {
   type PlanInterval,
   type PricePlan,
   type Subscription,
-} from '@/payment/types';
+  findPlanByPriceId,
+  getAllPricePlans,
+} from '@/payment/server';
 import { and, desc, eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 

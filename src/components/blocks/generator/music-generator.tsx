@@ -13,14 +13,14 @@ import { ArrowUpRight, Mic, Sparkles, Wand2, Check } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConstantVelocityMarquee } from '@/components/ui/constant-marquee';
 import { useRouter } from 'next/navigation';
-import { useCreateStore } from '@/store/create-store';
+import { useCreateStore } from '@/store';
 
 import { useState } from 'react';
 
 export function MusicGeneratorBlock() {
   const [newsContent, setNewsContent] = useState('');
   const [selectedContentType, setSelectedContentType] = useState<string>('Hot Gossip');
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>(['Banger', 'MemeEnergy', 'Viral']);
   const currentUser = useCurrentUser();
   const mounted = useMounted();
   const router = useRouter();
@@ -28,16 +28,60 @@ export function MusicGeneratorBlock() {
   const contentTypes: string[] = ['News Farce', 'Hot Gossip', 'WTF Society'];
 
   const musicStyles: string[] = [
-    '#Trap',
-    '#Satirical',
-    '#ParodyRap',
-    '#MemeEnergy',
-    '#Banger',
-    '#Catchy',
-    '#BoldAttitude',
-    '#Absurd',
-    '#Viral',
+    'Trap',
+    'Satirical',
+    'ParodyRap',
+    'MemeEnergy',
+    'Banger',
+    'Catchy',
+    'BoldAttitude',
+    'Absurd',
+    'Viral',
   ];
+
+  // Validation Logic
+  const canGenerate =
+    newsContent.trim().length > 0 &&
+    selectedContentType.length > 0 &&
+    selectedStyles.length > 0;
+
+  // Helper: Compose the Music Prompt
+  const getComposedPrompt = () => {
+    // Re-add hashtags for the prompt string
+    const loadedStyles = selectedStyles.map(s => `#${s}`).join(' ');
+    return `${selectedContentType}. ${loadedStyles}`;
+  };
+
+  // Helper: Common Logic for Store Update & Navigation
+  const handleGlobalGenerate = () => {
+     // Store State Transfer
+     const store = useCreateStore.getState();
+     store.reset(); // Get Custom Vibe defaults
+
+     // Smart Detect
+     const isUrl = /^(https?:\/\/|www\.)[^ "]+$/i.test(newsContent);
+     if (isUrl) {
+         store.setNewsLink(newsContent);
+         store.setNewsContent('');
+     } else {
+         store.setNewsContent(newsContent);
+         store.setNewsLink('');
+     }
+
+     store.setMusicPrompt(getComposedPrompt());
+     store.setShouldAutoGenerate(true); // Auto-start on arrival
+  };
+
+  // Helper: Construct Callback URL with Prompt (For LoginWrapper & Robustness)
+  const getDestinationUrl = () => {
+     if (!canGenerate) return undefined;
+
+     const prompt = getComposedPrompt();
+     // Pack the style into the content signature
+     const packedContent = `${newsContent} [[STYLE:${prompt}]]`;
+
+     return `${Routes.Create}?content=${encodeURIComponent(packedContent)}`;
+  };
 
   // Micro-motion Variants
   const blobVariant = {
@@ -339,28 +383,19 @@ export function MusicGeneratorBlock() {
                   <div className="mt-auto pt-6">
                     {mounted && currentUser ? (
                       <Button
+                        disabled={!canGenerate}
                         onClick={(e) => {
-                           if (!newsContent.trim()) {
+                           if (!canGenerate) {
                              e.preventDefault();
                              return;
                            }
-                           // Store State Transfer (Like QuickGenerateForm)
-                           const store = useCreateStore.getState();
-                           store.reset(); // Get Custom Vibe defaults
-                           // Smart Detect
-                           const isUrl = /^(https?:\/\/|www\.)[^ "]+$/i.test(newsContent);
-                           if (isUrl) {
-                               store.setNewsLink(newsContent);
-                               store.setNewsContent('');
-                           } else {
-                               store.setNewsContent(newsContent);
-                               store.setNewsLink('');
-                           }
-                           store.setShouldAutoGenerate(true);
-                           // Navigate to Studio
+                           handleGlobalGenerate();
                            router.push(Routes.Create);
                         }}
-                        className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black"
+                        className={cn(
+                          "w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black",
+                          !canGenerate && "opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none"
+                        )}
                       >
                        {/* ... Content ... */}
                           {/* Shimmer Element - Moved INSIDE LocaleLink to satisfy asChild single-child rule */}
@@ -387,7 +422,7 @@ export function MusicGeneratorBlock() {
                                 Generate Music <span className="animate-bounce">🎵</span>
                               </span>
                               <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
-                                AI-Powered Instant Hit
+                                {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}
                               </span>
                             </div>
 
@@ -404,19 +439,22 @@ export function MusicGeneratorBlock() {
                       <LoginWrapper
                         mode="modal"
                         asChild
-                        callbackUrl={
-                          newsContent.trim()
-                            ? `${Routes.Create}?content=${encodeURIComponent(
-                                newsContent
-                              )}`
-                            : undefined
-                        }
+                        callbackUrl={getDestinationUrl()}
                       >
                          <Button
-                          className="w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black"
+                          disabled={!canGenerate}
+                          className={cn(
+                             "w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black",
+                             !canGenerate && "opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none"
+                          )}
                           onClick={(e) => {
-                            if (!newsContent.trim()) {
+                            if (!canGenerate) {
                               e.preventDefault();
+                              return;
+                            }
+                            // Store Logic for instant feel if pre-login storage works
+                            if (canGenerate) {
+                               handleGlobalGenerate();
                             }
                           }}
                         >
@@ -444,7 +482,7 @@ export function MusicGeneratorBlock() {
                                 Generate Music <span className="animate-bounce">🎵</span>
                               </span>
                               <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
-                                AI-Powered Instant Hit
+                                {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}
                               </span>
                             </div>
 

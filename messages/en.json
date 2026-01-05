@@ -73,47 +73,49 @@
   "PricePlans": {
     "free": {
       "name": "Free",
-      "description": "Get started with light use",
+      "description": "Start your journey and explore AI creativity",
       "features": {
         "feature-1": "10 credits/month (auto refresh)",
-        "feature-2": "Lyrics generation is free",
-        "feature-3": "Music generation costs 2 credits/track",
-        "feature-4": "Core feature access"
+        "feature-2": "Welcome gift: 4 credits for new users",
+        "feature-3": "Unlimited lyrics generation",
+        "feature-4": "Free lyrics editing & refinement",
+        "feature-5": "Access to all core AI features"
       },
       "limits": {
-        "limit-1": "Credits valid for current month (30 days)",
+        "limit-1": "Credits valid for 30 days",
         "limit-2": "No priority support",
-        "limit-3": "No team/enterprise features"
+        "limit-3": "Lyrics download not supported"
       }
     },
     "basic": {
       "name": "Basic",
-      "description": "Great for regular creators",
+      "description": "Perfect for regular creators and hobbyists",
       "features": {
-        "feature-1": "240 credits/month (auto refresh)",
-        "feature-2": "Lyrics generation is free",
-        "feature-3": "Music generation costs 2 credits/track",
-        "feature-4": "Perfect for personal content & social tracks",
-        "feature-5": "Standard support"
+        "feature-1": "200 credits/month for high-frequency creation",
+        "feature-2": "Unlimited lyrics generation & edits",
+        "feature-3": "High-quality MP3 downloads",
+        "feature-4": "Standard technical support",
+        "feature-5": "Smooth & reliable standard experience"
       },
       "limits": {
-        "limit-1": "Credits valid for current month (30 days)",
+        "limit-1": "Credits valid for 30 days",
         "limit-2": "No team/enterprise features"
       }
     },
     "advanced": {
       "name": "Advanced",
-      "description": "Built for frequent & pro creators",
+      "description": "Designed for professional music producers",
       "features": {
-        "feature-1": "600 credits/month (auto refresh)",
-        "feature-2": "Lyrics generation is free",
-        "feature-3": "Music generation costs 2 credits/track",
-        "feature-4": "Great for high frequency & long content",
-        "feature-5": "Priority support"
+        "feature-1": "500 credits/month for professional needs",
+        "feature-2": "Premium Creative Suite: Unlimited lyrics & edits",
+        "feature-3": "Lossless quality audio downloads",
+        "feature-4": "Early access to beta features (e.g. Preview)",
+        "feature-5": "24/7 Priority VIP support",
+        "feature-6": "Full access to advanced pro tools"
       },
       "limits": {
-        "limit-1": "Credits valid for current month (30 days)",
-        "limit-2": "-"
+        "limit-1": "Credits valid for 30 days",
+        "limit-2": "Individual license only"
       }
     },
     "lifetime": {
@@ -160,10 +162,10 @@
   },
   "AboutPage": {
     "title": "About",
-    "description": "This is MkSaaS, an AI SaaS template built with modern technologies, helping you build your SaaS faster and better.",
-    "authorName": "MkSaaS",
-    "authorBio": "AI SaaS Boilerplate",
-    "introduction": "👋 Hi there! This is MkSaaS, an AI SaaS template built with modern technologies, helping you build your SaaS faster and better. If you have any questions, welcome to contact me.",
+    "description": "ScoopRYM is the ultimate News-to-Hip-Hop Hit Factory, transforming the day's wildest headlines and juiciest gossip into an endless feed of unskippable diss tracks.",
+    "authorName": "ScoopRYM",
+    "authorBio": "News-to-Hip-Hop Hit Factory",
+    "introduction": "👋 Hi there! This is ScoopRYM, the factory where we turn news and gossip into fire beats. We help you stay on top of trends through rhythm and rhyme.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
   },
@@ -313,7 +315,7 @@
     "previousPage": "Previous",
     "nextPage": "Next",
     "chooseLanguage": "Select language",
-    "title": "MkSaaS Docs",
+    "title": "ScoopRYM Docs",
     "homepage": "Homepage"
   },
   "PremiumContent": {
@@ -509,7 +511,8 @@
         "items": {
           "cookiePolicy": "Cookie Policy",
           "privacyPolicy": "Privacy Policy",
-          "termsOfService": "Terms of Service"
+          "termsOfService": "Terms of Service",
+          "companyEmail": "Company Email:contact@900mounts.com"
         }
       }
     },
@@ -827,8 +830,8 @@
     }
   },
   "HomePage": {
-    "title": "MkSaaS",
-    "description": "Make AI SaaS in days, simply and effortlessly",
+    "title": "ScoopRYM",
+    "description": "Turning news, entertainment, and gossip into beats",
     "hero": {
       "title": "The Hip-Hop Voice of the News",
       "description": "Turning news, entertainment, and gossip into beats."
@@ -1061,7 +1064,7 @@
         },
         "item-5": {
           "question": "Can't find what you're looking for?",
-          "answer": "Please contact our customer support team at support@mksaas.com"
+          "answer": "Please contact our customer support team at support@scooprym.com"
         }
       }
     },
@@ -1073,80 +1076,80 @@
           "name": "Jonathan Yombo",
           "role": "Software Engineer",
           "image": "https://randomuser.me/api/portraits/men/1.jpg",
-          "quote": "MkSaaS is really extraordinary and very practical, no need to break your head. A real gold mine."
+          "quote": "ScoopRYM is really extraordinary and very practical, no need to break your head. A real gold mine."
         },
         "item-2": {
           "name": "Yves Kalume",
           "role": "GDE - Android",
           "image": "https://randomuser.me/api/portraits/men/6.jpg",
-          "quote": "With no experience in webdesign I just redesigned my entire website in a few minutes with tailwindcss thanks to MkSaaS."
+          "quote": "With no experience in webdesign I just redesigned my entire website in a few minutes with tailwindcss thanks to ScoopRYM."
         },
         "item-3": {
           "name": "Yucel Faruksahan",
           "role": "Tailkits Creator",
           "image": "https://randomuser.me/api/portraits/men/7.jpg",
-          "quote": "Great work on MkSaaS template. This is one of the best personal website that I have seen so far :)"
+          "quote": "Great work on ScoopRYM template. This is one of the best personal website that I have seen so far :)"
         },
         "item-4": {
           "name": "Anonymous author",
           "role": "Product Manager",
           "image": "https://randomuser.me/api/portraits/men/8.jpg",
-          "quote": "I downloaded the one of MkSaaS template which is very clear to understand at the start and you could modify the codes/blocks to fit perfectly on your purpose of the page."
+          "quote": "I downloaded the one of ScoopRYM template which is very clear to understand at the start and you could modify the codes/blocks to fit perfectly on your purpose of the page."
         },
         "item-5": {
           "name": "Shekinah Tshiokufila",
           "role": "Senior Software Engineer",
           "image": "https://randomuser.me/api/portraits/men/4.jpg",
-          "quote": "MkSaaS is redefining the standard of web design, with these blocks it provides an easy and efficient way for those who love beauty but may lack the time to implement it."
+          "quote": "ScoopRYM is redefining the standard of web design, with these blocks it provides an easy and efficient way for those who love beauty but may lack the time to implement it."
         },
         "item-6": {
           "name": "Oketa Fred",
           "role": "Fullstack Developer",
           "image": "https://randomuser.me/api/portraits/men/2.jpg",
-          "quote": "I absolutely love MkSaaS! The component blocks are beautifully designed and easy to use, which makes creating a great-looking website a breeze."
+          "quote": "I absolutely love ScoopRYM! The component blocks are beautifully designed and easy to use, which makes creating a great-looking website a breeze."
         },
         "item-7": {
           "name": "Zeki",
           "role": "Founder of ChatExtend",
           "image": "https://randomuser.me/api/portraits/men/5.jpg",
-          "quote": "MkSaaS is the perfect fusion of simplicity and versatility, enabling us to create UIs that are as stunning as they are user-friendly."
+          "quote": "ScoopRYM is the perfect fusion of simplicity and versatility, enabling us to create UIs that are as stunning as they are user-friendly."
         },
         "item-8": {
           "name": "Joseph Kitheka",
           "role": "Fullstack Developer",
           "image": "https://randomuser.me/api/portraits/men/9.jpg",
-          "quote": "MkSaaS has transformed the way I develop web applications. Their extensive collection of UI components, blocks, and templates has significantly accelerated my workflow."
+          "quote": "ScoopRYM has transformed the way I develop web applications. Their extensive collection of UI components, blocks, and templates has significantly accelerated my workflow."
         },
         "item-9": {
           "name": "Khatab Wedaa",
           "role": "MerakiUI Creator",
           "image": "https://randomuser.me/api/portraits/men/10.jpg",
-          "quote": "MkSaaS is an elegant, clean, and responsive tailwind css components it's very helpful to start fast with your project."
+          "quote": "ScoopRYM is an elegant, clean, and responsive tailwind css components it's very helpful to start fast with your project."
         },
         "item-10": {
           "name": "Rodrigo Aguilar",
           "role": "TailwindAwesome Creator",
           "image": "https://randomuser.me/api/portraits/men/11.jpg",
-          "quote": "I love MkSaaS ❤️. The component blocks are well-structured, simple to use, and beautifully designed. It makes it really easy to have a good-looking website in no time."
+          "quote": "I love ScoopRYM ❤️. The component blocks are well-structured, simple to use, and beautifully designed. It makes it really easy to have a good-looking website in no time."
         },
         "item-11": {
           "name": "Eric Ampire",
           "role": "@GoogleDevExpert for Android",
           "image": "https://randomuser.me/api/portraits/men/12.jpg",
-          "quote": "MkSaaS templates are the perfect solution for anyone who wants to create a beautiful and functional website without any web design experience."
+          "quote": "ScoopRYM templates are the perfect solution for anyone who wants to create a beautiful and functional website without any web design experience."
         },
         "item-12": {
           "name": "Roland Tubonge",
           "role": "Software Engineer",
           "image": "https://randomuser.me/api/portraits/men/13.jpg",
-          "quote": "MkSaaS is so well designed that even with a very poor knowledge of web design you can do miracles. Let yourself be seduced!"
+          "quote": "ScoopRYM is so well designed that even with a very poor knowledge of web design you can do miracles. Let yourself be seduced!"
         }
       }
     },
     "stats": {
       "title": "Stats",
-      "subtitle": "MkSaaS in numbers",
-      "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly",
+      "subtitle": "ScoopRYM in numbers",
+      "description": "Turning news, entertainment, and gossip into beats.",
       "items": {
         "item-1": {
           "title": "Stars on GitHub"
@@ -1161,7 +1164,7 @@
     },
     "calltoaction": {
       "title": "Start Building",
-      "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly",
+      "description": "Turning news, entertainment, and gossip into beats.",
       "primaryButton": "Get Started",
       "secondaryButton": "See Demo"
     }
@@ -1217,18 +1220,18 @@
   },
   "AIImagePage": {
     "title": "AI Image",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
   },
   "AIChatPage": {
     "title": "AI Chat",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
   },
   "AIVideoPage": {
     "title": "AI Video",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
   },
   "AIAudioPage": {
     "title": "AI Audio",
-    "description": "MkSaaS lets you make AI SaaS in days, simply and effortlessly"
+    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
   }
 }

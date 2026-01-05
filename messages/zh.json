@@ -1,8 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "MkSaaS - 最好的 AI SaaS 模板",
-    "description": "MkSaaS 是构建 AI SaaS 的最佳模板，使用 MkSaaS 可以在几天内轻松构建您的 AI SaaS，简单且毫不费力。"
+    "title": "ScoopRYM - 将新闻、娱乐和八卦转化为音乐节奏",
+    "description": "ScoopRYM：新闻生成嘻哈音乐的热门工厂 —— 将每天最狂野的头条和最劲爆的八卦转化为无穷无尽的嘻哈音乐节奏。"
   },
   "Common": {
     "premium": "付费文章",
@@ -73,28 +73,29 @@
   "PricePlans": {
     "free": {
       "name": "免费版",
-      "description": "入门体验，适合轻量使用",
+      "description": "入门体验，探索 AI 创作的魅力",
       "features": {
-        "feature-1": "每月赠送 10 积分（自动刷新）",
-        "feature-2": "歌词生成免费",
-        "feature-3": "音乐生成 2 积分/首",
-        "feature-4": "基础功能体验"
+        "feature-1": "每月赠送 10 积分，灵感不断 (自动刷新)",
+        "feature-2": "开启创作之旅，新用户即领 4 积分",
+        "feature-3": "歌词生成完全免费，随心挥洒才华",
+        "feature-4": "支持免费修改歌词，打磨完美作品",
+        "feature-5": "基础功能全开放，抢先体验 AI 魅力"
       },
       "limits": {
         "limit-1": "积分当月有效（30 天）",
         "limit-2": "不含优先支持",
-        "limit-3": "不含团队/企业功能"
+        "limit-3": "不支持歌词下载"
       }
     },
     "basic": {
       "name": "基础版",
-      "description": "适合常规创作与进阶使用",
+      "description": "适合常规创作者的进阶之选",
       "features": {
-        "feature-1": "每月 240 积分（自动刷新）",
-        "feature-2": "歌词生成免费",
-        "feature-3": "音乐生成 2 积分/首",
-        "feature-4": "适合个人创作与社媒配乐",
-        "feature-5": "标准支持"
+        "feature-1": "每月赠送 200 积分，满足日常高频创作",
+        "feature-2": "歌词生成与修改永久免费",
+        "feature-3": "支持高品质歌曲下载，离线也能随心听",
+        "feature-4": "标准技术支持，助您解决创作难题",
+        "feature-5": "稳定流畅的标准功能体验"
       },
       "limits": {
         "limit-1": "积分当月有效（30 天）",
@@ -103,17 +104,18 @@
     },
     "advanced": {
       "name": "高级版",
-      "description": "面向高频与专业创作",
+      "description": "面向寻求极致体验的专业制作人",
       "features": {
-        "feature-1": "每月 600 积分（自动刷新）",
-        "feature-2": "歌词生成免费",
-        "feature-3": "音乐生成 2 积分/首",
-        "feature-4": "适合高频制作与长文本场景",
-        "feature-5": "优先支持"
+        "feature-1": "每月赠送 500 积分，支撑极致专业需求",
+        "feature-2": "核心创作套件：歌词无限生成与修改",
+        "feature-3": "支持无损品质歌曲下载，留住每个音符",
+        "feature-4": "新功能（如预览功能）优先体验权",
+        "feature-5": "专属优先支持，全天候为您保驾护航",
+        "feature-6": "高级功能全解锁，释放无限创意"
       },
       "limits": {
         "limit-1": "积分当月有效（30 天）",
-        "limit-2": "-"
+        "limit-2": "仅限个人授权使用"
       }
     },
     "lifetime": {
@@ -160,10 +162,10 @@
   },
   "AboutPage": {
     "title": "关于我们",
-    "description": "MkSaaS 是一个使用最先进的技术栈构建的 AI SaaS 模板，它可以帮助你更快更好地构建你的 SaaS。如果你有任何问题，欢迎联系我。",
-    "authorName": "MkSaaS",
-    "authorBio": "最好的 AI SaaS 模板",
-    "introduction": "👋 你好，这里是 MkSaaS，一个使用最先进的技术栈构建的 AI SaaS 模板，它可以帮助你更快更好地构建你的 SaaS。如果你有任何问题，欢迎联系我。",
+    "description": "ScoopRYM 是新闻转成嘻哈音乐的热门工厂，将每天最狂野的头条和最劲爆的八卦转化为无穷无尽的必备 Diss 轨道。",
+    "authorName": "ScoopRYM",
+    "authorBio": "新闻到嘻哈的热门工厂",
+    "introduction": "👋 你好！这里是 ScoopRYM，我们将新闻和八卦转化为炸裂节奏的工厂。我们通过韵律和节奏助您紧跟潮流。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -313,7 +315,7 @@
     "previousPage": "上一页",
     "nextPage": "下一页",
     "chooseLanguage": "选择语言",
-    "title": "MkSaaS文档",
+    "title": "ScoopRYM文档",
     "homepage": "首页"
   },
   "PremiumContent": {
@@ -509,7 +511,8 @@
         "items": {
           "cookiePolicy": "Cookie政策",
           "privacyPolicy": "隐私政策",
-          "termsOfService": "服务条款"
+          "termsOfService": "服务条款",
+          "companyEmail": "公司邮箱：contact@900mounts.com"
         }
       }
     },
@@ -822,8 +825,8 @@
     }
   },
   "HomePage": {
-    "title": "MkSaaS",
-    "description": "使用 MkSaaS 在几天内轻松构建您的 AI SaaS 产品",
+    "title": "ScoopRYM",
+    "description": "ScoopRYM - 将新闻、娱乐与八卦变成节拍。",
     "hero": {
       "title": "新闻的嘻哈之声",
       "description": "把新闻、娱乐与八卦变成节拍。"
@@ -1056,7 +1059,7 @@
         },
         "item-5": {
           "question": "找不到您想问的问题？",
-          "answer": "请联系我们的客户支持团队，邮箱地址：support@mksaas.com"
+          "answer": "请联系我们的客户支持团队，邮箱地址：contact@900mounts.com"
         }
       }
     },
@@ -1068,95 +1071,95 @@
           "name": "Jonathan Yombo",
           "role": "软件工程师",
           "image": "https://randomuser.me/api/portraits/men/1.jpg",
-          "quote": "MkSaaS 非常出色且实用，无需费心，一个真正的金矿。"
+          "quote": "ScoopRYM 非常出色且实用，无需费心，一个真正的金矿。"
         },
         "item-2": {
           "name": "Yves Kalume",
           "role": "Android GDE",
           "image": "https://randomuser.me/api/portraits/men/6.jpg",
-          "quote": "没有网页设计经验，我只需几分钟就可以用 Tailwindcss 重新设计我的整个网站，感谢 MkSaaS。"
+          "quote": "没有网页设计经验，我只需几分钟就可以用 Tailwindcss 重新设计我的整个网站，感谢 ScoopRYM。"
         },
         "item-3": {
           "name": "Yucel Faruksahan",
           "role": "Tailkits 创建者",
           "image": "https://randomuser.me/api/portraits/men/7.jpg",
-          "quote": "MkSaaS 模板做得很好，这是我见过最好的 SaaS 模板，没有之一 :)"
+          "quote": "ScoopRYM 模板做得很好，这是我见过最好的 SaaS 模板，没有之一 :)"
         },
         "item-4": {
           "name": "Anonymous author",
           "role": "产品经理",
           "image": "https://randomuser.me/api/portraits/men/8.jpg",
-          "quote": "我不熟悉 Tailwind，我想自己做一些页面，我在网上搜索了很多英雄页面和区块。然而，大多数都没有给我一个清晰的想法，或者需要一些 HTML/CSS 编码背景来从原始文件中做一些更改，或者太贵了。我下载了其中一个 MkSaaS 模板，它非常容易理解，你可以在开始时修改代码/区块以完美地适应你的页面目的。"
+          "quote": "我不熟悉 Tailwind，我想自己做一些页面，我在网上搜索了很多英雄页面和区块。然而，大多数都没有给我一个清晰的想法，或者需要一些 HTML/CSS 编码背景来从原始文件中做一些更改，或者太贵了。我下载了其中一个 ScoopRYM 模板，它非常容易理解，你可以在开始时修改代码/区块以完美地适应你的页面目的。"
         },
         "item-5": {
           "name": "Shekinah Tshiokufila",
           "role": "高级软件工程师",
           "image": "https://randomuser.me/api/portraits/men/4.jpg",
-          "quote": "MkSaaS 正在重新定义网页设计标准，这些区块为那些喜欢美丽但可能缺乏时间实现它的人提供了简单且高效的方式。我只能推荐这个不可思议的奇迹。"
+          "quote": "ScoopRYM 正在重新定义网页设计标准，这些区块为那些喜欢美丽但可能缺乏时间实现它的人提供了简单且高效的方式。我只能推荐这个不可思议的奇迹。"
         },
         "item-6": {
           "name": "Oketa Fred",
           "role": "全栈开发工程师",
           "image": "https://randomuser.me/api/portraits/men/2.jpg",
-          "quote": "我绝对喜欢 MkSaaS！这些组件区块设计精美且易于使用，使创建一个出色的网站变得轻而易举。"
+          "quote": "我绝对喜欢 ScoopRYM！这些组件区块设计精美且易于使用，使创建一个出色的网站变得轻而易举。"
         },
         "item-7": {
           "name": "Zeki",
           "role": "ChatExtend 创始人",
           "image": "https://randomuser.me/api/portraits/men/5.jpg",
-          "quote": "使用 MkSaaS 就像解锁了一个秘密的设计超能力。它是简单性和多功能性的完美融合，使我们能够创建既令人惊叹又用户友好的界面。"
+          "quote": "使用 ScoopRYM 就像解锁了一个秘密的设计超能力。它是简单性和多功能性的完美融合，使我们能够创建既令人惊叹又用户友好的界面。"
         },
         "item-8": {
           "name": "Joseph Kitheka",
           "role": "全栈开发工程师",
           "image": "https://randomuser.me/api/portraits/men/9.jpg",
-          "quote": "MkSaaS 改变了我的网页开发方式。他们的 UI 组件、区块和模板极大地加速了我的工作流程。定制每个方面的灵活性使我能够创建独特的用户体验。MkSaaS 是现代网页开发的游戏规则改变者！"
+          "quote": "ScoopRYM 改变了我的网页开发方式。他们的 UI 组件、区块和模板极大地加速了我的工作流程。定制每个方面的灵活性使我能够创建独特的用户体验。ScoopRYM 是现代网页开发的游戏规则改变者！"
         },
         "item-9": {
           "name": "Khatab Wedaa",
           "role": "MerakiUI 创建者",
           "image": "https://randomuser.me/api/portraits/men/10.jpg",
-          "quote": "MkSaaS 是一个优雅、干净且响应式的 SaaS 模板，它非常有助于快速开始您的项目。"
+          "quote": "ScoopRYM 是一个优雅、干净且响应式的 SaaS 模板，它非常有助于快速开始您的项目。"
         },
         "item-10": {
           "name": "Rodrigo Aguilar",
           "role": "TailwindAwesome 创建者",
           "image": "https://randomuser.me/api/portraits/men/11.jpg",
-          "quote": "我爱 MkSaaS ❤️。这些组件区块结构良好，易于使用，设计精美。它使创建一个出色的网站变得非常容易。"
+          "quote": "我爱 ScoopRYM ❤️。这些组件区块结构良好，易于使用，设计精美。它使创建一个出色的网站变得非常容易。"
         },
         "item-11": {
           "name": "Eric Ampire",
           "role": "Google 开发者专家",
           "image": "https://randomuser.me/api/portraits/men/12.jpg",
-          "quote": "MkSaaS 模板是任何想要创建一个美丽且功能齐全的网站但没有网页设计经验的人的完美解决方案。这些模板易于使用，可定制，并且响应迅速。我强烈推荐 MkSaaS 模板给任何想要创建网站的人。"
+          "quote": "ScoopRYM 模板是任何想要创建一个美丽且功能齐全的网站但没有网页设计经验的人的完美解决方案。这些模板易于使用，可定制，并且响应迅速。我强烈推荐 ScoopRYM 模板给任何想要创建网站的人。"
         },
         "item-12": {
           "name": "Roland Tubonge",
           "role": "软件工程师",
           "image": "https://randomuser.me/api/portraits/men/13.jpg",
-          "quote": "MkSaaS 设计得如此出色，即使没有网页设计经验，您也可以创造奇迹。让自己被吸引！"
+          "quote": "ScoopRYM 设计得如此出色，即使没有网页设计经验，您也可以创造奇迹。让自己被吸引！"
         }
       }
     },
     "stats": {
       "title": "统计",
-      "subtitle": "MkSaaS 相关的数字",
-      "description": "MkSaaS 可让您在几天内轻松构建您的 AI SaaS",
+      "subtitle": "ScoopRYM 相关的数字",
+      "description": "ScoopRYM 可让您在几天内轻松构建您的 AI SaaS",
       "items": {
         "item-1": {
           "title": "GitHub 上的星星"
         },
         "item-2": {
-          "title": "使用 MkSaaS 的活跃用户"
+          "title": "使用 ScoopRYM 的活跃用户"
         },
         "item-3": {
-          "title": "使用 MkSaaS 启动的应用"
+          "title": "使用 ScoopRYM 启动的应用"
         }
       }
     },
     "calltoaction": {
       "title": "开始构建",
-      "description": "MkSaaS 可让您在几天内轻松构建您的 AI SaaS",
+      "description": "ScoopRYM 可让您在几天内轻松构建您的 AI SaaS",
       "primaryButton": "开始使用",
       "secondaryButton": "查看演示"
     }
@@ -1212,18 +1215,18 @@
   },
   "AIImagePage": {
     "title": "AI 图片",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
   },
   "AIChatPage": {
     "title": "AI 聊天",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
   },
   "AIVideoPage": {
     "title": "AI 视频",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
   },
   "AIAudioPage": {
     "title": "AI 音频",
-    "description": "MkSaaS 让您在几天内轻松构建您的 AI SaaS，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
   }
 }

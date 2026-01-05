@@ -17,9 +17,9 @@ async function getSearchAPI() {
       // Get all pages from all languages and map them to search indexes
       indexes: source.getLanguages().flatMap(({ language, pages }) =>
         pages.map((page) => ({
-          title: page.data.title,
-          description: page.data.description,
-          structuredData: page.data.structuredData,
+          title: (page.data as any).title || '',
+          description: (page.data as any).description,
+          structuredData: (page.data as any).structuredData,
           id: page.url,
           url: page.url,
           locale: language,

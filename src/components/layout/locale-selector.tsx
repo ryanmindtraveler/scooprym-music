@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { websiteConfig } from '@/config/website';
 import { useLocalePathname, useLocaleRouter } from '@/i18n/navigation';
 import { DEFAULT_LOCALE } from '@/i18n/routing';
-import { useLocaleStore } from '@/stores/locale-store';
+import { useLocaleStore } from '@/store';
 import { type Locale, useLocale } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useEffect, useTransition } from 'react';

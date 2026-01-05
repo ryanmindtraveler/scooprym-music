@@ -13,5 +13,6 @@ export interface Song {
   sourceUrl?: string | null;
   newsSummary?: string | null;
   isLiked?: boolean;
+  updatedAt?: Date | string | null;
   processingStatus?: string | null;
 }

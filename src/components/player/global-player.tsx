@@ -1,6 +1,6 @@
 'use client';
 
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 

@@ -87,7 +87,7 @@
 - `src/lib/` - 工具函数和共享代码
 - `src/db/` - 数据库模式和迁移
 - `src/actions/` - API 操作的服务器动作
-- `src/stores/` - Zustand 状态管理
+- `src/store/` - Zustand 状态管理
 - `src/hooks/` - 自定义 React 钩子
 - `src/config/` - 应用程序配置文件
 - `src/i18n/` - 国际化设置
@@ -167,8 +167,6 @@
 **`/hooks/`** - React Hooks
 
 - 认证、积分、支付等自定义 Hooks
-
-**`/stores/`** - 状态管理
 
 - Zustand 状态管理（本地化状态等）
 
@@ -315,3 +313,5 @@
 - 应用支持浅色和深色主题
 - 内容通过 `content/` 目录中的 MDX 文件管理
 - 项目包含全面的国际化支持
+- **项目主 README**: 详见 [README.md](file:///e:/AllWorkSpaces/VSWork/MkSaaS/scooprym_music/README.md)
+- **项目开发手册**: 详见 [开发手册.md](file:///e:/AllWorkSpaces/VSWork/MkSaaS/scooprym_music/docs/开发手册.md)

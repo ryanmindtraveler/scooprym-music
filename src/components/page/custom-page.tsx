@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/formatter';
 import type { PagesType } from '@/lib/source';
 import { CalendarIcon } from 'lucide-react';
@@ -9,9 +10,10 @@ interface CustomPageProps {
 }
 
 export function CustomPage({ page }: CustomPageProps) {
-  const { title, description, date } = page.data;
+  if (!page) notFound();
+  const { title, description, date } = page.data as any;
   const formattedDate = formatDate(new Date(date));
-  const MDX = page.data.body;
+  const MDX = (page.data as any).body;
 
   return (
     <div className="min-h-screen bg-background pt-20">

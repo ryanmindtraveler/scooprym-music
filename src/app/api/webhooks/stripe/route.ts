@@ -1,4 +1,4 @@
-import { handleWebhookEvent } from '@/payment';
+import { handleWebhookEvent } from '@/payment/server';
 import { type NextRequest, NextResponse } from 'next/server';
 
 /**

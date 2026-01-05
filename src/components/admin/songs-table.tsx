@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTogglePublish } from '@/hooks/admin/use-admin-songs';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import type { SortingState } from '@tanstack/react-table';
 import { CheckCircle2, ChevronLeft, ChevronRight, EyeOff, ListMusic, Loader2, Search } from 'lucide-react';

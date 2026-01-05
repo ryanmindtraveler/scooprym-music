@@ -7,7 +7,7 @@ import { getDb } from '@/db';
 import { payment, user } from '@/db/schema';
 import type { Payment } from '@/db/types';
 import { PAYMENT_RECORD_RETRY_ATTEMPTS, PAYMENT_RECORD_RETRY_DELAY } from '@/lib/constants';
-import { findPlanByPlanId, findPriceInPlan } from '@/lib/price-plan';
+import { findPlanByPlanId, findPlanByPriceId, findPriceInPlan } from '../price-plan';
 import { sendNotification } from '@/notification/notification';
 import { desc, eq } from 'drizzle-orm';
 import { Stripe } from 'stripe';
@@ -29,7 +29,7 @@ import {
  * Stripe payment provider implementation
  *
  * docs:
- * https://mksaas.com/docs/payment
+ * https://scooprym.com/docs/payment
  */
 export class StripeProvider implements PaymentProvider {
   private stripe: Stripe;

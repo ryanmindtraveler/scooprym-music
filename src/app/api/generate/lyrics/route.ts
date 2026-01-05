@@ -22,6 +22,25 @@ export async function POST(req: Request) {
       return NextResponse.json(unifiedError, { status: 400 });
     }
 
+    // 0. Rate Limiting
+    const { getRateLimiter } = await import("@/lib/ratelimit");
+    // Lyrics validation doesn't always have session on strict server-side context if called by non-authed?
+    // Assuming auth optional for lyrics demo, or enforce?
+    // Based on previous logic, auth wasn't strictly checked here, so we limit by IP.
+
+    // Attempt to get session if possible, or fallback to IP
+    const { getSession } = await import('@/lib/server');
+    const session = await getSession();
+    const identifier = session?.user?.id || (req.headers.get("x-forwarded-for") ?? "127.0.0.1");
+
+    const { success } = await getRateLimiter().limit(identifier);
+    if (!success) {
+        return NextResponse.json(
+            { success: false, error: "Too many requests. Please try again in a minute.", code: 429 },
+            { status: 429 }
+        );
+    }
+
     // 调用核心生成逻辑
     const lyricsData = await generateLyrics({
       newsUrl,

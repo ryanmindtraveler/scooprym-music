@@ -10,7 +10,7 @@ import { useTranslations } from 'next-intl';
  * NOTICE: used in client components only
  *
  * docs:
- * https://mksaas.com/docs/config/navbar
+ * https://scooprym.com/docs/config/navbar
  *
  * @returns The navbar config with translated titles and descriptions
  */

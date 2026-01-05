@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { websiteConfig } from '@/config/website';
 import { useLocalePathname, useLocaleRouter } from '@/i18n/navigation';
-import { useLocaleStore } from '@/stores/locale-store';
+import { useLocaleStore } from '@/store';
 import { Languages } from 'lucide-react';
 import { type Locale, useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';

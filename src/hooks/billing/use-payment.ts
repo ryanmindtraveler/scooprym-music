@@ -1,6 +1,5 @@
 import { getCurrentPlanAction } from '@/actions/billing/get-current-plan';
-import { getAllPricePlans } from '@/lib/price-plan';
-import type { PricePlan, Subscription } from '@/payment/types';
+import { findPlanByPriceId, getAllPricePlans, type PricePlan, type Subscription } from '@/payment';
 import { useQuery } from '@tanstack/react-query';
 
 // Query keys

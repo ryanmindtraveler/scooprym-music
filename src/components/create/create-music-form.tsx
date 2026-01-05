@@ -46,7 +46,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useCreateStore } from '@/store/create-store';
+import { useCreateStore } from '@/store';
 import { ALL_KNOWN_TAGS, DEFAULT_CUSTOM_VIBE_PROMPT, MUSIC_STYLE_CATEGORIES, VIBE_PERSONAS, getActiveStyle } from './create-music-data';
 import { GenerationProgress } from './generation-progress';
 
@@ -533,8 +533,13 @@ export function CreateMusicForm({
                   !canGenerate && 'cursor-not-allowed opacity-90'
                 )}
               >
+                {/* Dynamic Shimmer Effect */}
+                <div className="absolute inset-0 w-full h-full">
+                  <div className="absolute top-0 -left-full w-1/2 h-full bg-linear-to-r from-transparent via-white/30 to-transparent group-hover:animate-shimmer-fast" />
+                </div>
+
                 <div className="relative z-10 flex items-center justify-center w-full">
-                  <Sparkles className="mr-2.5 size-5 fill-current text-indigo-100" />
+                  <Sparkles className="mr-2.5 size-5 fill-current text-indigo-100 group-hover:animate-pulse" />
                   Generate Music
                   <span className="ml-2.5 text-xs px-2 py-0.5 rounded-full font-bold bg-white/20 opacity-90">
                     -{musicCreditCost}

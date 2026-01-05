@@ -30,6 +30,6 @@ export default function ForgotPassword({ url, name, locale, messages }: ForgotPa
 ForgotPassword.PreviewProps = {
   locale: routing.defaultLocale,
   messages: defaultMessages,
-  url: 'https://mksaas.com',
+  url: 'https://scooprym.com',
   name: 'username',
 };

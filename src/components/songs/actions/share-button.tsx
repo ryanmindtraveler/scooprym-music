@@ -17,7 +17,12 @@ export function ShareButton({ songId, className, variant = 'ghost', size = 'icon
     e.stopPropagation();
     e.preventDefault();
 
-    const url = `${window.location.origin}/songs/${songId}`;
+    const path = window.location.pathname;
+    const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/);
+    const locale = localeMatch ? localeMatch[1] : '';
+    const localePrefix = locale ? `/${locale}` : '';
+
+    const url = `${window.location.origin}${localePrefix}/songs/${songId}`;
     navigator.clipboard.writeText(url);
     toast.success('Link copied to clipboard');
   };

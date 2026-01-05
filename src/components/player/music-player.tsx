@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingTicker } from '@/components/ui/loading-ticker';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import {
   Download,
   Loader2,

@@ -64,7 +64,7 @@ export const getUsersAction = adminActionClient.schema(getUsersSchema).action(as
       items = items.map((item) => ({
         ...item,
         name: 'Demo User',
-        email: 'example@mksaas.com',
+        email: 'example@scooprym.com',
         customerId: 'cus_abcdef123456',
       }));
     }

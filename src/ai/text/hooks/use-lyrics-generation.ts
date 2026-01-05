@@ -1,4 +1,4 @@
-import { useCreateStore } from '@/store/create-store';
+import { useCreateStore } from '@/store';
 import { useMutation } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';

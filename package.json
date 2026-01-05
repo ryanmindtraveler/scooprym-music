@@ -157,18 +157,26 @@
     "@biomejs/biome": "1.9.4",
     "@tailwindcss/postcss": "^4.0.14",
     "@tanstack/eslint-plugin-query": "^5.83.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.1",
     "@types/mdx": "^2.0.13",
     "@types/node": "^20.19.0",
     "@types/pg": "^8.11.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@upstash/qstash": "^2.8.4",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.36.0",
+    "@vitejs/plugin-react": "^5.1.2",
     "drizzle-kit": "^0.31.4",
+    "jsdom": "^27.4.0",
     "knip": "^5.61.2",
     "postcss": "^8",
     "react-email": "3.0.7",
     "tailwindcss": "^4.0.14",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.16"
   }
 }

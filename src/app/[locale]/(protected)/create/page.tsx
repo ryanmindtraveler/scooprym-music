@@ -13,12 +13,12 @@
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { CreateMusicForm } from '@/components/create/create-music-form';
 import { LyricsDisplay } from '@/components/create/lyrics-display';
+import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
 import { MusicPlayer } from '@/components/player/music-player';
-import { useCreateStore } from '@/store/create-store';
-import { usePlayerStore } from '@/store/player-store';
+import { useCreateStore, usePlayerStore } from '@/store';
 import { useCreditBalance } from '@/hooks/billing/use-credits';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Music, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -64,6 +64,13 @@ import { toast } from 'sonner';
 
   const MUSIC_CREDIT_COST = 2;
 
+  // --- Effect: Reset Player on Mount (Decoupling) ---
+  useEffect(() => {
+    // Stop any global playback when entering creation mode to provide a clean slate
+    stopPlayer();
+    setGlobalIsGenerating(false);
+  }, [stopPlayer, setGlobalIsGenerating]);
+
   // --- Effect: Handle URL Params (e.g. from Marketing Page) ---
   useEffect(() => {
     const contentParam = searchParams.get('content');
@@ -73,15 +80,27 @@ import { toast } from 'sonner';
           reset();
 
           // 2. Set Content (Safe Decode)
-          const decoded = decodeURIComponent(contentParam);
+          const decoded = decodeURIComponent(contentParam).trim();
+          let finalContent = decoded;
+
+          // 2a. Extract Packed Style (from Marketing Page)
+          // Robust regex allows for potential trailing whitespace
+          const styleMatch = decoded.match(/\[\[STYLE:(.*?)\]\]\s*$/);
+          if (styleMatch) {
+              const packedPrompt = styleMatch[1].trim();
+              if (packedPrompt) {
+                  setMusicPrompt(packedPrompt);
+              }
+              // Remove the tag from valid content
+              finalContent = decoded.replace(styleMatch[0], '').trim();
+          }
 
           // Smart Detect: URL vs Text
-          // Simple heuristic: If it looks like a URL, treat as link.
-          if (/^(https?:\/\/|www\.)[^ "]+$/i.test(decoded)) {
-              setNewsLink(decoded);
+          if (/^(https?:\/\/|www\.)[^ "]+$/i.test(finalContent)) {
+              setNewsLink(finalContent);
               setNewsContent('');
           } else {
-              setNewsContent(decoded);
+              setNewsContent(finalContent);
               setNewsLink('');
           }
 
@@ -96,16 +115,21 @@ import { toast } from 'sonner';
           router.replace(Routes.Create);
        }
     }
-  }, [searchParams, reset, setNewsContent, setNewsLink, setShouldAutoGenerate, isGenerating, router]);
+  }, [searchParams, reset, setNewsContent, setNewsLink, setMusicPrompt, setShouldAutoGenerate, isGenerating, router]);
+
+  // --- Ref: Prevent Double Fire in Strict Mode ---
+  const autoGenLock = useRef(false);
 
   // --- Effect: Auto-Generate on Mount if signaled ---
   useEffect(() => {
-    if (shouldAutoGenerate && (newsContent || newsLink) && !isGenerating) {
-      // 1. Consume the flag to prevent double-fire
+    if (shouldAutoGenerate && (newsContent || newsLink) && !isGenerating && !autoGenLock.current) {
+      // 1. Lock immediately
+      autoGenLock.current = true;
+
+      // 2. Consume the flag
       setShouldAutoGenerate(false);
 
-      // 2. Trigger Generation Logic
-      // We wrap in timeout to ensure state hydration is settled
+      // 3. Trigger Generation
       setTimeout(() => {
         handleGenerate();
       }, 100);
@@ -135,6 +159,9 @@ import { toast } from 'sonner';
   /**
    * Handle Poll for Back-end completion
    */
+  /* New: Access setCoverImage from player store */
+  const setPlayerCoverImage = usePlayerStore((state) => state.setCoverImage);
+
   /**
    * Effect: Handle Polling for Back-end completion
    * Replaces ad-hoc startPolling to prevent multiple intervals/toasts on re-renders.
@@ -156,6 +183,13 @@ import { toast } from 'sonner';
 
           if (result.song?.coverImageUrl) {
             setMusicCoverUrl(result.song.coverImageUrl);
+
+            // New: Sync to Global Player ONLY if it's the current song
+            // This prevents overwriting cover art if user switched tracks
+            const currentGlobalSong = usePlayerStore.getState().currentSong;
+            if (currentGlobalSong?.id === result.song.id || currentGlobalSong?.id === processingTaskId) {
+               setPlayerCoverImage(result.song.coverImageUrl);
+            }
           }
 
           if (result.status === 'completed' || result.status === 'failed' || result.status === 'completed_without_cover') {
@@ -193,12 +227,13 @@ import { toast } from 'sonner';
       clearInterval(intervalId);
       setMusicLoading(false); // Optional: clear loading on unmount, or leave it?
     };
-  }, [processingTaskId, setProcessingTaskId, setMusicCoverUrl]);
+  }, [processingTaskId, setProcessingTaskId, setMusicCoverUrl, setPlayerCoverImage]);
 
   /**
    * Phase 2: Generate Music from Lyrics
    */
   const handleGenerateMusic = async (inputLyrics?: string, inputTitle?: string) => {
+    if (musicLoading) return;
     const targetLyrics = inputLyrics || lyrics;
     const targetTitle = inputTitle || musicTitle;
 
@@ -224,10 +259,11 @@ import { toast } from 'sonner';
         body: JSON.stringify({
           songId: clientSongId, // Pass to API
           lyrics: targetLyrics,
-          prompt: musicPrompt,
+          prompt: musicPrompt || DEFAULT_CUSTOM_VIBE_PROMPT, // Fallback to Viral Default
           title: targetTitle,
           sourceText: newsContent,
           sourceUrl: newsLink,
+          newsSummary: useCreateStore.getState().newsSummary, // Use fresh state (avoid stale closure)
           useStream: false, // Poll mode for stability
         }),
       });
@@ -270,6 +306,7 @@ import { toast } from 'sonner';
    * Phase 1: Full Generation Flow (Lyrics -> Music)
    */
   const handleGenerate = async () => {
+    if (isGenerating || musicLoading) return;
     if (!newsContent && !newsLink) {
       toast.error('Give us some tea to spill first!');
       return;

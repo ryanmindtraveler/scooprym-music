@@ -1,7 +1,7 @@
 'use client';
 
 import { SongDetailModal } from '@/components/songs/song-detail-modal';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { useEffect, useState } from 'react';
 import { TrendingSongCard } from './trending-song-card';

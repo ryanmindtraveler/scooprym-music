@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { MusicPlayer } from '@/components/player/music-player';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

@@ -36,7 +36,7 @@ export enum Routes {
   Home = '/home', // 登录后的个人主页 (Quick Cook)
   Dashboard = '/dashboard', // 数据统计后台
   Create = '/create', // 核心功能：音乐创作工作室 (Studio)
-  MySongs = '/songs', // 个人作品库 (Library)
+  MySongs = '/mysongs', // 个人作品库 (Library)
   DashboardCreate = '/dashboard/create', // 控制台内的创作入口
   AdminUsers = '/admin/users', // 管理员用户管理页
   AdminSongs = '/admin/songs', // 管理员歌曲发布页

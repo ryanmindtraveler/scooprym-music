@@ -1,8 +1,7 @@
 import { randomUUID } from 'crypto';
 import { getDb } from '@/db';
 import { creditTransaction, payment, user, userCredit } from '@/db/schema';
-import { findPlanByPriceId, getAllPricePlans } from '@/lib/price-plan';
-import { PlanIntervals } from '@/payment/types';
+import { PlanIntervals, findPlanByPriceId, getAllPricePlans } from '@/payment';
 import { addDays } from 'date-fns';
 import { and, eq, gt, inArray, isNull, lt, not, or, sql } from 'drizzle-orm';
 import { canAddCreditsByType } from './credits';

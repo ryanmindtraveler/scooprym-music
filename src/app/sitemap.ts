@@ -1,4 +1,7 @@
+import { getDb } from '@/db';
+import { song as songTable } from '@/db/schema';
 import { websiteConfig } from '@/config/website';
+import { and, desc, isNotNull, ne } from 'drizzle-orm';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { generateHreflangUrls } from '@/lib/hreflang';
@@ -50,26 +53,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  /* PENDING FIX: Dynamic sitemap generation crashes build due to fumadocs source loading issues.
-     Disabled temporarily to ensure stable build.
-  // add blog related routes if enabled
-  if (websiteConfig.blog.enable) {
-    try {
-      // Logic for blog/category/posts...
-    } catch (error) {
-      console.error('Failed to generate blog sitemap:', error);
-    }
-  }
+  // Add dynamic song routes
+  try {
+    const db = getDb();
+    const songs = await db
+      .select({
+        id: songTable.id,
+        updatedAt: songTable.updatedAt,
+        createdAt: songTable.createdAt,
+      })
+      .from(songTable)
+      .where(and(isNotNull(songTable.audioUrl), ne(songTable.audioUrl, 'pending-stream'), ne(songTable.audioUrl, ''))) // Only public/completed songs
+      .orderBy(desc(songTable.createdAt))
+      .limit(1000); // Limit to 1000 for performance
 
-  // add docs related routes if enabled
-  if (websiteConfig.docs.enable) {
-    try {
-       // Logic for docs params...
-    } catch (error) {
-       console.error('Failed to generate docs sitemap:', error);
-    }
+    sitemapList.push(
+      ...songs.flatMap((songItem: { id: string; updatedAt: Date; createdAt: Date }) => {
+        const route = `/songs/${songItem.id}`;
+        const lastModified = songItem.updatedAt ? new Date(songItem.updatedAt) : new Date(songItem.createdAt);
+
+        return routing.locales.map((locale) => ({
+          url: getUrl(route, locale),
+          lastModified,
+          alternates: {
+            languages: generateHreflangUrls(route),
+          },
+        }));
+      })
+    );
+  } catch (error) {
+    console.error('Failed to generate songs sitemap:', error);
   }
-  */
 
   return sitemapList;
 }

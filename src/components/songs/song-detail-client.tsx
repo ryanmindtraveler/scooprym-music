@@ -12,7 +12,7 @@ import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { cn } from '@/lib/utils';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
 import {
   ChevronDown,
@@ -81,7 +81,10 @@ export function SongDetailClient({
   });
 
   // Handlers
-  const handlePlay = () => {
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Also prevent default just in case
+    // e.preventDefault();
     if (currentSong?.id === song.id) {
       togglePlay();
     } else {
@@ -97,7 +100,13 @@ export function SongDetailClient({
   };
 
   const handleShare = () => {
-    const url = `${window.location.origin}/songs/${song.id}`;
+    // Determine current locale from pathname to create accurate share link
+    const path = window.location.pathname;
+    const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/);
+    const locale = localeMatch ? localeMatch[1] : '';
+    const localePrefix = locale ? `/${locale}` : '';
+
+    const url = `${window.location.origin}${localePrefix}/songs/${song.id}`;
     navigator.clipboard.writeText(url);
     toast.success('Link copied to clipboard');
   };

@@ -2,7 +2,7 @@
 
 import type { GenerateMusicApiResponse, ProcessingStatusResponse } from '@/ai/music/lib/api-types';
 import { useCreditBalance } from '@/hooks/billing/use-credits';
-import { usePlayerStore } from '@/store/player-store';
+import { usePlayerStore } from '@/store';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';

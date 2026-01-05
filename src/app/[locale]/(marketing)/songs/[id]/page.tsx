@@ -1,12 +1,12 @@
-import HomePage from '@/app/[locale]/(marketing)/(home)/page';
-
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
-import { getDb } from '@/db/index';
-import { songFavorite, song as songTable } from '@/db/schema';
+import { getDb } from '@/db';
+import { song as songTable, songFavorite } from '@/db/schema';
+import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
 import { and, eq } from 'drizzle-orm';
+import type { Metadata } from 'next';
+import { notFound, redirect } from 'next/navigation';
+import type { Song } from '@/types/song';
 import type { Locale } from 'next-intl';
-import { notFound } from 'next/navigation';
 
 interface SongDetailPageProps {
   params: Promise<{
@@ -15,48 +15,38 @@ interface SongDetailPageProps {
   }>;
 }
 
-export default async function SongDetailPage({ params }: SongDetailPageProps) {
+export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const { id } = resolvedParams;
+  const { id, locale } = resolvedParams;
   const db = await getDb();
-  const session = await getSession();
-  const userId = session?.user?.id;
 
-  const [song] = await db.select().from(songTable).where(eq(songTable.id, id));
+  const [song] = await db
+    .select()
+    .from(songTable)
+    .where(eq(songTable.id, id))
+    .limit(1);
 
   if (!song) {
-    notFound();
+    return constructMetadata({
+      title: 'Song Not Found',
+      locale,
+    });
   }
 
-  // Check if favorite
-  let isFavorite = false;
-  if (userId) {
-    const [fav] = await db
-      .select()
-      .from(songFavorite)
-      .where(and(eq(songFavorite.songId, id), eq(songFavorite.userId, userId)));
-    isFavorite = !!fav;
-  }
+  return constructMetadata({
+    title: `${song.title} | ScoopRYM Music`,
+    description: song.newsSummary || song.sourceText || `Listen to ${song.title} by ScoopRYM AI.`,
+    image: song.coverImageUrl || undefined,
+    locale,
+    pathname: `/songs/${id}`,
+  });
+}
 
-  // Wrap HomePage in MarketingLayout to ensure Navbar/Footer are present
-  // Note: MarketingLayout expects children.
+export default async function SongDetailPage({ params }: SongDetailPageProps) {
+  const resolvedParams = await params;
+  const { id, locale } = resolvedParams;
 
-  return (
-    <div className="relative">
-      {/* Render Home Page as Background */}
-      <HomePage params={Promise.resolve({ locale: resolvedParams.locale })} />
-
-      {/* Render Modal Overlay */}
-      <SongDetailModal
-        song={{
-          ...song,
-          createdAt: new Date(song.createdAt).toISOString(),
-        }}
-        initialIsFavorite={isFavorite}
-        defaultOpen={true}
-        navigationMode="hard"
-        autoPlay={true}
-      />
-    </div>
-  );
+  // Permanent redirect to the homepage with the song ID query parameter
+  // This preserves the "modal over homepage" experience for shared links
+  redirect(`/${locale}?s=${id}`);
 }
