@@ -34,6 +34,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     console.error('Error in webhook route:', error);
 
     // Return error
-    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 400 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Webhook handler failed' },
+      { status: 400 }
+    );
   }
 }

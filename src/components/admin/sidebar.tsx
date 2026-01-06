@@ -22,8 +22,8 @@ import { ScoopRYMLogo } from '@/components/layout/logo-scooprym';
 // Defines the admin navigation structure
 const adminNav = [
   {
-    title: 'Overview',
-    url: '/admin',
+    title: 'Dashboard',
+    url: '/admin/dashboard',
     icon: LayoutDashboard,
   },
   {

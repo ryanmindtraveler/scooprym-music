@@ -63,6 +63,7 @@ export const verification = pgTable("verification", {
 export const payment = pgTable("payment", {
         id: text("id").primaryKey(),
         priceId: text('price_id').notNull(),
+        amount: integer("amount").notNull().default(0),
         type: text('type').notNull(),
         scene: text('scene'), // payment scene: 'lifetime', 'credit', 'subscription'
         interval: text('interval'),

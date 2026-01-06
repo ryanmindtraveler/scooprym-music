@@ -407,7 +407,7 @@ export class StripeProvider implements PaymentProvider {
       }
     } catch (error) {
       console.error('handle webhook event error:', error);
-      throw new Error('Failed to handle webhook event');
+      throw new Error(`Failed to handle webhook event: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -897,6 +897,7 @@ export class StripeProvider implements PaymentProvider {
     }
 
     const subscriptionId = session.subscription as string;
+
     const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
 
     // Get priceId from subscription items
