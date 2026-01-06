@@ -1,4 +1,4 @@
-import { PaymentTypes, PlanIntervals } from '@/payment';
+import { PaymentTypes, PlanIntervals } from '@/payment/types';
 import type { WebsiteConfig } from '@/types';
 
 /**

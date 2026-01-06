@@ -2,6 +2,8 @@
 import { distributeCreditsToAllUsers } from '@/credits/distribute';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 基础认证中间件函数
  * 验证HTTP Basic Authentication，保护定时任务接口
