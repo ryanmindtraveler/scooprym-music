@@ -80,6 +80,10 @@ export async function getAdminSongsAction({
           plays: songTable.plays,
           durationSec: songTable.durationSec,
           lyrics: songTable.lyrics,
+          prompt: songTable.prompt,
+          newsSummary: songTable.newsSummary,
+          sourceText: songTable.sourceText,
+          sourceUrl: songTable.sourceUrl,
           authorName: userTable.name, // Join to get author name
         })
         .from(songTable)

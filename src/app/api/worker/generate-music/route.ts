@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { processMusicBackground, type ProcessMusicOptions } from "@/lib/song-workflow";
-import { generateImage } from "@/ai/image/lib/cover-generation";
+import { generateCoverWithRetry } from "@/ai/image/lib/cover-generation";
 
 /**
  * Worker Endpoint: /api/worker/generate-music
@@ -30,16 +30,11 @@ async function handler(req: NextRequest) {
     // Note: If you wanted purely parallel generation (Audio & Image started at same time),
     // you'd need to push TWO jobs or handle it differently.
     // For now, to keep it simple and robust, we regenerate the cover here.
-
-    // Construct the prompt for cover art
-    const imagePrompt = `A cool, artistic album cover for a hip-hop song titled "${options.title || 'Untitled'}".
-    Style: vivid, street art, high quality.
-    Context: ${options.prompt || 'No specific context'}.`;
-
-    const coverImagePromise = generateImage({
-      prompt: imagePrompt,
-      aspectRatio: "1:1",
-    }).then(res => res.success ? res.imageUrl || null : null);
+    const coverImagePromise = generateCoverWithRetry({
+      title: options.title || 'Untitled',
+      lyrics: options.lyrics || '',
+      sourceText: options.sourceText || '',
+    });
 
     // Run the existing workflow logic
     const result = await processMusicBackground(audioContent, options, coverImagePromise);
@@ -47,10 +42,10 @@ async function handler(req: NextRequest) {
     if (result.success) {
       console.log(`[Worker] Job completed successfully for ${options.songId}`);
       return NextResponse.json({ status: "success", data: result });
-    } else {
-      console.error(`[Worker] Job failed for ${options.songId}:`, result.error);
-      return NextResponse.json({ status: "error", error: result.error }, { status: 500 });
     }
+
+    console.error(`[Worker] Job failed for ${options.songId}:`, result.error);
+    return NextResponse.json({ status: "error", error: result.error }, { status: 500 });
 
   } catch (error: any) {
     console.error("[Worker] Unhandled exception:", error);

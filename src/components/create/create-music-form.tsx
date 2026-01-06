@@ -119,7 +119,7 @@ export function CreateMusicForm({
   // State for Popover
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  const syncMusicPrompt = (vTags: string[], customText: string) => {
+  const syncMusicPrompt = (vTags: string[] | readonly string[], customText: string) => {
     const combined = [...vTags, customText].filter(Boolean).join(', ');
     setMusicPrompt(combined);
   };

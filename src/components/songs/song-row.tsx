@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import type { SongItem } from '@/app/[locale]/(protected)/songs/types';
+import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
@@ -57,9 +57,9 @@ function SongRowBase({
     return `${m}:${s}`;
   };
 
-  const isPending = item.audioUrl === 'pending-stream' || item.processingStatus === 'processing';
+  const isPending = !item.audioUrl || item.audioUrl === 'pending-stream' || item.audioUrl === 'processing' || item.processingStatus === 'processing';
   const isFailed = item.processingStatus?.startsWith('failed');
-  const hasAudio = Boolean(item.audioUrl) && !isPending && !isFailed;
+  const hasAudio = Boolean(item.audioUrl) && item.audioUrl !== 'processing' && !isPending && !isFailed;
 
   return (
     <div

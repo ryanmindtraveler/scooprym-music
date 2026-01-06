@@ -10,6 +10,16 @@ export interface StyleCategory {
   tags: StyleTag[];
 }
 
+export interface VibePersona {
+  id: string;
+  label: string;
+  desc: string;
+  icon: string;
+  tags: string[] | readonly string[];
+  color: string;
+  tooltip?: string;
+}
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // 🛑 LOCKED SCHEMA - DO NOT EDIT 🛑
 // The 5-layer structure and tag set below are FINALIZED and LOCKED.
@@ -239,14 +249,20 @@ export const MUSIC_STYLE_CATEGORIES: StyleCategory[] = [
 
 export const DEFAULT_CUSTOM_VIBE_PROMPT = 'Jersey Club, Fast Tempo, Funny, Aggressive Flow, Bed Squeak';
 
-export const VIBE_PERSONAS = [
+export const VIBE_PERSONAS: readonly VibePersona[] = [
   {
     id: 'viral_pop',
     label: 'Custom Vibe',
     desc: 'Create your own',
     icon: '✨',
     color: 'bg-slate-50 dark:bg-white/5 border-dashed border-slate-200 dark:border-white/10',
-    tags: 'Jersey Club, Fast Tempo, Funny, Aggressive Flow, Bed Squeak'.split(', '),
+    tags: [
+      'Jersey Club',
+      'Fast Tempo',
+      'Funny',
+      'Aggressive Flow',
+      'Bed Squeak',
+    ],
   },
   {
     id: 'news',
@@ -437,7 +453,6 @@ export const VIBE_PERSONAS = [
     color: 'bg-rose-900/10 text-rose-900 border-rose-900/20 hover:bg-rose-900/20 hover:border-rose-900/50',
     tooltip: 'Aggressive "Rage Beat" with buzzing synths and video game SFX for moshpits.',
   },
-// ... (end of array)
 ] as const;
 
 // Pre-calculated set of all known tags for O(1) lookup

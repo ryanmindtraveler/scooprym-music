@@ -57,7 +57,7 @@ export function SongDetailClient({
 
   // Auto-play logic
   useEffect(() => {
-    if (autoPlay && song.audioUrl && currentSong?.id !== song.id) {
+    if (autoPlay && song.audioUrl && song.audioUrl !== 'processing' && currentSong?.id !== song.id) {
       play({
         id: song.id,
         title: song.title,

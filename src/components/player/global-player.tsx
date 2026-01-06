@@ -141,7 +141,7 @@ export function GlobalPlayer() {
     if (!audio) return;
 
     // Check if we effectively have a song (must have a valid URL)
-    const hasValidAudio = currentSong && currentSong.audioUrl;
+    const hasValidAudio = currentSong?.audioUrl && currentSong.audioUrl !== 'processing';
 
     if (hasValidAudio) {
       // 1. New Song Loaded

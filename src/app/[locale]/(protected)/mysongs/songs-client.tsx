@@ -200,7 +200,7 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
   const handlePlayClick = useCallback((songItem: SongItem) => {
     if (currentSong?.id === songItem.id && globalIsPlaying) {
       pause();
-    } else if (songItem.audioUrl) {
+    } else if (songItem.audioUrl && songItem.audioUrl !== 'processing') {
       play({
         id: songItem.id,
         title: songItem.title,

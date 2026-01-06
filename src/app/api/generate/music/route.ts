@@ -119,7 +119,7 @@ export async function POST(req: Request) {
       sourceText,
       sourceUrl,
       newsSummary,
-      audioUrl: 'processing',
+      audioUrl: '',
       processingStatus: 'processing',
       creditsDeducted: false,
       isAdminGenerated: session?.user?.role === 'admin',

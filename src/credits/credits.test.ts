@@ -1,4 +1,5 @@
 
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { addCredits, consumeCredits, hasEnoughCredits, getUserCredits } from './credits';
 import { CREDIT_TRANSACTION_TYPE } from './types';

@@ -5,6 +5,7 @@
  */
 
 import { Client } from "@upstash/qstash";
+import { getBaseUrl } from "./urls/urls";
 
 // Initialize QStash Client
 // If tokens are missing (e.g. in development before setup), it will throw or fail gracefully depending on usage.
@@ -21,11 +22,9 @@ export const qstash = new Client({
  * Recommendation for Dev: Use a tool like ngrok to expose localhost and set NEXT_PUBLIC_BASE_URL to the ngrok URL.
  */
 export const getWorkerUrl = (path: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  // Remove trailing slash if present
-  const normalizedBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  const base = getBaseUrl();
   // Ensure path has leading slash
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  return `${normalizedBase}${normalizedPath}`;
+  return `${base}${normalizedPath}`;
 };

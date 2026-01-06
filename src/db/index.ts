@@ -8,10 +8,10 @@ import * as schema from './schema';
 
 // Prevent multiple connections in development
 const globalForDb = globalThis as unknown as {
-  conn: ReturnType<typeof drizzle> | undefined;
+  conn: ReturnType<typeof drizzle<typeof schema>> | undefined;
 };
 
-let db: ReturnType<typeof drizzle>;
+let db: ReturnType<typeof drizzle<typeof schema>>;
 
 export function getDb() {
   if (db) return db;

@@ -1,6 +1,6 @@
 'use client';
 
-import type { SongItem } from '@/app/[locale]/(protected)/songs/types';
+import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
 import { SongDetailModal } from '@/components/songs/song-detail-modal';
 import { SongRow } from '@/components/songs/song-row';
 import { Button } from '@/components/ui/button';
