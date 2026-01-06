@@ -1,8 +1,23 @@
 import { routing } from '@/i18n/routing';
 import type { Locale } from 'next-intl';
 
-const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+const getRawBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return `http://localhost:${process.env.PORT ?? 3000}`;
+};
+
+const rawBaseUrl = getRawBaseUrl();
 const baseUrl = rawBaseUrl.replace(/\/$/, '');
+
+// Log the resolved base URL on the server side to help debugging
+if (typeof window === 'undefined') {
+  console.log('Server initialized with baseURL:', baseUrl);
+}
 
 /**
  * Get the base URL of the application
