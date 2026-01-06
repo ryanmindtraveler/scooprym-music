@@ -17,6 +17,9 @@ export const authClient = createAuthClient({
     oneTapClient({
       clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
       autoSelect: false, // disable auto select to prevent conflict
+      additionalOptions: {
+        use_fedcm_for_prompt: true,
+      },
     }),
   ],
 });
