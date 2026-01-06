@@ -12,6 +12,7 @@ import { Loader2Icon } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface SocialLoginButtonProps {
   callbackUrl?: string;
@@ -37,51 +38,35 @@ export const SocialLoginButton = ({ callbackUrl: propCallbackUrl, showDivider = 
   console.log('social login button, callbackUrl', callbackUrl);
 
   const onClick = async (provider: 'google' | 'github') => {
-    await authClient.signIn.social(
-      {
-        /**
-         * The social provider id
-         * @example "github", "google"
-         */
-        provider: provider,
-        /**
-         * a url to redirect after the user authenticates with the provider
-         * @default "/"
-         */
-        callbackURL: callbackUrl,
-        /**
-         * a url to redirect if an error occurs during the sign in process
-         */
-        errorCallbackURL: Routes.AuthError,
-        /**
-         * a url to redirect if the user is newly registered
-         */
-        // newUserCallbackURL: "/auth/welcome",
-        /**
-         * disable the automatic redirect to the provider.
-         * @default false
-         */
-        // disableRedirect: true,
-      },
-      {
-        onRequest: (ctx) => {
-          // console.log("onRequest", ctx);
-          setIsLoading(provider);
+    try {
+      await authClient.signIn.social(
+        {
+          provider: provider,
+          callbackURL: callbackUrl,
+          errorCallbackURL: Routes.AuthError,
         },
-        onResponse: (ctx) => {
-          // console.log("onResponse", ctx.response);
-          setIsLoading(null);
-        },
-        onSuccess: (ctx) => {
-          // console.log("onSuccess", ctx.data);
-          setIsLoading(null);
-        },
-        onError: (ctx) => {
-          console.log('social login error', ctx.error.message);
-          setIsLoading(null);
-        },
-      }
-    );
+        {
+          onRequest: () => {
+             setIsLoading(provider);
+          },
+          onResponse: () => {
+             setIsLoading(null);
+          },
+          onSuccess: () => {
+             setIsLoading(null);
+          },
+          onError: (ctx) => {
+             console.error('social login error', ctx.error.message);
+             toast.error(ctx.error.message || 'Something went wrong');
+             setIsLoading(null);
+          },
+        }
+      );
+    } catch (err: any) {
+      console.error('Social login exception:', err);
+      toast.error(err.message || 'Failed to initiate login');
+      setIsLoading(null);
+    }
   };
 
   return (

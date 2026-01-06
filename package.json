@@ -26,6 +26,9 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "knip": "knip"
   },
+  "overrides": {
+    "ws": "^8.18.0"
+  },
   "dependencies": {
     "@ai-sdk/deepseek": "^1.0.0",
     "@ai-sdk/fal": "^1.0.0",
