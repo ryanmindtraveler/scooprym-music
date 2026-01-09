@@ -9,7 +9,9 @@ import type { PropsWithChildren } from 'react';
  */
 export default async function DashboardLayout({ children }: PropsWithChildren) {
   const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === 'true';
+  const sidebarState = cookieStore.get('sidebar_state');
+  // Default to open unless explicitly set to false
+  const defaultOpen = sidebarState?.value !== 'false';
 
   return (
     <SidebarProvider
@@ -35,7 +37,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
       />
 
       {/* Floating Main Content with Rounded Corners */}
-      <SidebarInset className="bg-transparent peer-data-[variant=inset]:bg-transparent relative z-10 m-2 md:m-4 rounded-[32px] overflow-hidden border border-white/20 dark:border-white/5 shadow-2xl h-[calc(100svh-2rem)] no-scrollbar md:ml-6 transition-[margin-left] duration-200 ease-linear">
+      <SidebarInset className="bg-background peer-data-[variant=inset]:bg-background relative z-10 m-2 md:m-4 rounded-[32px] overflow-y-auto border border-white/20 dark:border-white/5 shadow-2xl h-[calc(100svh-2rem)] no-scrollbar md:ml-6 transition-[margin-left] duration-200 ease-linear">
         {children}
       </SidebarInset>
     </SidebarProvider>

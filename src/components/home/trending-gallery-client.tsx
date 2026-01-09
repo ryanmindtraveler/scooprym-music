@@ -4,13 +4,24 @@ import { SongDetailModal } from '@/components/songs/song-detail-modal';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { useEffect, useState } from 'react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { TrendingSongCard } from './trending-song-card';
 
 interface TrendingGalleryClientProps {
   songs: Song[];
+  currentPage: number;
+  totalPages: number;
 }
 
-export function TrendingGalleryClient({ songs }: TrendingGalleryClientProps) {
+export function TrendingGalleryClient({ songs, currentPage, totalPages }: TrendingGalleryClientProps) {
   const { currentSong, isPlaying: globalIsPlaying, play, togglePlay: globalTogglePlay } = usePlayerStore();
   const playingId = globalIsPlaying && currentSong ? currentSong.id : null;
 
@@ -94,6 +105,62 @@ export function TrendingGalleryClient({ songs }: TrendingGalleryClientProps) {
           onClose={() => setSelectedSong(null)}
         />
       )}
-    </div>
+
+      {/* Pagination Controls */}
+      <div className="col-span-full mt-8">
+        <Pagination>
+          <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href={`?page=${Math.max(1, currentPage - 1)}`}
+                  aria-disabled={currentPage <= 1}
+                  className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+
+              {/* Simple Pagination Logic: Show all if small, or simplify */}
+              {Array.from({ length: totalPages }).map((_, i) => {
+                 const pageNum = i + 1;
+                 // Show first, last, current, and adjacent pages
+                 if (
+                   pageNum === 1 ||
+                   pageNum === totalPages ||
+                   (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                 ) {
+                   return (
+                     <PaginationItem key={pageNum}>
+                       <PaginationLink href={`?page=${pageNum}`} isActive={currentPage === pageNum}>
+                         {pageNum}
+                       </PaginationLink>
+                     </PaginationItem>
+                   );
+                 }
+
+                 // Ellipsis logic
+                 if (
+                   pageNum === currentPage - 2 ||
+                   pageNum === currentPage + 2
+                 ) {
+                    return (
+                        <PaginationItem key={pageNum}>
+                            <PaginationEllipsis />
+                        </PaginationItem>
+                    )
+                 }
+
+                 return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  href={`?page=${Math.min(totalPages, currentPage + 1)}`}
+                  aria-disabled={currentPage >= totalPages}
+                  className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      </div>
   );
 }

@@ -21,6 +21,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState, useRef } from 'react';
 import { Music, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { creditsKeys } from '@/hooks/billing/use-credits';
 
   import { useSearchParams, useRouter } from 'next/navigation';
   import { Routes } from '@/routes';
@@ -52,6 +54,7 @@ import { toast } from 'sonner';
   const stopPlayer = usePlayerStore((state) => state.stop);
   const setGlobalIsGenerating = usePlayerStore((state) => state.setIsGenerating);
   const { data: balance, isLoading: isBalanceLoading } = useCreditBalance();
+  const queryClient = useQueryClient();
 
   // --- Local UI State ---
   const [isGenerating, setIsGenerating] = useState(false);
@@ -166,16 +169,26 @@ import { toast } from 'sonner';
    * Effect: Handle Polling for Back-end completion
    * Replaces ad-hoc startPolling to prevent multiple intervals/toasts on re-renders.
    */
+  /**
+   * Effect: Handle Polling for Back-end completion
+   * Uses recursive setTimeout to prevent race conditions (duplicate toasts)
+   * which can happen if setInterval fires multiple overlaps before cancellation.
+   */
   useEffect(() => {
     if (!processingTaskId) return;
 
     setMusicLoading(true);
+    let isCancelled = false;
     let notFoundCount = 0;
 
-    const intervalId = setInterval(async () => {
+    const pollStatus = async () => {
+      if (isCancelled) return;
+
       try {
         const res = await fetch(`/api/songs/${processingTaskId}/processing-status`);
         const result = await res.json();
+
+        if (isCancelled) return; // distinct check after await
 
         if (result.success) {
           notFoundCount = 0;
@@ -185,7 +198,6 @@ import { toast } from 'sonner';
             setMusicCoverUrl(result.song.coverImageUrl);
 
             // New: Sync to Global Player ONLY if it's the current song
-            // This prevents overwriting cover art if user switched tracks
             const currentGlobalSong = usePlayerStore.getState().currentSong;
             if (currentGlobalSong?.id === result.song.id || currentGlobalSong?.id === processingTaskId) {
                setPlayerCoverImage(result.song.coverImageUrl);
@@ -193,39 +205,45 @@ import { toast } from 'sonner';
           }
 
           if (result.status === 'completed' || result.status === 'failed' || result.status === 'completed_without_cover') {
-            clearInterval(intervalId);
-            setProcessingTaskId(null);
+            setProcessingTaskId(null); // Stop polling by clearing ID
             setMusicLoading(false);
 
             if (result.status === 'completed') {
-               // Only toast if it was a real completion logic
-               // Since we have fast playback, this toast confirms persistence.
-               toast.success('Track fully persisted & cover ready!');
+               toast.success('Track fully persisted & cover ready!', { id: 'song-completion' });
             } else if (result.status === 'failed') {
                setProcessingStatus('failed');
                toast.error('Processing failed in background.');
             }
+            return; // Stop recursion
           }
         } else {
              if (res.status === 404 || result.error === 'Song not found') {
                  notFoundCount++;
                  if (notFoundCount > 10) {
-                     clearInterval(intervalId);
                      setProcessingTaskId(null);
                      setMusicLoading(false);
                      setProcessingStatus('failed');
                      toast.error('Task vanished via polling timeout.');
+                     return;
                  }
              }
         }
       } catch (err) {
         console.error('Polling error:', err);
       }
-    }, 4000);
+
+      // Schedule next poll if not cancelled and not finished
+      if (!isCancelled) {
+          setTimeout(pollStatus, 4000); // Wait 4s AFTER response
+      }
+    };
+
+    // Start initial poll
+    pollStatus();
 
     return () => {
-      clearInterval(intervalId);
-      setMusicLoading(false); // Optional: clear loading on unmount, or leave it?
+      isCancelled = true;
+      setMusicLoading(false);
     };
   }, [processingTaskId, setProcessingTaskId, setMusicCoverUrl, setPlayerCoverImage]);
 
@@ -292,6 +310,9 @@ import { toast } from 'sonner';
           artist: 'AI Generation',
         });
       }
+
+      // Invalidate credit balance to reflect deduction immediately
+      queryClient.invalidateQueries({ queryKey: creditsKeys.balance() });
 
       toast.success('Vibe generated! Playing now.');
     } catch (e: any) {

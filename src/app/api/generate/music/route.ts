@@ -13,6 +13,7 @@ import { processMusicBackground, type ProcessMusicOptions } from '@/lib/song-wor
 import { qstash, getWorkerUrl } from '@/lib/queue';
 import { eq } from 'drizzle-orm';
 import { mapGenerationError } from '@/lib/music/error-handler';
+import { consumeCredits } from '@/credits/credits';
 
 type GenerateMusicBody = {
   lyrics?: string;
@@ -169,6 +170,28 @@ export async function POST(req: Request) {
     }
 
     const tempAudioUrl = musicResult.audioContent as string;
+
+    // 3.5 Deduct Credits Synchronously (CRITICAL for Real-time Balance Update)
+    let creditsDeductedSynch = false;
+    try {
+        console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
+        await consumeCredits({
+            userId,
+            amount: 2,
+            description: `Generate music: ${effectiveTitle} [ID:${songId}]`,
+        });
+
+        // Update DB to reflect deduction immediately
+        await db.update(songTable)
+           .set({ creditsDeducted: true })
+           .where(eq(songTable.id, songId));
+
+        creditsDeductedSynch = true;
+    } catch (creditErr) {
+        console.error(`[generate-music] Synchronous credit deduction failed for ${songId} (will retry in worker):`, creditErr);
+        // We do NOT fail the request here, because audio is already generated.
+        // We let the worker try again (idempotency check handles it).
+    }
 
     // 4. Publish to QStash (The "Async" Part)
     // Instead of `waitUntil(processMusicBackground...)`, we send a message to QStash.

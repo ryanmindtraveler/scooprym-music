@@ -71,6 +71,55 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
   const [prevVolume, setPrevVolume] = useState(volume);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Cover Regeneration Logic
+  const [isRegeneratingCover, setIsRegeneratingCover] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+
+  const setCoverImage = usePlayerStore((state) => state.setCoverImage);
+
+  const handleRegenerateCover = async () => {
+    if (!currentSong?.id || isRegeneratingCover) return;
+
+    if (retryCount >= MAX_RETRIES) {
+      toast.error('Max retry attempts reached for this session.');
+      return;
+    }
+
+    try {
+      setIsRegeneratingCover(true);
+      toast.info('Regenerating cover art...');
+
+      const res = await fetch('/api/generate/cover/retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songId: currentSong.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to regenerate cover');
+      }
+
+      if (data.coverImageUrl) {
+        setCoverImage(data.coverImageUrl);
+        toast.success('New cover art applied!');
+      }
+    } catch (error: any) {
+      setRetryCount((prev) => prev + 1);
+      const remaining = MAX_RETRIES - (retryCount + 1);
+      toast.error(error.message || 'Regeneration failed');
+      if (remaining > 0) {
+          toast(`You have ${remaining} attempts left.`);
+      } else {
+          toast.error("Max retries reached. Feature disabled.");
+      }
+    } finally {
+      setIsRegeneratingCover(false);
+    }
+  };
+
   // Memoize slider value array. Using a larger precision (0.1) to avoid constant snapping loops.
   const sliderValue = useMemo(() => [currentTime], [currentTime]);
 
@@ -168,12 +217,49 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                         <Loader2 className="size-6 animate-spin" />
                       </div>
                     ) : (
-                      <div className="relative size-full group font-bold">
-                        <img src="/images/funny-censored-fallback.png" alt="Censored" className="size-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                          <span className="text-[6px] text-white text-center leading-tight uppercase">Too Spicy for AI</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleRegenerateCover();
+                        }}
+                        disabled={retryCount >= MAX_RETRIES || isRegeneratingCover}
+                        className={cn(
+                            "relative size-full group font-bold transition-all",
+                            (retryCount >= MAX_RETRIES) ? "cursor-not-allowed opacity-50" : "cursor-pointer active:scale-95"
+                        )}
+                      >
+                        <img
+                            src="/images/funny-censored-fallback.png"
+                            alt="Censored"
+                            className={cn("size-full object-cover", isRegeneratingCover && "opacity-50 blur-[2px]")}
+                        />
+
+                        {/* Overlay: Either Loading or Prompt */}
+                        <div className={cn(
+                            "absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-1 transition-opacity",
+                            isRegeneratingCover ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}>
+                           {isRegeneratingCover ? (
+                               <Loader2 className="size-5 text-white animate-spin" />
+                           ) : (
+                               <>
+                                   {retryCount >= MAX_RETRIES ? (
+                                       <span className="text-[8px] text-red-300 text-center leading-tight font-black uppercase">
+                                           Limit<br/>Reached
+                                       </span>
+                                   ) : (
+                                       <>
+                                         <Sparkles className="size-4 text-white mb-1" />
+                                         <span className="text-[6px] text-white text-center leading-tight uppercase font-black tracking-wider">
+                                            Regenerate<br/>Cover
+                                         </span>
+                                       </>
+                                   )}
+                               </>
+                           )}
                         </div>
-                      </div>
+                      </button>
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">

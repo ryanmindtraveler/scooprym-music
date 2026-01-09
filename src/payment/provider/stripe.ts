@@ -934,7 +934,7 @@ export class StripeProvider implements PaymentProvider {
         subscriptionId,
         sessionId: session.id,
         invoiceId, // may be null initially
-        paid: false, // will be set to true when invoice.paid event occurs
+        paid: session.payment_status === 'paid', // Optimize: trust session status immediately
         interval: this.mapStripeIntervalToPlanInterval(subscription),
         status: this.mapSubscriptionStatusToPaymentStatus(subscription.status),
         periodStart,
@@ -998,7 +998,7 @@ export class StripeProvider implements PaymentProvider {
         customerId,
         sessionId: session.id,
         invoiceId, // may be null initially
-        paid: false, // will be set to true when invoice.paid event occurs
+        paid: session.payment_status === 'paid', // Optimize: trust session status immediately for one-time payments
         status: 'completed', // one-time payments are completed once checkout is done
         createdAt: currentDate,
         updatedAt: currentDate,

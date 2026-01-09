@@ -131,7 +131,7 @@ export const websiteConfig: WebsiteConfig = {
         popular: true,
         credits: {
           enable: true,
-          amount: 240,
+          amount: 200,
           expireDays: 30,
         },
       },
@@ -157,7 +157,7 @@ export const websiteConfig: WebsiteConfig = {
         isLifetime: false,
         credits: {
           enable: true,
-          amount: 600,
+          amount: 500,
           expireDays: 30,
         },
       },

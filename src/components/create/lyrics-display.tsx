@@ -133,7 +133,7 @@ export function LyricsDisplay({
       {/* === 摘要显示区域 (新增) === */}
       {newsSummary && (
         <div className="mb-2 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/50">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-500 mb-0.5">News Background</h4>
+          <h4 className="text-xs font-bold tracking-wider text-indigo-500 mb-0.5">News Background</h4>
           <p className="text-sm text-indigo-900/80 dark:text-indigo-200/80 leading-relaxed">{newsSummary}</p>
         </div>
       )}
