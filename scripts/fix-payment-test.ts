@@ -7,7 +7,7 @@ const projectDir = process.cwd();
 loadEnvConfig(projectDir);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 async function simulateWebhook() {
@@ -27,7 +27,7 @@ async function simulateWebhook() {
   const payload = {
     id: `evt_test_${Date.now()}`,
     object: 'event',
-    api_version: '2025-01-27.acacia',
+    api_version: '2025-02-24.acacia',
     created: Math.floor(Date.now() / 1000),
     type: 'checkout.session.completed',
     data: {
