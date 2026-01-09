@@ -42,7 +42,7 @@ export const lyricsSchema = z.object({
   lyrics: z
     .string()
     .describe(
-      'The generated song lyrics. Must include [Verse], [Chorus], [Bridge], [Outro] tags. Total length ~50 seconds.'
+      'The generated song lyrics. Must include [Intro], [Verse], [Chorus], [Bridge], [Outro] tags. Total length ~50 seconds.'
     ),
 });
 
@@ -135,7 +135,7 @@ export async function generateLyrics({ newsUrl, prompt, provider }: GenerateLyri
     - For punchy styles: Use short, aggressive statements.
   - **Structure (Full Narrative Arc)**:
     - Use as many lines as needed to tell a compelling story.
-    - Mandatory Segments: [Verse], [Chorus], [Bridge], [Outro]. Keep them tight.
+    - Mandatory Segments: [Intro], [Verse], [Chorus], [Bridge], [Outro]. Keep them tight.
     - [Bridge] is critical for a "switch up" or "drop".
   - **Length Constraint**: **STRICTLY target 50-60 seconds.**
     - Do NOT write a 3-minute song.

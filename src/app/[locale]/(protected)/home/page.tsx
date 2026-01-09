@@ -128,9 +128,10 @@ function TrendingGallerySkeleton() {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string }>;
 }) {
-  const currentPage = Number(searchParams?.page) || 1;
+  const { page } = await searchParams;
+  const currentPage = Number(page) || 1;
 
   // 获取服务端翻译函数
   const t = await getTranslations();
