@@ -1,11 +1,11 @@
-import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+
 import { QuickGenerateForm } from '@/components/home/quick-generate-form';
 import { TrendingGalleryClient } from '@/components/home/trending-gallery-client';
 import { Card } from '@/components/ui/card';
 
 import { getSession } from '@/lib/server';
 import { Flame, Sparkles } from 'lucide-react';
-import { getTranslations } from 'next-intl/server';
+
 
 import { getDb } from '@/db';
 import { songFavorite, song as songTable, user } from '@/db/schema';
@@ -179,20 +179,11 @@ export default async function HomePage({
   }
 
   // 获取服务端翻译函数
-  const t = await getTranslations();
 
-  // 定义面包屑导航路径
-  const breadcrumbs = [
-    {
-      label: t('Dashboard.home.title', { default: 'Home' }),
-      isCurrentPage: true,
-    },
-  ];
 
   return (
     <>
-      {/* 顶部导航栏，传入面包屑数据 */}
-      <DashboardHeader breadcrumbs={breadcrumbs} />
+
 
       {/* 页面主要内容容器 */}
       <div className="flex flex-1 flex-col min-h-full pb-24">

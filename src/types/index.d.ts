@@ -208,6 +208,7 @@ export type MenuItem = {
   href?: string;                      // The url to link to
   external?: boolean;                 // Whether the link is external
   authorizeOnly?: string[];           // The roles that are authorized to see the item
+  badge?: ReactNode | string | number; // Optional badge to display next to the item
 };
 
 /**

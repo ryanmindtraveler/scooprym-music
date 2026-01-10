@@ -1,22 +1,16 @@
-import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+
 import { getDb } from '@/db/index';
 import { songFavorite, songPlay, song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
 import { and, desc, eq, inArray, isNull, notInArray, or, sql } from 'drizzle-orm';
-import { getTranslations } from 'next-intl/server';
+
 import { SongsPageClient } from './songs-client';
 import type { SongItem } from './types';
 
 export default async function MySongsPage() {
-  const t = await getTranslations();
 
-  const breadcrumbs = [
-    { label: t('Dashboard.dashboard.title'), href: '/dashboard' },
-    {
-      label: t('Dashboard.songs.title', { default: 'My Songs' }),
-      isCurrentPage: true,
-    },
-  ];
+
+
 
   // 读取真实歌曲数据
   const session = await getSession();
@@ -201,7 +195,7 @@ export default async function MySongsPage() {
 
   return (
     <>
-      <DashboardHeader breadcrumbs={breadcrumbs} />
+
       <div className="flex flex-1 flex-col bg-muted/10">
         <div className="@container/main flex flex-1 flex-col gap-2">
           <div className="flex flex-col gap-6 p-4 md:p-8">

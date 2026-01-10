@@ -13,12 +13,13 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useSidebarLinks } from '@/config/sidebar-config';
+import { useCreditBalance } from '@/hooks/billing/use-credits';
 import { LocaleLink } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Routes } from '@/routes';
 import { useTranslations } from 'next-intl';
 import type * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Logo } from '../layout/logo';
 import { UpgradeCard } from './upgrade-card';
 
@@ -33,13 +34,43 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
   const { state } = useSidebar();
   // console.log('sidebar currentUser:', currentUser);
 
+  const { data: balance, isLoading: isBalanceLoading } = useCreditBalance();
+
   const sidebarLinks = useSidebarLinks();
-  const filteredSidebarLinks = sidebarLinks.filter((link) => {
-    if (link.authorizeOnly) {
-      return link.authorizeOnly.includes(currentUser?.role || '');
-    }
-    return true;
-  });
+
+  // Inject Credits Balance Badge
+  const sidebarLinksWithBadge = useMemo(() => {
+    return sidebarLinks.map((item) => {
+      if (item.items) {
+        return {
+          ...item,
+          items: item.items.map((subItem) => {
+            if (subItem.href === Routes.SettingsCredits) {
+              return {
+                ...subItem,
+                badge: (
+                  <div className="flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 text-[10px] font-bold border border-indigo-500/20">
+                    {isBalanceLoading ? '...' : (balance ?? 0)}
+                  </div>
+                ),
+              };
+            }
+            return subItem;
+          }),
+        };
+      }
+      return item;
+    });
+  }, [sidebarLinks, balance, isBalanceLoading]);
+
+  const filteredSidebarLinks = useMemo(() => {
+    return sidebarLinksWithBadge.filter((link) => {
+      if (link.authorizeOnly) {
+        return link.authorizeOnly.includes(currentUser?.role || '');
+      }
+      return true;
+    });
+  }, [sidebarLinksWithBadge, currentUser]);
 
   useEffect(() => {
     setMounted(true);
@@ -50,7 +81,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:p-1.5!">
               <LocaleLink href={Routes.Root}>
                 <Logo className="size-5" />
                 <span className="truncate font-semibold text-base">{t('Metadata.name')}</span>

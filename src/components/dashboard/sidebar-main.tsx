@@ -47,7 +47,8 @@ export function SidebarMain({ items }: { items: NestedMenuItem[] }) {
                             {subItem.icon}
                           </span>
                         ) : null}
-                        <span className="truncate font-bold text-sm tracking-wide">{subItem.title}</span>
+                        <span className="truncate font-bold text-sm tracking-wide flex-1">{subItem.title}</span>
+                        {subItem.badge && <span className="ml-auto">{subItem.badge}</span>}
                       </LocaleLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -70,8 +71,9 @@ export function SidebarMain({ items }: { items: NestedMenuItem[] }) {
                       {item.icon ? (
                         <span className="group-data-[active=true]:text-primary transition-colors">{item.icon}</span>
                       ) : null}
-                      <span className="truncate font-bold text-sm tracking-wide">{item.title}</span>
-                    </LocaleLink>
+                        <span className="truncate font-bold text-sm tracking-wide flex-1">{item.title}</span>
+                        {item.badge && <span className="ml-auto">{item.badge}</span>}
+                      </LocaleLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

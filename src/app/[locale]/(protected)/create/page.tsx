@@ -10,14 +10,14 @@
  * 4. Implements polling for background song processing.
  */
 
-import { DashboardHeader } from '@/components/dashboard/dashboard-header';
+
 import { CreateMusicForm } from '@/components/create/create-music-form';
 import { LyricsDisplay } from '@/components/create/lyrics-display';
 import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
 import { MusicPlayer } from '@/components/player/music-player';
 import { useCreateStore, usePlayerStore } from '@/store';
 import { useCreditBalance } from '@/hooks/billing/use-credits';
-import { useTranslations } from 'next-intl';
+
 import { useEffect, useState, useRef } from 'react';
 import { Music, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,7 +28,6 @@ import { creditsKeys } from '@/hooks/billing/use-credits';
   import { Routes } from '@/routes';
 
   export default function CreateMusicPage() {
-  const t = useTranslations();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -138,12 +137,6 @@ import { creditsKeys } from '@/hooks/billing/use-credits';
       }, 100);
     }
   }, [shouldAutoGenerate, newsContent, newsLink, isGenerating]); // eslint-disable-next-line react-hooks/exhaustive-deps
-
-  // --- Breadcrumbs ---
-  const breadcrumbs = [
-    { label: t('Dashboard.dashboard.title') },
-    { label: t('Dashboard.create.title', { default: 'Create' }), isCurrentPage: true },
-  ];
 
   /**
    * Normalize lyrics section formatting
@@ -409,7 +402,7 @@ import { creditsKeys } from '@/hooks/billing/use-credits';
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-zinc-950">
-      <DashboardHeader breadcrumbs={breadcrumbs} />
+
 
       {/* Ambient Background Glow */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />

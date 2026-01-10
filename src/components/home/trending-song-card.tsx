@@ -9,7 +9,6 @@ import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { format } from 'date-fns';
 import { Clock, Loader2, Music2, Pause, Play } from 'lucide-react';
-import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 
 interface TrendingSongCardProps {
@@ -29,7 +28,6 @@ export function TrendingSongCard({
   togglePlay,
   onSongClick,
 }: TrendingSongCardProps) {
-  const locale = useLocale();
   const { isCurrentLoading } = { isCurrentLoading: isPlaying && isGlobalLoading };
 
   const lyricsLines = (song.lyrics ?? '')

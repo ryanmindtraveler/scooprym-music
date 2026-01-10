@@ -76,7 +76,7 @@ export async function generateCoverImageDataUrl(options: {
 
   descriptionParts.push('Style: bold colors, high contrast, clean composition, NO TEXT, square 1:1 album art.');
   descriptionParts.push(
-    'Resolution: 1024x1024, 8k, ultra-detailed, masterpiece. Ensure the main subject is centered and fits well within a square frame.'
+    'Resolution: 1024x1024. COMPOSITION RULE: The image MUST fill the entire square canvas from edge to edge. NO borders, NO frames, NO letterboxing, NO padding, NO blur bars. If the subject is wide, crop it to fill the square.'
   );
 
   const prompt = descriptionParts.join('\n\n');
