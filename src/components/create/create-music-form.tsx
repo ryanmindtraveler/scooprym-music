@@ -550,6 +550,16 @@ export function CreateMusicForm({
           </div>
         </div>
 
+        {/* Credit Transparency Tip */}
+        <div className="px-1 mt-3 flex items-start gap-2 opacity-60 hover:opacity-100 transition-opacity">
+          <div className="mt-0.5 p-0.5 rounded-full bg-slate-100 dark:bg-white/5">
+            <Info className="size-3 text-slate-500" />
+          </div>
+          <p className="text-[10px] text-slate-500 leading-tight">
+            Credits are only consumed for <b>successful</b> generations. Failed tasks due to safety or system errors are automatically refunded.
+          </p>
+        </div>
+
 
       {/* Error Modal Dialog */}
       <AlertDialog open={!!(error || musicError)} onOpenChange={(open) => {

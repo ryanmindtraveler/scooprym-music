@@ -2,7 +2,7 @@ import { getDb } from '@/db';
 import { song as songTable } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import type { Song } from '@/types/song';
-import { and, desc, isNotNull, ne } from 'drizzle-orm';
+import { and, desc, isNotNull, isNull, ne, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { SongsClientWrapper } from './songs-client-wrapper';
@@ -33,7 +33,17 @@ export default async function SongsPage({ params }: SongsPageProps) {
   const songs = await db
     .select()
     .from(songTable)
-    .where(and(isNotNull(songTable.audioUrl), ne(songTable.audioUrl, 'pending-stream'), ne(songTable.audioUrl, '')))
+    .where(
+      and(
+        isNotNull(songTable.audioUrl),
+        ne(songTable.audioUrl, 'pending-stream'),
+        ne(songTable.audioUrl, ''),
+        or(
+          isNull(songTable.processingStatus),
+          notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+        )
+      )
+    )
     .orderBy(desc(songTable.createdAt))
     .limit(50);
 

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePricePlans } from '@/config/price-config';
 import { useMounted } from '@/hooks/ui/use-mounted';
+import { Logger } from '@/lib/logger';
 import { useCurrentPlan } from '@/hooks/billing/use-payment';
 import { LocaleLink } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth-client';
@@ -40,7 +41,7 @@ export default function BillingCard() {
   const subscription = paymentData?.subscription;
   const isLifetimeMember = currentPlan?.isLifetime || false;
 
-  console.log('=== BillingCard Debug Info ===', {
+  Logger.debug('=== BillingCard Debug Info ===', {
     mounted,
     userId: currentUser?.id,
     isLoadingSession,

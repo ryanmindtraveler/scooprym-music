@@ -57,8 +57,8 @@ function SongRowBase({
     return `${m}:${s}`;
   };
 
-  const isPending = !item.audioUrl || item.audioUrl === 'pending-stream' || item.audioUrl === 'processing' || item.processingStatus === 'processing';
   const isFailed = item.processingStatus?.startsWith('failed');
+  const isPending = !isFailed && (!item.audioUrl || item.audioUrl === 'pending-stream' || item.audioUrl === 'processing' || item.processingStatus === 'processing');
   const hasAudio = Boolean(item.audioUrl) && item.audioUrl !== 'processing' && !isPending && !isFailed;
 
   return (
@@ -66,8 +66,8 @@ function SongRowBase({
       className={cn(
         'group relative flex items-center gap-4 rounded-2xl border p-3 transition-all hover:shadow-md hover:shadow-purple-500/5 hover:-translate-y-0.5',
         isPlaying
-          ? 'bg-linear-to-r from-indigo-50/80 to-purple-50/80 border-indigo-200 dark:border-indigo-800'
-          : 'bg-linear-to-r from-white/90 to-purple-50/40 dark:from-zinc-900/90 dark:to-zinc-900/50 border-purple-100/60 dark:border-white/5 hover:border-purple-200 dark:hover:border-white/10'
+          ? 'bg-linear-to-r from-indigo-50/90 to-purple-50/90 border-indigo-200 dark:border-indigo-800 shadow-sm'
+          : 'bg-white dark:bg-zinc-900/50 border-slate-200 dark:border-white/10 shadow-sm hover:border-purple-300 dark:hover:border-purple-500/30'
       )}
     >
       <div className="hidden sm:block w-8 shrink-0 text-center text-sm font-medium text-muted-foreground">{index}</div>

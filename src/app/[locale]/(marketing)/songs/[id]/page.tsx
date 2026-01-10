@@ -2,7 +2,7 @@ import { getDb } from '@/db';
 import { song as songTable, songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import type { Song } from '@/types/song';
@@ -23,7 +23,15 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const [song] = await db
     .select()
     .from(songTable)
-    .where(eq(songTable.id, id))
+    .where(
+      and(
+        eq(songTable.id, id),
+        or(
+          isNull(songTable.processingStatus),
+          notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+        )
+      )
+    )
     .limit(1);
 
   if (!song) {

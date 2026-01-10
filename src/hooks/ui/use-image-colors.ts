@@ -77,7 +77,8 @@ export function useImageColors(imageUrl: string | null | undefined): ImageColors
       } catch (err) {
         if (isCancelled) return;
 
-        console.warn('[useImageColors] Failed to extract colors:', err);
+        // Suppress console warning for CORS errors as this is expected when headers are not set
+        // console.warn('[useImageColors] Failed to extract colors:', err);
         setColors({
           ...DEFAULT_COLORS,
           isLoading: false,

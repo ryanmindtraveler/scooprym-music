@@ -527,3 +527,25 @@ export async function addLifetimeMonthlyCredits(userId: string, priceId: string)
     );
   }
 }
+
+/**
+ * Refund credits (for failed generation or other system errors)
+ * @param params - Refund parameters
+ */
+export async function refundCredits({
+  userId,
+  amount,
+  description,
+}: {
+  userId: string;
+  amount: number;
+  description: string;
+}) {
+  console.log(`[Credits] Refunding ${amount} credits to user ${userId}: ${description}`);
+  return addCredits({
+    userId,
+    amount,
+    type: CREDIT_TRANSACTION_TYPE.REFUND || 'refund',
+    description: `Refund: ${description}`,
+  });
+}

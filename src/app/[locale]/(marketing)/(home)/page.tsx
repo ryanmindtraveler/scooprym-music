@@ -10,7 +10,7 @@ import { songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
 import type { Song } from '@/types/song';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -54,7 +54,16 @@ export default async function HomePage(props: HomePageProps) {
     .select()
     .from(songTable)
     .innerJoin(user, eq(songTable.userId, user.id))
-    .where(and(eq(user.role, 'admin'), eq(songTable.isPublished, true)))
+    .where(
+      and(
+        eq(user.role, 'admin'),
+        eq(songTable.isPublished, true),
+        or(
+          isNull(songTable.processingStatus),
+          notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+        )
+      )
+    )
     .orderBy(desc(songTable.createdAt))
     .limit(15)
     .then((res) => res.map((row) => row.song)); // Extract song part from join result
@@ -88,7 +97,15 @@ export default async function HomePage(props: HomePageProps) {
     const [foundSong] = await db
       .select()
       .from(songTable)
-      .where(eq(songTable.id, sharedSongId))
+      .where(
+        and(
+          eq(songTable.id, sharedSongId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      )
       .limit(1);
 
     if (foundSong) {

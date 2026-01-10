@@ -9,7 +9,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { getDb } from '@/db';
 import { songFavorite, song as songTable, user } from '@/db/schema';
-import { and, asc, count, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,7 +38,7 @@ interface SongItem {
  * 热门画廊组件 (服务端组件)
  * 职责：直接连接数据库，获取管理员生成的最新歌曲数据，并传递给客户端组件渲染
  */
-async function TrendingGallery({ currentPage }: { currentPage: number }) {
+async function TrendingGallery({ currentPage, sharedSong }: { currentPage: number, sharedSong?: SongItem | null }) {
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
@@ -48,7 +48,14 @@ async function TrendingGallery({ currentPage }: { currentPage: number }) {
   const userId = session?.user?.id;
 
   // 基础查询条件
-  const whereConditions = and(eq(user.role, 'admin'), eq(songTable.isPublished, true));
+  const whereConditions = and(
+    eq(user.role, 'admin'),
+    eq(songTable.isPublished, true),
+    or(
+      isNull(songTable.processingStatus),
+      notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+    )
+  );
 
   // 2.1 查询总数
   const [totalCountResult] = await db
@@ -99,7 +106,7 @@ async function TrendingGallery({ currentPage }: { currentPage: number }) {
   }));
 
   // 4. 渲染客户端组件，将处理好的数据作为 props 传入
-  return <TrendingGalleryClient songs={songs} currentPage={currentPage} totalPages={totalPages} />;
+  return <TrendingGalleryClient songs={songs} currentPage={currentPage} totalPages={totalPages} initialSelectedSong={sharedSong} />;
 }
 
 /**
@@ -128,10 +135,48 @@ function TrendingGallerySkeleton() {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; s?: string }>;
 }) {
-  const { page } = await searchParams;
+  const { page, s: sharedSongId } = await searchParams;
   const currentPage = Number(page) || 1;
+  let sharedSong: SongItem | null = null;
+  if (sharedSongId && typeof sharedSongId === 'string') {
+    const db = await getDb();
+    const session = await getSession();
+    const userId = session?.user?.id;
+
+    const [foundSong] = await db
+      .select()
+      .from(songTable)
+      .where(
+        and(
+          eq(songTable.id, sharedSongId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      )
+      .limit(1);
+
+    if (foundSong) {
+        let isSharedSongLiked = false;
+        if (userId) {
+          const [fav] = await db
+            .select()
+            .from(songFavorite)
+            .where(and(eq(songFavorite.userId, userId), eq(songFavorite.songId, foundSong.id)));
+          isSharedSongLiked = !!fav;
+        }
+
+        sharedSong = {
+          ...foundSong,
+          isLiked: isSharedSongLiked,
+          createdAt: foundSong.createdAt!,
+          durationSec: foundSong.durationSec ?? null,
+        };
+    }
+  }
 
   // 获取服务端翻译函数
   const t = await getTranslations();
@@ -175,7 +220,7 @@ export default async function HomePage({
 
             {/* 调用上面定义的异步组件来展示列表 */}
             <Suspense fallback={<TrendingGallerySkeleton />}>
-              <TrendingGallery currentPage={currentPage} />
+              <TrendingGallery currentPage={currentPage} sharedSong={sharedSong} />
             </Suspense>
           </div>
         </section>

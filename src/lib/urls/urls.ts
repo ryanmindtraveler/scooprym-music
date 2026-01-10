@@ -15,9 +15,9 @@ const rawBaseUrl = getRawBaseUrl();
 const baseUrl = rawBaseUrl.replace(/\/$/, '');
 
 // Log the resolved base URL on the server side to help debugging
-if (typeof window === 'undefined') {
-  console.log('Server initialized with baseURL:', baseUrl);
-}
+// if (typeof window === 'undefined') {
+//   console.log('Server initialized with baseURL:', baseUrl);
+// }
 
 /**
  * Get the base URL of the application

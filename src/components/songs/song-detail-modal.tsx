@@ -4,7 +4,7 @@ import { SongDetailClient } from '@/components/songs/song-detail-client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 import type { Song } from '@/types/song';
 
@@ -53,6 +53,9 @@ export function SongDetailModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[1100px] w-[95vw] sm:w-[85vw] h-[80vh] max-h-[800px] p-0 gap-0 bg-transparent border-none shadow-none outline-none overflow-hidden">
         <DialogTitle className="sr-only">{song.title}</DialogTitle>
+        <DialogDescription className="sr-only">
+          Detailed view for song {song.title}, including player, lyrics, and metadata.
+        </DialogDescription>
         <div className="h-full bg-background/95 backdrop-blur-md rounded-[32px] overflow-hidden border border-white/20 dark:border-white/5 shadow-2xl">
           <SongDetailClient
             song={song}

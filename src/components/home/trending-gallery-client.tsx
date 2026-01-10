@@ -19,9 +19,10 @@ interface TrendingGalleryClientProps {
   songs: Song[];
   currentPage: number;
   totalPages: number;
+  initialSelectedSong?: Song | null;
 }
 
-export function TrendingGalleryClient({ songs, currentPage, totalPages }: TrendingGalleryClientProps) {
+export function TrendingGalleryClient({ songs, currentPage, totalPages, initialSelectedSong = null }: TrendingGalleryClientProps) {
   const { currentSong, isPlaying: globalIsPlaying, play, togglePlay: globalTogglePlay } = usePlayerStore();
   const playingId = globalIsPlaying && currentSong ? currentSong.id : null;
 
@@ -33,7 +34,7 @@ export function TrendingGalleryClient({ songs, currentPage, totalPages }: Trendi
     return initial;
   });
 
-  const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [selectedSong, setSelectedSong] = useState<Song | null>(initialSelectedSong);
   const isGlobalLoading = false;
 
   useEffect(() => {

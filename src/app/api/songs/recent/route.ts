@@ -1,7 +1,7 @@
 import { getDb } from '@/db/index';
 import { song, songPlay } from '@/db/schema';
 import { getSession } from '@/lib/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -23,7 +23,16 @@ export async function GET(request: NextRequest) {
     const [totalRes] = await db
       .select({ count: sql<number>`count(distinct ${songPlay.songId})` })
       .from(songPlay)
-      .where(eq(songPlay.userId, userId));
+      .innerJoin(song, eq(songPlay.songId, song.id))
+      .where(
+        and(
+          eq(songPlay.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      );
     const total = Number(totalRes?.count || 0);
 
     // Get the most recent play for each song, ordered by the latest play
@@ -46,7 +55,15 @@ export async function GET(request: NextRequest) {
       })
       .from(songPlay)
       .innerJoin(song, eq(songPlay.songId, song.id))
-      .where(eq(songPlay.userId, userId))
+      .where(
+        and(
+          eq(songPlay.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      )
       .groupBy(song.id)
       .orderBy(desc(sql`lastPlayedAt`))
       .limit(limit)

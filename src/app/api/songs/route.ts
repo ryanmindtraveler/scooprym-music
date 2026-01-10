@@ -1,7 +1,7 @@
 import { getDb } from '@/db/index';
 import { song } from '@/db/schema';
 import { getSession } from '@/lib/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -20,13 +20,32 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     // Get total count
-    const [totalRes] = await db.select({ count: sql<number>`count(*)` }).from(song).where(eq(song.userId, userId));
+    const [totalRes] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(song)
+      .where(
+        and(
+          eq(song.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      );
     const total = Number(totalRes?.count || 0);
 
     const rows = await db
       .select()
       .from(song)
-      .where(eq(song.userId, userId))
+      .where(
+        and(
+          eq(song.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      )
       .orderBy(desc(song.createdAt))
       .limit(limit)
       .offset(offset);

@@ -2,7 +2,7 @@ import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { getDb } from '@/db/index';
 import { songFavorite, songPlay, song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { SongsPageClient } from './songs-client';
 import type { SongItem } from './types';
@@ -23,7 +23,15 @@ export default async function MySongsPage() {
   const userId = session?.user?.id;
   const db = await getDb();
   const rows = userId
-    ? await db.select().from(songTable).where(eq(songTable.userId, userId)).orderBy(desc(songTable.createdAt)).limit(9)
+    ? await db.select().from(songTable).where(
+        and(
+          eq(songTable.userId, userId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      ).orderBy(desc(songTable.createdAt)).limit(9)
     : [];
   const creations: SongItem[] = rows.map((r) => ({
     id: r.id,
@@ -59,7 +67,15 @@ export default async function MySongsPage() {
     const recentSongIdsOrdered = Array.from(new Set(recentPlays.map((p) => p.songId)));
 
     if (recentSongIdsOrdered.length > 0) {
-      const recentSongRows = await db.select().from(songTable).where(inArray(songTable.id, recentSongIdsOrdered));
+      const recentSongRows = await db.select().from(songTable).where(
+        and(
+          inArray(songTable.id, recentSongIdsOrdered),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      );
 
       const byId = new Map(recentSongRows.map((r) => [r.id, r]));
 
@@ -98,7 +114,15 @@ export default async function MySongsPage() {
     const favoriteSongIdsOrdered = favoriteRows.map((f) => f.songId);
 
     if (favoriteSongIdsOrdered.length > 0) {
-      const favoriteSongRows = await db.select().from(songTable).where(inArray(songTable.id, favoriteSongIdsOrdered));
+      const favoriteSongRows = await db.select().from(songTable).where(
+        and(
+          inArray(songTable.id, favoriteSongIdsOrdered),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      );
 
       const byId = new Map(favoriteSongRows.map((r) => [r.id, r]));
 
@@ -133,19 +157,45 @@ export default async function MySongsPage() {
     const [cCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(songTable)
-      .where(eq(songTable.userId, userId));
+      .where(
+        and(
+          eq(songTable.userId, userId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      );
     creationsCount = Number(cCount?.count || 0);
 
     const [fCount] = await db
       .select({ count: sql<number>`count(*)` })
       .from(songFavorite)
-      .where(eq(songFavorite.userId, userId));
+      .innerJoin(songTable, eq(songFavorite.songId, songTable.id))
+      .where(
+        and(
+          eq(songFavorite.userId, userId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      );
     favoritesCount = Number(fCount?.count || 0);
 
     const [rCount] = await db
       .select({ count: sql<number>`count(distinct ${songPlay.songId})` })
       .from(songPlay)
-      .where(eq(songPlay.userId, userId));
+      .innerJoin(songTable, eq(songPlay.songId, songTable.id))
+      .where(
+        and(
+          eq(songPlay.userId, userId),
+          or(
+            isNull(songTable.processingStatus),
+            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          )
+        )
+      );
     recentCount = Number(rCount?.count || 0);
   }
 

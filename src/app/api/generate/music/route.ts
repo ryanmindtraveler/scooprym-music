@@ -11,7 +11,7 @@ import { generateMusic } from '@/ai/music/lib/generation';
 // Import processMusicBackground for fallback execution
 import { processMusicBackground, type ProcessMusicOptions } from '@/lib/song-workflow';
 import { qstash, getWorkerUrl } from '@/lib/queue';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { mapGenerationError } from '@/lib/music/error-handler';
 import { consumeCredits } from '@/credits/credits';
 
@@ -39,16 +39,20 @@ type GenerateMusicBody = {
  * 6. Return "Audio Ready" response immediately
  */
 export async function POST(req: Request) {
-  let songId: string | null = null;
-  const startTime = performance.now();
+    let songId: string | null = null;
+    let creditsDeductedSynch = false;
+    let session: any = null;
+    let userId: string | undefined;
+    const startTime = performance.now();
   console.log('[Performance] generate-music: New Request');
 
   try {
     // 0. Rate Limiting
-    const { getRateLimiter } = await import("@/lib/ratelimit");
-    // session is declared later, do not declare here if not needed immediately or rename
-    const session = await getSession();
-    const userId = session?.user?.id;
+        const { getRateLimiter } = await import("@/lib/ratelimit");
+
+        // 1. Session & Auth
+        session = await getSession();
+        userId = session?.user?.id;
 
     // Identify by UserID (preferred) or IP (fallback)
     const identifier = userId || (req.headers.get("x-forwarded-for") ?? "127.0.0.1");
@@ -172,7 +176,6 @@ export async function POST(req: Request) {
     const tempAudioUrl = musicResult.audioContent as string;
 
     // 3.5 Deduct Credits Synchronously (CRITICAL for Real-time Balance Update)
-    let creditsDeductedSynch = false;
     try {
         console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
         await consumeCredits({
@@ -254,9 +257,34 @@ export async function POST(req: Request) {
              // We do NOT update status to 'failed'. We assume inline might succeed.
         } catch (fallbackError) {
              console.error(`[QStash] Fallback Inline execution also failed for ${songId}:`, fallbackError);
-             await db.update(songTable)
-                .set({ processingStatus: 'processing_queue_failed', creditError: 'Queue & Inline failed' })
-                .where(eq(songTable.id, songId));
+             try {
+                 const dbInstance = await getDb();
+                 const updatedRows = await dbInstance.update(songTable)
+                    .set({
+                        processingStatus: 'processing_queue_failed',
+                        creditError: 'Queue & Inline failed',
+                        creditsDeducted: false
+                    })
+                    .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+                    .returning({ id: songTable.id });
+
+                 if (updatedRows.length > 0 && userId) {
+                     console.log(`[generate-music] Fallback Failure: Atomic auto-refund triggered for ${songId}`);
+                     const { refundCredits } = await import('@/credits/credits');
+                     await refundCredits({
+                         userId,
+                         amount: 2,
+                         description: `Generation failed (Queue & Inline) [ID:${songId}]`
+                     }).catch(e => console.error("Auto-refund failed in fallback catch:", e));
+                 } else if (updatedRows.length === 0) {
+                     // Just update status if not deducted
+                     await dbInstance.update(songTable)
+                        .set({ processingStatus: 'processing_queue_failed', creditError: 'Queue & Inline failed' })
+                        .where(eq(songTable.id, songId));
+                 }
+             } catch (dbErr) {
+                 console.error("Failed to update/refund in fallback catch:", dbErr);
+             }
         }
     }
 
@@ -281,10 +309,47 @@ export async function POST(req: Request) {
     console.error('[generate-music] Handler Exception:', error);
     if (songId) {
         try {
-            await (await getDb()).update(songTable)
-               .set({ processingStatus: 'failed_generation', creditError: error.message })
-               .where(eq(songTable.id, songId));
-        } catch (e) {}
+            const dbInstance = await getDb();
+            // Atomic Lock: Only refund if we flip creditsDeducted from true to false
+            const updatedRows = await dbInstance.update(songTable)
+                .set({
+                    processingStatus: 'failed_generation',
+                    creditError: error.message,
+                    creditsDeducted: false
+                })
+                .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+                .returning({ id: songTable.id });
+
+            if (updatedRows.length > 0 || (creditsDeductedSynch && !updatedRows.length)) {
+                // If updatedRows.length > 0, it means we atomically flipped the flag.
+                // If creditsDeductedSynch is true but updatedRows.length is 0, it might mean
+                // another process (like the worker) already refunded it.
+                // However, if we just deducted it and caught an error before publish,
+                // creditsDeductedSynch is our safest local signal.
+
+                // Let's be even safer: If creditsDeductedSynch is true, we ONLY refund if
+                // we were the ones to flip it or if we are absolutely sure it's needed.
+                if (updatedRows.length > 0 && userId) {
+                    console.log(`[generate-music] POST Failure: Atomic auto-refund triggered for ${songId}`);
+                    const { refundCredits } = await import('@/credits/credits');
+                    await refundCredits({
+                        userId,
+                        amount: 2,
+                        description: `Generation failed (POST Handler Exception) [ID:${songId}]`
+                    }).catch(e => console.error("Auto-refund failed in final catch:", e));
+                }
+            } else {
+                // Not deducted or already handled, just update generic status if not already set
+                await dbInstance.update(songTable)
+                    .set({
+                        processingStatus: 'failed_generation',
+                        creditError: error.message
+                    })
+                    .where(eq(songTable.id, songId));
+            }
+        } catch (e) {
+            console.error("Failed to update song status in final catch:", e);
+        }
     }
     return NextResponse.json(mapGenerationError(error), { status: 500 });
   }

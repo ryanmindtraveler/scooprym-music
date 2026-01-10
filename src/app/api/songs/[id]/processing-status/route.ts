@@ -1,7 +1,7 @@
 import { getDb } from '@/db/index';
 import { song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 /**
@@ -129,11 +129,52 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
     const created = new Date(song.createdAt);
     const minutesSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60);
 
-    if (minutesSinceCreation > 10 && status !== 'completed') {
+    if (minutesSinceCreation > 15 && status !== 'completed' && status !== 'failed') {
+      console.log(`[processing-status] Detected zombie task ${params.id} (${minutesSinceCreation.toFixed(1)} mins). Cleaning up...`);
+
       status = 'failed';
-      message = '处理超时，可能失败';
+      message = '处理超时，已自动退款并标记失败';
       if (musicStatus === 'processing') musicStatus = 'failed';
       if (coverStatus === 'processing' || coverStatus === 'generating') coverStatus = 'failed';
+
+      // Perform side-effect: Update DB and Refund
+      try {
+          const dbForUpdate = await getDb();
+
+          // 1. Refund if needed and 2. Mark as failed in DB
+          const updatedRows = await dbForUpdate
+            .update(songTable)
+            .set({
+                processingStatus: 'failed_generation',
+                creditsDeducted: false,
+                creditError: 'Processing timeout (>15 mins)'
+            })
+            .where(and(eq(songTable.id, params.id), eq(songTable.creditsDeducted, true)))
+            .returning({ id: songTable.id });
+
+          if (updatedRows.length > 0) {
+              const { refundCredits } = await import('@/credits/credits');
+              await refundCredits({
+                  userId: song.userId,
+                  amount: 2, // Default cost
+                  description: `Generation timeout (Self-healing) [ID:${params.id}]`
+              }).catch(e => console.error(`[processing-status] Self-healing refund failed for ${params.id}:`, e));
+          } else {
+              // If no row was updated, it means it was either not deducted or already refunded.
+              // Just update the status without attempting refund.
+              await dbForUpdate
+                .update(songTable)
+                .set({
+                    processingStatus: 'failed_generation',
+                    creditError: 'Processing timeout (>15 mins)'
+                })
+                .where(eq(songTable.id, params.id));
+          }
+
+          console.log(`[processing-status] Zombie task ${params.id} successfully cleaned & refunded.`);
+      } catch (cleanupErr) {
+          console.error("[processing-status] Cleanup side-effect failed:", cleanupErr);
+      }
     }
 
     return NextResponse.json({

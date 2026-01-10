@@ -1,7 +1,7 @@
 import { getDb } from '@/db';
 import { song, songFavorite } from '@/db/schema';
 import { getSession } from '@/lib/server';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -24,7 +24,16 @@ export async function GET(request: Request) {
     const [totalRes] = await db
       .select({ count: sql<number>`count(*)` })
       .from(songFavorite)
-      .where(eq(songFavorite.userId, userId));
+      .innerJoin(song, eq(songFavorite.songId, song.id))
+      .where(
+        and(
+          eq(songFavorite.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      );
     const total = Number(totalRes?.count || 0);
 
     const favorites = await db
@@ -46,7 +55,15 @@ export async function GET(request: Request) {
       })
       .from(songFavorite)
       .innerJoin(song, eq(songFavorite.songId, song.id))
-      .where(eq(songFavorite.userId, userId))
+      .where(
+        and(
+          eq(songFavorite.userId, userId),
+          or(
+            isNull(song.processingStatus),
+            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          )
+        )
+      )
       .orderBy(desc(songFavorite.createdAt))
       .limit(limit)
       .offset(offset);

@@ -8,7 +8,7 @@ import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
 import { getDb } from '@/db/index';
 import { creditTransaction, song as songTable } from '@/db/schema';
 import { uploadFile } from '@/storage';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql, like } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 
 export interface ProcessMusicOptions {
@@ -161,34 +161,37 @@ export async function processMusicBackground(
         const { consumeCredits } = await import('@/credits/credits');
 
         // Idempotency Check: Verify if we already deducted for this song
-        // We check BOTH the song status AND the credit transaction history for maximum safety
-        const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
+        // We check BOTH the song status AND the net credit balance for this specific song ID
+        const idSuffix = `[ID:${songId}]`;
 
         // Parallel check
-        const [existingRecordRows, existingTransactionRows] = await Promise.all([
+        const [existingRecordRows, netCreditRows] = await Promise.all([
              db.select({ creditsDeducted: songTable.creditsDeducted })
                .from(songTable)
                .where(eq(songTable.id, songId))
                .limit(1),
-             db.select({ id: creditTransaction.id })
+             db.select({
+                // Calculate net credits for this song (Usage -2 + Refund +2 = 0)
+                netAmount: sql<number>`COALESCE(SUM(${creditTransaction.amount}), 0)`
+             })
                .from(creditTransaction)
                .where(
                   and(
                       eq(creditTransaction.userId, userId),
-                      eq(creditTransaction.description, uniqueDescription),
-                      eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.USAGE)
+                      like(creditTransaction.description, `%${idSuffix}`)
                   )
                )
-               .limit(1)
         ]);
 
-        // Using "Rows" suffix clearly indicates these are arrays from the select result
         const existingRecord = existingRecordRows[0];
-        const existingTransaction = existingTransactionRows[0];
+        const netAmount = Number(netCreditRows[0]?.netAmount || 0);
 
-        if (existingRecord?.creditsDeducted || existingTransaction) {
-           console.log(`[song-workflow] Credits already deducted for ${songId} (Transaction/Status found). Skipping charge.`);
+        // If netAmount is negative (e.g., -2), it means the user is already "charged" for this ID.
+        // If netAmount is 0 (or positive), it means they either weren't charged or were refunded.
+        if (existingRecord?.creditsDeducted || netAmount < 0) {
+           console.log(`[song-workflow] Credits already deducted for ${songId} (Status=${existingRecord?.creditsDeducted}, Net=${netAmount}). Skipping charge.`);
         } else {
+            const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
             await consumeCredits({
               userId,
               amount: 2,
@@ -239,10 +242,39 @@ export async function processMusicBackground(
     } else {
       // Audio failed
       console.error(`[song-workflow] Audio upload failed for ${songId}:`, audioUploadResult.reason);
-      await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
+
+      // Refund credits if they were already deducted (Atomic Lock)
+      try {
+        const updatedRows = await db
+          .update(songTable)
+          .set({
+             creditsDeducted: false,
+             processingStatus: 'failed_audio_upload'
+          })
+          .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+          .returning({ id: songTable.id });
+
+        if (updatedRows.length > 0) {
+          const { refundCredits } = await import('@/credits/credits');
+          await refundCredits({
+            userId,
+            amount: 2,
+            description: `Generation failed (Storage Upload) [ID:${songId}]`,
+          }).catch(e => console.error(`[song-workflow] Refund failed for ${songId}:`, e));
+        } else {
+          // If no row was updated, it means it's either not deducted or already refunded
+          await db
+            .update(songTable)
+            .set({ processingStatus: 'failed_audio_upload' })
+            .where(eq(songTable.id, songId));
+        }
+      } catch (refundError) {
+        console.error(`[song-workflow] Failed to process refund for ${songId}:`, refundError);
+      }
+
       return {
-          success: false,
-          error: `Audio upload failed: ${audioUploadResult.reason}`
+        success: false,
+        error: `Audio upload failed: ${audioUploadResult.reason}`,
       };
     }
   } catch (globalError: any) {
@@ -250,13 +282,33 @@ export async function processMusicBackground(
 
     // Attempt to update DB to prevent zombie state
     try {
+      // Refund credits if they were already deducted (Atomic Lock)
+      const updatedRows = await db
+        .update(songTable)
+        .set({
+           creditsDeducted: false,
+           processingStatus: 'failed_internal_error',
+           creditError: globalError.message || 'Fatal workflow error'
+        })
+        .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+        .returning({ id: songTable.id });
+
+      if (updatedRows.length > 0) {
+        const { refundCredits } = await import('@/credits/credits');
+        await refundCredits({
+          userId,
+          amount: 2,
+          description: `Generation failed (Fatal Error) [ID:${songId}]`,
+        }).catch((e) => console.error(`[song-workflow] Fatal refund error for ${songId}:`, e));
+      } else {
         await db
           .update(songTable)
           .set({
             processingStatus: 'failed_internal_error',
-            creditError: globalError.message || 'Fatal workflow error'
+            creditError: globalError.message || 'Fatal workflow error',
           })
           .where(eq(songTable.id, songId));
+      }
     } catch (dbError) {
         // If DB connection is also dead, just log it.
         console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);

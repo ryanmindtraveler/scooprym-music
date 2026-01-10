@@ -14,6 +14,7 @@ import {
   findPlanByPriceId,
   getAllPricePlans,
 } from '@/payment/server';
+import { Logger } from '@/lib/logger';
 import { and, desc, eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -29,7 +30,7 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
   const userId = currentUser.id;
 
   try {
-    console.log('Check current plan start for userId:', userId);
+    Logger.debug('Check current plan start for userId:', userId);
 
     const db = await getDb();
     const plans = getAllPricePlans();
@@ -75,7 +76,7 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
       )
       .orderBy(desc(payment.createdAt));
 
-    console.log(`Check current plan, found ${payments.length} relevant payments`);
+    Logger.debug(`Check current plan, found ${payments.length} relevant payments`);
 
     // Analyze payments to determine current plan
     let userLifetimePlan: PricePlan | null = null;
@@ -92,7 +93,7 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
         const pricePlan = findPlanByPriceId(paymentRecord.priceId);
         if (pricePlan && lifetimePlanIds.includes(pricePlan.id)) {
           userLifetimePlan = pricePlan;
-          console.log('Check current plan, found lifetime plan:', pricePlan.id);
+          Logger.debug('Check current plan, found lifetime plan:', pricePlan.id);
         }
       }
 
@@ -117,13 +118,13 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
           trialEndDate: paymentRecord.trialEnd || undefined,
           createdAt: paymentRecord.createdAt,
         };
-        console.log('Check current plan, found active subscription:', activeSubscription.id);
+        Logger.debug('Check current plan, found active subscription:', activeSubscription.id);
       }
     }
 
     // Return results based on priority: lifetime > subscription > free
     if (userLifetimePlan) {
-      console.log('Check current plan, user is lifetime member');
+      Logger.debug('Check current plan, user is lifetime member');
       return {
         success: true,
         data: {
@@ -134,10 +135,14 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
     }
 
     if (activeSubscription) {
-      console.log('Check current plan, user has active subscription');
+      Logger.debug('Check current plan, user has active subscription:', activeSubscription.id);
+      Logger.debug('Active Subscription Price ID:', activeSubscription.priceId);
+
       // Find the corresponding plan for the subscription
       const subscriptionPlan =
         plans.find((p) => p.prices.find((price) => price.priceId === activeSubscription!.priceId)) || null;
+
+      Logger.debug('Found matching subscription plan:', subscriptionPlan?.id || 'null');
 
       return {
         success: true,
@@ -149,7 +154,7 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
     }
 
     // Default to free plan
-    console.log('Check current plan, return free plan');
+    Logger.debug('Check current plan, return free plan');
     return {
       success: true,
       data: {
@@ -158,10 +163,11 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
       },
     };
   } catch (error) {
-    console.error('Check current plan error:', error);
+    Logger.error('Check current plan error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get current plan',
     };
   }
 });
+

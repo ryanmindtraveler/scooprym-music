@@ -211,10 +211,85 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
     }
   }, [currentSong?.id, globalIsPlaying, pause, play]);
 
-  const getIsPlaying = (id: string) => globalIsPlaying && currentSong?.id === id;
+  // Hydration fix: Handle client-side only player state
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
+  const getIsPlaying = (id: string) => mounted && globalIsPlaying && currentSong?.id === id;
 
+  // Polling logic: If any song is processing, refresh every 3 seconds
+  useEffect(() => {
+    const currentList = data[activeTab];
+    const hasProcessing = currentList.some(
+      (s) => s.audioUrl === 'processing' || s.processingStatus === 'processing'
+    );
 
+    if (!hasProcessing) return;
+
+    const intervalId = setInterval(() => {
+      // Quietly fetch updates (don't set loading spinner)
+      const page = pages[activeTab];
+      const endpoint = activeTab === 'creations' ? '/api/songs' : `/api/songs/${activeTab}`;
+      fetch(`${endpoint}?page=${page}&limit=9`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success && result.data) {
+            setData((prev) => {
+               // Only update if data actually changed to avoid re-renders?
+               // For now just update to keep it simple and ensuring latest status
+               return { ...prev, [activeTab]: result.data };
+            });
+            setTotalPages((prev) => ({ ...prev, [activeTab]: result.pagination.totalPages }));
+
+            // Update playsById from polling data
+            if (result.data) {
+                setPlaysById((prev) => {
+                    const next = { ...prev };
+                    for (const s of result.data) {
+                        next[s.id] = s.plays;
+                    }
+                    return next;
+                });
+            }
+
+            // Check if we still need to poll
+            const stillProcessing = result.data.some(
+              (s: SongItem) => s.audioUrl === 'processing' || s.processingStatus === 'processing'
+            );
+
+            // Sync selectedSong if it's currently open
+            if (selectedSong) {
+                const updatedSelectedSong = result.data.find((s: SongItem) => s.id === selectedSong.id);
+                if (updatedSelectedSong) {
+                    // If it was processing and is now failed, close modal and warn user
+                    if (updatedSelectedSong.processingStatus?.startsWith('failed')) {
+                        setSelectedSong(null);
+                        toast.error(`Generation failed for "${updatedSelectedSong.title}"`);
+                    } else if (updatedSelectedSong.audioUrl !== 'processing' && updatedSelectedSong.audioUrl !== selectedSong.audioUrl) {
+                        // If audio URL is now available, update snapshot
+                        setSelectedSong(updatedSelectedSong);
+                    }
+                } else {
+                    // Song disappeared from list (likely failed and filtered by API)
+                    // We only close if it was previously in a 'processing' state
+                    const wasProcessing = selectedSong.audioUrl === 'processing' || selectedSong.processingStatus === 'processing';
+                    if (wasProcessing) {
+                        setSelectedSong(null);
+                        toast.error('Track generation was interrupted or failed.');
+                    }
+                }
+            }
+          }
+        })
+        .catch((err) => console.error('Polling error:', err));
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [activeTab, data, pages]); // Depend on data so it re-evaluates when data updates
+
+  // Initial fetch logic
   useEffect(() => {
     // 仅在非初始加载 (page > 1) 或通过分页导航回到第 1 页时才获取数据
     // 初始加载 (page=1, !hasNavigated) 使用服务器渲染的数据
@@ -228,7 +303,7 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
       }
       fetchData(activeTab, pages[activeTab]);
     }
-  }, [activeTab, pages, hasNavigated]);
+  }, [activeTab, pages, hasNavigated, fetchData]);
 
   const handlePageChange = (tab: string, newPage: number) => {
     setPages((prev) => ({ ...prev, [tab]: newPage }));
