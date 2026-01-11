@@ -3,7 +3,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 
 // Define the shape of our data based on your schema
 export type User = {
@@ -30,10 +30,7 @@ export const columns: ColumnDef<User>[] = [
     id: 'select',
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
@@ -56,10 +53,7 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: 'email',
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
           Email
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
@@ -70,16 +64,16 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: 'role',
     header: 'Role',
     cell: ({ row }) => {
-        const role = row.getValue('role') as string;
-        return <Badge variant={role === 'admin' ? 'destructive' : 'secondary'}>{role || 'user'}</Badge>
-    }
+      const role = row.getValue('role') as string;
+      return <Badge variant={role === 'admin' ? 'destructive' : 'secondary'}>{role || 'user'}</Badge>;
+    },
   },
   {
     accessorKey: 'createdAt',
     header: 'Joined',
     cell: ({ row }) => {
-        return new Date(row.getValue('createdAt')).toLocaleDateString();
-    }
+      return new Date(row.getValue('createdAt')).toLocaleDateString();
+    },
   },
   {
     id: 'actions',
@@ -96,11 +90,7 @@ export const columns: ColumnDef<User>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(user.id)}
-            >
-              Copy User ID
-            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.id)}>Copy User ID</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View Details</DropdownMenuItem>
           </DropdownMenuContent>

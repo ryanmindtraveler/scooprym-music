@@ -12,10 +12,7 @@ export default async function HeroSection() {
           Turning <span className="font-extrabold text-cyan-600 drop-shadow-sm">news</span>,{' '}
           <span className="font-extrabold text-pink-600 drop-shadow-sm">entertainment</span>, and{' '}
           <span className="font-extrabold text-orange-600 drop-shadow-sm">gossip</span> into{' '}
-          <span className="text-slate-900 drop-shadow-md font-black text-[1.3em]">
-            Music Beats
-          </span>
-          .
+          <span className="text-slate-900 drop-shadow-md font-black text-[1.3em]">Music Beats</span>.
         </>
       }
       callToAction={{

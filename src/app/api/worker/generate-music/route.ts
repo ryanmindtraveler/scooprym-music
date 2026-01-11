@@ -1,7 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
-import { processMusicBackground, type ProcessMusicOptions } from "@/lib/song-workflow";
-import { generateCoverWithRetry } from "@/ai/image/lib/cover-generation";
+import { generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
+import { type ProcessMusicOptions, processMusicBackground } from '@/lib/song-workflow';
+import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+import { type NextRequest, NextResponse } from 'next/server';
 
 /**
  * Worker Endpoint: /api/worker/generate-music
@@ -19,7 +19,7 @@ async function handler(req: NextRequest) {
     const body = await req.json();
     const { audioContent, options } = body as {
       audioContent: string;
-      options: ProcessMusicOptions
+      options: ProcessMusicOptions;
     };
 
     console.log(`[Worker] Received job for song: ${options.songId}`);
@@ -41,15 +41,14 @@ async function handler(req: NextRequest) {
 
     if (result.success) {
       console.log(`[Worker] Job completed successfully for ${options.songId}`);
-      return NextResponse.json({ status: "success", data: result });
+      return NextResponse.json({ status: 'success', data: result });
     }
 
     console.error(`[Worker] Job failed for ${options.songId}:`, result.error);
-    return NextResponse.json({ status: "error", error: result.error }, { status: 500 });
-
+    return NextResponse.json({ status: 'error', error: result.error }, { status: 500 });
   } catch (error: any) {
-    console.error("[Worker] Unhandled exception:", error);
-    return NextResponse.json({ status: "error", error: error.message }, { status: 500 });
+    console.error('[Worker] Unhandled exception:', error);
+    return NextResponse.json({ status: 'error', error: error.message }, { status: 500 });
   }
 }
 

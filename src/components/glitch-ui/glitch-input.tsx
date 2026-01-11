@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type InputHTMLAttributes, type ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
 interface GlitchInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;

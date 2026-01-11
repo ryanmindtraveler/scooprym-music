@@ -1,6 +1,5 @@
 'use client';
 
-import { memo } from 'react';
 import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
@@ -17,9 +16,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Clock, Loader2, Music2, Pause, Play, Trash2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { memo } from 'react';
 
 interface SongRowProps {
   index: number;
@@ -58,7 +58,12 @@ function SongRowBase({
   };
 
   const isFailed = item.processingStatus?.startsWith('failed');
-  const isPending = !isFailed && (!item.audioUrl || item.audioUrl === 'pending-stream' || item.audioUrl === 'processing' || item.processingStatus === 'processing');
+  const isPending =
+    !isFailed &&
+    (!item.audioUrl ||
+      item.audioUrl === 'pending-stream' ||
+      item.audioUrl === 'processing' ||
+      item.processingStatus === 'processing');
   const hasAudio = Boolean(item.audioUrl) && item.audioUrl !== 'processing' && !isPending && !isFailed;
 
   return (
@@ -86,38 +91,38 @@ function SongRowBase({
 
           {/* Status Overlay */}
           {(isPending || isFailed) && (
-             <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px]">
-                {isPending ? (
-                  <Loader2 className="size-5 text-white animate-spin" />
-                ) : (
-                  <div className="text-[10px] font-bold text-red-400 bg-red-950/80 px-1 py-0.5 rounded">FAILED</div>
-                )}
-             </div>
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px]">
+              {isPending ? (
+                <Loader2 className="size-5 text-white animate-spin" />
+              ) : (
+                <div className="text-[10px] font-bold text-red-400 bg-red-950/80 px-1 py-0.5 rounded">FAILED</div>
+              )}
+            </div>
           )}
         </div>
 
         {/* Play Overlay - Only show if valid audio */}
         {hasAudio && (
-        <div
-          className={cn(
-            'absolute inset-0 flex items-center justify-center rounded-xl transition-all duration-200',
-            isPlaying ? 'bg-black/40 opacity-100' : 'bg-black/10 opacity-0 group-hover/cover:opacity-100'
-          )}
-        >
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8 rounded-full text-white hover:bg-white/20 hover:text-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPlayClick();
-            }}
-            disabled={!hasAudio}
-            aria-label={isPlaying ? 'Pause song' : 'Play song'}
+          <div
+            className={cn(
+              'absolute inset-0 flex items-center justify-center rounded-xl transition-all duration-200',
+              isPlaying ? 'bg-black/40 opacity-100' : 'bg-black/10 opacity-0 group-hover/cover:opacity-100'
+            )}
           >
-            {isPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
-          </Button>
-        </div>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-8 rounded-full text-white hover:bg-white/20 hover:text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPlayClick();
+              }}
+              disabled={!hasAudio}
+              aria-label={isPlaying ? 'Pause song' : 'Play song'}
+            >
+              {isPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
+            </Button>
+          </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
@@ -224,7 +229,7 @@ export function SongRowSkeleton() {
       </div>
       <div className="flex-1 min-w-0">
         <div className="h-5 w-48 mb-2">
-           <Skeleton className="h-full w-full" />
+          <Skeleton className="h-full w-full" />
         </div>
         <div className="flex gap-4">
           <Skeleton className="h-3 w-20" />

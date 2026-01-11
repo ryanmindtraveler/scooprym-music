@@ -26,13 +26,13 @@ export function SpectrumLoader({ className }: { className?: string }) {
 
   return (
     <div className={cn('relative flex items-center gap-1 h-12', className)}>
-       {bars.map((height, i) => (
-         <div
-           key={i}
-           className="w-1 bg-indigo-500/40 rounded-full transition-all duration-150"
-           style={{ height: `${height}%` }}
-         />
-       ))}
+      {bars.map((height, i) => (
+        <div
+          key={i}
+          className="w-1 bg-indigo-500/40 rounded-full transition-all duration-150"
+          style={{ height: `${height}%` }}
+        />
+      ))}
     </div>
   );
 }

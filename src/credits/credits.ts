@@ -1,4 +1,3 @@
-
 import { randomUUID } from 'crypto';
 import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';

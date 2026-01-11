@@ -5,7 +5,7 @@ import { getCreditPackageById } from '@/credits/server';
 import type { User } from '@/lib/auth-types';
 import { userActionClient } from '@/lib/safe-action';
 import { getUrlWithLocale } from '@/lib/urls/urls';
-import { createCreditCheckout, type CreateCreditCheckoutParams } from '@/payment/server';
+import { type CreateCreditCheckoutParams, createCreditCheckout } from '@/payment/server';
 import { Routes } from '@/routes';
 import { getLocale } from 'next-intl/server';
 import { cookies } from 'next/headers';

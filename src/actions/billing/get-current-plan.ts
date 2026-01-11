@@ -3,6 +3,7 @@
 import { getDb } from '@/db';
 import { payment } from '@/db/schema';
 import type { User } from '@/lib/auth-types';
+import { Logger } from '@/lib/logger';
 import { userActionClient } from '@/lib/safe-action';
 import {
   PaymentScenes,
@@ -14,7 +15,6 @@ import {
   findPlanByPriceId,
   getAllPricePlans,
 } from '@/payment/server';
-import { Logger } from '@/lib/logger';
 import { and, desc, eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -170,4 +170,3 @@ export const getCurrentPlanAction = userActionClient.schema(schema).action(async
     };
   }
 });
-

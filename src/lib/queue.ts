@@ -4,14 +4,14 @@
  * This client is used to publish messages to the QStash queue, which then calls our worker endpoints.
  */
 
-import { Client } from "@upstash/qstash";
-import { getBaseUrl } from "./urls/urls";
+import { Client } from '@upstash/qstash';
+import { getBaseUrl } from './urls/urls';
 
 // Initialize QStash Client
 // If tokens are missing (e.g. in development before setup), it will throw or fail gracefully depending on usage.
 // For robust local dev without QStash, we might want to mock this or use a conditional check.
 export const qstash = new Client({
-  token: process.env.QSTASH_TOKEN || "mock_token",
+  token: process.env.QSTASH_TOKEN || 'mock_token',
 });
 
 /**
@@ -24,7 +24,7 @@ export const qstash = new Client({
 export const getWorkerUrl = (path: string) => {
   const base = getBaseUrl();
   // Ensure path has leading slash
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
   return `${base}${normalizedPath}`;
 };

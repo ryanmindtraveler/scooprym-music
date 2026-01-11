@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
+import { cn } from '@/lib/utils';
 import type { NestedMenuItem } from '@/types';
 
 /**
@@ -47,8 +48,12 @@ export function SidebarMain({ items }: { items: NestedMenuItem[] }) {
                             {subItem.icon}
                           </span>
                         ) : null}
-                        <span className="truncate font-bold text-sm tracking-wide flex-1">{subItem.title}</span>
-                        {subItem.badge && <span className="ml-auto">{subItem.badge}</span>}
+                        <div className="flex flex-1 items-center min-w-0">
+                          <span className="truncate font-bold text-sm tracking-wide">{subItem.title}</span>
+                          {subItem.badge && (
+                            <span className={cn('ml-auto', subItem.badgeClassName)}>{subItem.badge}</span>
+                          )}
+                        </div>
                       </LocaleLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -71,9 +76,11 @@ export function SidebarMain({ items }: { items: NestedMenuItem[] }) {
                       {item.icon ? (
                         <span className="group-data-[active=true]:text-primary transition-colors">{item.icon}</span>
                       ) : null}
-                        <span className="truncate font-bold text-sm tracking-wide flex-1">{item.title}</span>
-                        {item.badge && <span className="ml-auto">{item.badge}</span>}
-                      </LocaleLink>
+                      <div className="flex flex-1 items-center min-w-0">
+                        <span className="truncate font-bold text-sm tracking-wide">{item.title}</span>
+                        {item.badge && <span className={cn('ml-auto', item.badgeClassName)}>{item.badge}</span>}
+                      </div>
+                    </LocaleLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

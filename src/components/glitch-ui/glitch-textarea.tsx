@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type TextareaHTMLAttributes, type ReactNode } from 'react';
+import type { ReactNode, TextareaHTMLAttributes } from 'react';
 
 interface GlitchTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;

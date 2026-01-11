@@ -14,6 +14,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Edit2,
   FileText,
   Info,
   Link as LinkIcon,
@@ -21,7 +22,6 @@ import {
   Music2,
   Sparkles,
   Trash2,
-  Edit2,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -38,19 +38,19 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useCreateStore } from '@/store';
-import { ALL_KNOWN_TAGS, DEFAULT_CUSTOM_VIBE_PROMPT, MUSIC_STYLE_CATEGORIES, VIBE_PERSONAS, getActiveStyle } from './create-music-data';
+import {
+  ALL_KNOWN_TAGS,
+  DEFAULT_CUSTOM_VIBE_PROMPT,
+  MUSIC_STYLE_CATEGORIES,
+  VIBE_PERSONAS,
+  getActiveStyle,
+} from './create-music-data';
 import { GenerationProgress } from './generation-progress';
-
-
 
 interface CreateMusicFormProps {
   newsLink: string;
@@ -68,10 +68,6 @@ interface CreateMusicFormProps {
   isAdmin?: boolean;
   onClearError?: () => void;
 }
-
-
-
-
 
 // ==================== Main Component ====================
 
@@ -163,11 +159,11 @@ export function CreateMusicForm({
 
     // 3. If Prop is different (e.g. Reset, Initial Load, or External Change), Re-Parse
     if (!musicPrompt) {
-        // Special case: Empty
-        setActivePersonaId(null);
-        setVibeTags([]);
-        setCustomVibeText('');
-        return;
+      // Special case: Empty
+      setActivePersonaId(null);
+      setVibeTags([]);
+      setCustomVibeText('');
+      return;
     }
 
     const currentTags = musicPrompt.split(',').map((s) => s.trim());
@@ -176,14 +172,14 @@ export function CreateMusicForm({
     const matched = VIBE_PERSONAS.find((p) => p.tags.every((t) => currentTags.includes(t)));
 
     if (matched) {
-        setActivePersonaId(matched.id);
-        setVibeTags([...matched.tags]);
-        // Ideally, remaining text?
-        // For simplicity in "Persona Mode", we often assume the Prompt IS the Persona.
-        // But if there are extra tags, they should go to custom?
-        // Let's stick to the "Unknown -> Custom" logic which is safer:
+      setActivePersonaId(matched.id);
+      setVibeTags([...matched.tags]);
+      // Ideally, remaining text?
+      // For simplicity in "Persona Mode", we often assume the Prompt IS the Persona.
+      // But if there are extra tags, they should go to custom?
+      // Let's stick to the "Unknown -> Custom" logic which is safer:
     } else {
-        setActivePersonaId(null);
+      setActivePersonaId(null);
     }
 
     // Distribute Tags (Known vs Unknown)
@@ -193,21 +189,20 @@ export function CreateMusicForm({
     // to keep the UI "Clean" (Persona Card Selected).
 
     if (matched) {
-         // If matched, we force the Persona's definition to be the "Active Tags"
-         // Any extra text in prompt is ignored? Or appended?
-         // If we want "Pure", we ignore. If we want robustness, we parse rest.
-         // Let's parse rest to be safe.
-         const extra = currentTags.filter(t => !matched.tags.includes(t)).join(', ');
-         setCustomVibeText(extra);
+      // If matched, we force the Persona's definition to be the "Active Tags"
+      // Any extra text in prompt is ignored? Or appended?
+      // If we want "Pure", we ignore. If we want robustness, we parse rest.
+      // Let's parse rest to be safe.
+      const extra = currentTags.filter((t) => !matched.tags.includes(t)).join(', ');
+      setCustomVibeText(extra);
     } else {
-         // Freestyle Mode
-         const known = currentTags.filter(s => ALL_KNOWN_TAGS.has(s));
-         const unknown = currentTags.filter(s => s && !ALL_KNOWN_TAGS.has(s)).join(', ');
-         setVibeTags(known);
-         setCustomVibeText(unknown);
+      // Freestyle Mode
+      const known = currentTags.filter((s) => ALL_KNOWN_TAGS.has(s));
+      const unknown = currentTags.filter((s) => s && !ALL_KNOWN_TAGS.has(s)).join(', ');
+      setVibeTags(known);
+      setCustomVibeText(unknown);
     }
   }, [musicPrompt]); // Depend only on prop provided by parent (Store)
-
 
   // --- Logic 2: Shake Animation on Selection ---
   const [triggerShake, setTriggerShake] = useState(false);
@@ -224,20 +219,19 @@ export function CreateMusicForm({
 
   return (
     <div className="flex flex-col">
-
       <Card
         className={cn(
-          'p-5 flex flex-col w-full',
-          'shadow-2xl shadow-indigo-500/10',
-          'bg-white/80 dark:bg-zinc-900/90', // More transparency for glassmorphism
-          'bg-linear-to-b from-white to-purple-50/30 dark:from-zinc-900 dark:to-zinc-900/50', // Subtle mesh gradient
-          'border border-white/50 dark:border-white/5 backdrop-blur-xl rounded-[32px]', // Increased blur and roundedness
-          'transition-all duration-300'
+          'p-5 flex flex-col w-full h-full',
+          'shadow-[0_8px_40px_-12px_rgba(99,102,241,0.1)] hover:shadow-[0_16px_60px_-12px_rgba(99,102,241,0.15)]', // Indigo-tinted shadow for "Cotton Candy" vibe
+          'bg-white/90 dark:bg-slate-900/90',
+          'border border-white/50 dark:border-white/5 backdrop-blur-2xl rounded-[32px]',
+          'transition-all duration-500',
+          'group/form'
         )}
       >
         {/* Header Section */}
-        <div className="flex items-center gap-3 pb-2 border-b border-purple-100/50 dark:border-white/5 mb-1 shrink-0">
-          <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
+        <div className="flex items-center gap-3 pb-2 border-b border-indigo-100/50 dark:border-white/5 mb-1 shrink-0">
+          <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm shadow-indigo-500/10">
             <FileText className="size-5" />
           </div>
           <div>
@@ -248,13 +242,13 @@ export function CreateMusicForm({
         {/* Form Body - flex-none to condense content, empty space will be below footer */}
         <div className="flex-1 min-h-0 pr-1 flex flex-col space-y-2 mt-0 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {/* 1. News Link Input */}
-          <div className="space-y-1">
+          <div className="space-y-1 group">
             <LabelWithIcon
               icon={LinkIcon}
               label={
                 <span>
                   1. News Link{' '}
-                  <span className="text-slate-400 dark:text-slate-500 font-normal ml-1 text-[10px] lowercase opacity-80">
+                  <span className="text-slate-400 dark:text-slate-500 font-normal ml-1 text-[10px] lowercase opacity-80 group-focus-within:text-indigo-400 transition-colors">
                     (or fill Content below)
                   </span>
                 </span>
@@ -262,20 +256,20 @@ export function CreateMusicForm({
             />
             <Input
               placeholder="Paste a URL..."
-              className="h-10 bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm rounded-xl placeholder:text-slate-400 shadow-sm"
+              className="h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-200/60 dark:border-white/5 focus:bg-white dark:focus:bg-slate-800 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm rounded-xl placeholder:text-slate-400 font-medium shadow-inner"
               value={newsLink}
               onChange={(e) => setNewsLink(e.target.value)}
             />
           </div>
 
           {/* 2. Content Input */}
-          <div className="space-y-1 flex flex-col">
+          <div className="space-y-1 flex flex-col group">
             <LabelWithIcon
               icon={FileText}
               label={
                 <span>
                   2. Content / Context{' '}
-                  <span className="text-slate-400 dark:text-slate-500 font-normal ml-1 text-[10px] lowercase opacity-80">
+                  <span className="text-slate-400 dark:text-slate-500 font-normal ml-1 text-[10px] lowercase opacity-80 group-focus-within:text-indigo-400 transition-colors">
                     (or paste Link above)
                   </span>
                 </span>
@@ -283,7 +277,7 @@ export function CreateMusicForm({
             />
             <Textarea
               placeholder="Paste the article text or describe the vibe..."
-              className="w-full h-48 resize-none overflow-y-auto bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm rounded-xl placeholder:text-slate-400 leading-relaxed custom-scrollbar shadow-sm"
+              className="w-full h-40 resize-none overflow-y-auto bg-slate-50/80 dark:bg-slate-800/80 border-slate-200/60 dark:border-white/5 focus:bg-white dark:focus:bg-slate-800 focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm rounded-xl placeholder:text-slate-400 leading-relaxed custom-scrollbar shadow-inner p-4"
               value={newsContent}
               onChange={(e) => setNewsContent(e.target.value)}
             />
@@ -354,7 +348,6 @@ export function CreateMusicForm({
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {category.tags.map((tagObj) => {
-
                             const isSelected = selectedTags.includes(tagObj.label);
                             return (
                               <TooltipProvider key={tagObj.label}>
@@ -368,7 +361,7 @@ export function CreateMusicForm({
                                       className={cn(
                                         'h-6 px-2 text-[10px] font-bold transition-all rounded-md border',
                                         isSelected
-                                          ? `${getActiveStyle(category.id)} text-white border-transparent shadow-sm scale-105`
+                                          ? 'bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 text-white border-transparent shadow-md shadow-purple-500/20 scale-105'
                                           : 'bg-slate-100 dark:bg-zinc-800/50 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-white/10 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white'
                                       )}
                                     >
@@ -399,89 +392,93 @@ export function CreateMusicForm({
 
               {/* ALWAYS VISIBLE in background */}
               <div className="grid grid-cols-3 gap-1.5 absolute inset-0">
-                  {/* Persona Grid */}
-                  {VIBE_PERSONAS.map((persona) => {
-                    const isSpecialCustom = persona.id === 'viral_pop';
-                    const isThisActive = activePersonaId === persona.id || (isSpecialCustom && !activePersonaId && (vibeTags.length > 0 || customVibeText.length > 0));
+                {/* Persona Grid */}
+                {VIBE_PERSONAS.map((persona) => {
+                  const isSpecialCustom = persona.id === 'viral_pop';
+                  const isThisActive =
+                    activePersonaId === persona.id ||
+                    (isSpecialCustom && !activePersonaId && (vibeTags.length > 0 || customVibeText.length > 0));
 
-                    return (
-                      <TooltipProvider key={persona.id}>
-                        <Tooltip delayDuration={300}>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isSpecialCustom && isThisActive) {
-                                  setIsPopoverOpen(true);
-                                } else {
-                                  handlePersonaSelect(persona.id);
-                                }
-                              }}
+                  return (
+                    <TooltipProvider key={persona.id}>
+                      <Tooltip delayDuration={300}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isSpecialCustom && isThisActive) {
+                                setIsPopoverOpen(true);
+                              } else {
+                                handlePersonaSelect(persona.id);
+                              }
+                            }}
+                            className={cn(
+                              'flex items-center gap-2 p-1 px-2 text-left rounded-xl border-2 transition-all active:scale-95 group relative h-12',
+                              isThisActive
+                                ? 'border-indigo-500 bg-indigo-500/15 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/5 z-10'
+                                : cn(
+                                    persona.color,
+                                    isSpecialCustom
+                                      ? 'opacity-80 hover:opacity-100'
+                                      : 'border-transparent opacity-80 hover:opacity-100'
+                                  ),
+                              'hover:shadow-md'
+                            )}
+                          >
+                            {/* Active Checkmark Badge */}
+                            {isThisActive && (
+                              <div className="absolute -top-1.5 -right-1.5 bg-indigo-500 text-white rounded-full p-0.5 shadow-sm z-20 animate-in zoom-in duration-200">
+                                <Check className="size-2.5 stroke-[4px]" />
+                              </div>
+                            )}
+
+                            <div
                               className={cn(
-                                'flex items-center gap-2 p-1 px-2 text-left rounded-xl border-2 transition-all active:scale-95 group relative h-12',
-                                isThisActive
-                                  ? 'border-indigo-500 bg-indigo-500/15 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/5 z-10'
-                                  : cn(
-                                      persona.color,
-                                      isSpecialCustom ? 'opacity-80 hover:opacity-100' : 'border-transparent opacity-80 hover:opacity-100'
-                                    ),
-                                'hover:shadow-md'
+                                'text-lg shrink-0 transition-transform',
+                                isThisActive ? 'scale-110 rotate-3' : 'group-hover:scale-110'
                               )}
                             >
-                              {/* Active Checkmark Badge */}
-                              {isThisActive && (
-                                <div className="absolute -top-1.5 -right-1.5 bg-indigo-500 text-white rounded-full p-0.5 shadow-sm z-20 animate-in zoom-in duration-200">
-                                  <Check className="size-2.5 stroke-[4px]" />
-                                </div>
-                              )}
-
-                              <div
+                              {persona.icon}
+                            </div>
+                            <div className="flex flex-col min-w-0 pointer-events-none leading-none">
+                              <span
                                 className={cn(
-                                  'text-lg shrink-0 transition-transform',
-                                  isThisActive ? 'scale-110 rotate-3' : 'group-hover:scale-110'
+                                  'text-xs font-bold truncate',
+                                  isThisActive ? 'text-indigo-900 dark:text-indigo-100' : 'opacity-90'
                                 )}
                               >
-                                {persona.icon}
-                              </div>
-                              <div className="flex flex-col min-w-0 pointer-events-none leading-none">
-                                <span
-                                  className={cn(
-                                    'text-xs font-bold truncate',
-                                    isThisActive
-                                      ? 'text-indigo-900 dark:text-indigo-100'
-                                      : 'opacity-90'
-                                  )}
-                                >
-                                  {persona.label}
-                                </span>
-                                <span
-                                  className={cn(
-                                    'text-[9px] font-medium truncate mt-0.5',
-                                    isThisActive
-                                      ? 'text-indigo-600/70 dark:text-indigo-300/70'
-                                      : 'opacity-50'
-                                  )}
-                                >
-                                  {isSpecialCustom && isThisActive
-                                    ? ((vibeTags.length > 0 || customVibeText.length > 0) ? `${vibeTags.length + (customVibeText ? 1 : 0)} tags selected` : persona.desc)
-                                    : persona.desc}
-                                </span>
-                              </div>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            className="text-xs bg-black/90 text-white px-3 py-1.5 border-none max-w-[220px]"
-                          >
-                            <p>{isSpecialCustom && isThisActive ? 'Click to edit in Freestyle mode.' : (persona.desc || persona.label)}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })}
-
-
-                </div>
+                                {persona.label}
+                              </span>
+                              <span
+                                className={cn(
+                                  'text-[9px] font-medium truncate mt-0.5',
+                                  isThisActive ? 'text-indigo-600/70 dark:text-indigo-300/70' : 'opacity-50'
+                                )}
+                              >
+                                {isSpecialCustom && isThisActive
+                                  ? vibeTags.length > 0 || customVibeText.length > 0
+                                    ? `${vibeTags.length + (customVibeText ? 1 : 0)} tags selected`
+                                    : persona.desc
+                                  : persona.desc}
+                              </span>
+                            </div>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          className="text-xs bg-black/90 text-white px-3 py-1.5 border-none max-w-[220px]"
+                        >
+                          <p>
+                            {isSpecialCustom && isThisActive
+                              ? 'Click to edit in Freestyle mode.'
+                              : persona.desc || persona.label}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -550,51 +547,44 @@ export function CreateMusicForm({
           </div>
         </div>
 
-        {/* Credit Transparency Tip */}
-        <div className="px-1 mt-3 flex items-start gap-2 opacity-60 hover:opacity-100 transition-opacity">
-          <div className="mt-0.5 p-0.5 rounded-full bg-slate-100 dark:bg-white/5">
-            <Info className="size-3 text-slate-500" />
-          </div>
-          <p className="text-[10px] text-slate-500 leading-tight">
-            Credits are only consumed for <b>successful</b> generations. Failed tasks due to safety or system errors are automatically refunded.
-          </p>
-        </div>
-
-
-      {/* Error Modal Dialog */}
-      <AlertDialog open={!!(error || musicError)} onOpenChange={(open) => {
-        if (!open && onClearError) onClearError();
-      }}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-900 border-red-100 dark:border-red-900/30">
-          <AlertDialogHeader>
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
-              <AlertCircle className="size-5" />
-              <AlertDialogTitle className="text-lg font-bold">
+        {/* Error Modal Dialog */}
+        <AlertDialog
+          open={!!(error || musicError)}
+          onOpenChange={(open) => {
+            if (!open && onClearError) onClearError();
+          }}
+        >
+          <AlertDialogContent className="bg-white dark:bg-zinc-900 border-red-100 dark:border-red-900/30">
+            <AlertDialogHeader>
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
+                <AlertCircle className="size-5" />
+                <AlertDialogTitle className="text-lg font-bold">
+                  {(error || musicError)?.includes('2013') || (error || musicError)?.includes('sensitive')
+                    ? 'Content Safety Policy'
+                    : (error || musicError)?.includes('1008') ||
+                        (error || musicError)?.includes('insufficient balance') ||
+                        (error || musicError)?.includes('Insufficient credits')
+                      ? 'Insufficient Credits'
+                      : 'Generation Interrupted'}
+                </AlertDialogTitle>
+              </div>
+              <AlertDialogDescription className="text-slate-600 dark:text-slate-300 text-base leading-relaxed">
                 {(error || musicError)?.includes('2013') || (error || musicError)?.includes('sensitive')
-                  ? 'Content Safety Policy'
-                  : (error || musicError)?.includes('1008') || (error || musicError)?.includes('insufficient balance') || (error || musicError)?.includes('Insufficient credits')
-                    ? 'Insufficient Credits'
-                    : 'Generation Interrupted'}
-              </AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="text-slate-600 dark:text-slate-300 text-base leading-relaxed">
-              {(error || musicError)?.includes('2013') || (error || musicError)?.includes('sensitive')
-                ? 'Your lyrics contain content that may violate safety guidelines (e.g. violence, explicit themes, or sensitive topics). Please revise your lyrics and try again.'
-                  : (error || musicError)?.includes('1008') || (error || musicError)?.includes('insufficient balance') || (error || musicError)?.includes('Insufficient credits')
+                  ? 'Your lyrics contain content that may violate safety guidelines (e.g. violence, explicit themes, or sensitive topics). Please revise your lyrics and try again.'
+                  : (error || musicError)?.includes('1008') ||
+                      (error || musicError)?.includes('insufficient balance') ||
+                      (error || musicError)?.includes('Insufficient credits')
                     ? 'Insufficient Credits: You have run out of generation credits.'
                     : error || musicError}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={onClearError}
-              className="bg-red-500 hover:bg-red-600 text-white border-none"
-            >
-              Close
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={onClearError} className="bg-red-500 hover:bg-red-600 text-white border-none">
+                Close
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
     </div>
   );
@@ -602,19 +592,25 @@ export function CreateMusicForm({
 
 // ==================== Sub-components ====================
 
+// ==================== Sub-components ====================
+
 function LabelWithIcon({
   icon: Icon,
   label,
+  className,
 }: {
   icon: React.ElementType;
   label: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center gap-2 px-1">
-      <div className="p-1 rounded-md bg-indigo-50 dark:bg-indigo-500/20">
+    <div className={cn('flex items-center gap-2 px-1 transition-colors duration-300', className)}>
+      <div className="p-1 rounded-md bg-indigo-50 dark:bg-indigo-500/20 group-focus-within:bg-indigo-100 dark:group-focus-within:bg-indigo-500/30 transition-colors duration-300">
         <Icon className="size-3.5 text-indigo-600 dark:text-indigo-400" />
       </div>
-      <span className="font-bold text-xs text-slate-700 dark:text-slate-200 tracking-wider">{label}</span>
+      <span className="font-bold text-xs text-slate-700 dark:text-slate-200 tracking-wider group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-300 transition-colors duration-300">
+        {label}
+      </span>
     </div>
   );
 }

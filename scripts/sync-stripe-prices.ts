@@ -42,21 +42,21 @@ async function main() {
       if (interval === 'month') keyName = 'NEXT_PUBLIC_STRIPE_PRICE_BASIC_MONTHLY';
       if (interval === 'year') keyName = 'NEXT_PUBLIC_STRIPE_PRICE_BASIC_YEARLY';
     } else if (productName.includes('advanced') || productName.includes('pro')) {
-       // Assuming 'Advanced' corresponds to the next tier, heavily used in this project
+      // Assuming 'Advanced' corresponds to the next tier, heavily used in this project
       if (interval === 'month') keyName = 'NEXT_PUBLIC_STRIPE_PRICE_ADVANCED_MONTHLY';
       if (interval === 'year') keyName = 'NEXT_PUBLIC_STRIPE_PRICE_ADVANCED_YEARLY';
     } else if (productName.includes('lifetime')) {
       keyName = 'NEXT_PUBLIC_STRIPE_PRICE_LIFETIME';
     } else if (productName.includes('credit') || productName.includes('pack')) {
-        // Just print it as a comment or generic credit name
-        keyName = `# CREDIT PACK: ${product.name} (${amount})`;
+      // Just print it as a comment or generic credit name
+      keyName = `# CREDIT PACK: ${product.name} (${amount})`;
     }
 
     if (keyName && !keyName.startsWith('#')) {
       envLines.push(`${keyName}=${price.id} # ${product.name} - $${amount}/${interval}`);
     } else {
-        // Fallback or just info
-         envLines.push(`# UNMAPPED: ${price.id} | ${product.name} | $${amount} | ${interval}`);
+      // Fallback or just info
+      envLines.push(`# UNMAPPED: ${price.id} | ${product.name} | $${amount} | ${interval}`);
     }
   }
 

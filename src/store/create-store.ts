@@ -1,6 +1,6 @@
+import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
 
 interface CreateState {
   // Inputs

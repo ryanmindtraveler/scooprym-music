@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
 import { formatDate } from '@/lib/formatter';
 import type { PagesType } from '@/lib/source';
 import { CalendarIcon } from 'lucide-react';
+import { notFound } from 'next/navigation';
 import { getMDXComponents } from '../docs/mdx-components';
 import { Card, CardContent } from '../ui/card';
 

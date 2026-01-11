@@ -1,10 +1,4 @@
-export type TextProvider =
-  | 'openai'
-  | 'google'
-  | 'anthropic'
-  | 'fireworks'
-  | 'deepseek'
-  | 'openrouter';
+export type TextProvider = 'openai' | 'google' | 'anthropic' | 'fireworks' | 'deepseek' | 'openrouter';
 
 export const textProviderConfig = {
   openai: {
@@ -24,5 +18,5 @@ export const textProviderConfig = {
   },
   openrouter: {
     model: 'openai/gpt-4o',
-  }
+  },
 };

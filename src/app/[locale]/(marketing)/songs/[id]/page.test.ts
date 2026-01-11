@@ -1,5 +1,4 @@
-
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateMetadata } from './page';
 
 // Mock dependencies
@@ -27,47 +26,51 @@ vi.mock('@/lib/server', () => ({
 }));
 
 describe('Song Page Metadata', () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockDb.select.mockReturnThis();
-        mockDb.from.mockReturnThis();
-        mockDb.where.mockReturnThis();
-        mockDb.limit.mockReturnThis();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb.select.mockReturnThis();
+    mockDb.from.mockReturnThis();
+    mockDb.where.mockReturnThis();
+    mockDb.limit.mockReturnThis();
+  });
 
-    it('should generate correct metadata for existing song', async () => {
-        const mockSong = {
-            id: 'song-123',
-            title: 'Test Song',
-            newsSummary: 'A summary about news',
-            coverImageUrl: 'https://example.com/image.png'
-        };
+  it('should generate correct metadata for existing song', async () => {
+    const mockSong = {
+      id: 'song-123',
+      title: 'Test Song',
+      newsSummary: 'A summary about news',
+      coverImageUrl: 'https://example.com/image.png',
+    };
 
-        // Mock DB response
-        mockDb.limit.mockResolvedValueOnce([mockSong]);
+    // Mock DB response
+    mockDb.limit.mockResolvedValueOnce([mockSong]);
 
-        const params = Promise.resolve({ id: 'song-123', locale: 'en' as any });
-        const metadata = await generateMetadata({ params });
+    const params = Promise.resolve({ id: 'song-123', locale: 'en' as any });
+    const metadata = await generateMetadata({ params });
 
-        expect(metadata).toEqual(expect.objectContaining({
-            title: 'Test Song | ScoopRYM Music',
-            description: 'A summary about news',
-            image: 'https://example.com/image.png',
-            locale: 'en',
-            pathname: '/songs/song-123'
-        }));
-    });
+    expect(metadata).toEqual(
+      expect.objectContaining({
+        title: 'Test Song | ScoopRYM Music',
+        description: 'A summary about news',
+        image: 'https://example.com/image.png',
+        locale: 'en',
+        pathname: '/songs/song-123',
+      })
+    );
+  });
 
-    it('should generate fallback metadata for missing song', async () => {
-        // Mock DB return empty
-        mockDb.limit.mockResolvedValueOnce([]);
+  it('should generate fallback metadata for missing song', async () => {
+    // Mock DB return empty
+    mockDb.limit.mockResolvedValueOnce([]);
 
-        const params = Promise.resolve({ id: 'missing-123', locale: 'en' as any });
-        const metadata = await generateMetadata({ params });
+    const params = Promise.resolve({ id: 'missing-123', locale: 'en' as any });
+    const metadata = await generateMetadata({ params });
 
-        expect(metadata).toEqual(expect.objectContaining({
-            title: 'Song Not Found',
-            locale: 'en'
-        }));
-    });
+    expect(metadata).toEqual(
+      expect.objectContaining({
+        title: 'Song Not Found',
+        locale: 'en',
+      })
+    );
+  });
 });

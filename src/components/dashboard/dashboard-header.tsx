@@ -34,7 +34,7 @@ export function DashboardHeader({ breadcrumbs, actions }: DashboardHeaderProps) 
   const isDemo = isDemoWebsite();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1 cursor-pointer" />
         {breadcrumbs.length > 0 && (

@@ -81,7 +81,11 @@ export function MusicPlayerEnhanced() {
     }
 
     const interval = setInterval(() => {
-      setVisualizerBars(Array(20).fill(0).map(() => Math.random() * 20 + 4));
+      setVisualizerBars(
+        Array(20)
+          .fill(0)
+          .map(() => Math.random() * 20 + 4)
+      );
     }, 100);
 
     return () => clearInterval(interval);
@@ -104,8 +108,6 @@ export function MusicPlayerEnhanced() {
         setDuration(audio.duration);
       }
     };
-
-
 
     const handleEnded = () => {
       // Playlist logic not implemented in store yet
@@ -165,9 +167,7 @@ export function MusicPlayerEnhanced() {
   const showGeneratingUI = isGenerating;
   const isCoverStillLoading = !currentSong.coverImageUrl && currentSong.audioUrl;
 
-  const activeShareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/share/${currentSong.id}`
-    : '';
+  const activeShareUrl = typeof window !== 'undefined' ? `${window.location.origin}/share/${currentSong.id}` : '';
 
   // Used for slider value to avoid jumping
   const sliderValue = [currentTime];
@@ -184,7 +184,9 @@ export function MusicPlayerEnhanced() {
           layout
           className={cn(
             'mx-auto pointer-events-auto bg-black/80 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl shadow-black/50',
-            isExpanded ? 'w-[95%] max-w-4xl rounded-[2rem] p-4 sm:p-5' : 'w-auto max-w-[90%] rounded-full p-2 pr-4 h-[64px]'
+            isExpanded
+              ? 'w-[95%] max-w-4xl rounded-[2rem] p-4 sm:p-5'
+              : 'w-auto max-w-[90%] rounded-full p-2 pr-4 h-[64px]'
           )}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
         >
@@ -209,13 +211,19 @@ export function MusicPlayerEnhanced() {
                         />
                       ) : (
                         <div className="size-full flex items-center justify-center bg-zinc-900">
-                           {isGenerating ? <Loader2 className="size-6 text-purple-500 animate-spin" /> : <Sparkles className="size-6 text-zinc-700" />}
+                          {isGenerating ? (
+                            <Loader2 className="size-6 text-purple-500 animate-spin" />
+                          ) : (
+                            <Sparkles className="size-6 text-zinc-700" />
+                          )}
                         </div>
                       )}
 
                       {/* Play overlay on hover */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                         {isGenerating ? null : <div className="text-[10px] text-white font-bold tracking-wider uppercase">View</div>}
+                        {isGenerating ? null : (
+                          <div className="text-[10px] text-white font-bold tracking-wider uppercase">View</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -275,19 +283,19 @@ export function MusicPlayerEnhanced() {
                   </div>
 
                   {/* Visualizer Bars */}
-                   {!showGeneratingUI && (
-                      <div className="hidden lg:flex items-center gap-0.5 h-4">
-                        {visualizerBars.map((height, index) => (
-                          <motion.div
-                            key={index}
-                            className="w-1 bg-gradient-to-t from-purple-500/50 to-pink-500/50 rounded-full"
-                            style={{ height: `${Math.max(height * 0.3, 2)}px` }}
-                            animate={{ height: `${Math.max(height * 0.3, 2)}px` }}
-                            transition={{ duration: 0.1 }}
-                          />
-                        ))}
-                      </div>
-                   )}
+                  {!showGeneratingUI && (
+                    <div className="hidden lg:flex items-center gap-0.5 h-4">
+                      {visualizerBars.map((height, index) => (
+                        <motion.div
+                          key={index}
+                          className="w-1 bg-gradient-to-t from-purple-500/50 to-pink-500/50 rounded-full"
+                          style={{ height: `${Math.max(height * 0.3, 2)}px` }}
+                          animate={{ height: `${Math.max(height * 0.3, 2)}px` }}
+                          transition={{ duration: 0.1 }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Right Side: Actions */}
@@ -350,8 +358,8 @@ export function MusicPlayerEnhanced() {
                         step={0.1}
                         onValueChange={(val) => {
                           if (audioRef.current) {
-                             audioRef.current.currentTime = val[0];
-                             setCurrentTime(val[0]);
+                            audioRef.current.currentTime = val[0];
+                            setCurrentTime(val[0]);
                           }
                         }}
                         className="z-10 cursor-pointer"

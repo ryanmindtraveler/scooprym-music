@@ -5,12 +5,12 @@ import { defaultMessages } from '@/i18n/messages';
 import { LOCALE_COOKIE_NAME, routing } from '@/i18n/routing';
 import { sendEmail } from '@/mail';
 import { subscribe } from '@/newsletter';
+import { getAllPricePlans } from '@/payment';
 import { type User, betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, oneTap } from 'better-auth/plugins';
 import { parse as parseCookies } from 'cookie';
 import type { Locale } from 'next-intl';
-import { getAllPricePlans } from '@/payment';
 import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from './urls/urls';
 
 /**

@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/server';
+import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { getDb } from '@/db/index';
 import { song as songTable } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { generateCoverWithRetry, dataUrlToImageBuffer } from '@/ai/image/lib/cover-generation';
+import { getSession } from '@/lib/server';
 import { uploadFile } from '@/storage';
+import { and, eq } from 'drizzle-orm';
+import { type NextRequest, NextResponse } from 'next/server';
 
 /**
  * POST /api/generate/cover/retry
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const coverImageUrl = await generateCoverWithRetry({
       title: song.title || 'Untitled Track',
       lyrics: song.lyrics || '',
-      sourceText: song.prompt && song.prompt.length > 5 ? song.prompt : (song.sourceText || ''),
+      sourceText: song.prompt && song.prompt.length > 5 ? song.prompt : song.sourceText || '',
     });
 
     if (!coverImageUrl) {
@@ -77,7 +77,6 @@ export async function POST(req: NextRequest) {
       success: true,
       coverImageUrl: uploadResult.url,
     });
-
   } catch (error: any) {
     console.error('[Cover Retry] Error:', error);
     return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });

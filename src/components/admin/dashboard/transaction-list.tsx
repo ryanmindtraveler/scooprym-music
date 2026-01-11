@@ -13,7 +13,7 @@ export function TransactionList({ transactions }: { transactions: RecentTransact
         <div className="space-y-4">
           {transactions.length === 0 && (
             <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-               <p className="text-sm">No recent transactions.</p>
+              <p className="text-sm">No recent transactions.</p>
             </div>
           )}
           {transactions.map((tx) => (
@@ -23,16 +23,14 @@ export function TransactionList({ transactions }: { transactions: RecentTransact
                 <p className="text-xs text-muted-foreground">{tx.user?.email}</p>
               </div>
               <div className="flex items-center gap-4">
-                <Badge variant={tx.type === 'subscription' ? 'default' : 'secondary'}>
-                  {tx.type}
-                </Badge>
+                <Badge variant={tx.type === 'subscription' ? 'default' : 'secondary'}>{tx.type}</Badge>
                 <div className="text-right">
-                   <p className="text-sm font-medium">
-                      {(tx.amount / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                   </p>
-                   <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>
-                      {new Date(tx.createdAt).toLocaleDateString()}
-                   </p>
+                  <p className="text-sm font-medium">
+                    {(tx.amount / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground" suppressHydrationWarning>
+                    {new Date(tx.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </div>

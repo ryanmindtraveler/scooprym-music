@@ -16,7 +16,12 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
   const socialLinks = useSocialLinks();
 
   return (
-    <footer className={cn('border-t border-border/50 bg-background', className)}>
+    <footer
+      className={cn(
+        'border-t border-black/5 dark:border-white/5 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl',
+        className
+      )}
+    >
       <Container className="px-4">
         <div className="grid grid-cols-2 gap-12 py-16 md:grid-cols-6">
           <div className="flex flex-col items-start col-span-full md:col-span-2">

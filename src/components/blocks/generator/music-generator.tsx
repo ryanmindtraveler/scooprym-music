@@ -3,17 +3,17 @@
 import { LoginWrapper } from '@/components/auth/login-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConstantVelocityMarquee } from '@/components/ui/constant-marquee';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useMounted } from '@/hooks/ui/use-mounted';
 import { LocaleLink } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
-import { ArrowUpRight, Mic, Sparkles, Wand2, Check } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ConstantVelocityMarquee } from '@/components/ui/constant-marquee';
-import { useRouter } from 'next/navigation';
 import { useCreateStore } from '@/store';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpRight, Check, Mic, Sparkles, Wand2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { useState } from 'react';
 
@@ -40,47 +40,44 @@ export function MusicGeneratorBlock() {
   ];
 
   // Validation Logic
-  const canGenerate =
-    newsContent.trim().length > 0 &&
-    selectedContentType.length > 0 &&
-    selectedStyles.length > 0;
+  const canGenerate = newsContent.trim().length > 0 && selectedContentType.length > 0 && selectedStyles.length > 0;
 
   // Helper: Compose the Music Prompt
   const getComposedPrompt = () => {
     // Re-add hashtags for the prompt string
-    const loadedStyles = selectedStyles.map(s => `#${s}`).join(' ');
+    const loadedStyles = selectedStyles.map((s) => `#${s}`).join(' ');
     return `${selectedContentType}. ${loadedStyles}`;
   };
 
   // Helper: Common Logic for Store Update & Navigation
   const handleGlobalGenerate = () => {
-     // Store State Transfer
-     const store = useCreateStore.getState();
-     store.reset(); // Get Custom Vibe defaults
+    // Store State Transfer
+    const store = useCreateStore.getState();
+    store.reset(); // Get Custom Vibe defaults
 
-     // Smart Detect
-     const isUrl = /^(https?:\/\/|www\.)[^ "]+$/i.test(newsContent);
-     if (isUrl) {
-         store.setNewsLink(newsContent);
-         store.setNewsContent('');
-     } else {
-         store.setNewsContent(newsContent);
-         store.setNewsLink('');
-     }
+    // Smart Detect
+    const isUrl = /^(https?:\/\/|www\.)[^ "]+$/i.test(newsContent);
+    if (isUrl) {
+      store.setNewsLink(newsContent);
+      store.setNewsContent('');
+    } else {
+      store.setNewsContent(newsContent);
+      store.setNewsLink('');
+    }
 
-     store.setMusicPrompt(getComposedPrompt());
-     store.setShouldAutoGenerate(true); // Auto-start on arrival
+    store.setMusicPrompt(getComposedPrompt());
+    store.setShouldAutoGenerate(true); // Auto-start on arrival
   };
 
   // Helper: Construct Callback URL with Prompt (For LoginWrapper & Robustness)
   const getDestinationUrl = () => {
-     if (!canGenerate) return undefined;
+    if (!canGenerate) return undefined;
 
-     const prompt = getComposedPrompt();
-     // Pack the style into the content signature
-     const packedContent = `${newsContent} [[STYLE:${prompt}]]`;
+    const prompt = getComposedPrompt();
+    // Pack the style into the content signature
+    const packedContent = `${newsContent} [[STYLE:${prompt}]]`;
 
-     return `${Routes.Create}?content=${encodeURIComponent(packedContent)}`;
+    return `${Routes.Create}?content=${encodeURIComponent(packedContent)}`;
   };
 
   // Micro-motion Variants
@@ -118,12 +115,10 @@ export function MusicGeneratorBlock() {
       id="generator"
       className="relative z-20 w-full overflow-hidden py-32 font-sans selection:bg-black selection:text-white"
     >
-      <div className="absolute top-0 left-0 right-0 z-30 border-y-4 border-black bg-yellow-300 py-3 overflow-hidden shadow-xl">
+      <div className="absolute top-0 left-0 right-0 z-30 border-y-4 border-black bg-[#ecec3a] py-3 overflow-hidden shadow-xl">
         <ConstantVelocityMarquee velocity={150}>
           {Array(6)
-            .fill(
-              'CREATE YOUR TRACK • NO SKILLS NEEDED • VIRAL HITS INSTANTLY • '
-            )
+            .fill('CREATE YOUR TRACK • NO SKILLS NEEDED • VIRAL HITS INSTANTLY • ')
             .map((text, i) => (
               <span
                 key={i}
@@ -135,16 +130,16 @@ export function MusicGeneratorBlock() {
         </ConstantVelocityMarquee>
       </div>
 
-      {/* 1. Background - Clean Candy Gradient (Restored) */}
+      {/* 1. Background - Clean Candy Gradient (Restored & Enhanced) */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(135deg, #06b6d4 0%, #a78bfa 50%, #d8b4fe 100%)',
+            background: 'linear-gradient(135deg, #06b6d4 0%, #a78bfa 50%, #f472b6 100%)',
           }}
         />
         {/* Soft Glass Wash to blend with page */}
-        <div className="absolute inset-0 bg-white/20 backdrop-blur-3xl" />
+        <div className="absolute inset-0 bg-indigo-50/10 backdrop-blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-[1600px] relative z-10 px-6 md:px-12">
@@ -166,10 +161,9 @@ export function MusicGeneratorBlock() {
           </div>
 
           {/* Card Container - White Glass */}
-          <div className="bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.2)] rounded-[40px] p-2 md:p-3 relative overflow-hidden group">
+          <div className="bg-white/40 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.2)] rounded-[40px] p-2 md:p-3 relative overflow-hidden group">
             {/* Inner Content Area */}
             <div className="w-full h-full rounded-[32px] p-6 md:p-12 relative overflow-hidden">
-
               <div className="grid gap-12 lg:grid-cols-12 relative z-10">
                 {/* Left: Interactive Input Canvas */}
                 <div className="lg:col-span-7 flex flex-col gap-6">
@@ -217,15 +211,13 @@ export function MusicGeneratorBlock() {
                           <span className="text-lg">🔗</span> News article URLs
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">📝</span> Text content /
-                          headlines
+                          <span className="text-lg">📝</span> Text content / headlines
                         </li>
                         <li className="flex items-center gap-2.5">
                           <span className="text-lg">📱</span> Social media posts
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🎬</span> Entertainment
-                          gossip
+                          <span className="text-lg">🎬</span> Entertainment gossip
                         </li>
                         <li className="flex items-center gap-2.5">
                           <span className="text-lg">⚽</span> Sports updates
@@ -245,9 +237,7 @@ export function MusicGeneratorBlock() {
                               : 'bg-slate-200 text-slate-400 border-slate-300'
                           )}
                         >
-                          {newsContent.length > 0
-                            ? 'Waiting for Generate'
-                            : 'Waiting for Input...'}
+                          {newsContent.length > 0 ? 'Waiting for Generate' : 'Waiting for Input...'}
                         </div>
                       </div>
                     </div>
@@ -271,27 +261,32 @@ export function MusicGeneratorBlock() {
                     </h3>
                     <div className="flex flex-col gap-3">
                       {contentTypes.map((type, i) => {
-                         const isActive = selectedContentType === type;
-                         return (
-                            <motion.div
-                              key={type}
-                              onClick={() => setSelectedContentType(type)}
-                              whileTap={{ scale: 0.98 }}
+                        const isActive = selectedContentType === type;
+                        return (
+                          <motion.div
+                            key={type}
+                            onClick={() => setSelectedContentType(type)}
+                            whileTap={{ scale: 0.98 }}
+                            className={cn(
+                              'group flex items-center justify-between w-full p-5 rounded-2xl transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-transparent',
+                              isActive
+                                ? 'bg-[#6366F1] text-white shadow-md scale-[1.02]'
+                                : 'bg-white text-slate-800 hover:bg-white/80 hover:border-black/5'
+                            )}
+                          >
+                            <span className="text-lg font-bold">{type}</span>
+                            <div
                               className={cn(
-                                "group flex items-center justify-between w-full p-5 rounded-2xl transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-transparent",
+                                'size-4 rounded-full transition-all duration-300 flex items-center justify-center',
                                 isActive
-                                  ? "bg-[#6366F1] text-white shadow-md scale-[1.02]"
-                                  : "bg-white text-slate-800 hover:bg-white/80 hover:border-black/5"
+                                  ? 'bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]'
+                                  : 'bg-slate-200 box-border border border-slate-300'
                               )}
                             >
-                              <span className="text-lg font-bold">
-                                {type}
-                              </span>
-                              <div className={cn("size-4 rounded-full transition-all duration-300 flex items-center justify-center", isActive ? "bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]" : "bg-slate-200 box-border border border-slate-300")}>
-                                {isActive && <div className="size-2 rounded-full bg-[#6366F1]" />}
-                              </div>
-                            </motion.div>
-                         );
+                              {isActive && <div className="size-2 rounded-full bg-[#6366F1]" />}
+                            </div>
+                          </motion.div>
+                        );
                       })}
                     </div>
                   </div>
@@ -323,23 +318,28 @@ export function MusicGeneratorBlock() {
                         const styleConfig = [
                           {
                             pastel: 'bg-pink-100 text-pink-700 hover:bg-pink-200 border-transparent',
-                            vibrant: 'bg-pink-500 text-white shadow-lg shadow-pink-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]'
+                            vibrant:
+                              'bg-pink-500 text-white shadow-lg shadow-pink-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]',
                           },
                           {
                             pastel: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-transparent',
-                            vibrant: 'bg-blue-500 text-white shadow-lg shadow-blue-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]'
+                            vibrant:
+                              'bg-blue-500 text-white shadow-lg shadow-blue-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]',
                           },
                           {
                             pastel: 'bg-green-100 text-green-700 hover:bg-green-200 border-transparent',
-                            vibrant: 'bg-green-500 text-white shadow-lg shadow-green-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]'
+                            vibrant:
+                              'bg-green-500 text-white shadow-lg shadow-green-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]',
                           },
                           {
                             pastel: 'bg-purple-100 text-purple-700 hover:bg-purple-200 border-transparent',
-                            vibrant: 'bg-purple-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]'
+                            vibrant:
+                              'bg-purple-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]',
                           },
                           {
                             pastel: 'bg-orange-100 text-orange-700 hover:bg-orange-200 border-transparent',
-                            vibrant: 'bg-orange-500 text-white shadow-lg shadow-orange-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]'
+                            vibrant:
+                              'bg-orange-500 text-white shadow-lg shadow-orange-500/40 ring-2 ring-white ring-offset-2 ring-offset-[#FCE4EC]',
                           },
                         ];
                         const config = styleConfig[i % styleConfig.length];
@@ -349,17 +349,17 @@ export function MusicGeneratorBlock() {
                             key={style}
                             type="button"
                             onClick={() => {
-                                if (isSelected) {
-                                    setSelectedStyles(prev => prev.filter(s => s !== style));
-                                } else {
-                                    setSelectedStyles(prev => [...prev, style]);
-                                }
+                              if (isSelected) {
+                                setSelectedStyles((prev) => prev.filter((s) => s !== style));
+                              } else {
+                                setSelectedStyles((prev) => [...prev, style]);
+                              }
                             }}
                             variants={tagItemVariant}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className={cn(
-                              "relative px-4 py-2.5 font-bold rounded-xl text-sm transition-all duration-300 border flex items-center justify-center gap-2 select-none",
+                              'relative px-4 py-2.5 font-bold rounded-xl text-sm transition-all duration-300 border flex items-center justify-center gap-2 select-none',
                               isSelected ? config.vibrant : config.pastel
                             )}
                           >
@@ -371,7 +371,7 @@ export function MusicGeneratorBlock() {
                               animate={{ scale: isSelected ? 1 : 0, opacity: isSelected ? 1 : 0 }}
                               className="absolute -top-1.5 -right-1.5 size-4 bg-white text-black rounded-full shadow-sm flex items-center justify-center z-10"
                             >
-                                <Check className="w-2.5 h-2.5 stroke-4" />
+                              <Check className="w-2.5 h-2.5 stroke-4" />
                             </motion.div>
                           </motion.button>
                         );
@@ -380,72 +380,71 @@ export function MusicGeneratorBlock() {
                   </div>
 
                   {/* Main Action - GRADIENT BUTTON */}
-                  <div className="mt-auto pt-6">
+                  <div className="mt-auto pt-6 relative z-20">
                     {mounted && currentUser ? (
                       <Button
                         disabled={!canGenerate}
                         onClick={(e) => {
-                           if (!canGenerate) {
-                             e.preventDefault();
-                             return;
-                           }
-                           handleGlobalGenerate();
-                           router.push(Routes.Create);
+                          if (!canGenerate) {
+                            e.preventDefault();
+                            return;
+                          }
+                          handleGlobalGenerate();
+                          router.push(Routes.Create);
                         }}
                         className={cn(
-                          "w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black",
-                          !canGenerate && "opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none"
+                          'w-full h-auto py-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
+                          !canGenerate &&
+                            'opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none'
                         )}
                       >
-                       {/* ... Content ... */}
-                          {/* Shimmer Element - Moved INSIDE LocaleLink to satisfy asChild single-child rule */}
-                          <motion.div
-                            className="absolute inset-0 z-0 pointer-events-none"
-                            initial={{ x: '-200%' }}
-                            animate={{ x: ['-200%', '200%'] }}
-                            transition={{
-                              repeat: Number.POSITIVE_INFINITY,
-                              duration: 2.5,
-                              ease: "easeInOut",
-                              repeatDelay: 1
-                            }}
-                            style={{
-                              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                              width: '50%',
-                              transform: 'skewX(-20deg)',
-                            }}
-                          />
+                        {/* ... Content ... */}
+                        {/* Shimmer Element - Moved INSIDE LocaleLink to satisfy asChild single-child rule */}
+                        <motion.div
+                          className="absolute inset-0 z-0 pointer-events-none"
+                          initial={{ x: '-200%' }}
+                          animate={{ x: ['-200%', '200%'] }}
+                          transition={{
+                            repeat: Number.POSITIVE_INFINITY,
+                            duration: 2.5,
+                            ease: 'easeInOut',
+                            repeatDelay: 1,
+                          }}
+                          style={{
+                            background:
+                              'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                            width: '50%',
+                            transform: 'skewX(-20deg)',
+                          }}
+                        />
 
-                          <div className="relative z-10 flex items-center justify-between w-full px-8">
-                            <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
-                              <span className="text-3xl font-black italic tracking-tighter drop-shadow-sm flex items-center gap-2">
-                                Generate Music <span className="animate-bounce">🎵</span>
-                              </span>
-                              <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
-                                {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}
-                              </span>
-                            </div>
+                        <div className="relative z-10 flex items-center justify-between w-full px-8">
+                          <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
+                            <span className="text-3xl font-black italic tracking-tighter drop-shadow-sm flex items-center gap-2">
+                              Generate Music <span className="animate-bounce">🎵</span>
+                            </span>
+                            <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
+                              {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}
+                            </span>
+                          </div>
 
-                            {/* Arrow Circle with Pulse & Rotate */}
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20" />
-                              <div className="flex items-center justify-center w-14 h-14 bg-white/20 rounded-full backdrop-blur-md border border-white/30 transition-all duration-300 group-hover:bg-white group-hover:text-purple-600 group-hover:scale-110 group-hover:rotate-12 shadow-xl">
-                                <ArrowUpRight className="w-8 h-8 transition-transform duration-300 group-hover:rotate-45" />
-                              </div>
+                          {/* Arrow Circle with Pulse & Rotate */}
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20" />
+                            <div className="flex items-center justify-center w-14 h-14 bg-white/20 rounded-full backdrop-blur-md border border-white/30 transition-all duration-300 group-hover:bg-white group-hover:text-purple-600 group-hover:scale-110 group-hover:rotate-12 shadow-xl">
+                              <ArrowUpRight className="w-8 h-8 transition-transform duration-300 group-hover:rotate-45" />
                             </div>
                           </div>
-                        </Button>
+                        </div>
+                      </Button>
                     ) : (
-                      <LoginWrapper
-                        mode="modal"
-                        asChild
-                        callbackUrl={getDestinationUrl()}
-                      >
-                         <Button
+                      <LoginWrapper mode="modal" asChild callbackUrl={getDestinationUrl()}>
+                        <Button
                           disabled={!canGenerate}
                           className={cn(
-                             "w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black",
-                             !canGenerate && "opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none"
+                            'w-full h-auto py-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
+                            !canGenerate &&
+                              'opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none'
                           )}
                           onClick={(e) => {
                             if (!canGenerate) {
@@ -454,11 +453,11 @@ export function MusicGeneratorBlock() {
                             }
                             // Store Logic for instant feel if pre-login storage works
                             if (canGenerate) {
-                               handleGlobalGenerate();
+                              handleGlobalGenerate();
                             }
                           }}
                         >
-                          {/* Shimmer Element - COPY */ }
+                          {/* Shimmer Element - COPY */}
                           <motion.div
                             className="absolute inset-0 z-0 pointer-events-none"
                             initial={{ x: '-200%' }}
@@ -466,11 +465,12 @@ export function MusicGeneratorBlock() {
                             transition={{
                               repeat: Number.POSITIVE_INFINITY,
                               duration: 2.5,
-                              ease: "easeInOut",
-                              repeatDelay: 1
+                              ease: 'easeInOut',
+                              repeatDelay: 1,
                             }}
                             style={{
-                              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                              background:
+                                'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
                               width: '50%',
                               transform: 'skewX(-20deg)',
                             }}

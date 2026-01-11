@@ -28,7 +28,13 @@ export async function GET(request: NextRequest) {
           eq(song.userId, userId),
           or(
             isNull(song.processingStatus),
-            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+            notInArray(song.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_internal_error',
+              'failed_credit_deduction',
+            ])
           )
         )
       );
@@ -42,7 +48,13 @@ export async function GET(request: NextRequest) {
           eq(song.userId, userId),
           or(
             isNull(song.processingStatus),
-            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+            notInArray(song.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_internal_error',
+              'failed_credit_deduction',
+            ])
           )
         )
       )
@@ -52,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: rows.map(r => ({ ...r, category: 'News' })),
+      data: rows.map((r) => ({ ...r, category: 'News' })),
       pagination: {
         total,
         page,

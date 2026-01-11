@@ -2,8 +2,8 @@ import { Analytics } from '@/analytics/analytics';
 import { fontBricolageGrotesque, fontNotoSans, fontNotoSansMono, fontNotoSerif } from '@/assets/fonts';
 import AffonsoScript from '@/components/affiliate/affonso';
 import PromotekitScript from '@/components/affiliate/promotekit';
-import { GlobalPlayer } from '@/components/player/global-player';
 import { TailwindIndicator } from '@/components/layout/tailwind-indicator';
+import { GlobalPlayer } from '@/components/player/global-player';
 import { routing } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 import { type Locale, NextIntlClientProvider, hasLocale } from 'next-intl';
@@ -36,7 +36,6 @@ export default async function LocaleLayout({ children, modal, params }: LocaleLa
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
-
 
   const messages = await getMessages();
 

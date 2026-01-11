@@ -1,12 +1,12 @@
 import { getDb } from '@/db';
-import { song as songTable, songFavorite } from '@/db/schema';
+import { songFavorite, song as songTable } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
+import type { Song } from '@/types/song';
 import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
-import type { Song } from '@/types/song';
 import type { Locale } from 'next-intl';
+import { notFound, redirect } from 'next/navigation';
 
 interface SongDetailPageProps {
   params: Promise<{
@@ -28,7 +28,12 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
         eq(songTable.id, id),
         or(
           isNull(songTable.processingStatus),
-          notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+          notInArray(songTable.processingStatus, [
+            'failed_generation',
+            'processing_queue_failed',
+            'failed_audio_upload',
+            'failed_credit_deduction',
+          ])
         )
       )
     )

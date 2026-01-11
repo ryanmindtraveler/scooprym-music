@@ -37,9 +37,7 @@ export default async function PrivacyPolicyPage(props: NextPageProps) {
     <div className="container mx-auto py-12 px-4 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">{page.data.title}</h1>
-        {page.data.description && (
-          <p className="text-lg text-muted-foreground">{page.data.description}</p>
-        )}
+        {page.data.description && <p className="text-lg text-muted-foreground">{page.data.description}</p>}
       </div>
       <article className="prose prose-neutral dark:prose-invert max-w-none">
         <MDX components={getMDXComponents()} />

@@ -28,7 +28,13 @@ export function useMusicGeneration() {
   const [processingTaskId, setProcessingTaskId] = useState<string | null>(null); // 有 ID 则轮询
 
   // External Stores
-  const { play: playGlobal, stop: stopGlobal, setCoverImage, setExpanded, setIsGenerating: setGlobalGenerating } = usePlayerStore();
+  const {
+    play: playGlobal,
+    stop: stopGlobal,
+    setCoverImage,
+    setExpanded,
+    setIsGenerating: setGlobalGenerating,
+  } = usePlayerStore();
   const { data: balance, isLoading: isBalanceLoading } = useCreditBalance();
   const currentBalance = balance ?? 0;
   const MUSIC_CREDIT_COST = 2; // Keep in sync with UI cost
@@ -61,7 +67,9 @@ export function useMusicGeneration() {
         }),
       });
 
-      console.log(`[Performance] Hook: Music API initial response in ${(performance.now() - musicStartTime).toFixed(2)}ms`);
+      console.log(
+        `[Performance] Hook: Music API initial response in ${(performance.now() - musicStartTime).toFixed(2)}ms`
+      );
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Failed to generate music' }));

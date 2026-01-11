@@ -25,5 +25,5 @@ export const Logger = {
 
   error: (...args: any[]) => {
     console.error('[ERROR]', ...args);
-  }
+  },
 };

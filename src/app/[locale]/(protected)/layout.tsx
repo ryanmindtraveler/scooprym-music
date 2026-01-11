@@ -22,13 +22,13 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
           '--header-height': 'calc(var(--spacing) * 12)',
         } as React.CSSProperties
       }
-      className="bg-neutral-50/50 dark:bg-neutral-950/50 relative overflow-hidden"
+      className="bg-slate-100/50 dark:bg-slate-900/50 relative overflow-hidden"
     >
-      {/* === Atmospheric Background (Fixed & Enhanced) === */}
+      {/* === Atmospheric Background (Fixed & Enhanced - Cotton Candy Vibe) === */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/15 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-purple-500/15 blur-[120px]" />
-        <div className="absolute top-[40%] left-[40%] w-[30vw] h-[30vw] rounded-full bg-blue-500/10 blur-[100px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-pink-500/10 blur-[120px]" />
+        <div className="absolute top-[40%] left-[40%] w-[30vw] h-[30vw] rounded-full bg-cyan-500/10 blur-[100px]" />
       </div>
 
       <DashboardSidebar
@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
       />
 
       {/* Floating Main Content with Rounded Corners */}
-      <SidebarInset className="bg-background peer-data-[variant=inset]:bg-background relative z-10 m-2 md:m-4 rounded-[32px] overflow-y-auto border border-white/20 dark:border-white/5 shadow-2xl h-[calc(100svh-2rem)] no-scrollbar md:ml-6 transition-[margin-left] duration-200 ease-linear">
+      <SidebarInset className="bg-slate-50/50 peer-data-[variant=inset]:bg-slate-50/50 dark:bg-slate-950/50 dark:peer-data-[variant=inset]:bg-slate-950/50 relative z-10 m-2 md:m-4 rounded-[32px] overflow-y-auto border border-white/20 dark:border-white/5 shadow-2xl h-[calc(100svh-2rem)] no-scrollbar md:ml-6 transition-[margin-left] duration-200 ease-linear">
         {children}
       </SidebarInset>
     </SidebarProvider>

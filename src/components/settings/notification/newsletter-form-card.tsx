@@ -5,7 +5,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { websiteConfig } from '@/config/website';
-import { useNewsletterStatus, useSubscribeNewsletter, useUnsubscribeNewsletter } from '@/hooks/newsletter/use-newsletter';
+import {
+  useNewsletterStatus,
+  useSubscribeNewsletter,
+  useUnsubscribeNewsletter,
+} from '@/hooks/newsletter/use-newsletter';
 import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';

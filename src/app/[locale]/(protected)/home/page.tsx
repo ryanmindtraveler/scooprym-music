@@ -1,4 +1,3 @@
-
 import { QuickGenerateForm } from '@/components/home/quick-generate-form';
 import { TrendingGalleryClient } from '@/components/home/trending-gallery-client';
 import { Card } from '@/components/ui/card';
@@ -6,12 +5,11 @@ import { Card } from '@/components/ui/card';
 import { getSession } from '@/lib/server';
 import { Flame, Sparkles } from 'lucide-react';
 
-
+import { Skeleton } from '@/components/ui/skeleton';
 import { getDb } from '@/db';
 import { songFavorite, song as songTable, user } from '@/db/schema';
 import { and, asc, count, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { Suspense } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // 定义歌曲数据项的接口，用于前端组件的数据类型规范
 interface SongItem {
@@ -38,7 +36,7 @@ interface SongItem {
  * 热门画廊组件 (服务端组件)
  * 职责：直接连接数据库，获取管理员生成的最新歌曲数据，并传递给客户端组件渲染
  */
-async function TrendingGallery({ currentPage, sharedSong }: { currentPage: number, sharedSong?: SongItem | null }) {
+async function TrendingGallery({ currentPage, sharedSong }: { currentPage: number; sharedSong?: SongItem | null }) {
   const pageSize = 18;
   const offset = (currentPage - 1) * pageSize;
 
@@ -53,7 +51,12 @@ async function TrendingGallery({ currentPage, sharedSong }: { currentPage: numbe
     eq(songTable.isPublished, true),
     or(
       isNull(songTable.processingStatus),
-      notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+      notInArray(songTable.processingStatus, [
+        'failed_generation',
+        'processing_queue_failed',
+        'failed_audio_upload',
+        'failed_credit_deduction',
+      ])
     )
   );
 
@@ -106,7 +109,14 @@ async function TrendingGallery({ currentPage, sharedSong }: { currentPage: numbe
   }));
 
   // 4. 渲染客户端组件，将处理好的数据作为 props 传入
-  return <TrendingGalleryClient songs={songs} currentPage={currentPage} totalPages={totalPages} initialSelectedSong={sharedSong} />;
+  return (
+    <TrendingGalleryClient
+      songs={songs}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      initialSelectedSong={sharedSong}
+    />
+  );
 }
 
 /**
@@ -153,38 +163,40 @@ export default async function HomePage({
           eq(songTable.id, sharedSongId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+            notInArray(songTable.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_credit_deduction',
+            ])
           )
         )
       )
       .limit(1);
 
     if (foundSong) {
-        let isSharedSongLiked = false;
-        if (userId) {
-          const [fav] = await db
-            .select()
-            .from(songFavorite)
-            .where(and(eq(songFavorite.userId, userId), eq(songFavorite.songId, foundSong.id)));
-          isSharedSongLiked = !!fav;
-        }
+      let isSharedSongLiked = false;
+      if (userId) {
+        const [fav] = await db
+          .select()
+          .from(songFavorite)
+          .where(and(eq(songFavorite.userId, userId), eq(songFavorite.songId, foundSong.id)));
+        isSharedSongLiked = !!fav;
+      }
 
-        sharedSong = {
-          ...foundSong,
-          isLiked: isSharedSongLiked,
-          createdAt: foundSong.createdAt!,
-          durationSec: foundSong.durationSec ?? null,
-        };
+      sharedSong = {
+        ...foundSong,
+        isLiked: isSharedSongLiked,
+        createdAt: foundSong.createdAt!,
+        durationSec: foundSong.durationSec ?? null,
+      };
     }
   }
 
   // 获取服务端翻译函数
 
-
   return (
     <>
-
-
       {/* 页面主要内容容器 */}
       <div className="flex flex-1 flex-col min-h-full pb-24">
         {/* === 第一部分：快速创作区 === */}
@@ -200,13 +212,19 @@ export default async function HomePage({
         <section className="flex-1 p-4 md:p-8">
           <div className="max-w-[1800px] mx-auto w-full space-y-8">
             {/* 标题区域：包含火焰图标和文字 */}
-            <div className="flex items-center gap-4">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                <Flame className="size-6" />
+            <div className="flex items-center gap-4 mb-2">
+              <div className="p-3 rounded-full bg-orange-500/10 text-orange-600 shadow-sm ring-1 ring-orange-500/20">
+                <Flame className="size-6 fill-orange-500/20" />
               </div>
-              <h2 className="text-3xl font-black tracking-tighter">
-                Trending <span className="text-primary">now</span>
-              </h2>
+              <div>
+                <h2 className="text-3xl font-black tracking-tighter text-slate-800 dark:text-slate-100">
+                  Trending{' '}
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-500 to-amber-500">now</span>
+                </h2>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
+                  Discover the hottest AI-generated beats from the community
+                </p>
+              </div>
             </div>
 
             {/* 调用上面定义的异步组件来展示列表 */}

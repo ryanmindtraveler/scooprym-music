@@ -60,7 +60,13 @@ export default async function HomePage(props: HomePageProps) {
         eq(songTable.isPublished, true),
         or(
           isNull(songTable.processingStatus),
-          notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+          notInArray(songTable.processingStatus, [
+            'failed_generation',
+            'processing_queue_failed',
+            'failed_audio_upload',
+            'failed_internal_error',
+            'failed_credit_deduction',
+          ])
         )
       )
     )
@@ -102,7 +108,13 @@ export default async function HomePage(props: HomePageProps) {
           eq(songTable.id, sharedSongId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+            notInArray(songTable.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_internal_error',
+              'failed_credit_deduction',
+            ])
           )
         )
       )

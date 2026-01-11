@@ -140,7 +140,8 @@ export async function generateCoverWithRetry(
       const currentOptions = isLastAttempt
         ? {
             title: 'Abstract Vibes',
-            sourceText: 'Abstract digital art, colorful music visualization, geometric shapes, high quality, 4k wallpaper',
+            sourceText:
+              'Abstract digital art, colorful music visualization, geometric shapes, high quality, 4k wallpaper',
             lyrics: '', // Remove lyrics to avoid text triggers
           }
         : options;

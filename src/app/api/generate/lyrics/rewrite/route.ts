@@ -1,5 +1,5 @@
 import { rewriteLyrics } from '@/ai/text/lib/generation';
-import { type TextProvider } from '@/ai/text/lib/provider-config';
+import type { TextProvider } from '@/ai/text/lib/provider-config';
 import { NextResponse } from 'next/server';
 
 /**

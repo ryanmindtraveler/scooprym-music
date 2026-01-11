@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface GlitchCardProps {
   children: ReactNode;
@@ -10,12 +10,7 @@ interface GlitchCardProps {
   hoverEffect?: boolean;
 }
 
-export function GlitchCard({
-  children,
-  className,
-  variant = 'cyan',
-  hoverEffect = true,
-}: GlitchCardProps) {
+export function GlitchCard({ children, className, variant = 'cyan', hoverEffect = true }: GlitchCardProps) {
   const variantClasses = {
     cyan: cn(
       'bg-black/80 border border-[#00ffff]/50',
@@ -67,23 +62,10 @@ interface PunkCardProps {
   tornEdges?: boolean;
 }
 
-export function PunkCard({
-  children,
-  className,
-  variant = 'default',
-  tornEdges = true,
-}: PunkCardProps) {
+export function PunkCard({ children, className, variant = 'default', tornEdges = true }: PunkCardProps) {
   const variantClasses = {
-    default: cn(
-      'bg-black text-white',
-      'border-4 border-white',
-      'shadow-[8px_8px_0_0_#ff00ff,-8px_-8px_0_0_#00ffff]'
-    ),
-    stencil: cn(
-      'bg-black text-white',
-      'border-3 border-dashed border-[#ffff00]',
-      'shadow-[6px_6px_0_0_#ff00ff]'
-    ),
+    default: cn('bg-black text-white', 'border-4 border-white', 'shadow-[8px_8px_0_0_#ff00ff,-8px_-8px_0_0_#00ffff]'),
+    stencil: cn('bg-black text-white', 'border-3 border-dashed border-[#ffff00]', 'shadow-[6px_6px_0_0_#ff00ff]'),
     spray: cn(
       'bg-black text-white',
       'border-2 border-[#ff00ff]',
@@ -93,14 +75,7 @@ export function PunkCard({
   };
 
   return (
-    <div
-      className={cn(
-        'punk-card relative p-8',
-        tornEdges && 'punk-torn-edges',
-        variantClasses[variant],
-        className
-      )}
-    >
+    <div className={cn('punk-card relative p-8', tornEdges && 'punk-torn-edges', variantClasses[variant], className)}>
       {/* 手写边框 */}
       <div className="absolute -top-2 -left-2 -right-2 -bottom-2 border-2 border-dashed border-[#ffff00] pointer-events-none" />
 
@@ -165,13 +140,7 @@ export function MaximalistCard({
   };
 
   return (
-    <div
-      className={cn(
-        'maximalist-card relative p-8 overflow-hidden rounded-2xl',
-        variantClasses[variant],
-        className
-      )}
-    >
+    <div className={cn('maximalist-card relative p-8 overflow-hidden rounded-2xl', variantClasses[variant], className)}>
       {/* 多层边框 */}
       <div className="absolute inset-0 border-2 border-[#ff00ff] pointer-events-none rounded-2xl" />
       <div className="absolute -inset-2 border-2 border-[#00ffff] pointer-events-none rounded-2xl opacity-70" />

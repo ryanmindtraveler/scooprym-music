@@ -38,7 +38,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
 
   const sidebarLinks = useSidebarLinks();
 
-  // Inject Credits Balance Badge
+  // Inject Credits Balance Value into Badge (Stylized as colored text)
   const sidebarLinksWithBadge = useMemo(() => {
     return sidebarLinks.map((item) => {
       if (item.items) {
@@ -49,10 +49,15 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
               return {
                 ...subItem,
                 badge: (
-                  <div className="flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 text-[10px] font-bold border border-indigo-500/20">
-                    {isBalanceLoading ? '...' : (balance ?? 0)}
-                  </div>
+                  <span className="font-bold">
+                    (
+                    <span className="text-indigo-600 dark:text-indigo-400">
+                      {isBalanceLoading ? '...' : (balance ?? 0)}
+                    </span>
+                    )
+                  </span>
                 ),
+                badgeClassName: 'ml-1',
               };
             }
             return subItem;

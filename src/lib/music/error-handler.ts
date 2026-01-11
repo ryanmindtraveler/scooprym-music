@@ -16,7 +16,7 @@ export function mapGenerationError(
   input: { success: false; error: string; statusCode?: number; details?: any } | Error | any
 ): UnifiedGenerationError {
   let code: number | undefined;
-  let originalMessage = "";
+  let originalMessage = '';
   let details: any;
 
   if (input instanceof Error) {
@@ -27,15 +27,19 @@ export function mapGenerationError(
     details = input.details;
   }
 
-
   // 1. SAFETY (Content Filtering)
-  if (code === 2013 || originalMessage.toLowerCase().includes('sensitive') || originalMessage.toLowerCase().includes('content safety')) {
+  if (
+    code === 2013 ||
+    originalMessage.toLowerCase().includes('sensitive') ||
+    originalMessage.toLowerCase().includes('content safety')
+  ) {
     return {
       success: false,
       category: 'SAFETY',
-      error: "Content Safety Alert: We’re unable to generate music with sensitive, controversial, or prohibited lyrics. Please keep it clean and try again!",
+      error:
+        'Content Safety Alert: We’re unable to generate music with sensitive, controversial, or prohibited lyrics. Please keep it clean and try again!',
       code,
-      details
+      details,
     };
   }
 
@@ -44,9 +48,10 @@ export function mapGenerationError(
     return {
       success: false,
       category: 'CREDITS',
-      error: "Refuel Required: You've run out of credits for this generation. Please top up your account to keep the music flowing!",
+      error:
+        "Refuel Required: You've run out of credits for this generation. Please top up your account to keep the music flowing!",
       code,
-      details
+      details,
     };
   }
 
@@ -55,19 +60,26 @@ export function mapGenerationError(
     return {
       success: false,
       category: 'VENDOR',
-      error: "Taking a Breather: You're moving faster than our AI can keep up with! Please take a quick 30-second break and try again.",
+      error:
+        "Taking a Breather: You're moving faster than our AI can keep up with! Please take a quick 30-second break and try again.",
       code,
-      details
+      details,
     };
   }
 
-  if (code === 1000 || code === 1001 || code === 2001 || /busy|overload|maintenance|unavailable/i.test(originalMessage)) {
+  if (
+    code === 1000 ||
+    code === 1001 ||
+    code === 2001 ||
+    /busy|overload|maintenance|unavailable/i.test(originalMessage)
+  ) {
     return {
       success: false,
       category: 'VENDOR',
-      error: "Studio's Packed: Our AI servers are currently at capacity or undergoing maintenance. Please give it a minute and try again!",
+      error:
+        "Studio's Packed: Our AI servers are currently at capacity or undergoing maintenance. Please give it a minute and try again!",
       code,
-      details
+      details,
     };
   }
 
@@ -76,9 +88,10 @@ export function mapGenerationError(
     return {
       success: false,
       category: 'INPUT',
-      error: "Check Your Gears: Something looks off with your inputs. Please double-check your lyrics or style prompts and try again.",
+      error:
+        'Check Your Gears: Something looks off with your inputs. Please double-check your lyrics or style prompts and try again.',
       code,
-      details
+      details,
     };
   }
 
@@ -86,8 +99,10 @@ export function mapGenerationError(
   return {
     success: false,
     category: 'SYSTEM',
-    error: originalMessage || `System Glitch: We hit an unexpected snag (Code: ${code || 'Unknown'}). Please refresh or try again!`,
+    error:
+      originalMessage ||
+      `System Glitch: We hit an unexpected snag (Code: ${code || 'Unknown'}). Please refresh or try again!`,
     code,
-    details
+    details,
   };
 }

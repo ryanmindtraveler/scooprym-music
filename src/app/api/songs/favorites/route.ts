@@ -30,7 +30,13 @@ export async function GET(request: Request) {
           eq(songFavorite.userId, userId),
           or(
             isNull(song.processingStatus),
-            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+            notInArray(song.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_internal_error',
+              'failed_credit_deduction',
+            ])
           )
         )
       );
@@ -60,7 +66,13 @@ export async function GET(request: Request) {
           eq(songFavorite.userId, userId),
           or(
             isNull(song.processingStatus),
-            notInArray(song.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_internal_error', 'failed_credit_deduction'])
+            notInArray(song.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_internal_error',
+              'failed_credit_deduction',
+            ])
           )
         )
       )

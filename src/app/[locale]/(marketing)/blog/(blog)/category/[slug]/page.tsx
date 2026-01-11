@@ -1,9 +1,9 @@
-import { notFound } from 'next/navigation';
 import type { NextPageProps } from '@/types/next-page-props';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 export async function generateStaticParams() {
-   return [];
+  return [];
 }
 
 export async function generateMetadata(): Promise<Metadata> {

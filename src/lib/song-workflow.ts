@@ -8,7 +8,7 @@ import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
 import { getDb } from '@/db/index';
 import { creditTransaction, song as songTable } from '@/db/schema';
 import { uploadFile } from '@/storage';
-import { eq, and, sql, like } from 'drizzle-orm';
+import { and, eq, like, sql } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 
 export interface ProcessMusicOptions {
@@ -100,7 +100,9 @@ export async function processMusicBackground(
             fileExt === 'wav' ? 'audio/wav' : 'audio/mpeg',
             `songs/${userId}`
           );
-          console.log(`[Performance] Audio uploaded for ${songId} in ${(performance.now() - uploadStartTime).toFixed(2)}ms`);
+          console.log(
+            `[Performance] Audio uploaded for ${songId} in ${(performance.now() - uploadStartTime).toFixed(2)}ms`
+          );
 
           // A3. Update DB
           await db
@@ -166,21 +168,18 @@ export async function processMusicBackground(
 
         // Parallel check
         const [existingRecordRows, netCreditRows] = await Promise.all([
-             db.select({ creditsDeducted: songTable.creditsDeducted })
-               .from(songTable)
-               .where(eq(songTable.id, songId))
-               .limit(1),
-             db.select({
-                // Calculate net credits for this song (Usage -2 + Refund +2 = 0)
-                netAmount: sql<number>`COALESCE(SUM(${creditTransaction.amount}), 0)`
-             })
-               .from(creditTransaction)
-               .where(
-                  and(
-                      eq(creditTransaction.userId, userId),
-                      like(creditTransaction.description, `%${idSuffix}`)
-                  )
-               )
+          db
+            .select({ creditsDeducted: songTable.creditsDeducted })
+            .from(songTable)
+            .where(eq(songTable.id, songId))
+            .limit(1),
+          db
+            .select({
+              // Calculate net credits for this song (Usage -2 + Refund +2 = 0)
+              netAmount: sql<number>`COALESCE(SUM(${creditTransaction.amount}), 0)`,
+            })
+            .from(creditTransaction)
+            .where(and(eq(creditTransaction.userId, userId), like(creditTransaction.description, `%${idSuffix}`))),
         ]);
 
         const existingRecord = existingRecordRows[0];
@@ -189,14 +188,16 @@ export async function processMusicBackground(
         // If netAmount is negative (e.g., -2), it means the user is already "charged" for this ID.
         // If netAmount is 0 (or positive), it means they either weren't charged or were refunded.
         if (existingRecord?.creditsDeducted || netAmount < 0) {
-           console.log(`[song-workflow] Credits already deducted for ${songId} (Status=${existingRecord?.creditsDeducted}, Net=${netAmount}). Skipping charge.`);
+          console.log(
+            `[song-workflow] Credits already deducted for ${songId} (Status=${existingRecord?.creditsDeducted}, Net=${netAmount}). Skipping charge.`
+          );
         } else {
-            const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
-            await consumeCredits({
-              userId,
-              amount: 2,
-              description: uniqueDescription,
-            });
+          const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
+          await consumeCredits({
+            userId,
+            amount: 2,
+            description: uniqueDescription,
+          });
         }
 
         // Determine final status
@@ -213,14 +214,18 @@ export async function processMusicBackground(
           .where(eq(songTable.id, songId));
 
         console.log(`[song-workflow] Background processing succeeded for ${songId}. Status: ${finalStatus}`);
-        console.log(`[Performance] Background worker for ${songId} total time: ${(performance.now() - bgStartTime).toFixed(2)}ms`);
+        console.log(
+          `[Performance] Background worker for ${songId} total time: ${(performance.now() - bgStartTime).toFixed(2)}ms`
+        );
 
         return {
-            success: true,
-            audioUrl: audioUploadResult.value.url,
-            coverImageUrl: (coverGenerateResult.status === 'fulfilled' && coverGenerateResult.value) ? coverGenerateResult.value.url : undefined
+          success: true,
+          audioUrl: audioUploadResult.value.url,
+          coverImageUrl:
+            coverGenerateResult.status === 'fulfilled' && coverGenerateResult.value
+              ? coverGenerateResult.value.url
+              : undefined,
         };
-
       } catch (creditError) {
         console.error(`[song-workflow] Credit deduction failed for ${songId}:`, creditError);
         await db
@@ -234,9 +239,9 @@ export async function processMusicBackground(
 
         // Even if credit deduction failed, we still have the audio
         return {
-            success: true,
-            audioUrl: audioUploadResult.value.url,
-            error: 'Credit deduction failed'
+          success: true,
+          audioUrl: audioUploadResult.value.url,
+          error: 'Credit deduction failed',
         };
       }
     } else {
@@ -248,8 +253,8 @@ export async function processMusicBackground(
         const updatedRows = await db
           .update(songTable)
           .set({
-             creditsDeducted: false,
-             processingStatus: 'failed_audio_upload'
+            creditsDeducted: false,
+            processingStatus: 'failed_audio_upload',
           })
           .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
           .returning({ id: songTable.id });
@@ -260,13 +265,10 @@ export async function processMusicBackground(
             userId,
             amount: 2,
             description: `Generation failed (Storage Upload) [ID:${songId}]`,
-          }).catch(e => console.error(`[song-workflow] Refund failed for ${songId}:`, e));
+          }).catch((e) => console.error(`[song-workflow] Refund failed for ${songId}:`, e));
         } else {
           // If no row was updated, it means it's either not deducted or already refunded
-          await db
-            .update(songTable)
-            .set({ processingStatus: 'failed_audio_upload' })
-            .where(eq(songTable.id, songId));
+          await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
         }
       } catch (refundError) {
         console.error(`[song-workflow] Failed to process refund for ${songId}:`, refundError);
@@ -286,9 +288,9 @@ export async function processMusicBackground(
       const updatedRows = await db
         .update(songTable)
         .set({
-           creditsDeducted: false,
-           processingStatus: 'failed_internal_error',
-           creditError: globalError.message || 'Fatal workflow error'
+          creditsDeducted: false,
+          processingStatus: 'failed_internal_error',
+          creditError: globalError.message || 'Fatal workflow error',
         })
         .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
         .returning({ id: songTable.id });
@@ -310,13 +312,13 @@ export async function processMusicBackground(
           .where(eq(songTable.id, songId));
       }
     } catch (dbError) {
-        // If DB connection is also dead, just log it.
-        console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);
+      // If DB connection is also dead, just log it.
+      console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);
     }
 
     return {
-        success: false,
-        error: globalError.message || 'Fatal background workflow error'
+      success: false,
+      error: globalError.message || 'Fatal background workflow error',
     };
   }
 }

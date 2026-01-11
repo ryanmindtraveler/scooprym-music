@@ -1,5 +1,5 @@
-import { createSafeActionClient } from 'next-safe-action';
 import type { User } from '@/lib/auth-types';
+import { createSafeActionClient } from 'next-safe-action';
 import { isDemoWebsite } from './demo';
 import { getSession } from './server';
 

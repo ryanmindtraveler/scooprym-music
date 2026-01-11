@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface GlitchBadgeProps {
   children: ReactNode;
@@ -10,12 +10,7 @@ interface GlitchBadgeProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function GlitchBadge({
-  children,
-  className,
-  variant = 'cyan',
-  size = 'md',
-}: GlitchBadgeProps) {
+export function GlitchBadge({ children, className, variant = 'cyan', size = 'md' }: GlitchBadgeProps) {
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
     md: 'px-3 py-1 text-sm',
@@ -23,21 +18,9 @@ export function GlitchBadge({
   };
 
   const variantClasses = {
-    cyan: cn(
-      'bg-[#00ffff]/10 text-[#00ffff]',
-      'border border-[#00ffff]/50',
-      'shadow-[0_0_10px_rgba(0,255,255,0.3)]'
-    ),
-    purple: cn(
-      'bg-[#ff00ff]/10 text-[#ff00ff]',
-      'border border-[#ff00ff]/50',
-      'shadow-[0_0_10px_rgba(255,0,255,0.3)]'
-    ),
-    green: cn(
-      'bg-[#00ff00]/10 text-[#00ff00]',
-      'border border-[#00ff00]/50',
-      'shadow-[0_0_10px_rgba(0,255,0,0.3)]'
-    ),
+    cyan: cn('bg-[#00ffff]/10 text-[#00ffff]', 'border border-[#00ffff]/50', 'shadow-[0_0_10px_rgba(0,255,255,0.3)]'),
+    purple: cn('bg-[#ff00ff]/10 text-[#ff00ff]', 'border border-[#ff00ff]/50', 'shadow-[0_0_10px_rgba(255,0,255,0.3)]'),
+    green: cn('bg-[#00ff00]/10 text-[#00ff00]', 'border border-[#00ff00]/50', 'shadow-[0_0_10px_rgba(0,255,0,0.3)]'),
   };
 
   return (
@@ -69,13 +52,7 @@ interface PunkBadgeProps {
   tornEdges?: boolean;
 }
 
-export function PunkBadge({
-  children,
-  className,
-  variant = 'default',
-  size = 'md',
-  tornEdges = true,
-}: PunkBadgeProps) {
+export function PunkBadge({ children, className, variant = 'default', size = 'md', tornEdges = true }: PunkBadgeProps) {
   const sizeClasses = {
     sm: 'px-2 py-0.5 text-xs',
     md: 'px-3 py-1 text-sm',
@@ -83,22 +60,9 @@ export function PunkBadge({
   };
 
   const variantClasses = {
-    default: cn(
-      'bg-black text-white',
-      'border-2 border-white',
-      'shadow-[3px_3px_0_0_#ff00ff,-3px_-3px_0_0_#00ffff]'
-    ),
-    outline: cn(
-      'bg-transparent text-white',
-      'border-2 border-dashed border-[#ffff00]',
-      'shadow-[2px_2px_0_0_#ff00ff]'
-    ),
-    sticker: cn(
-      'bg-[#ffff00] text-black',
-      'border border-black',
-      'shadow-[0_2px_0_0_black]',
-      '-rotate-2'
-    ),
+    default: cn('bg-black text-white', 'border-2 border-white', 'shadow-[3px_3px_0_0_#ff00ff,-3px_-3px_0_0_#00ffff]'),
+    outline: cn('bg-transparent text-white', 'border-2 border-dashed border-[#ffff00]', 'shadow-[2px_2px_0_0_#ff00ff]'),
+    sticker: cn('bg-[#ffff00] text-black', 'border border-black', 'shadow-[0_2px_0_0_black]', '-rotate-2'),
   };
 
   return (
@@ -112,9 +76,7 @@ export function PunkBadge({
       )}
     >
       {/* 涂鸦装饰 */}
-      {variant === 'default' && (
-        <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#ff00ff] rotate-45" />
-      )}
+      {variant === 'default' && <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#ff00ff] rotate-45" />}
 
       {/* 胶带效果（仅sticker） */}
       {variant === 'sticker' && (
@@ -162,11 +124,7 @@ export function MaximalistBadge({
   };
 
   const variantClasses = {
-    default: cn(
-      'bg-black text-white',
-      'border-2 border-white',
-      'shadow-[0_0_15px_rgba(255,0,255,0.5)]'
-    ),
+    default: cn('bg-black text-white', 'border-2 border-white', 'shadow-[0_0_15px_rgba(255,0,255,0.5)]'),
     gradient: cn(
       gradientClasses[gradient],
       'text-black font-black',

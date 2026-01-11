@@ -8,12 +8,12 @@ import { performance } from 'perf_hooks';
 // Services
 import { generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { generateMusic } from '@/ai/music/lib/generation';
-// Import processMusicBackground for fallback execution
-import { processMusicBackground, type ProcessMusicOptions } from '@/lib/song-workflow';
-import { qstash, getWorkerUrl } from '@/lib/queue';
-import { and, eq, sql } from 'drizzle-orm';
-import { mapGenerationError } from '@/lib/music/error-handler';
 import { consumeCredits } from '@/credits/credits';
+import { mapGenerationError } from '@/lib/music/error-handler';
+import { getWorkerUrl, qstash } from '@/lib/queue';
+// Import processMusicBackground for fallback execution
+import { type ProcessMusicOptions, processMusicBackground } from '@/lib/song-workflow';
+import { and, eq, sql } from 'drizzle-orm';
 
 type GenerateMusicBody = {
   lyrics?: string;
@@ -39,30 +39,30 @@ type GenerateMusicBody = {
  * 6. Return "Audio Ready" response immediately
  */
 export async function POST(req: Request) {
-    let songId: string | null = null;
-    let creditsDeductedSynch = false;
-    let session: any = null;
-    let userId: string | undefined;
-    const startTime = performance.now();
+  let songId: string | null = null;
+  let creditsDeductedSynch = false;
+  let session: any = null;
+  let userId: string | undefined;
+  const startTime = performance.now();
   console.log('[Performance] generate-music: New Request');
 
   try {
     // 0. Rate Limiting
-        const { getRateLimiter } = await import("@/lib/ratelimit");
+    const { getRateLimiter } = await import('@/lib/ratelimit');
 
-        // 1. Session & Auth
-        session = await getSession();
-        userId = session?.user?.id;
+    // 1. Session & Auth
+    session = await getSession();
+    userId = session?.user?.id;
 
     // Identify by UserID (preferred) or IP (fallback)
-    const identifier = userId || (req.headers.get("x-forwarded-for") ?? "127.0.0.1");
+    const identifier = userId || (req.headers.get('x-forwarded-for') ?? '127.0.0.1');
 
     const { success } = await getRateLimiter().limit(identifier);
     if (!success) {
-        return NextResponse.json(
-            { success: false, error: "Too many requests. Please try again in a minute.", code: 429 },
-            { status: 429 }
-        );
+      return NextResponse.json(
+        { success: false, error: 'Too many requests. Please try again in a minute.', code: 429 },
+        { status: 429 }
+      );
     }
 
     // 1. Validation
@@ -81,20 +81,32 @@ export async function POST(req: Request) {
     } = body as GenerateMusicBody & { songId?: string };
 
     if (!lyrics || lyrics.trim().length < 10) {
-      const unifiedError = mapGenerationError({ success: false, error: 'Lyrics required (min 10 chars)', statusCode: 400 });
+      const unifiedError = mapGenerationError({
+        success: false,
+        error: 'Lyrics required (min 10 chars)',
+        statusCode: 400,
+      });
       return NextResponse.json(unifiedError, { status: 400 });
     }
 
     // 2. Auth
     const apiKey = process.env.MINIMAXI_API_KEY;
     if (!apiKey) {
-      const unifiedError = mapGenerationError({ success: false, error: 'Service configuration error (API Key)', statusCode: 500 });
+      const unifiedError = mapGenerationError({
+        success: false,
+        error: 'Service configuration error (API Key)',
+        statusCode: 500,
+      });
       return NextResponse.json(unifiedError, { status: 500 });
     }
 
     // Reuse existing session/userId
     if (!userId) {
-      const unifiedError = mapGenerationError({ success: false, error: 'Unauthorized: Please login first', statusCode: 401 });
+      const unifiedError = mapGenerationError({
+        success: false,
+        error: 'Unauthorized: Please login first',
+        statusCode: 401,
+      });
       return NextResponse.json(unifiedError, { status: 401 });
     }
 
@@ -102,7 +114,11 @@ export async function POST(req: Request) {
     const { hasEnoughCredits } = await import('@/credits/credits');
     const hasCredits = await hasEnoughCredits({ userId, requiredCredits: 2 });
     if (!hasCredits) {
-      const unifiedError = mapGenerationError({ success: false, error: 'Insufficient credits (Code: 1010)', statusCode: 402 });
+      const unifiedError = mapGenerationError({
+        success: false,
+        error: 'Insufficient credits (Code: 1010)',
+        statusCode: 402,
+      });
       return NextResponse.json(unifiedError, { status: 402 });
     }
 
@@ -110,7 +126,7 @@ export async function POST(req: Request) {
     const effectiveTitle =
       title?.trim() || (lyrics.split('\n').find((l) => l.trim().length > 0) || 'Generated Track').slice(0, 50);
 
-    songId = (clientSongId && /^[0-9a-f-]{36}$/i.test(clientSongId)) ? clientSongId : randomUUID();
+    songId = clientSongId && /^[0-9a-f-]{36}$/i.test(clientSongId) ? clientSongId : randomUUID();
 
     // 2.3 DB Record Creation (Optimistic)
     const db = await getDb();
@@ -131,11 +147,35 @@ export async function POST(req: Request) {
     });
     console.log(`[Performance] Initial DB record created in ${(performance.now() - dbStartTime).toFixed(2)}ms`);
 
-
     // 3. Generate Audio (Blocking - The "Synchronous" Part)
     // We still do this synchronously so the user gets "Instant Playback".
     // If MiniMaxi fails here, we fail the requests entirely.
-    const effectivePrompt = prompt && prompt.trim().length >= 10 ? prompt.trim() : 'Auto, dynamic, emotional, based on lyrics context';
+    let effectivePrompt =
+      prompt && prompt.trim().length >= 10 ? prompt.trim() : 'Auto, dynamic, emotional, based on lyrics context';
+
+    // --- AI Prompt Enhancement (MiniMax 2.0 Optimization) ---
+    try {
+      if (prompt && lyrics) {
+        console.log(`[Music Prompt] Enhancing raw tags: "${prompt}"`);
+        const { enhanceMusicPrompt } = await import('@/ai/text/lib/generation');
+
+        // Timeout protection for the enhancement step (don't let prompt engineering block the main gen too long)
+        // We give it 4 seconds max.
+        const enhanced = await Promise.race([
+          enhanceMusicPrompt({ tags: prompt, lyrics }),
+          new Promise<string | null>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 4000)),
+        ]);
+
+        if (enhanced) {
+          console.log(`[Music Prompt] Enhanced result: "${enhanced}"`);
+          effectivePrompt = enhanced.slice(0, 500); // Safety clamp for MiniMax limit
+        }
+      }
+    } catch (enhanceErr) {
+      console.warn('[Music Prompt] Enhancement skipped/failed:', enhanceErr);
+      // Fallback to original prompt silently
+    }
+    // --------------------------------------------------------
 
     // 3.1 Start Cover Image Generation (Parallel / Optimistic)
     // We start this promise here so it can be passed to QStash (if supported deep serialization?)
@@ -146,54 +186,71 @@ export async function POST(req: Request) {
     // To keep it consistent: We will create the promise here primarily for INLINE fallback usage.
     // The Worker will start its own independently if used.
 
+    // --------------------------------------------------------
+
+    // --- LYRICS CLEANING (Protocol: "Section Meta-Tagging") ---
+    // 1. Meta-Tags: "[Verse: Fast]" -> "[Verse]"
+    //    Regex: Matches '[' capturing Group 1 (tag name) then ':' then optional space then anything then ']' -> Replaces with '[' + Group 1 + ']'
+    let cleanedLyrics = lyrics.replace(/\[(.*?):\s*.*?\]/g, '[$1]');
+
+    // 2. Cleanup: Remove any leftover parentheses (legacy support)
+    cleanedLyrics = cleanedLyrics.replace(/\s*\([^)]*\)/g, '').trim();
+
+    if (cleanedLyrics.length < 5) {
+      console.warn(`[Lyrics Cleaning] Cleaned lyrics too short, reverting to original.`);
+      cleanedLyrics = lyrics;
+    }
+    // ----------------------------------------------
+
     // 3.1 Start Cover Image Generation (Parallel / Optimistic)
     // We pass the raw data so the service can construct the optimal prompt.
     const coverImagePromise = generateCoverWithRetry({
-        title: effectiveTitle,
-        lyrics: lyrics,
-        sourceText: effectivePrompt
+      title: effectiveTitle,
+      lyrics: lyrics, // Cover gen uses full context
+      sourceText: effectivePrompt,
     });
-
 
     // Call MiniMaxi
     const musicResult = await generateMusic({
       apiKey,
       prompt: effectivePrompt,
-      lyrics,
+      lyrics: cleanedLyrics, // Audio model gets CLEANED lyrics
       outputFormat: 'url',
       audioFormat,
       stream: false, // Force non-streaming for URL
     });
 
     if (!musicResult.success || !musicResult.audioContent) {
-        // Fail fast
-        await db.update(songTable)
-           .set({ processingStatus: 'failed_generation', creditError: musicResult.error })
-           .where(eq(songTable.id, songId));
-        return NextResponse.json(mapGenerationError(musicResult as any), { status: 500 });
+      // Fail fast
+      await db
+        .update(songTable)
+        .set({ processingStatus: 'failed_generation', creditError: musicResult.error })
+        .where(eq(songTable.id, songId));
+      return NextResponse.json(mapGenerationError(musicResult as any), { status: 500 });
     }
 
     const tempAudioUrl = musicResult.audioContent as string;
 
     // 3.5 Deduct Credits Synchronously (CRITICAL for Real-time Balance Update)
     try {
-        console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
-        await consumeCredits({
-            userId,
-            amount: 2,
-            description: `Generate music: ${effectiveTitle} [ID:${songId}]`,
-        });
+      console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
+      await consumeCredits({
+        userId,
+        amount: 2,
+        description: `Generate music: ${effectiveTitle} [ID:${songId}]`,
+      });
 
-        // Update DB to reflect deduction immediately
-        await db.update(songTable)
-           .set({ creditsDeducted: true })
-           .where(eq(songTable.id, songId));
+      // Update DB to reflect deduction immediately
+      await db.update(songTable).set({ creditsDeducted: true }).where(eq(songTable.id, songId));
 
-        creditsDeductedSynch = true;
+      creditsDeductedSynch = true;
     } catch (creditErr) {
-        console.error(`[generate-music] Synchronous credit deduction failed for ${songId} (will retry in worker):`, creditErr);
-        // We do NOT fail the request here, because audio is already generated.
-        // We let the worker try again (idempotency check handles it).
+      console.error(
+        `[generate-music] Synchronous credit deduction failed for ${songId} (will retry in worker):`,
+        creditErr
+      );
+      // We do NOT fail the request here, because audio is already generated.
+      // We let the worker try again (idempotency check handles it).
     }
 
     // 4. Publish to QStash (The "Async" Part)
@@ -201,91 +258,89 @@ export async function POST(req: Request) {
 
     // Construct the Options object needed by the worker (and fallback)
     const processOptions: ProcessMusicOptions = {
-        lyrics: lyrics || '',
-        prompt,
-        title: effectiveTitle,
-        sourceText,
-        sourceUrl,
-        outputFormat: 'url',
-        audioFormat,
-        songId: songId!,
-        userId
+      lyrics: lyrics || '',
+      prompt,
+      title: effectiveTitle,
+      sourceText,
+      sourceUrl,
+      outputFormat: 'url',
+      audioFormat,
+      songId: songId!,
+      userId,
     };
 
     try {
-        console.log(`[QStash] Publishing job for song ${songId}...`);
+      console.log(`[QStash] Publishing job for song ${songId}...`);
 
-        const workerUrl = getWorkerUrl('api/worker/generate-music');
+      const workerUrl = getWorkerUrl('api/worker/generate-music');
 
-        const qstashResponse = await qstash.publishJSON({
-            url: workerUrl,
-            body: {
-                audioContent: tempAudioUrl,
-                options: processOptions
-            },
-            // Retry logic: If worker fails (e.g. S3 down), retry up to 3 times
-            retries: 3,
-        });
+      const qstashResponse = await qstash.publishJSON({
+        url: workerUrl,
+        body: {
+          audioContent: tempAudioUrl,
+          options: processOptions,
+        },
+        // Retry logic: If worker fails (e.g. S3 down), retry up to 3 times
+        retries: 3,
+      });
 
-        console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
+      console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
     } catch (queueError: any) {
-        console.error(`[QStash] FAILED to publish job for ${songId}. Fallback to INLINE execution. Error:`, queueError);
-        // CRITICAL FALLBACK (Fail-Open): If Queue is down, run inline!
-        // This risks timeout on Vercel, but is better than 100% data loss.
+      console.error(`[QStash] FAILED to publish job for ${songId}. Fallback to INLINE execution. Error:`, queueError);
+      // CRITICAL FALLBACK (Fail-Open): If Queue is down, run inline!
+      // This risks timeout on Vercel, but is better than 100% data loss.
 
-        try {
-            // Re-import locally if needed, or use the imported one.
-            // We need to pass the coverImagePromise we created earlier.
-            // Note: processMusicBackground is imported at top level.
+      try {
+        // Re-import locally if needed, or use the imported one.
+        // We need to pass the coverImagePromise we created earlier.
+        // Note: processMusicBackground is imported at top level.
 
-            const backgroundWork = processMusicBackground(
-              tempAudioUrl,
-              processOptions,
-              coverImagePromise
-            );
+        const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, coverImagePromise);
 
-            // Attempt to keep serverless function alive
-            // @ts-ignore
-            if (typeof waitUntil === 'function') waitUntil(backgroundWork);
-            // @ts-ignore
-            else if ((req as any).waitUntil) (req as any).waitUntil(backgroundWork);
-            else {
-                // Node.js / VPS fallback
-                backgroundWork.catch(err => console.error("Inline background work failed:", err));
-            }
-
-             // We do NOT update status to 'failed'. We assume inline might succeed.
-        } catch (fallbackError) {
-             console.error(`[QStash] Fallback Inline execution also failed for ${songId}:`, fallbackError);
-             try {
-                 const dbInstance = await getDb();
-                 const updatedRows = await dbInstance.update(songTable)
-                    .set({
-                        processingStatus: 'processing_queue_failed',
-                        creditError: 'Queue & Inline failed',
-                        creditsDeducted: false
-                    })
-                    .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
-                    .returning({ id: songTable.id });
-
-                 if (updatedRows.length > 0 && userId) {
-                     console.log(`[generate-music] Fallback Failure: Atomic auto-refund triggered for ${songId}`);
-                     const { refundCredits } = await import('@/credits/credits');
-                     await refundCredits({
-                         userId,
-                         amount: 2,
-                         description: `Generation failed (Queue & Inline) [ID:${songId}]`
-                     }).catch(e => console.error("Auto-refund failed in fallback catch:", e));
-                 } else if (updatedRows.length === 0) {
-                     // Just update status if not deducted
-                     await dbInstance.update(songTable)
-                        .set({ processingStatus: 'processing_queue_failed', creditError: 'Queue & Inline failed' })
-                        .where(eq(songTable.id, songId));
-                 }
-             } catch (dbErr) {
-                 console.error("Failed to update/refund in fallback catch:", dbErr);
-             }
+        // Attempt to keep serverless function alive
+        // @ts-ignore
+        if (typeof waitUntil === 'function') waitUntil(backgroundWork);
+        // @ts-ignore
+        else if ((req as any).waitUntil) (req as any).waitUntil(backgroundWork);
+        else {
+          // Node.js / VPS fallback
+          backgroundWork.catch((err) => console.error('Inline background work failed:', err));
         }
+
+        // We do NOT update status to 'failed'. We assume inline might succeed.
+      } catch (fallbackError) {
+        console.error(`[QStash] Fallback Inline execution also failed for ${songId}:`, fallbackError);
+        try {
+          const dbInstance = await getDb();
+          const updatedRows = await dbInstance
+            .update(songTable)
+            .set({
+              processingStatus: 'processing_queue_failed',
+              creditError: 'Queue & Inline failed',
+              creditsDeducted: false,
+            })
+            .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+            .returning({ id: songTable.id });
+
+          if (updatedRows.length > 0 && userId) {
+            console.log(`[generate-music] Fallback Failure: Atomic auto-refund triggered for ${songId}`);
+            const { refundCredits } = await import('@/credits/credits');
+            await refundCredits({
+              userId,
+              amount: 2,
+              description: `Generation failed (Queue & Inline) [ID:${songId}]`,
+            }).catch((e) => console.error('Auto-refund failed in fallback catch:', e));
+          } else if (updatedRows.length === 0) {
+            // Just update status if not deducted
+            await dbInstance
+              .update(songTable)
+              .set({ processingStatus: 'processing_queue_failed', creditError: 'Queue & Inline failed' })
+              .where(eq(songTable.id, songId));
+          }
+        } catch (dbErr) {
+          console.error('Failed to update/refund in fallback catch:', dbErr);
+        }
+      }
     }
 
     console.log(`[Performance] Optimistic Response sent in ${(performance.now() - startTime).toFixed(2)}ms`);
@@ -297,59 +352,60 @@ export async function POST(req: Request) {
         id: songId,
         title: effectiveTitle,
         audioUrl: tempAudioUrl, // Immediate playback
-        coverImageUrl: null     // Cover arrives later via socket or poll
+        coverImageUrl: null, // Cover arrives later via socket or poll
       },
       meta: {
         songId,
-        info: 'Background processing via QStash started.'
-      }
+        info: 'Background processing via QStash started.',
+      },
     });
-
   } catch (error: any) {
     console.error('[generate-music] Handler Exception:', error);
     if (songId) {
-        try {
-            const dbInstance = await getDb();
-            // Atomic Lock: Only refund if we flip creditsDeducted from true to false
-            const updatedRows = await dbInstance.update(songTable)
-                .set({
-                    processingStatus: 'failed_generation',
-                    creditError: error.message,
-                    creditsDeducted: false
-                })
-                .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
-                .returning({ id: songTable.id });
+      try {
+        const dbInstance = await getDb();
+        // Atomic Lock: Only refund if we flip creditsDeducted from true to false
+        const updatedRows = await dbInstance
+          .update(songTable)
+          .set({
+            processingStatus: 'failed_generation',
+            creditError: error.message,
+            creditsDeducted: false,
+          })
+          .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+          .returning({ id: songTable.id });
 
-            if (updatedRows.length > 0 || (creditsDeductedSynch && !updatedRows.length)) {
-                // If updatedRows.length > 0, it means we atomically flipped the flag.
-                // If creditsDeductedSynch is true but updatedRows.length is 0, it might mean
-                // another process (like the worker) already refunded it.
-                // However, if we just deducted it and caught an error before publish,
-                // creditsDeductedSynch is our safest local signal.
+        if (updatedRows.length > 0 || (creditsDeductedSynch && !updatedRows.length)) {
+          // If updatedRows.length > 0, it means we atomically flipped the flag.
+          // If creditsDeductedSynch is true but updatedRows.length is 0, it might mean
+          // another process (like the worker) already refunded it.
+          // However, if we just deducted it and caught an error before publish,
+          // creditsDeductedSynch is our safest local signal.
 
-                // Let's be even safer: If creditsDeductedSynch is true, we ONLY refund if
-                // we were the ones to flip it or if we are absolutely sure it's needed.
-                if (updatedRows.length > 0 && userId) {
-                    console.log(`[generate-music] POST Failure: Atomic auto-refund triggered for ${songId}`);
-                    const { refundCredits } = await import('@/credits/credits');
-                    await refundCredits({
-                        userId,
-                        amount: 2,
-                        description: `Generation failed (POST Handler Exception) [ID:${songId}]`
-                    }).catch(e => console.error("Auto-refund failed in final catch:", e));
-                }
-            } else {
-                // Not deducted or already handled, just update generic status if not already set
-                await dbInstance.update(songTable)
-                    .set({
-                        processingStatus: 'failed_generation',
-                        creditError: error.message
-                    })
-                    .where(eq(songTable.id, songId));
-            }
-        } catch (e) {
-            console.error("Failed to update song status in final catch:", e);
+          // Let's be even safer: If creditsDeductedSynch is true, we ONLY refund if
+          // we were the ones to flip it or if we are absolutely sure it's needed.
+          if (updatedRows.length > 0 && userId) {
+            console.log(`[generate-music] POST Failure: Atomic auto-refund triggered for ${songId}`);
+            const { refundCredits } = await import('@/credits/credits');
+            await refundCredits({
+              userId,
+              amount: 2,
+              description: `Generation failed (POST Handler Exception) [ID:${songId}]`,
+            }).catch((e) => console.error('Auto-refund failed in final catch:', e));
+          }
+        } else {
+          // Not deducted or already handled, just update generic status if not already set
+          await dbInstance
+            .update(songTable)
+            .set({
+              processingStatus: 'failed_generation',
+              creditError: error.message,
+            })
+            .where(eq(songTable.id, songId));
         }
+      } catch (e) {
+        console.error('Failed to update song status in final catch:', e);
+      }
     }
     return NextResponse.json(mapGenerationError(error), { status: 500 });
   }

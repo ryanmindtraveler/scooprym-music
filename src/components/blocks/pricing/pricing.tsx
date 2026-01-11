@@ -1,22 +1,22 @@
 'use client';
 
 import { PricingTable } from '@/components/pricing/pricing-table';
-import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 
 export default function PricingSection() {
   return (
     <section
       id="pricing"
       // Added z-20 to ensure it sits ON TOP of neighbor sections
-      className="relative z-20 px-4 pt-32 pb-32 md:pt-48 md:pb-48 overflow-visible bg-[#ee7752]"
+      className="relative z-20 px-4 pt-32 pb-32 md:pt-48 md:pb-48 overflow-visible bg-indigo-950"
     >
       {/* Universal Fluid Mesh Background */}
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-100 animate-gradient-xy"
           style={{
-            background: 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)',
+            background: 'linear-gradient(135deg, #06b6d4 0%, #db2777 50%, #4f46e5 100%)',
           }}
         />
       </div>

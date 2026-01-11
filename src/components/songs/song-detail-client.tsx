@@ -8,9 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
+import { useImageColors } from '@/hooks/ui/use-image-colors';
+import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
@@ -194,192 +195,195 @@ export function SongDetailClient({
       <div className="relative z-10 flex flex-col md:flex-row h-full w-full overflow-hidden p-4 md:p-6 gap-6">
         {/* Left: Vinyl Player */}
         <div className="relative flex-none w-full md:w-[420px] h-full overflow-hidden">
-             {/* Share Button - Abstracted to Top Right */}
-             <div className="absolute top-0 right-0 z-20 flex items-center gap-2">
-                  <LikeButton
-                    songId={song.id}
-                    initialIsLiked={isLiked}
-                    className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-500 hover:scale-110 transition-all h-10 w-10 border-none"
-                  />
-                {song.audioUrl && (
-                  <DownloadButton
-                    audioUrl={song.audioUrl}
-                    title={song.title}
-                    className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none"
-                  />
-                )}
-              <ShareButton
-                songId={song.id}
+          {/* Share Button - Abstracted to Top Right */}
+          <div className="absolute top-0 right-0 z-20 flex items-center gap-2">
+            <LikeButton
+              songId={song.id}
+              initialIsLiked={isLiked}
+              className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-500 hover:scale-110 transition-all h-10 w-10 border-none"
+            />
+            {song.audioUrl && (
+              <DownloadButton
+                audioUrl={song.audioUrl}
+                title={song.title}
                 className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none"
               />
-             </div>
-        <div className="w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="min-h-full flex flex-col items-center justify-center gap-6 py-6 pl-4 pr-4">
-          {/* Vinyl Record */}
-          <div className="relative group cursor-pointer" onClick={handlePlay}>
-            {/* The Disc */}
-            <div
-              className={cn(
-                'relative size-[220px] rounded-full shadow-2xl border-4 border-neutral-900 bg-neutral-950 overflow-hidden',
-                'before:absolute before:inset-0 before:rounded-full before:border before:border-white/5 before:z-20',
-                'after:absolute after:inset-[10px] after:rounded-full after:border-40 after:border-neutral-900/50 after:z-10'
-              )}
-              style={{
-                animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
-                boxShadow: isThisSongPlaying
-                  ? '0 0 60px rgba(255, 255, 255, 0.15), 0 0 100px rgba(255, 255, 255, 0.05)'
-                  : '0 20px 40px rgba(0,0,0,0.6)',
-              }}
-            >
-              <div className="absolute inset-[50px] rounded-full overflow-hidden z-0 bg-neutral-800">
-                <Image
-                  src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                  alt="Cover"
-                  fill
-                  className="object-cover"
-                />
-                {!song.coverImageUrl && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
-                    <span className="text-[10px] font-black text-center text-white uppercase tracking-wider leading-relaxed">
-                      Content flagged:<br/>Too hot for AI art
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Center Hole */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-black border border-white/10 z-30" />
-
-            {/* Play Overlay - Always visible */}
-            <div className="absolute inset-0 flex items-center justify-center z-40 opacity-70 group-hover:opacity-100 transition-opacity bg-black/20 group-hover:bg-black/40 rounded-full backdrop-blur-[1px] group-hover:backdrop-blur-[2px]">
-              {isThisSongPlaying ? (
-                <Pause className="size-14 fill-white text-white drop-shadow-lg" />
-              ) : (
-                <Play className="size-16 fill-white text-white drop-shadow-lg pl-1" />
-              )}
-            </div>
+            )}
+            <ShareButton
+              songId={song.id}
+              className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none"
+            />
           </div>
-
-          {/* Song Meta */}
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none">
-              {song.title}
-            </h1>
-            <div className="flex items-center justify-center gap-2 text-sm text-white/50">
-              <Badge
-                variant="secondary"
-                className="bg-white/10 text-white/70 hover:bg-white/20 border-0 h-5 px-2 text-[10px]"
-              >
-                AI
-              </Badge>
-              <span>•</span>
-              <span>{formattedDate}</span>
-            </div>
-          </div>
-
-
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-2 px-2">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="bg-white/5 text-white/60 hover:bg-white/10 border-0 h-5 px-2 text-[10px] whitespace-nowrap"
+          <div className="w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="min-h-full flex flex-col items-center justify-center gap-6 py-6 pl-4 pr-4">
+              {/* Vinyl Record */}
+              <div className="relative group cursor-pointer" onClick={handlePlay}>
+                {/* The Disc */}
+                <div
+                  className={cn(
+                    'relative size-[220px] rounded-full shadow-2xl border-4 border-neutral-900 bg-neutral-950 overflow-hidden',
+                    'before:absolute before:inset-0 before:rounded-full before:border before:border-white/5 before:z-20',
+                    'after:absolute after:inset-[10px] after:rounded-full after:border-40 after:border-neutral-900/50 after:z-10'
+                  )}
+                  style={{
+                    animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
+                    boxShadow: isThisSongPlaying
+                      ? '0 0 60px rgba(255, 255, 255, 0.15), 0 0 100px rgba(255, 255, 255, 0.05)'
+                      : '0 20px 40px rgba(0,0,0,0.6)',
+                  }}
                 >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {/* Scrubber */}
-          <div className="w-full max-w-[280px] space-y-3">
-            <div className="relative group">
-              <Slider
-                value={[currentTime]}
-                max={duration || 100}
-                step={1}
-                onValueChange={(val) => usePlayerStore.getState().setCurrentTime(val[0])}
-                className="cursor-pointer relative z-10"
-              />
-              <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 rounded-full -translate-y-1/2 z-0 blur-sm group-hover:bg-white/10 transition-colors" />
-            </div>
-            <div className="flex justify-between text-[11px] text-white/50 font-medium font-mono tracking-wider">
-              <span>
-                {(() => {
-                  if (!currentTime || Number.isNaN(currentTime)) return '0:00';
-                  const mins = Math.floor(currentTime / 60);
-                  const secs = Math.floor(currentTime % 60);
-                  return `${mins}:${secs.toString().padStart(2, '0')}`;
-                })()}
-              </span>
-              <span>
-                {(() => {
-                  if (!duration || Number.isNaN(duration)) return '0:00';
-                  const mins = Math.floor(duration / 60);
-                  const secs = Math.floor(duration % 60);
-                  return `${mins}:${secs.toString().padStart(2, '0')}`;
-                })()}
-              </span>
-            </div>
-          </div>
-
-          {/* Actions - Removed from here (Moved to Top Right) */}
-
-          {/* News Summary */}
-          {(song.newsSummary || song.sourceText) && (
-            <div className="group/news relative w-full overflow-hidden rounded-2xl bg-white/3 hover:bg-white/6 border border-white/10 p-5 backdrop-blur-md transition-colors duration-500">
-              {/* Subtle Gradient Glow */}
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none group-hover/news:bg-indigo-400/30 transition-colors duration-500" />
-
-              <div className="relative z-10 flex items-center justify-between gap-2 mb-4 w-full">
-                <div className="flex items-center gap-2.5 text-white/40 group-hover/news:text-white/60 transition-colors">
-                  <div className="p-1.5 rounded-md bg-white/5">
-                    <Newspaper className="size-3.5" />
+                  <div className="absolute inset-[50px] rounded-full overflow-hidden z-0 bg-neutral-800">
+                    <Image
+                      src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
+                      alt="Cover"
+                      fill
+                      className="object-cover"
+                    />
+                    {!song.coverImageUrl && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
+                        <span className="text-[10px] font-black text-center text-white uppercase tracking-wider leading-relaxed">
+                          Content flagged:
+                          <br />
+                          Too hot for AI art
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">Background</span>
                 </div>
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center size-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white hover:scale-105 transition-all border border-white/5 shadow-sm"
-                      onClick={() => {
-                        const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
-                        window.open(
-                          song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
-                          '_blank'
-                        );
-                      }}
-                    >
-                      <span
-                        className="text-lg leading-none mb-0.5 inline-block origin-bottom"
-                        style={{ animation: 'ring 1.5s ease-in-out infinite' }}
-                      >
-                        🍿
-                      </span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white">
-                    <p>{song.sourceUrl ? 'Read Source' : 'Search Topic'}</p>
-                  </TooltipContent>
-                </Tooltip>
+                {/* Center Hole */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-4 rounded-full bg-black border border-white/10 z-30" />
+
+                {/* Play Overlay - Always visible */}
+                <div className="absolute inset-0 flex items-center justify-center z-40 opacity-70 group-hover:opacity-100 transition-opacity bg-black/20 group-hover:bg-black/40 rounded-full backdrop-blur-[1px] group-hover:backdrop-blur-[2px]">
+                  {isThisSongPlaying ? (
+                    <Pause className="size-14 fill-white text-white drop-shadow-lg" />
+                  ) : (
+                    <Play className="size-16 fill-white text-white drop-shadow-lg pl-1" />
+                  )}
+                </div>
               </div>
 
-              <div className="relative z-10">
-                <p className="text-sm text-white/80 leading-relaxed font-light text-left tracking-wide opacity-90">
-                  {song.newsSummary || song.sourceText}
-                </p>
+              {/* Song Meta */}
+              <div className="text-center space-y-2">
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none">
+                  {song.title}
+                </h1>
+                <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+                  <Badge
+                    variant="secondary"
+                    className="bg-white/10 text-white/70 hover:bg-white/20 border-0 h-5 px-2 text-[10px]"
+                  >
+                    AI
+                  </Badge>
+                  <span>•</span>
+                  <span>{formattedDate}</span>
+                </div>
               </div>
+
+              {/* Tags */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 px-2">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="bg-white/5 text-white/60 hover:bg-white/10 border-0 h-5 px-2 text-[10px] whitespace-nowrap"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Scrubber */}
+              <div className="w-full max-w-[280px] space-y-3">
+                <div className="relative group">
+                  <Slider
+                    value={[currentTime]}
+                    max={duration || 100}
+                    step={1}
+                    onValueChange={(val) => usePlayerStore.getState().setCurrentTime(val[0])}
+                    className="cursor-pointer relative z-10"
+                  />
+                  <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 rounded-full -translate-y-1/2 z-0 blur-sm group-hover:bg-white/10 transition-colors" />
+                </div>
+                <div className="flex justify-between text-[11px] text-white/50 font-medium font-mono tracking-wider">
+                  <span>
+                    {(() => {
+                      if (!currentTime || Number.isNaN(currentTime)) return '0:00';
+                      const mins = Math.floor(currentTime / 60);
+                      const secs = Math.floor(currentTime % 60);
+                      return `${mins}:${secs.toString().padStart(2, '0')}`;
+                    })()}
+                  </span>
+                  <span>
+                    {(() => {
+                      if (!duration || Number.isNaN(duration)) return '0:00';
+                      const mins = Math.floor(duration / 60);
+                      const secs = Math.floor(duration % 60);
+                      return `${mins}:${secs.toString().padStart(2, '0')}`;
+                    })()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions - Removed from here (Moved to Top Right) */}
+
+              {/* News Summary */}
+              {(song.newsSummary || song.sourceText) && (
+                <div className="group/news relative w-full overflow-hidden rounded-2xl bg-white/3 hover:bg-white/6 border border-white/10 p-5 backdrop-blur-md transition-colors duration-500">
+                  {/* Subtle Gradient Glow */}
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none group-hover/news:bg-indigo-400/30 transition-colors duration-500" />
+
+                  <div className="relative z-10 flex items-center justify-between gap-2 mb-4 w-full">
+                    <div className="flex items-center gap-2.5 text-white/40 group-hover/news:text-white/60 transition-colors">
+                      <div className="p-1.5 rounded-md bg-white/5">
+                        <Newspaper className="size-3.5" />
+                      </div>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Background</span>
+                    </div>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center justify-center size-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white hover:scale-105 transition-all border border-white/5 shadow-sm"
+                          onClick={() => {
+                            const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
+                            window.open(
+                              song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+                              '_blank'
+                            );
+                          }}
+                        >
+                          <span
+                            className="text-lg leading-none mb-0.5 inline-block origin-bottom"
+                            style={{ animation: 'ring 1.5s ease-in-out infinite' }}
+                          >
+                            🍿
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="left"
+                        className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white"
+                      >
+                        <p>{song.sourceUrl ? 'Read Source' : 'Search Topic'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+
+                  <div className="relative z-10">
+                    <p className="text-sm text-white/80 leading-relaxed font-light text-left tracking-wide opacity-90">
+                      {song.newsSummary || song.sourceText}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
           </div>
         </div>
-       </div>
 
         {/* Right: Lyrics With Card Style */}
         <div className="flex-1 flex flex-col min-h-0 bg-white/3 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-md">
@@ -432,7 +436,8 @@ function FormattedLyricsView({
 
   // --- 1. Parse lyrics into display lines ---
   const displayLines = useMemo(() => {
-    return lyrics.split('\n').filter((line) => line.trim() !== '');
+    const cleanText = cleanLyricsForDisplay(lyrics);
+    return cleanText.split('\n').filter((line: string) => line.trim() !== '');
   }, [lyrics]);
 
   // --- 2. Calculate active line index ---
@@ -539,4 +544,3 @@ function FormattedLyricsView({
     </div>
   );
 }
-

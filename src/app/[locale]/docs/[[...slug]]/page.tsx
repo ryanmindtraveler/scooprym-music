@@ -1,5 +1,5 @@
-import { notFound } from 'next/navigation';
 import type { Locale } from 'next-intl';
+import { notFound } from 'next/navigation';
 
 export const revalidate = false;
 
@@ -11,7 +11,7 @@ interface DocPageProps {
 }
 
 export function generateStaticParams() {
-   return [];
+  return [];
 }
 
 export async function generateMetadata({ params }: DocPageProps) {
@@ -26,7 +26,9 @@ export default async function DocPage({ params }: DocPageProps) {
   return (
     <div className="container mx-auto py-12 px-4">
       <h1 className="text-3xl font-bold mb-6">Documentation</h1>
-      <p className="text-muted-foreground">Documentation content is temporarily unavailable while we perform system upgrades. Please check back later.</p>
+      <p className="text-muted-foreground">
+        Documentation content is temporarily unavailable while we perform system upgrades. Please check back later.
+      </p>
     </div>
   );
 }

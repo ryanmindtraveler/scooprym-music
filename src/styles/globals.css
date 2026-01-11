@@ -486,12 +486,25 @@ div[class*="border-t"][class*="bg-fd-secondary"]:not(:has(*)):not([data-content]
 
 /* Shake Animation */
 @keyframes button-shake {
-  0%, 100% { transform: translateX(0); }
-  10% { transform: translateX(-6px) rotate(-6deg); }
-  30% { transform: translateX(6px) rotate(6deg); }
-  50% { transform: translateX(-4px) rotate(-3deg); }
-  70% { transform: translateX(4px) rotate(3deg); }
-  90% { transform: translateX(-2px) rotate(0deg); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-6px) rotate(-6deg);
+  }
+  30% {
+    transform: translateX(6px) rotate(6deg);
+  }
+  50% {
+    transform: translateX(-4px) rotate(-3deg);
+  }
+  70% {
+    transform: translateX(4px) rotate(3deg);
+  }
+  90% {
+    transform: translateX(-2px) rotate(0deg);
+  }
 }
 
 .animate-button-shake {
@@ -499,10 +512,33 @@ div[class*="border-t"][class*="bg-fd-secondary"]:not(:has(*)):not([data-content]
 }
 
 @keyframes shimmer {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(100%); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 .animate-shimmer {
   animation: shimmer 2s infinite linear;
+}
+
+/* Custom Scrollbar for Pro Max Feel */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2); /* Indigo-200 / 20% */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4); /* Indigo-400 / 40% */
 }

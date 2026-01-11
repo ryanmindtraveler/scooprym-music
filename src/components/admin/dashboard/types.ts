@@ -9,9 +9,9 @@ export interface AdminStats {
   subsGrowth: number;
   queueLength: number;
   recentRevenue: number; // Added
-  recentUsers: number;   // Added
-  recentSongs: number;   // Added
-  recentSubs: number;    // Added
+  recentUsers: number; // Added
+  recentSongs: number; // Added
+  recentSubs: number; // Added
 }
 
 export interface LiveSong {

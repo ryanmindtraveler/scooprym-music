@@ -47,18 +47,18 @@ export const SocialLoginButton = ({ callbackUrl: propCallbackUrl, showDivider = 
         },
         {
           onRequest: () => {
-             setIsLoading(provider);
+            setIsLoading(provider);
           },
           onResponse: () => {
-             setIsLoading(null);
+            setIsLoading(null);
           },
           onSuccess: () => {
-             setIsLoading(null);
+            setIsLoading(null);
           },
           onError: (ctx) => {
-             console.error('social login error', ctx.error.message);
-             toast.error(ctx.error.message || 'Something went wrong');
-             setIsLoading(null);
+            console.error('social login error', ctx.error.message);
+            toast.error(ctx.error.message || 'Something went wrong');
+            setIsLoading(null);
           },
         }
       );

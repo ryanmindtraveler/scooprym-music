@@ -11,8 +11,8 @@ import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
-import { ArrowUpRight, Clock, Eye, Loader2, Pause, Play, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ArrowUpRight, Clock, Eye, Loader2, Pause, Play, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,8 +25,6 @@ interface GallerySectionProps {
   songs?: Song[];
   initialSelectedSong?: Song | null;
 }
-
-
 
 import { SongDetailModal } from '@/components/songs/song-detail-modal';
 
@@ -74,7 +72,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
         <div
           className="absolute inset-0 opacity-100"
           style={{
-            background: 'linear-gradient(90deg, #38bdf8 0%, #e11d48 100%)', // Sky Blue -> Rose Red
+            background: 'linear-gradient(135deg, #ddd6fe 0%, #fbcfe8 50%, #bae6fd 100%)', // Violet -> Pink -> Blue (Unicorn Cloth)
           }}
         />
       </div>

@@ -24,9 +24,12 @@ export function createStreamEntry(id: string) {
   streamCache.set(id, entry);
 
   // Auto-cleanup after 10 minutes
-  setTimeout(() => {
-    streamCache.delete(id);
-  }, 10 * 60 * 1000);
+  setTimeout(
+    () => {
+      streamCache.delete(id);
+    },
+    10 * 60 * 1000
+  );
 
   return entry;
 }
@@ -35,7 +38,7 @@ export function pushToStream(id: string, chunk: Uint8Array) {
   const entry = streamCache.get(id);
   if (entry) {
     entry.dataParts.push(chunk);
-    entry.listeners.forEach(listener => listener(chunk));
+    entry.listeners.forEach((listener) => listener(chunk));
   }
 }
 
@@ -43,7 +46,7 @@ export function finishStream(id: string) {
   const entry = streamCache.get(id);
   if (entry) {
     entry.isFinished = true;
-    entry.listeners.forEach(listener => listener(null)); // null signal for EOF
+    entry.listeners.forEach((listener) => listener(null)); // null signal for EOF
     entry.listeners.clear();
   }
 }
@@ -84,7 +87,7 @@ export function getStreamResponse(id: string): Response | null {
       if (listener) {
         entry.listeners.delete(listener);
       }
-    }
+    },
   });
 
   return new Response(stream, {

@@ -60,9 +60,9 @@ export function Navbar({ scroll }: NavBarProps) {
         'fixed inset-x-0 top-0 z-50 py-4 transition-all duration-300',
         scroll
           ? scrolled
-            ? 'bg-background/80 backdrop-blur-md border-b border-border/50'
+            ? 'bg-white/60 dark:bg-slate-950/60 backdrop-blur-2xl border-b border-black/5 dark:border-white/5 shadow-sm supports-backdrop-filter:bg-white/60'
             : 'bg-transparent'
-          : 'border-b border-border/50 bg-background/80 backdrop-blur-md'
+          : 'border-b border-black/5 dark:border-white/5 bg-white/60 dark:bg-slate-950/60 backdrop-blur-2xl shadow-sm'
       )}
     >
       <Container className="px-4">

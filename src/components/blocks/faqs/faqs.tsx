@@ -1,9 +1,9 @@
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { motion } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
 import type { IconName } from 'lucide-react/dynamic';
-import { motion } from 'framer-motion';
 import { useLocale } from 'next-intl';
 
 type FAQItem = {

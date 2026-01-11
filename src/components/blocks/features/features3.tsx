@@ -1,20 +1,20 @@
 'use client';
 
-import { CpuIcon, FingerprintIcon, PencilIcon, Settings2Icon, SparklesIcon, ZapIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { CpuIcon, FingerprintIcon, PencilIcon, Settings2Icon, SparklesIcon, ZapIcon } from 'lucide-react';
 
 export default function Features3Section() {
   return (
-    <section id="features" className="relative px-4 py-32 overflow-hidden bg-[#ee7752]">
-      {/* 1. Background - Matching Hero Fluid Mesh (Darker/Different Phase) */}
+    <section id="features" className="relative px-4 py-32 overflow-hidden bg-indigo-900">
+      {/* 1. Background - Matching Hero Fluid Mesh (Lighter/Vibrant Phase) */}
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 opacity-80 animate-gradient-xy"
           style={{
-            background: 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)',
+            background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #22d3ee 100%)',
           }}
         />
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-[30px]" />
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-[30px]" />
       </div>
 
       <div className="mx-auto max-w-7xl space-y-12 lg:space-y-20 relative z-10 text-white">
@@ -95,9 +95,20 @@ export default function Features3Section() {
               viewport={{ once: true }}
               transition={{ delay: idx * 0.1 }}
               whileHover={{ y: -10 }}
-              className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[40px] shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.2)] hover:bg-white/20 transition-all duration-300 group"
+              className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[40px] shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] hover:shadow-[0_8px_32px_0_rgba(255,255,255,0.2)] hover:bg-white/20 transition-all duration-300 group relative overflow-hidden"
             >
-              <div className="flex items-center gap-4 mb-6">
+              {/* Spotlight Effect Overlay */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(600px circle at var(--mouse-x, 50%) 0%, rgba(255,255,255,0.15), transparent 40%)',
+                }}
+              />
+              {/* Fallback Static Spotlight for simple hover if mouse tracking not enabled */}
+              <div className="absolute inset-0 bg-linear-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+              <div className="flex items-center gap-4 mb-6 relative z-10">
                 <div
                   className={`p-4 rounded-2xl bg-white/10 backdrop-blur-md shadow-sm group-hover:scale-110 transition-transform duration-300 ${feature.color}`}
                 >
@@ -105,7 +116,7 @@ export default function Features3Section() {
                 </div>
                 <h3 className="text-2xl font-black italic tracking-tight">{feature.title}</h3>
               </div>
-              <p className="text-lg font-medium text-white/90 leading-relaxed">{feature.desc}</p>
+              <p className="text-lg font-medium text-white/90 leading-relaxed relative z-10">{feature.desc}</p>
             </motion.div>
           ))}
         </div>

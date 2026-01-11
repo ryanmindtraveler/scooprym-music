@@ -42,6 +42,9 @@ export async function generateMusic(opt: MiniMaxRequestOptions): Promise<Generat
   const apiStartTime = performance.now();
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s Timeout
+
     const res = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -61,7 +64,8 @@ export async function generateMusic(opt: MiniMaxRequestOptions): Promise<Generat
         },
         aigc_watermark: false,
       }),
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     if (stream && res.ok && res.body) {
       console.log(`[music-generation] Streaming started in ${(performance.now() - apiStartTime).toFixed(2)}ms`);

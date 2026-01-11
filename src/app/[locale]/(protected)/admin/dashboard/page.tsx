@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
 
         {/* 3. Recent Transactions (Narrow) */}
         <div className="col-span-3 lg:col-span-3 space-y-6">
-            <TransactionList transactions={transactions} />
+          <TransactionList transactions={transactions} />
         </div>
       </div>
 
@@ -40,41 +40,40 @@ export default async function AdminDashboardPage() {
 
         {/* 5. System Health Monitor */}
         <div className="col-span-3 lg:col-span-3">
-
-            {/* 4. System Health Monitor */}
-            <Card>
-                <div className="p-4 flex items-center justify-between border-b">
-                     <h3 className="font-semibold text-sm">System Health</h3>
-                     <Badge variant="outline" className="text-green-500 border-green-500">
-                        Operational
-                     </Badge>
-                </div>
-                <CardContent className="p-4 space-y-3">
-                     <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            API Status (Suno)
-                        </span>
-                        <span className="font-medium">99.9% Uptime</span>
-                     </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            QStash Queue
-                        </span>
-                        <span className="font-medium">
-                            {stats.queueLength} {stats.queueLength > 0 ? 'Processing' : 'Idle'}
-                        </span>
-                     </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <span className="flex items-center gap-2 text-muted-foreground">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            Database Latency
-                        </span>
-                        <span className="font-medium">12ms</span>
-                     </div>
-                </CardContent>
-            </Card>
+          {/* 4. System Health Monitor */}
+          <Card>
+            <div className="p-4 flex items-center justify-between border-b">
+              <h3 className="font-semibold text-sm">System Health</h3>
+              <Badge variant="outline" className="text-green-500 border-green-500">
+                Operational
+              </Badge>
+            </div>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  API Status (Suno)
+                </span>
+                <span className="font-medium">99.9% Uptime</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  QStash Queue
+                </span>
+                <span className="font-medium">
+                  {stats.queueLength} {stats.queueLength > 0 ? 'Processing' : 'Idle'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  Database Latency
+                </span>
+                <span className="font-medium">12ms</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

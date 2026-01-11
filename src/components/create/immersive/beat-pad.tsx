@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { usePlayerStore } from '@/store';
 import {
   Activity,
   Bell,
@@ -18,9 +19,8 @@ import {
   Triangle,
   Zap,
 } from 'lucide-react';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePlayerStore } from '@/store';
 
 // === AUDIO SYNTHESIS ENGINE (V7 Expanded) ===
 class DrumSynth {
@@ -291,7 +291,7 @@ export function BeatPad() {
                     className={cn(
                       'absolute transform -translate-x-1/2 -translate-y-1/2',
                       (v.type === 'SNARE' || v.type === 'CLAP') && 'h-1 w-full bg-white blur-sm animate-flash',
-                       (v.type === 'HAT' || v.type || 'RIDE') &&
+                      (v.type === 'HAT' || v.type || 'RIDE') &&
                         'size-20 bg-yellow-400/50 rounded-full blur-xl animate-ping',
                       (v.type === 'KICK' || v.type === 'TOM') &&
                         'size-80 border-30 border-white/20 rounded-full animate-ping-slow animate-shake', // Thicker, brighter pulses
@@ -327,19 +327,21 @@ export function BeatPad() {
       <div
         className={cn(
           'absolute -top-12 transition-all duration-500 flex flex-col items-center gap-1',
-          (idleHint || isPlaying) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          idleHint || isPlaying ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
         )}
       >
         {isPlaying ? (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/40 backdrop-blur-md">
-             <div className="size-2 bg-indigo-500 rounded-full" />
-             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Audio Preview Active</span>
+            <div className="size-2 bg-indigo-500 rounded-full" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">
+              Audio Preview Active
+            </span>
           </div>
         ) : (
           <>
             <MousePointerClick className="size-4 text-purple-400 animate-bounce" />
             <span className="text-xs font-bold text-purple-400/80 bg-white/50 backdrop-blur-md px-3 py-1 rounded-full shadow-sm">
-                Tap to Play!
+              Tap to Play!
             </span>
           </>
         )}
@@ -347,7 +349,7 @@ export function BeatPad() {
 
       {/* Glow Effect when Playing */}
       {isPlaying && (
-         <div className="absolute inset-x-0 -bottom-4 h-24 bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full" />
+        <div className="absolute inset-x-0 -bottom-4 h-24 bg-indigo-500/10 blur-[60px] pointer-events-none rounded-full" />
       )}
 
       {/* === MAIN PAD GRID (Single Row) === */}
@@ -571,9 +573,9 @@ function VisualPad({
   const isIdleActive = index === waveIndex;
 
   useEffect(() => {
-     if (ref.current && onMount) {
-        onMount(label, ref.current.getBoundingClientRect());
-     }
+    if (ref.current && onMount) {
+      onMount(label, ref.current.getBoundingClientRect());
+    }
   }, [label, onMount]);
 
   // New Vibrant Color Mapping

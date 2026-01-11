@@ -40,7 +40,7 @@ export interface UseLyricsGenerationReturn {
   handleGenerateLyrics: (
     newsContent: string,
     newsLink: string,
-    musicPrompt: string,
+    musicPrompt: string
   ) => Promise<{ lyrics: string; title: string; summary?: string } | undefined>;
 
   handleRewriteLyrics: (musicPrompt: string) => Promise<void>;
@@ -134,12 +134,12 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
       return data;
     },
     onSuccess: (data, variables) => {
-        // 重写成功后的处理逻辑
-        // 替换原文中的选中部分
-        const originalLyrics = lyrics;
-        const { selectedText } = variables; // 注意：这里需要知道原始选中的文本或范围
-        // 由于 mutationFn 的 payload 只包含 selectedText，我们可能需要依赖外部状态 selectionRange
-        // 但为了准确性，最好在调用 mutate 时处理，或者在这里只能做通用提示
+      // 重写成功后的处理逻辑
+      // 替换原文中的选中部分
+      const originalLyrics = lyrics;
+      const { selectedText } = variables; // 注意：这里需要知道原始选中的文本或范围
+      // 由于 mutationFn 的 payload 只包含 selectedText，我们可能需要依赖外部状态 selectionRange
+      // 但为了准确性，最好在调用 mutate 时处理，或者在这里只能做通用提示
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to rewrite lyrics');
@@ -154,7 +154,7 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
   const handleGenerateLyrics = async (
     newsContent: string,
     newsLink: string,
-    musicPrompt: string,
+    musicPrompt: string
   ): Promise<{ lyrics: string; title: string; summary?: string } | undefined> => {
     setManualLoading(true);
     setManualError(null);
@@ -199,24 +199,24 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
     if (!selectedText.trim()) return;
 
     try {
-        const data = await rewriteLyricsMutation.mutateAsync({
-          selectedText,
-          context: lyrics,
-          style: musicPrompt,
-        });
+      const data = await rewriteLyricsMutation.mutateAsync({
+        selectedText,
+        context: lyrics,
+        style: musicPrompt,
+      });
 
-        if (data.rewrittenText) {
-            // 拼接新歌词： 前段 + 重写段 + 后段
-            const before = lyrics.substring(0, start);
-            const after = lyrics.substring(end);
-            const newLyrics = before + data.rewrittenText + after;
+      if (data.rewrittenText) {
+        // 拼接新歌词： 前段 + 重写段 + 后段
+        const before = lyrics.substring(0, start);
+        const after = lyrics.substring(end);
+        const newLyrics = before + data.rewrittenText + after;
 
-            setLyrics(normalizeLyricsSections(newLyrics));
-            setSelectionRange(null); // 重置选择
-            toast.success('Lyrics rewritten! Fresh bars.');
-        }
+        setLyrics(normalizeLyricsSections(newLyrics));
+        setSelectionRange(null); // 重置选择
+        toast.success('Lyrics rewritten! Fresh bars.');
+      }
     } catch (e) {
-        // Error handled in mutation
+      // Error handled in mutation
     }
   };
 

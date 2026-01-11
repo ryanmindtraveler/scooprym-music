@@ -24,12 +24,12 @@ import { toast } from 'sonner';
 
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { MusicPlayer } from '@/components/player/music-player';
-import { usePlayerStore } from '@/store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { usePlayerStore } from '@/store';
 
 import { useConsumeCredits, useCreditBalance } from '@/hooks/billing/use-credits';
 
@@ -875,9 +875,7 @@ export default function CreateMusicPage() {
        */}
       {musicUrl || musicLoading ? (
         <div className="fixed bottom-0 right-0 z-50 left-0 md:left-[288px]">
-          <MusicPlayer
-            className="border-t border-border/50 shadow-2xl bg-background/95 backdrop-blur-md"
-          />
+          <MusicPlayer className="border-t border-border/50 shadow-2xl bg-background/95 backdrop-blur-md" />
         </div>
       ) : null}
     </>

@@ -2,7 +2,7 @@
 
 import { getDb } from '@/db';
 import { payment, song, user } from '@/db/schema';
-import { count, desc, eq, sql, and, gt, gte } from 'drizzle-orm';
+import { and, count, desc, eq, gt, gte, sql } from 'drizzle-orm';
 
 /**
  * Fetch Key Performance Indicators (KPIs)
@@ -14,7 +14,7 @@ export async function getAdminStats() {
   const calculateGrowth = (current: number, recent: number) => {
     const previous = current - recent;
     if (previous === 0) return recent > 0 ? 100 : 0;
-    return ((recent / previous) * 100);
+    return (recent / previous) * 100;
   };
 
   const thirtyDaysAgo = new Date();
@@ -55,19 +55,14 @@ export async function getAdminStats() {
   const subResult = await db
     .select({ count: count() })
     .from(payment)
-    .where(
-      and(
-        eq(payment.type, 'subscription'),
-        gt(payment.periodEnd, new Date())
-      )
-    );
+    .where(and(eq(payment.type, 'subscription'), gt(payment.periodEnd, new Date())));
 
   // For Subs Growth, compare with active subs 30 days ago is hard without history table.
   // Proxy: New subscriptions started in last 30 days.
   const subRecentResult = await db
-      .select({ count: count() })
-      .from(payment)
-      .where(and(eq(payment.type, 'subscription'), gt(payment.createdAt, thirtyDaysAgo)));
+    .select({ count: count() })
+    .from(payment)
+    .where(and(eq(payment.type, 'subscription'), gt(payment.createdAt, thirtyDaysAgo)));
 
   const activeSubs = subResult[0]?.count || 0;
   const recentSubs = subRecentResult[0]?.count || 0;
@@ -75,10 +70,7 @@ export async function getAdminStats() {
   const subsGrowth = calculateGrowth(activeSubs, recentSubs);
 
   // 5. Queue Length
-  const queueResult = await db
-    .select({ count: count() })
-    .from(song)
-    .where(eq(song.processingStatus, 'processing'));
+  const queueResult = await db.select({ count: count() }).from(song).where(eq(song.processingStatus, 'processing'));
 
   const queueLength = queueResult[0]?.count || 0;
 

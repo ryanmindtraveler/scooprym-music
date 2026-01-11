@@ -5,6 +5,7 @@ import { LoadingTicker } from '@/components/ui/loading-ticker';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Download,
   Loader2,
@@ -21,7 +22,6 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -111,9 +111,9 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
       const remaining = MAX_RETRIES - (retryCount + 1);
       toast.error(error.message || 'Regeneration failed');
       if (remaining > 0) {
-          toast(`You have ${remaining} attempts left.`);
+        toast(`You have ${remaining} attempts left.`);
       } else {
-          toast.error("Max retries reached. Feature disabled.");
+        toast.error('Max retries reached. Feature disabled.');
       }
     } finally {
       setIsRegeneratingCover(false);
@@ -200,10 +200,12 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 {/* Left Side: Song Info */}
-                <div className={cn(
-                  "flex items-center gap-4 min-w-0 transition-all duration-300",
-                  showGeneratingUI ? "max-w-[50%]" : "max-w-[35%]"
-                )}>
+                <div
+                  className={cn(
+                    'flex items-center gap-4 min-w-0 transition-all duration-300',
+                    showGeneratingUI ? 'max-w-[50%]' : 'max-w-[35%]'
+                  )}
+                >
                   <div
                     className={cn(
                       'size-14 rounded-xl overflow-hidden bg-zinc-800 border border-white/5 shadow-lg flex items-center justify-center shrink-0',
@@ -220,53 +222,61 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                       <button
                         type="button"
                         onClick={(e) => {
-                            e.stopPropagation();
-                            handleRegenerateCover();
+                          e.stopPropagation();
+                          handleRegenerateCover();
                         }}
                         disabled={retryCount >= MAX_RETRIES || isRegeneratingCover}
                         className={cn(
-                            "relative size-full group font-bold transition-all",
-                            (retryCount >= MAX_RETRIES) ? "cursor-not-allowed opacity-50" : "cursor-pointer active:scale-95"
+                          'relative size-full group font-bold transition-all',
+                          retryCount >= MAX_RETRIES ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-95'
                         )}
                       >
                         <img
-                            src="/images/funny-censored-fallback.png"
-                            alt="Censored"
-                            className={cn("size-full object-cover", isRegeneratingCover && "opacity-50 blur-[2px]")}
+                          src="/images/funny-censored-fallback.png"
+                          alt="Censored"
+                          className={cn('size-full object-cover', isRegeneratingCover && 'opacity-50 blur-[2px]')}
                         />
 
                         {/* Overlay: Either Loading or Prompt */}
-                        <div className={cn(
-                            "absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-1 transition-opacity",
-                            isRegeneratingCover ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                        )}>
-                           {isRegeneratingCover ? (
-                               <Loader2 className="size-5 text-white animate-spin" />
-                           ) : (
-                               <>
-                                   {retryCount >= MAX_RETRIES ? (
-                                       <span className="text-[8px] text-red-300 text-center leading-tight font-black uppercase">
-                                           Limit<br/>Reached
-                                       </span>
-                                   ) : (
-                                       <>
-                                         <Sparkles className="size-4 text-white mb-1" />
-                                         <span className="text-[6px] text-white text-center leading-tight uppercase font-black tracking-wider">
-                                            Regenerate<br/>Cover
-                                         </span>
-                                       </>
-                                   )}
-                               </>
-                           )}
+                        <div
+                          className={cn(
+                            'absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-1 transition-opacity',
+                            isRegeneratingCover ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                          )}
+                        >
+                          {isRegeneratingCover ? (
+                            <Loader2 className="size-5 text-white animate-spin" />
+                          ) : (
+                            <>
+                              {retryCount >= MAX_RETRIES ? (
+                                <span className="text-[8px] text-red-300 text-center leading-tight font-black uppercase">
+                                  Limit
+                                  <br />
+                                  Reached
+                                </span>
+                              ) : (
+                                <>
+                                  <Sparkles className="size-4 text-white mb-1" />
+                                  <span className="text-[6px] text-white text-center leading-tight uppercase font-black tracking-wider">
+                                    Regenerate
+                                    <br />
+                                    Cover
+                                  </span>
+                                </>
+                              )}
+                            </>
+                          )}
                         </div>
                       </button>
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h4 className={cn(
-                      "text-white font-bold text-base leading-normal pb-1",
-                      !showGeneratingUI && "truncate"
-                    )}>
+                    <h4
+                      className={cn(
+                        'text-white font-bold text-base leading-normal pb-1',
+                        !showGeneratingUI && 'truncate'
+                      )}
+                    >
                       {showGeneratingUI ? (
                         <div className="flex items-center gap-2">
                           <LoadingTicker
@@ -396,16 +406,14 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
                     <div className="flex-1 relative h-6 flex items-center">
                       <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden relative">
                         <motion.div
-                          initial={{ width: "0%" }}
-                          animate={{ width: "95%" }}
-                          transition={{ duration: 45, ease: "linear" }}
+                          initial={{ width: '0%' }}
+                          animate={{ width: '95%' }}
+                          transition={{ duration: 45, ease: 'linear' }}
                           className="absolute inset-y-0 left-0 bg-linear-to-r from-indigo-500/40 via-purple-500/40 to-pink-500/40 rounded-full"
                         />
                       </div>
                     </div>
-                    <span className="text-[11px] font-mono text-white/10 tabular-nums min-w-[35px]">
-                      1:00
-                    </span>
+                    <span className="text-[11px] font-mono text-white/10 tabular-nums min-w-[35px]">1:00</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-4 group px-1">

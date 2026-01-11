@@ -1,6 +1,6 @@
+import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import type { Locale } from 'next-intl';
 
 import '@/styles/mdx.css';
 
@@ -18,9 +18,7 @@ export default async function DocsRootLayout({ children, params }: DocsLayoutPro
       <header className="border-b py-4 px-6">
         <h1 className="text-xl font-bold">{t('title')}</h1>
       </header>
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }

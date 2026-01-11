@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -62,12 +63,12 @@ export function LyricsDisplay({
 
   return (
     // Functional Soft Glass Card: consistent with control form
-    <Card className="p-5 flex h-full flex-col shadow-2xl shadow-indigo-500/10 bg-white/80 dark:bg-zinc-900/80 border border-slate-200/60 dark:border-white/10 backdrop-blur-3xl rounded-[32px]">
+    <Card className="p-5 flex h-full flex-col shadow-[0_8px_40px_-12px_rgba(99,102,241,0.1)] bg-white/90 dark:bg-slate-900/90 border border-white/50 dark:border-white/5 backdrop-blur-2xl rounded-[32px] transition-all duration-500">
       {/* === 顶部标题栏 === */}
-      <div className="flex items-center pb-2 border-b border-purple-100/50 dark:border-white/5 mb-1">
+      <div className="flex items-center pb-2 border-b border-indigo-100/50 dark:border-white/5 mb-1">
         <div className="flex items-center gap-3">
           {/* 图标 - 改为柔和的品牌色玻璃质感 */}
-          <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
+          <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm shadow-indigo-500/10">
             <Mic2 className="size-5" />
           </div>
           <h3 className="text-xl font-bold tracking-tight text-indigo-950 dark:text-indigo-50">Lyrics</h3>
@@ -146,7 +147,7 @@ export function LyricsDisplay({
           <div className="absolute inset-0 z-50 overflow-hidden flex flex-col items-center justify-center bg-transparent pointer-events-none pb-24">
             {/* Center Stage: Spectrum Visualizer */}
             <div className="relative z-30 mb-8 animate-in zoom-in-50 fade-in duration-700">
-               <SpectrumLoader className="scale-125" />
+              <SpectrumLoader className="scale-125" />
             </div>
 
             {/* Bottom Stage: Beat Pad (Interactive) */}
@@ -215,12 +216,12 @@ export function LyricsDisplay({
           </div>
         ) : (
           // === 空状态 / 占位符 ===
-          <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center text-indigo-400/80 border-2 border-dashed border-purple-200 dark:border-zinc-800 rounded-2xl bg-purple-50/30 dark:bg-zinc-900/30 p-10">
-            <div className="size-24 rounded-full bg-white/50 dark:bg-zinc-800 flex items-center justify-center shadow-sm border border-white/50 dark:border-zinc-700">
-              <Mic2 className="size-10 opacity-50 text-violet-400" />
+          <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center text-indigo-400/80 border-2 border-dashed border-slate-200/60 dark:border-zinc-800 rounded-2xl bg-slate-50/50 dark:bg-zinc-900/30 p-10">
+            <div className="size-24 rounded-full bg-white/50 dark:bg-zinc-800 flex items-center justify-center shadow-sm border border-white/50 dark:border-zinc-700 group">
+              <Mic2 className="size-10 opacity-50 text-indigo-300 animate-[pulse_3s_ease-in-out_infinite]" />
             </div>
             {/* Updated to text-2xl font-bold to match view mode */}
-            <p className="font-bold text-2xl max-w-2xl text-indigo-400/80 dark:text-slate-400/80 leading-relaxed">
+            <p className="font-bold text-2xl max-w-2xl text-indigo-300 dark:text-slate-400/80 leading-relaxed">
               Enter news content on the left to start generating your track.
             </p>
           </div>
@@ -259,12 +260,17 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
   // Split lines into structured segments
   const displayLines = useMemo(() => {
     if (!lyrics) return [];
-    return lyrics
+
+    // Use shared utility for consistent cleaning across app
+    const cleanText = cleanLyricsForDisplay(lyrics);
+
+    return cleanText
       .replace(/\[(.*?)\]/g, '\n[$1]\n')
       .replace(/([,，])\s*/g, '$1\n')
+
       .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line !== '');
+      .map((line: string) => line.trim())
+      .filter((line: string) => line !== '');
   }, [lyrics]);
 
   // Track parent scroll position and center point for children to calculate focus efficiently
@@ -301,7 +307,8 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
   // Handle Heuristic Auto-Scroll: Map currentTime percentage to scroll position
   useEffect(() => {
     // Only auto-scroll if playing, duration is valid, and user is NOT interacting
-    if (!isPlaying || !duration || duration <= 0 || !containerRef.current || !scrollContentRef.current || isInteracting) return;
+    if (!isPlaying || !duration || duration <= 0 || !containerRef.current || !scrollContentRef.current || isInteracting)
+      return;
 
     const progress = currentTime / duration;
     const contentHeight = scrollContentRef.current.scrollHeight;
@@ -309,12 +316,12 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
 
     // We want the total scroll range to cover from start to end
     // adding some buffer so the last lines don't stay at the very top
-    const maxScroll = contentHeight - (viewportHeight / 2);
+    const maxScroll = contentHeight - viewportHeight / 2;
     const targetScroll = progress * maxScroll;
 
     containerRef.current.scrollTo({
       top: targetScroll,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
   }, [currentTime, duration, isPlaying, isInteracting]);
 
@@ -342,12 +349,12 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
       {/* 1. AMBIENT COVER MOTION BACKGROUND */}
       <AnimatePresence mode="wait">
         <motion.div
-           key={currentSong?.coverImageUrl || 'default'}
-           initial={{ opacity: 0, scale: 1.2 }}
-           animate={{ opacity: 0.15, scale: 1.1 }}
-           exit={{ opacity: 0 }}
-           transition={{ duration: 2.5, ease: "easeOut" }}
-           className="absolute inset-0 z-0 pointer-events-none"
+          key={currentSong?.coverImageUrl || 'default'}
+          initial={{ opacity: 0, scale: 1.2 }}
+          animate={{ opacity: 0.15, scale: 1.1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 2.5, ease: 'easeOut' }}
+          className="absolute inset-0 z-0 pointer-events-none"
         >
           {currentSong?.coverImageUrl ? (
             <motion.img
@@ -356,16 +363,16 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
               className="w-full h-full object-cover blur-[100px]"
               animate={{
                 rotate: [0, 8, 0, -8, 0],
-                scale: [1, 1.1, 1, 1.1, 1]
+                scale: [1, 1.1, 1, 1.1, 1],
               }}
               transition={{
                 duration: 60,
                 repeat: Number.POSITIVE_INFINITY,
-                ease: "linear"
+                ease: 'linear',
               }}
             />
           ) : (
-             <div className="w-full h-full bg-linear-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-[80px]" />
+            <div className="w-full h-full bg-linear-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-[80px]" />
           )}
         </motion.div>
       </AnimatePresence>
@@ -375,7 +382,7 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
         className="absolute inset-0 z-20 pointer-events-none"
         style={{
           background: 'linear-gradient(to bottom, transparent 0%, transparent 10%, transparent 90%, transparent 100%)',
-          boxShadow: 'inset 0 0 150px rgba(0,0,0,0.02)'
+          boxShadow: 'inset 0 0 150px rgba(0,0,0,0.02)',
         }}
       />
 
@@ -403,10 +410,14 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
  * LyricLine: Individual line with Focus Lens / Depth-of-Field Logic
  * Optimized: Uses props for calculation instead of own scroll listener
  */
-function LyricLine({ line, parentScrollPos, containerCenter }: {
-  line: string,
-  parentScrollPos: number,
-  containerCenter: number
+function LyricLine({
+  line,
+  parentScrollPos,
+  containerCenter,
+}: {
+  line: string;
+  parentScrollPos: number;
+  containerCenter: number;
 }) {
   const lineRef = useRef<HTMLDivElement>(null);
 
@@ -423,12 +434,12 @@ function LyricLine({ line, parentScrollPos, containerCenter }: {
 
     const maxFocusRange = 400; // Visible reach
     const t = Math.min(distance / maxFocusRange, 1);
-    const intensity = 1 - (t ** 1.8); // Adjusted curve for smoother drop-off
+    const intensity = 1 - t ** 1.8; // Adjusted curve for smoother drop-off
 
     setMetrics({
-      opacity: 0.08 + (intensity * 0.92),
-      scale: 0.88 + (intensity * 0.12),
-      isBold: intensity > 0.82
+      opacity: 0.08 + intensity * 0.92,
+      scale: 0.88 + intensity * 0.12,
+      isBold: intensity > 0.82,
     });
   }, [parentScrollPos, containerCenter]);
 
@@ -442,7 +453,7 @@ function LyricLine({ line, parentScrollPos, containerCenter }: {
         className="mt-20 mb-10 transition-all duration-1000 select-none"
         style={{
           opacity: metrics.opacity * 0.7,
-          scale: metrics.scale
+          scale: metrics.scale,
         }}
       >
         <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.4em] border border-indigo-500/20 backdrop-blur-md">
@@ -457,12 +468,12 @@ function LyricLine({ line, parentScrollPos, containerCenter }: {
       ref={lineRef}
       animate={{
         opacity: metrics.opacity,
-        scale: metrics.scale
+        scale: metrics.scale,
       }}
       transition={{ type: 'spring', stiffness: 100, damping: 30 }}
       className={cn(
-        "text-xl leading-relaxed tracking-wide font-sans w-full max-w-2xl mx-auto px-4 mb-6 wrap-break-word text-center transition-all duration-700",
-        metrics.isBold ? "font-bold text-slate-900 dark:text-white" : "font-medium text-slate-400 dark:text-slate-600"
+        'text-xl leading-relaxed tracking-wide font-sans w-full max-w-2xl mx-auto px-4 mb-6 wrap-break-word text-center transition-all duration-700',
+        metrics.isBold ? 'font-bold text-slate-900 dark:text-white' : 'font-medium text-slate-400 dark:text-slate-600'
       )}
     >
       {line}

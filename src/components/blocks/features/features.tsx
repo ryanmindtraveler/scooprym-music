@@ -3,8 +3,8 @@
 import { HeaderSection } from '@/components/layout/header-section';
 import { BorderBeam } from '@/components/magicui/border-beam';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ChartBarIncreasingIcon, Database, Fingerprint, IdCard } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChartBarIncreasingIcon, Database, Fingerprint, IdCard } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useState } from 'react';

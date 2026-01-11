@@ -133,9 +133,20 @@ export async function generateLyrics({ newsUrl, prompt, provider }: GenerateLyri
     - For high-energy styles (e.g., Rap): Use dense flows, triplets, and slang.
     - For melodic styles: Use poetic imagery and emotional metaphors.
     - For punchy styles: Use short, aggressive statements.
+  - **Section Meta-Tagging (THE CONDUCTOR'S PROTOCOL)**:
+    - **Do NOT** use paretheses like '(fast flow)' anymore.
+    - **Instead**, embed style instructions directly in the **Section Tags**.
+    - **Format**: '[SectionType: Mood, Tempo, VocalStyle]'
+    - **Examples**:
+      - '[Verse 1: Fast Rap, Aggressive Flow, Staccato]'
+      - '[Chorus: Melodic, Anthemic, High Notes, Open]'
+      - '[Bridge: Whisper, Dark, Minimalist]'
+      - '[Outro: Fade out, Spoken Word]'
+    - **Why?** This tells the Music Producer AI how to structure the song dynamically.
+
   - **Structure (Full Narrative Arc)**:
     - Use as many lines as needed to tell a compelling story.
-    - Mandatory Segments: [Intro], [Verse], [Chorus], [Bridge], [Outro]. Keep them tight.
+    - Mandatory Segments: [Intro], [Verse], [Chorus], [Bridge], [Outro].
     - [Bridge] is critical for a "switch up" or "drop".
   - **Length Constraint**: **STRICTLY target 50-60 seconds.**
     - Do NOT write a 3-minute song.
@@ -208,4 +219,69 @@ export async function rewriteLyrics({ selectedText, context, style, provider }: 
   });
 
   return object.rewrittenText;
+}
+
+/**
+ * 音乐提示词增强架构
+ */
+export const musicPromptSchema = z.object({
+  stylePrompt: z
+    .string()
+    .describe(
+      'The optimized, comma-separated list of musical style descriptors (e.g. "Genre, Vibe, Instruments, Tempo, Vocal Style"). Max 500 chars.'
+    ),
+});
+
+interface EnhanceMusicPromptParams {
+  tags: string;
+  lyrics: string;
+  provider?: TextProvider;
+}
+
+/**
+ * 核心功能：增强音乐提示词
+ * 利用 AI 将简单的标签 + 歌词转化为 MiniMax 更喜欢的高保真提示词
+ */
+export async function enhanceMusicPrompt({ tags, lyrics, provider }: EnhanceMusicPromptParams) {
+  const model = getModel(provider);
+
+  const systemPrompt = `You are a specialized Prompt Engineer for **MiniMax Music 2.0**.
+  Your goal is to transform user tags and lyrics into a **pro-level music generation prompt**.
+
+  ### Strategy: "Structural Decoding"
+  The lyrics utilize **Meta-Tags** like '[Verse: Fast Rap]' or '[Chorus: Melodic]'.
+  1.  **Analyze the Structure**: Read these tags to understand the song's progression.
+  2.  **Build a Structural Prompt**: Describe how the music changes over time.
+      -   *Example*: "Structure: Fast Rap Verse -> Melodic Anthemic Chorus -> Whisper Outro."
+  3.  **Combine**: Merge this structural roadmap with the base tags (Genre/Vibe).
+
+  ### MiniMax Music 2.0 Capabilities & Keywords (USE THESE):
+  - **Vocals**: Dynamic, Breath, Whisper, Falsetto, Belting, Rap Flow, Spoken Word.
+  - **Production**: High Fidelity, Wide Stereo, Studio Quality, 48kHz, Deep Bass, Crisp Highs.
+  - **Structure**: Intro, Build-up, Drop, Bridge, Outro.
+
+  ### Guidelines:
+  1.  **Duration Target**: The song MUST be **50-60 seconds**. Add "Radio Edit", "Short & Punchy".
+  2.  **Enhance the Vibe**:
+      -   If lyrics are sad, add "Melancholic, Reverb".
+      -   If lyrics are hype, add "Aggressive, Distorted 808s".
+  3.  **Format**: Return a single **COMMA-SEPARATED** string. Max 350 characters.
+  4.  **Conciseness**: Use arrow notation (->) for structure. Avoid filler words like "transitions to".
+
+  ### Example Output:
+  "Jersey Club, Fast Tempo, **Structure: Aggressive Rap Verse -> Anthemic Chorus**, 140 BPM, Dynamic Vocals, Radio Edit, Punchy Kick"
+
+  Input Tags: ${tags}
+  Input Lyrics (Excerpt): ${lyrics.slice(0, 500)}...
+  `;
+
+  const { object } = await generateObject({
+    model,
+    schema: musicPromptSchema,
+    system: systemPrompt,
+    prompt: 'Generate optimized music prompt.',
+    temperature: 0.7,
+  });
+
+  return object.stylePrompt;
 }

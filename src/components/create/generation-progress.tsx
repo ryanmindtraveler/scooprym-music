@@ -76,8 +76,12 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
   ];
 
   return (
-    <div className={cn("w-full h-[68px] relative overflow-hidden rounded-2xl bg-zinc-900 border border-indigo-500/30 flex items-center px-6 shadow-xl shadow-indigo-500/20", className)}>
-
+    <div
+      className={cn(
+        'w-full h-[68px] relative overflow-hidden rounded-2xl bg-zinc-900 border border-indigo-500/30 flex items-center px-6 shadow-xl shadow-indigo-500/20',
+        className
+      )}
+    >
       {/* Background Progress Bar */}
       <div
         className="absolute left-0 top-0 bottom-0 bg-indigo-600/20 transition-all duration-300 ease-out"
@@ -88,7 +92,6 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
       <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer" />
 
       <div className="relative z-10 w-full flex items-center justify-between gap-4">
-
         {/* Status Text & Spinner */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative">
@@ -98,14 +101,12 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
 
           <div className="flex flex-col">
             <span className="text-white font-bold text-sm tracking-wide">
-              {phase === 'initializing' && "Connecting to Studio..."}
-              {phase === 'composing' && "Composing Melody..."}
-              {phase === 'synthesizing' && "Synthesizing Vocals..."}
-              {phase === 'finalizing' && "Mastering Audio..."}
+              {phase === 'initializing' && 'Connecting to Studio...'}
+              {phase === 'composing' && 'Composing Melody...'}
+              {phase === 'synthesizing' && 'Synthesizing Vocals...'}
+              {phase === 'finalizing' && 'Mastering Audio...'}
             </span>
-            <span className="text-indigo-300/70 text-[10px] font-mono">
-              {percent.toFixed(0)}% Completed
-            </span>
+            <span className="text-indigo-300/70 text-[10px] font-mono">{percent.toFixed(0)}% Completed</span>
           </div>
         </div>
 
@@ -113,29 +114,34 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
         <div className="hidden sm:flex items-center gap-1">
           {steps.map((step, idx) => {
             const isCurrent = step.id === phase;
-            const isPast = steps.findIndex(s => s.id === phase) > idx;
+            const isPast = steps.findIndex((s) => s.id === phase) > idx;
 
             return (
               <div key={step.id} className="flex items-center">
-                <div className={cn(
-                  "flex items-center justify-center size-8 rounded-full border transition-all duration-500",
-                  isPast ? "bg-indigo-500 border-indigo-500 text-white" :
-                  isCurrent ? "bg-indigo-500/20 border-indigo-500 text-indigo-300 scale-110 shadow-lg shadow-indigo-500/25" :
-                  "bg-white/5 border-white/10 text-white/20"
-                )}>
+                <div
+                  className={cn(
+                    'flex items-center justify-center size-8 rounded-full border transition-all duration-500',
+                    isPast
+                      ? 'bg-indigo-500 border-indigo-500 text-white'
+                      : isCurrent
+                        ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300 scale-110 shadow-lg shadow-indigo-500/25'
+                        : 'bg-white/5 border-white/10 text-white/20'
+                  )}
+                >
                   <step.icon className="size-3.5" />
                 </div>
                 {idx < steps.length - 1 && (
-                  <div className={cn(
-                    "w-3 h-0.5 mx-1 rounded-full transition-colors duration-500",
-                     isPast ? "bg-indigo-500" : "bg-white/10"
-                  )} />
+                  <div
+                    className={cn(
+                      'w-3 h-0.5 mx-1 rounded-full transition-colors duration-500',
+                      isPast ? 'bg-indigo-500' : 'bg-white/10'
+                    )}
+                  />
                 )}
               </div>
             );
           })}
         </div>
-
       </div>
     </div>
   );

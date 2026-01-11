@@ -1,7 +1,6 @@
-
 // @ts-nocheck
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { addCredits, consumeCredits, hasEnoughCredits, getUserCredits } from './credits';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { addCredits, consumeCredits, getUserCredits, hasEnoughCredits } from './credits';
 import { CREDIT_TRANSACTION_TYPE } from './types';
 
 // Mock the dependencies
@@ -17,19 +16,19 @@ vi.mock('@/db', () => ({
 }));
 
 describe('Credit System', () => {
-    const userId = 'user_123';
+  const userId = 'user_123';
 
-    beforeEach(() => {
-        vi.clearAllMocks();
-        // Reset chainable mocks
-        mockDb.select.mockReturnThis();
-        mockDb.from = vi.fn().mockReturnThis();
-        mockDb.where = vi.fn().mockReturnThis();
-        mockDb.limit = vi.fn().mockReturnThis();
-        mockDb.orderBy = vi.fn().mockReturnThis();
-        mockDb.set = vi.fn().mockReturnThis();
-        mockDb.values = vi.fn().mockReturnThis();
-    });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset chainable mocks
+    mockDb.select.mockReturnThis();
+    mockDb.from = vi.fn().mockReturnThis();
+    mockDb.where = vi.fn().mockReturnThis();
+    mockDb.limit = vi.fn().mockReturnThis();
+    mockDb.orderBy = vi.fn().mockReturnThis();
+    mockDb.set = vi.fn().mockReturnThis();
+    mockDb.values = vi.fn().mockReturnThis();
+  });
 
   describe('getUserCredits', () => {
     it('should return 0 if user has no record', async () => {
@@ -47,50 +46,52 @@ describe('Credit System', () => {
   });
 
   describe('hasEnoughCredits', () => {
-      it('should return true if balance >= required', async () => {
-          mockDb.limit.mockResolvedValueOnce([{ currentCredits: 10 }]);
-          const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
-          expect(result).toBe(true);
-      });
+    it('should return true if balance >= required', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ currentCredits: 10 }]);
+      const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
+      expect(result).toBe(true);
+    });
 
-      it('should return false if balance < required', async () => {
-        mockDb.limit.mockResolvedValueOnce([{ currentCredits: 3 }]);
-        const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
-        expect(result).toBe(false);
+    it('should return false if balance < required', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ currentCredits: 3 }]);
+      const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
+      expect(result).toBe(false);
     });
   });
 
   describe('addCredits', () => {
-      it('should insert new user credit record if not exists', async () => {
-          mockDb.limit.mockResolvedValueOnce([]); // No existing user
+    it('should insert new user credit record if not exists', async () => {
+      mockDb.limit.mockResolvedValueOnce([]); // No existing user
 
-          await addCredits({
-              userId,
-              amount: 50,
-              type: 'TEST',
-              description: 'Test credits'
-          });
-
-          // Verify insert called on userCredit
-          expect(mockDb.insert).toHaveBeenCalledTimes(2); // 1 for userCredit, 1 for transaction
+      await addCredits({
+        userId,
+        amount: 50,
+        type: 'TEST',
+        description: 'Test credits',
       });
 
-      it('should update existing user record', async () => {
-        mockDb.limit.mockResolvedValueOnce([{ currentCredits: 20 }]);
+      // Verify insert called on userCredit
+      expect(mockDb.insert).toHaveBeenCalledTimes(2); // 1 for userCredit, 1 for transaction
+    });
 
-        await addCredits({
-            userId,
-            amount: 50,
-            type: 'TEST',
-            description: 'Test credits'
-        });
+    it('should update existing user record', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ currentCredits: 20 }]);
 
-        // Verify update called
-        expect(mockDb.update).toHaveBeenCalled();
-        // We expect set to be called with new balance 70
-        expect(mockDb.set).toHaveBeenCalledWith(expect.objectContaining({
-            currentCredits: 70
-        }));
+      await addCredits({
+        userId,
+        amount: 50,
+        type: 'TEST',
+        description: 'Test credits',
+      });
+
+      // Verify update called
+      expect(mockDb.update).toHaveBeenCalled();
+      // We expect set to be called with new balance 70
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentCredits: 70,
+        })
+      );
     });
   });
 
@@ -98,15 +99,16 @@ describe('Credit System', () => {
   // For P0, we ensure the basic balance check and deduction flow works.
 
   describe('consumeCredits', () => {
-      it('should throw error if insufficient credits', async () => {
-        mockDb.limit.mockResolvedValueOnce([{ currentCredits: 0 }]); // Balance check
+    it('should throw error if insufficient credits', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ currentCredits: 0 }]); // Balance check
 
-        await expect(consumeCredits({
-            userId,
-            amount: 10,
-            description: 'Test consume'
-        })).rejects.toThrow('Insufficient credits');
-      });
+      await expect(
+        consumeCredits({
+          userId,
+          amount: 10,
+          description: 'Test consume',
+        })
+      ).rejects.toThrow('Insufficient credits');
+    });
   });
-
 });

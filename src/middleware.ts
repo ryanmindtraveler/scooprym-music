@@ -38,7 +38,8 @@ export default async function middleware(req: NextRequest) {
   // const session = await getSession();
 
   // Check session using cookie instead of making HTTP request to avoid fetch failures
-  const sessionCookie = req.cookies.get('better-auth.session_token') || req.cookies.get('__Secure-better-auth.session_token');
+  const sessionCookie =
+    req.cookies.get('better-auth.session_token') || req.cookies.get('__Secure-better-auth.session_token');
   const isLoggedIn = !!sessionCookie;
   // console.log('middleware, isLoggedIn', isLoggedIn);
 

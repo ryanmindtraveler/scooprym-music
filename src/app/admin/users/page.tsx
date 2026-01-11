@@ -1,8 +1,8 @@
+import { DataTable } from '@/components/admin/data-table';
 import { getDb } from '@/db/index';
 import { user } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 import { columns } from './columns';
-import { DataTable } from '@/components/admin/data-table';
 
 export default async function AdminUsersPage() {
   const db = await getDb();
@@ -18,9 +18,7 @@ export default async function AdminUsersPage() {
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
-          <p className="text-muted-foreground">
-            Manage users, check roles, and view registration dates.
-          </p>
+          <p className="text-muted-foreground">Manage users, check roles, and view registration dates.</p>
         </div>
       </div>
       <DataTable data={userData} columns={columns} searchKey="email" />

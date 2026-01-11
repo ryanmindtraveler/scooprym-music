@@ -71,8 +71,13 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
         )}
         {...props}
       >
-        {/* 1. Global Background: "Candy Split" (Indigo/Periwinkle Base) */}
-        <div className="absolute inset-0 z-0 overflow-hidden bg-[#c7d2fe]"> {/* Indigo-200 Base */}
+        {/* 1. Global Background: "Candy Split" (Indigo/Periwinkle Base) -> Now Slate/Clean Base */}
+        <div className="absolute inset-0 z-0 overflow-hidden bg-slate-50">
+            {/* GLOBAL GRAIN TEXTURE: Adds 'Film' feel to remove digital flatness */}
+            <div
+                className="absolute inset-0 opacity-[0.04] mix-blend-color-burn pointer-events-none z-1"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
+            />
 
             {/*
                 THE DUALITY MESH
@@ -85,7 +90,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                 {/* 1. Left Side: Cyan-Blue Gradient */}
                 <motion.div
                     className="absolute top-[-10%] left-[-28%] w-[65vw] h-[120vw] rounded-full mix-blend-multiply opacity-60"
-                    style={{ background: 'linear-gradient(135deg, #67e8f9 0%, #3b82f6 100%)' }}
+                    style={{ background: 'linear-gradient(135deg, #22d3ee 0%, #818cf8 100%)' }}
                     animate={{
                          scale: [1, 1.05, 1],
                     }}
@@ -95,11 +100,22 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                 {/* 2. Right Side: Pink-Purple Gradient */}
                 <motion.div
                     className="absolute top-[-10%] right-[-28%] w-[65vw] h-[120vw] rounded-full mix-blend-multiply opacity-60"
-                    style={{ background: 'linear-gradient(225deg, #f472b6 0%, #d946ef 100%)' }}
+                    style={{ background: 'linear-gradient(225deg, #f472b6 0%, #c084fc 100%)' }}
                     animate={{
                          scale: [1, 1.05, 1],
                     }}
                     transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                />
+
+                {/* 3. CENTER FILL: Violet/Pink Aura (Full Height Coverage) */}
+                <motion.div
+                     className="absolute top-[-10%] left-[20%] w-[60vw] h-[120vw] rounded-full mix-blend-multiply opacity-80"
+                     style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.6) 0%, rgba(244,114,182,0.5) 40%, transparent 70%)' }} // Violet -> Pink
+                     animate={{
+                         scale: [0.95, 1.05, 0.95],
+                         opacity: [0.6, 0.8, 0.6]
+                     }}
+                     transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
                 />
 
             </div>
@@ -124,9 +140,9 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
             >
                <div className="relative inline-block z-10 px-12 py-4">
                    <motion.h1
-                     className="text-7xl sm:text-8xl md:text-[11.5rem] font-black italic tracking-tighter font-sans leading-tight z-20 relative drop-shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
+                     className="text-7xl sm:text-8xl md:text-[11.5rem] font-black italic tracking-[-0.07em] font-sans leading-tight z-20 relative drop-shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
                      style={{
-                        backgroundImage: 'linear-gradient(to right, #67e8f9, #ec4899, #eab308, #67e8f9)',
+                        backgroundImage: 'linear-gradient(to right, #22d3ee, #e879f9, #facc15, #22d3ee)',
                         backgroundSize: '200% auto',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',

@@ -66,9 +66,7 @@ const providerConfig: Record<ProviderKey, ProviderConfig> = {
 const withTimeout = <T>(promise: Promise<T>, timeoutMillis: number): Promise<T> => {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error('Image generation timed out')), timeoutMillis)
-    ),
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Image generation timed out')), timeoutMillis)),
   ]);
 };
 
@@ -96,26 +94,19 @@ export async function POST(req: NextRequest) {
     };
 
     if (config.dimensionFormat === 'size') {
-        options.size = size || DEFAULT_IMAGE_SIZE;
+      options.size = size || DEFAULT_IMAGE_SIZE;
     } else {
-        options.aspectRatio = aspectRatio || DEFAULT_ASPECT_RATIO;
+      options.aspectRatio = aspectRatio || DEFAULT_ASPECT_RATIO;
     }
 
-    const { image } = await withTimeout(
-      generateImage(options),
-      TIMEOUT_MILLIS
-    );
+    const { image } = await withTimeout(generateImage(options), TIMEOUT_MILLIS);
 
     return NextResponse.json({
-        success: true,
-        image: image.base64, // 或 url，取决于返回结构
+      success: true,
+      image: image.base64, // 或 url，取决于返回结构
     });
-
   } catch (error: any) {
     console.error('Image generation error:', error);
-    return NextResponse.json(
-      { success: false, error: error.message || 'Failed to generate image' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message || 'Failed to generate image' }, { status: 500 });
   }
 }

@@ -30,9 +30,7 @@ export default async function AdminDashboardLayout({ children }: PropsWithChildr
   return (
     <>
       <DashboardHeader breadcrumbs={breadcrumbs} />
-      <div className="flex flex-1 flex-col overflow-y-auto bg-muted/10 p-4 md:p-8">
-        {children}
-      </div>
+      <div className="flex flex-1 flex-col overflow-y-auto bg-muted/10 p-4 md:p-8">{children}</div>
     </>
   );
 }

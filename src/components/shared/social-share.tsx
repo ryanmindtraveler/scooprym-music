@@ -35,7 +35,7 @@ export function SocialShare({
   const [isCopied, setIsCopied] = useState(false);
 
   // Fallback to current window URL if not provided
-  const shareUrl = typeof window !== 'undefined' ? (url || window.location.href) : '';
+  const shareUrl = typeof window !== 'undefined' ? url || window.location.href : '';
   const shareText = `${title}\n${description}`;
 
   const handleCopy = async () => {
@@ -76,7 +76,7 @@ export function SocialShare({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("gap-2", className)}>
+        <Button variant="outline" size="sm" className={cn('gap-2', className)}>
           <Share2 className="size-4" />
           分享
         </Button>
@@ -84,9 +84,7 @@ export function SocialShare({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>分享歌曲</DialogTitle>
-          <DialogDescription>
-            将这首歌曲分享给你的朋友或者社交网络。
-          </DialogDescription>
+          <DialogDescription>将这首歌曲分享给你的朋友或者社交网络。</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-4">
@@ -105,12 +103,7 @@ export function SocialShare({
 
           <div className="flex items-center space-x-2">
             <div className="grid flex-1 gap-2">
-              <Input
-                id="link"
-                defaultValue={shareUrl}
-                readOnly
-                className="h-9 font-mono text-sm bg-muted/50"
-              />
+              <Input id="link" defaultValue={shareUrl} readOnly className="h-9 font-mono text-sm bg-muted/50" />
             </div>
             <Button type="button" size="sm" className="px-3" onClick={handleCopy}>
               {isCopied ? <Check className="size-4" /> : <Copy className="size-4" />}

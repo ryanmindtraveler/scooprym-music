@@ -416,7 +416,6 @@
   border-radius: inherit;
 }
 
-
 /* ===== 自定义滚动条 ===== */
 ::-webkit-scrollbar {
   width: 12px;
@@ -435,4 +434,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, #ffff00, #ff00ff);
 }
-

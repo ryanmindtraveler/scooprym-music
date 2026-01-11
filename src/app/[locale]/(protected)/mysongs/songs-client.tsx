@@ -47,8 +47,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { SongItem } from './types';
 
-
-
 interface SongsPageClientProps {
   creations: SongItem[];
   recent: SongItem[];
@@ -130,7 +128,6 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedSong, setSelectedSong] = useState<SongItem | null>(null);
 
-
   const fetchData = useCallback(async (tab: string, page: number) => {
     setLoading(true);
     try {
@@ -160,56 +157,62 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
     }
   }, []); // Stable dependency
 
-  const handleDelete = useCallback(async (songId: string) => {
-    setDeletingId(songId);
-    const originalData = data[activeTab];
-    // Optimistic Update: Filter out the deleted song immediately
-    setData((prev) => ({
-      ...prev,
-      [activeTab]: prev[activeTab].filter((s) => s.id !== songId),
-    }));
-
-    try {
-      const res = await fetch(`/api/songs/${songId}`, {
-        method: 'DELETE',
-      });
-      const result = await res.json();
-
-      if (!res.ok || !result.success) {
-        throw new Error(result.error || 'Failed to delete song');
-      }
-
-      toast.success('Song deleted successfully');
-      // No need to fetch again immediately if optimistic update worked,
-      // but if we are on page 1 and list is now empty, we might want to refresh.
-      if (data[activeTab].length <= 1) {
-        fetchData(activeTab, pages[activeTab]);
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete song');
-      // Revert on failure
+  const handleDelete = useCallback(
+    async (songId: string) => {
+      setDeletingId(songId);
+      const originalData = data[activeTab];
+      // Optimistic Update: Filter out the deleted song immediately
       setData((prev) => ({
         ...prev,
-        [activeTab]: originalData,
+        [activeTab]: prev[activeTab].filter((s) => s.id !== songId),
       }));
-    } finally {
-      setDeletingId(null);
-    }
-  }, [activeTab, data, fetchData, pages]);
 
-  const handlePlayClick = useCallback((songItem: SongItem) => {
-    if (currentSong?.id === songItem.id && globalIsPlaying) {
-      pause();
-    } else if (songItem.audioUrl && songItem.audioUrl !== 'processing') {
-      play({
-        id: songItem.id,
-        title: songItem.title,
-        audioUrl: songItem.audioUrl,
-        coverImageUrl: songItem.coverImageUrl,
-        artist: 'AI Generated',
-      });
-    }
-  }, [currentSong?.id, globalIsPlaying, pause, play]);
+      try {
+        const res = await fetch(`/api/songs/${songId}`, {
+          method: 'DELETE',
+        });
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          throw new Error(result.error || 'Failed to delete song');
+        }
+
+        toast.success('Song deleted successfully');
+        // No need to fetch again immediately if optimistic update worked,
+        // but if we are on page 1 and list is now empty, we might want to refresh.
+        if (data[activeTab].length <= 1) {
+          fetchData(activeTab, pages[activeTab]);
+        }
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to delete song');
+        // Revert on failure
+        setData((prev) => ({
+          ...prev,
+          [activeTab]: originalData,
+        }));
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [activeTab, data, fetchData, pages]
+  );
+
+  const handlePlayClick = useCallback(
+    (songItem: SongItem) => {
+      if (currentSong?.id === songItem.id && globalIsPlaying) {
+        pause();
+      } else if (songItem.audioUrl && songItem.audioUrl !== 'processing') {
+        play({
+          id: songItem.id,
+          title: songItem.title,
+          audioUrl: songItem.audioUrl,
+          coverImageUrl: songItem.coverImageUrl,
+          artist: 'AI Generated',
+        });
+      }
+    },
+    [currentSong?.id, globalIsPlaying, pause, play]
+  );
 
   // Hydration fix: Handle client-side only player state
   const [mounted, setMounted] = useState(false);
@@ -222,9 +225,7 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
   // Polling logic: If any song is processing, refresh every 3 seconds
   useEffect(() => {
     const currentList = data[activeTab];
-    const hasProcessing = currentList.some(
-      (s) => s.audioUrl === 'processing' || s.processingStatus === 'processing'
-    );
+    const hasProcessing = currentList.some((s) => s.audioUrl === 'processing' || s.processingStatus === 'processing');
 
     if (!hasProcessing) return;
 
@@ -237,21 +238,21 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
         .then((result) => {
           if (result.success && result.data) {
             setData((prev) => {
-               // Only update if data actually changed to avoid re-renders?
-               // For now just update to keep it simple and ensuring latest status
-               return { ...prev, [activeTab]: result.data };
+              // Only update if data actually changed to avoid re-renders?
+              // For now just update to keep it simple and ensuring latest status
+              return { ...prev, [activeTab]: result.data };
             });
             setTotalPages((prev) => ({ ...prev, [activeTab]: result.pagination.totalPages }));
 
             // Update playsById from polling data
             if (result.data) {
-                setPlaysById((prev) => {
-                    const next = { ...prev };
-                    for (const s of result.data) {
-                        next[s.id] = s.plays;
-                    }
-                    return next;
-                });
+              setPlaysById((prev) => {
+                const next = { ...prev };
+                for (const s of result.data) {
+                  next[s.id] = s.plays;
+                }
+                return next;
+              });
             }
 
             // Check if we still need to poll
@@ -261,25 +262,29 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
 
             // Sync selectedSong if it's currently open
             if (selectedSong) {
-                const updatedSelectedSong = result.data.find((s: SongItem) => s.id === selectedSong.id);
-                if (updatedSelectedSong) {
-                    // If it was processing and is now failed, close modal and warn user
-                    if (updatedSelectedSong.processingStatus?.startsWith('failed')) {
-                        setSelectedSong(null);
-                        toast.error(`Generation failed for "${updatedSelectedSong.title}"`);
-                    } else if (updatedSelectedSong.audioUrl !== 'processing' && updatedSelectedSong.audioUrl !== selectedSong.audioUrl) {
-                        // If audio URL is now available, update snapshot
-                        setSelectedSong(updatedSelectedSong);
-                    }
-                } else {
-                    // Song disappeared from list (likely failed and filtered by API)
-                    // We only close if it was previously in a 'processing' state
-                    const wasProcessing = selectedSong.audioUrl === 'processing' || selectedSong.processingStatus === 'processing';
-                    if (wasProcessing) {
-                        setSelectedSong(null);
-                        toast.error('Track generation was interrupted or failed.');
-                    }
+              const updatedSelectedSong = result.data.find((s: SongItem) => s.id === selectedSong.id);
+              if (updatedSelectedSong) {
+                // If it was processing and is now failed, close modal and warn user
+                if (updatedSelectedSong.processingStatus?.startsWith('failed')) {
+                  setSelectedSong(null);
+                  toast.error(`Generation failed for "${updatedSelectedSong.title}"`);
+                } else if (
+                  updatedSelectedSong.audioUrl !== 'processing' &&
+                  updatedSelectedSong.audioUrl !== selectedSong.audioUrl
+                ) {
+                  // If audio URL is now available, update snapshot
+                  setSelectedSong(updatedSelectedSong);
                 }
+              } else {
+                // Song disappeared from list (likely failed and filtered by API)
+                // We only close if it was previously in a 'processing' state
+                const wasProcessing =
+                  selectedSong.audioUrl === 'processing' || selectedSong.processingStatus === 'processing';
+                if (wasProcessing) {
+                  setSelectedSong(null);
+                  toast.error('Track generation was interrupted or failed.');
+                }
+              }
             }
           }
         })
@@ -406,22 +411,22 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
           {creationsWithPlays.length > 0 ? (
             <div className={cn('transition-all duration-300')}>
               <div className="space-y-4">
-                {loading ? (
-                   Array(6).fill(0).map((_, i) => <SongRowSkeleton key={i} />)
-                ) : (
-                  creationsWithPlays.map((item, idx) => (
-                    <SongRow
-                      key={item.id}
-                      index={(pages.creations - 1) * 9 + idx + 1}
-                      item={item}
-                      isPlaying={getIsPlaying(item.id)}
-                      onPlayClick={() => handlePlayClick(item)}
-                      isDeleting={deletingId === item.id}
-                      onDelete={() => handleDelete(item.id)}
-                      onSongClick={setSelectedSong}
-                    />
-                  ))
-                )}
+                {loading
+                  ? Array(6)
+                      .fill(0)
+                      .map((_, i) => <SongRowSkeleton key={i} />)
+                  : creationsWithPlays.map((item, idx) => (
+                      <SongRow
+                        key={item.id}
+                        index={(pages.creations - 1) * 9 + idx + 1}
+                        item={item}
+                        isPlaying={getIsPlaying(item.id)}
+                        onPlayClick={() => handlePlayClick(item)}
+                        isDeleting={deletingId === item.id}
+                        onDelete={() => handleDelete(item.id)}
+                        onSongClick={setSelectedSong}
+                      />
+                    ))}
               </div>
               {!loading && renderPagination('creations')}
             </div>
@@ -429,11 +434,13 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
             <Card className="mt-4 flex flex-col items-center justify-center p-12 text-muted-foreground bg-muted/5 border-dashed border-2 rounded-[32px]">
               <div className="text-center space-y-4">
                 <div className="size-20 mx-auto rounded-3xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                   <Music2 className="size-10" />
+                  <Music2 className="size-10" />
                 </div>
                 <div className="space-y-1">
                   <div className="text-xl font-bold text-foreground">No songs yet</div>
-                  <p className="text-sm text-muted-foreground max-w-[280px]">Your musical masterpieces will appear here once generated.</p>
+                  <p className="text-sm text-muted-foreground max-w-[280px]">
+                    Your musical masterpieces will appear here once generated.
+                  </p>
                 </div>
                 <Button asChild className="rounded-full px-8 bg-indigo-600 hover:bg-indigo-700">
                   <LocaleLink href="/create">Create Your First Song</LocaleLink>
@@ -452,20 +459,20 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
                 </h2>
               </div>
               <div className="space-y-4">
-                {loading ? (
-                   Array(6).fill(0).map((_, i) => <SongRowSkeleton key={i} />)
-                ) : (
-                  recentSongsWithPlays.map((item, idx) => (
-                    <SongRow
-                      key={item.id}
-                      index={(pages.recent - 1) * 9 + idx + 1}
-                      item={item}
-                      isPlaying={getIsPlaying(item.id)}
-                      onPlayClick={() => handlePlayClick(item)}
-                      onSongClick={setSelectedSong}
-                    />
-                  ))
-                )}
+                {loading
+                  ? Array(6)
+                      .fill(0)
+                      .map((_, i) => <SongRowSkeleton key={i} />)
+                  : recentSongsWithPlays.map((item, idx) => (
+                      <SongRow
+                        key={item.id}
+                        index={(pages.recent - 1) * 9 + idx + 1}
+                        item={item}
+                        isPlaying={getIsPlaying(item.id)}
+                        onPlayClick={() => handlePlayClick(item)}
+                        onSongClick={setSelectedSong}
+                      />
+                    ))}
               </div>
               {!loading && renderPagination('recent')}
             </div>
@@ -483,21 +490,21 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
                 <h2 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">My Favorites</h2>
               </div>
               <div className="space-y-4">
-                {loading ? (
-                   Array(6).fill(0).map((_, i) => <SongRowSkeleton key={i} />)
-                ) : (
-                  favoriteSongsWithPlays.map((item, idx) => (
-                    <SongRow
-                      key={item.id}
-                      index={(pages.favorites - 1) * 9 + idx + 1}
-                      item={item}
-                      isPlaying={getIsPlaying(item.id)}
-                      onPlayClick={() => handlePlayClick(item)}
-                      onSongClick={setSelectedSong}
-                      isLiked={true}
-                    />
-                  ))
-                )}
+                {loading
+                  ? Array(6)
+                      .fill(0)
+                      .map((_, i) => <SongRowSkeleton key={i} />)
+                  : favoriteSongsWithPlays.map((item, idx) => (
+                      <SongRow
+                        key={item.id}
+                        index={(pages.favorites - 1) * 9 + idx + 1}
+                        item={item}
+                        isPlaying={getIsPlaying(item.id)}
+                        onPlayClick={() => handlePlayClick(item)}
+                        onSongClick={setSelectedSong}
+                        isLiked={true}
+                      />
+                    ))}
               </div>
               {!loading && renderPagination('favorites')}
             </div>

@@ -1,4 +1,3 @@
-
 import { getDb } from '@/db/index';
 import { songFavorite, songPlay, song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
@@ -8,24 +7,30 @@ import { SongsPageClient } from './songs-client';
 import type { SongItem } from './types';
 
 export default async function MySongsPage() {
-
-
-
-
   // 读取真实歌曲数据
   const session = await getSession();
   const userId = session?.user?.id;
   const db = await getDb();
   const rows = userId
-    ? await db.select().from(songTable).where(
-        and(
-          eq(songTable.userId, userId),
-          or(
-            isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+    ? await db
+        .select()
+        .from(songTable)
+        .where(
+          and(
+            eq(songTable.userId, userId),
+            or(
+              isNull(songTable.processingStatus),
+              notInArray(songTable.processingStatus, [
+                'failed_generation',
+                'processing_queue_failed',
+                'failed_audio_upload',
+                'failed_credit_deduction',
+              ])
+            )
           )
         )
-      ).orderBy(desc(songTable.createdAt)).limit(9)
+        .orderBy(desc(songTable.createdAt))
+        .limit(9)
     : [];
   const creations: SongItem[] = rows.map((r) => ({
     id: r.id,
@@ -61,15 +66,23 @@ export default async function MySongsPage() {
     const recentSongIdsOrdered = Array.from(new Set(recentPlays.map((p) => p.songId)));
 
     if (recentSongIdsOrdered.length > 0) {
-      const recentSongRows = await db.select().from(songTable).where(
-        and(
-          inArray(songTable.id, recentSongIdsOrdered),
-          or(
-            isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+      const recentSongRows = await db
+        .select()
+        .from(songTable)
+        .where(
+          and(
+            inArray(songTable.id, recentSongIdsOrdered),
+            or(
+              isNull(songTable.processingStatus),
+              notInArray(songTable.processingStatus, [
+                'failed_generation',
+                'processing_queue_failed',
+                'failed_audio_upload',
+                'failed_credit_deduction',
+              ])
+            )
           )
-        )
-      );
+        );
 
       const byId = new Map(recentSongRows.map((r) => [r.id, r]));
 
@@ -108,15 +121,23 @@ export default async function MySongsPage() {
     const favoriteSongIdsOrdered = favoriteRows.map((f) => f.songId);
 
     if (favoriteSongIdsOrdered.length > 0) {
-      const favoriteSongRows = await db.select().from(songTable).where(
-        and(
-          inArray(songTable.id, favoriteSongIdsOrdered),
-          or(
-            isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+      const favoriteSongRows = await db
+        .select()
+        .from(songTable)
+        .where(
+          and(
+            inArray(songTable.id, favoriteSongIdsOrdered),
+            or(
+              isNull(songTable.processingStatus),
+              notInArray(songTable.processingStatus, [
+                'failed_generation',
+                'processing_queue_failed',
+                'failed_audio_upload',
+                'failed_credit_deduction',
+              ])
+            )
           )
-        )
-      );
+        );
 
       const byId = new Map(favoriteSongRows.map((r) => [r.id, r]));
 
@@ -156,7 +177,12 @@ export default async function MySongsPage() {
           eq(songTable.userId, userId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+            notInArray(songTable.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_credit_deduction',
+            ])
           )
         )
       );
@@ -171,7 +197,12 @@ export default async function MySongsPage() {
           eq(songFavorite.userId, userId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+            notInArray(songTable.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_credit_deduction',
+            ])
           )
         )
       );
@@ -186,7 +217,12 @@ export default async function MySongsPage() {
           eq(songPlay.userId, userId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, ['failed_generation', 'processing_queue_failed', 'failed_audio_upload', 'failed_credit_deduction'])
+            notInArray(songTable.processingStatus, [
+              'failed_generation',
+              'processing_queue_failed',
+              'failed_audio_upload',
+              'failed_credit_deduction',
+            ])
           )
         )
       );
@@ -195,7 +231,6 @@ export default async function MySongsPage() {
 
   return (
     <>
-
       <div className="flex flex-1 flex-col bg-muted/10">
         <div className="@container/main flex flex-1 flex-col gap-2">
           <div className="flex flex-col gap-6 p-4 md:p-8">
