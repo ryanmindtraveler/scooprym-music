@@ -33,7 +33,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
   const t = await getTranslations({ locale, namespace: 'Metadata' });
 
   return {
-    metadataBase: new URL('https://scooprym.app'),
+    metadataBase: new URL('https://www.scooprym.app'),
+    alternates: {
+      canonical: '/',
+      languages: {
+        'en': '/en',
+        'zh': '/zh',
+      },
+    },
     title: {
       default: t('title'),
       template: `%s | ${t('name')}`,
