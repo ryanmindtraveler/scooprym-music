@@ -295,16 +295,27 @@ export async function POST(req: Request) {
         // We need to pass the coverImagePromise we created earlier.
         // Note: processMusicBackground is imported at top level.
 
-        const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, coverImagePromise);
-
-        // Attempt to keep serverless function alive
-        // @ts-ignore
-        if (typeof waitUntil === 'function') waitUntil(backgroundWork);
-        // @ts-ignore
-        else if ((req as any).waitUntil) (req as any).waitUntil(backgroundWork);
-        else {
-          // Node.js / VPS fallback
+        // Create background work function
+        const fireBackgroundWork = () => {
+          const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, coverImagePromise);
           backgroundWork.catch((err) => console.error('Inline background work failed:', err));
+        };
+
+        // Execution Check:
+        // 1. If Vercel/Cloudflare 'waitUntil' exists, use it.
+        // 2. Fallback: Use setImmediate/setTimeout to detach from main loop.
+        // @ts-ignore
+        if (typeof waitUntil === 'function') {
+           // @ts-ignore
+           waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
+        }
+        // @ts-ignore
+        else if ((req as any).waitUntil) {
+           // @ts-ignore
+          (req as any).waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
+        } else {
+           // Node.js Local Fallback: Fire on next tick to allow return
+           setTimeout(fireBackgroundWork, 0);
         }
 
         // We do NOT update status to 'failed'. We assume inline might succeed.

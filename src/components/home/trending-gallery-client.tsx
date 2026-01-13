@@ -78,6 +78,9 @@ export function TrendingGalleryClient({
         audioUrl: song.audioUrl,
         coverImageUrl: song.coverImageUrl,
         artist: 'AI Generated',
+        newsSummary: song.newsSummary || undefined,
+        newsContent: song.sourceText || undefined,
+        newsLink: song.sourceUrl || undefined,
       });
       void incrementPlays(song.id);
     }

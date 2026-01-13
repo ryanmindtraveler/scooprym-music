@@ -49,6 +49,8 @@ export function SongDetailClient({ song, initialIsFavorite }: SongDetailClientPr
         ...song,
         artist: 'AI Generated',
         createdAt: song.createdAt.toString(),
+        newsContent: song.sourceText,
+        newsLink: song.sourceUrl,
       } as any);
     }
   };

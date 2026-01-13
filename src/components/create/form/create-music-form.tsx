@@ -222,8 +222,8 @@ export function CreateMusicForm({
       <Card
         className={cn(
           'p-5 flex flex-col w-full h-full',
-          'shadow-[0_8px_40px_-12px_rgba(99,102,241,0.1)] hover:shadow-[0_16px_60px_-12px_rgba(99,102,241,0.15)]', // Indigo-tinted shadow for "Cotton Candy" vibe
-          'bg-white/90 dark:bg-slate-900/90',
+          'shadow-xl shadow-indigo-500/10 hover:shadow-2xl hover:shadow-indigo-500/15', // Stronger shadow
+          'bg-white dark:bg-slate-900', // Full opacity
           'border border-white/50 dark:border-white/5 backdrop-blur-2xl rounded-[32px]',
           'transition-all duration-500',
           'group/form'
@@ -505,7 +505,11 @@ export function CreateMusicForm({
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={() => useCreateStore.getState().reset()}
+                  onClick={() => {
+                    setNewsLink('');
+                    setNewsContent('');
+                    setMusicPrompt('');
+                  }}
                   className="h-[68px] w-[68px] shrink-0 rounded-2xl border-2 border-slate-200 dark:border-white/10 text-slate-400 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
                 >
                   <Trash2 className="size-6" />

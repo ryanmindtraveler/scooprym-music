@@ -65,6 +65,9 @@ export function SongDetailClient({
         audioUrl: song.audioUrl,
         coverImageUrl: song.coverImageUrl,
         artist: 'AI Generated',
+        newsSummary: song.newsSummary || undefined,
+        newsContent: song.sourceText || undefined,
+        newsLink: song.sourceUrl || undefined,
       });
       fetch(`/api/songs/${song.id}/play`, { method: 'POST' }).catch(() => {});
     }
@@ -96,6 +99,9 @@ export function SongDetailClient({
         audioUrl: song.audioUrl,
         coverImageUrl: song.coverImageUrl,
         artist: 'AI Generated',
+        newsSummary: song.newsSummary || undefined,
+        newsContent: song.sourceText || undefined,
+        newsLink: song.sourceUrl || undefined,
       });
     }
   };

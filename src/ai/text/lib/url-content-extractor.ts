@@ -10,7 +10,7 @@ import { YoutubeTranscript } from 'youtube-transcript';
 
 // --- Types ---
 
-export type UrlType = 'youtube' | 'twitter' | 'generic';
+export type UrlType = 'youtube' | 'twitter' | 'tiktok' | 'instagram' | 'generic';
 
 export interface ExtractedContent {
   success: boolean;
@@ -26,11 +26,21 @@ export interface ExtractedContent {
 // --- Platform Detectors ---
 
 export function detectUrlType(url: string): UrlType {
+  // YouTube: Standard, Shorts, Embeds, Shortlinks
   if (/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)/i.test(url)) {
     return 'youtube';
   }
+  // Twitter/X
   if (/(?:twitter\.com|x\.com)\/\w+\/status\//i.test(url)) {
     return 'twitter';
+  }
+  // TikTok: Web + Mobile Shortlinks (vt/vm)
+  if (/(?:tiktok\.com\/|vt\.tiktok\.com|vm\.tiktok\.com)/i.test(url)) {
+    return 'tiktok';
+  }
+  // Instagram: Web + Shortlinks
+  if (/(?:instagram\.com|instagr\.am)\/(?:p|reels?|reel)\//i.test(url)) {
+    return 'instagram';
   }
   return 'generic';
 }
@@ -46,6 +56,24 @@ async function extractYoutube(url: string): Promise<ExtractedContent> {
   let author = '';
 
   try {
+    // 0. Normalize URL (Convert Shorts to Watch)
+    // youtube-transcript library fails on /shorts/ paths.
+    if (url.includes('/shorts/')) {
+        try {
+            const urlObj = new URL(url);
+            const pathParts = urlObj.pathname.split('/').filter(Boolean);
+            const videoId = pathParts[pathParts.length - 1];
+            if (videoId) {
+                const newUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                console.log(`[extractor] Normalized Shorts URL: ${url} -> ${newUrl}`);
+                url = newUrl;
+            }
+        } catch (e) {
+            console.warn('[extractor] Failed to normalize shorts URL:', e);
+            url = url.replace('shorts/', 'watch?v=');
+        }
+    }
+
     // 1. Get Metadata (Title/Desc) via oEmbed (Official & Free)
     // YouTube's oEmbed endpoint is public and allows CORS
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
@@ -83,7 +111,107 @@ async function extractYoutube(url: string): Promise<ExtractedContent> {
       // Transcript failed or not available (common for music videos or short clips)
       console.warn(`[extractor] YouTube transcript failed for ${url}: ${transcriptError.message}`);
 
-      // FALLBACK: Return success with just metadata if we have at least a title
+      // FALLBACK 1: Try Generic Extractor (Jina) to get page content/description
+      // This is crucial for Shorts where transcripts are often missing but we need the title/context
+      try {
+         // Jina works better with standard watch URLs than shorts/ URLs
+         // Robust conversion using URL object to handle query params safely
+         let fallbackUrl = url;
+         try {
+            const urlObj = new URL(url);
+            if (urlObj.pathname.includes('/shorts/')) {
+                const pathParts = urlObj.pathname.split('/').filter(Boolean);
+                const videoId = pathParts[pathParts.length - 1];
+                if (videoId) fallbackUrl = `https://www.youtube.com/watch?v=${videoId}`;
+            }
+         } catch (e) { fallbackUrl = url.replace('shorts/', 'watch?v='); }
+         console.log(`[extractor] specific transcript failed, trying generic fallback for ${fallbackUrl}`);
+
+         const fallbackResult = await extractGeneric(fallbackUrl, 'youtube');
+         if (fallbackResult.success && fallbackResult.content && fallbackResult.content.length > 50) {
+            console.log(`[extractor] Fallback generic extraction successful for ${url}`);
+
+            // CLEANUP: Jina returns the WHOLE page (sidebar, comments, next videos).
+            // We must strip this noise to prevent hallucinations (e.g. "Rat at Popeyes" from recommended feed).
+            let cleanContent = fallbackResult.content;
+
+            // 1. Remove "Transcript" section and everything after
+            const transcriptIndex = cleanContent.indexOf('\nTranscript\n');
+            if (transcriptIndex !== -1) cleanContent = cleanContent.substring(0, transcriptIndex);
+
+            // 2. Remove "Comments" section
+            const commentsIndex = cleanContent.indexOf('\nComments\n');
+            if (commentsIndex !== -1) cleanContent = cleanContent.substring(0, commentsIndex);
+
+            // 3. Remove "Sign in" noise
+            const signInIndex = cleanContent.indexOf('Sign in to confirm');
+            if (signInIndex !== -1) cleanContent = cleanContent.substring(0, signInIndex);
+
+            // 5. Intelligent Description Extraction
+            // Jina's YouTube MD often has stats line: "1,069 views • Jan 12, 2026 • #Hashtags"
+            // Followed by the Description.
+            // Followed by "Show less" or "Transcript".
+            let description = '';
+            const statsLineRegex = /(\d+ views|views •)/i;
+            const lines = cleanContent.split('\n');
+            let foundStats = false;
+            let capturedDescriptionLines: string[] = [];
+
+            for (const line of lines) {
+                if (!foundStats) {
+                    if (statsLineRegex.test(line)) {
+                        foundStats = true;
+                        continue;
+                    }
+                } else {
+                    // Stop capturing if we hit typical UI buttons
+                    if (line.includes('Show less') || line.includes('Transcript') || line.includes('Altered or synthetic content')) {
+                        break;
+                    }
+                    if (line.trim().length > 0) {
+                        capturedDescriptionLines.push(line.trim());
+                    }
+                }
+            }
+
+            if (capturedDescriptionLines.length > 0) {
+                const extractedDesc = capturedDescriptionLines.join('\n');
+                // Use this as the main content if it's better than the raw blob
+                if (extractedDesc.length > 20) {
+                   cleanContent = extractedDesc;
+                   description = extractedDesc;
+                }
+            } else {
+                // Fallback: If we couldn't parse description, just use the cleaned content but truncated
+                // to avoid sidebar noise.
+                if (cleanContent.length > 1000) {
+                    console.log('[extractor] Intelligent parsing failed, truncating content to safely limit noise.');
+                    cleanContent = cleanContent.substring(0, 1000) + '... [truncated for relevance]';
+                }
+            }
+
+            // PRIORITIZE oEmbed Title
+            // Jina often returns "Extracted Web Content" or "YouTube" if it hits a wall.
+            // We already fetched the official title via oEmbed at the start.
+            let finalTitle = fallbackResult.title;
+            if ((!finalTitle || finalTitle === 'Extracted Web Content' || finalTitle === 'YouTube' || finalTitle === 'Before you continue') && title && title !== 'YouTube Video') {
+                 console.log(`[extractor] Overwriting generic Jina title with oEmbed title: "${title}"`);
+                 finalTitle = title;
+            }
+
+            return {
+                ...fallbackResult,
+                urlType: 'youtube',
+                title: finalTitle,
+                description: description || fallbackResult.description,
+                content: cleanContent
+            };
+         }
+      } catch (fallbackErr) {
+         console.warn(`[extractor] Fallback failed:`, fallbackErr);
+      }
+
+      // FALLBACK 2: Return success with just metadata if we have at least a title
       // This ensures we don't fail completely just because there are no subtitles
       if (title && title !== 'YouTube Video') {
         console.log(`[extractor] Falling back to YouTube metadata for ${url}`);
@@ -275,9 +403,11 @@ export async function extractUrlContent(url: string): Promise<ExtractedContent> 
     case 'youtube':
       return await extractYoutube(url);
     case 'twitter':
-      // For free tier, we treat Twitter as generic fallback (Meta tags only)
+    case 'tiktok':
+    case 'instagram':
+      // For free tier, we treat these as generic Jina fallbacks
       // because actual parsing requires paid API or heavy puppeteer
-      return await extractGeneric(url, 'twitter');
+      return await extractGeneric(url, type);
     default:
       return await extractGeneric(url, 'generic');
   }

@@ -6,6 +6,9 @@ export interface Song {
   artist?: string;
   audioUrl: string;
   coverImageUrl?: string | null;
+  newsSummary?: string;
+  newsContent?: string;
+  newsLink?: string;
 }
 
 interface PlayerState {

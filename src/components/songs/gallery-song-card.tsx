@@ -28,9 +28,12 @@ export function GallerySongCard({ item, onSongClick }: GallerySongCardProps) {
       play({
         id: item.id,
         title: item.title,
-        audioUrl: item.audioUrl,
+        audioUrl: item.audioUrl!,
         coverImageUrl: item.coverImageUrl,
         artist: 'AI Generated',
+        newsSummary: item.newsSummary || undefined,
+        newsContent: item.sourceText || undefined,
+        newsLink: item.sourceUrl || undefined,
       });
     }
   };

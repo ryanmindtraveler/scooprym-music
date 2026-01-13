@@ -1,6 +1,21 @@
-import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/create-music-data';
+import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/form/create-music-data';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
+// Task Interface for Queue
+export interface CreationTask {
+  id: string;
+  status: 'processing' | 'generating_cover' | 'completed' | 'failed' | 'completed_without_cover';
+  title: string;
+  coverUrl?: string;
+  audioUrl?: string;
+  lyrics?: string; // Snapshot of lyrics used
+  style?: string;
+  newsSummary?: string; // Backstory context
+  newsContent?: string; // Original User Input
+  newsLink?: string; // Original URL
+  createdAt: number;
+}
 
 interface CreateState {
   // Inputs
@@ -25,16 +40,23 @@ interface CreateState {
   hasUnsavedLyricsChanges: boolean;
   setHasUnsavedLyricsChanges: (hasChanges: boolean) => void;
 
-  // Music Result
+  // Music Result (Stage / Current View)
   musicUrl: string | null;
   setMusicUrl: (url: string | null) => void;
   musicCoverUrl: string | null;
   setMusicCoverUrl: (url: string | null) => void;
-  musicId: string | null; // The ID of the successfully generated song
+  musicId: string | null; // The ID of the successfully generated song (Current Stage)
   setMusicId: (id: string | null) => void;
 
-  // Process State
-  processingTaskId: string | null; // For resuming polling in the background
+  // Task Queue (Background)
+  tasks: CreationTask[];
+  addTask: (task: CreationTask) => void;
+  updateTask: (id: string, updates: Partial<CreationTask>) => void;
+  removeTask: (id: string) => void;
+  clearCompletedTasks: () => void;
+
+  // Legacy / Polling (Can be used to track which task is "hot" if needed, but Queue is primary)
+  processingTaskId: string | null;
   setProcessingTaskId: (id: string | null) => void;
 
   // Auto-start generation signal
@@ -47,7 +69,7 @@ interface CreateState {
 
 export const useCreateStore = create<CreateState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Defaults
       newsLink: '',
       setNewsLink: (newsLink) => set({ newsLink }),
@@ -77,6 +99,19 @@ export const useCreateStore = create<CreateState>()(
       musicId: null,
       setMusicId: (musicId) => set({ musicId }),
 
+      // Task Queue Actions
+      tasks: [],
+      addTask: (task) => set((state) => ({ tasks: [task, ...state.tasks].slice(0, 10) })),
+      updateTask: (id, updates) =>
+        set((state) => ({
+          tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+        })),
+      removeTask: (id) => set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+      clearCompletedTasks: () =>
+        set((state) => ({
+          tasks: state.tasks.filter((t) => t.status === 'processing' || t.status === 'generating_cover'),
+        })),
+
       processingTaskId: null,
       setProcessingTaskId: (processingTaskId) => set({ processingTaskId }),
 
@@ -99,6 +134,7 @@ export const useCreateStore = create<CreateState>()(
           processingTaskId: null,
           musicPrompt: DEFAULT_CUSTOM_VIBE_PROMPT, // Reset to 'Viral Pop' default
           shouldAutoGenerate: false,
+          // Note: We deliberately do NOT reset 'tasks' here so history persists
         }),
     }),
     {

@@ -7,6 +7,7 @@ import { GlobalPlayer } from '@/components/player/global-player';
 import { routing } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 import { type Locale, NextIntlClientProvider, hasLocale } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
@@ -20,6 +21,30 @@ interface LocaleLayoutProps {
   children: ReactNode;
   modal: ReactNode;
   params: Promise<{ locale: Locale }>;
+}
+
+
+
+/**
+ * GENERATE METADATA (SEO)
+ */
+export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+
+  return {
+    metadataBase: new URL('https://scooprym.app'),
+    title: {
+      default: t('title'),
+      template: '%s | ScoopRYM',
+    },
+    description: t('description'),
+    icons: {
+      icon: '/favicon.ico',
+      shortcut: '/favicon-16x16.png',
+      apple: '/apple-touch-icon.png',
+    },
+  };
 }
 
 /**
