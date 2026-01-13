@@ -36,9 +36,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     metadataBase: new URL('https://scooprym.app'),
     title: {
       default: t('title'),
-      template: '%s | ScoopRYM',
+      template: `%s | ${t('name')}`,
     },
     description: t('description'),
+    appleWebApp: {
+        title: t('name'),
+        statusBarStyle: 'default',
+    },
     icons: {
       icon: '/favicon.ico',
       shortcut: '/favicon-16x16.png',
