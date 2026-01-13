@@ -12,6 +12,11 @@
 
 # testing
 /coverage
+__mocks__/
+debug-*.ts
+debug-*.json
+test-*.ts
+verify-*.ts
 
 # next.js
 /.next/
@@ -42,6 +47,7 @@ certificates/
 
 # claude code
 .claude
+tmpclaude-*
 
 # conductor
 .conductor
