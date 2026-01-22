@@ -32,7 +32,7 @@ function toVirtualFiles(files: any[]) {
       // Fallback if already in VirtualFile-like format or unknown
       return file;
     })
-    .filter((f) => f && f.path); // Filter out invalid items
+    .filter((f) => f?.path); // Filter out invalid items
 }
 
 export const source = loader({

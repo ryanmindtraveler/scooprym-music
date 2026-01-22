@@ -51,7 +51,8 @@ export function detectUrlType(url: string): UrlType {
  * 1. YouTube Extractor
  * Uses youtube-transcript to get the actual spoken content (subtitles).
  */
-async function extractYoutube(url: string): Promise<ExtractedContent> {
+async function extractYoutube(rawUrl: string): Promise<ExtractedContent> {
+  let url = rawUrl;
   let title = 'YouTube Video';
   let author = '';
 
@@ -59,19 +60,19 @@ async function extractYoutube(url: string): Promise<ExtractedContent> {
     // 0. Normalize URL (Convert Shorts to Watch)
     // youtube-transcript library fails on /shorts/ paths.
     if (url.includes('/shorts/')) {
-        try {
-            const urlObj = new URL(url);
-            const pathParts = urlObj.pathname.split('/').filter(Boolean);
-            const videoId = pathParts[pathParts.length - 1];
-            if (videoId) {
-                const newUrl = `https://www.youtube.com/watch?v=${videoId}`;
-                console.log(`[extractor] Normalized Shorts URL: ${url} -> ${newUrl}`);
-                url = newUrl;
-            }
-        } catch (e) {
-            console.warn('[extractor] Failed to normalize shorts URL:', e);
-            url = url.replace('shorts/', 'watch?v=');
+      try {
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/').filter(Boolean);
+        const videoId = pathParts[pathParts.length - 1];
+        if (videoId) {
+          const newUrl = `https://www.youtube.com/watch?v=${videoId}`;
+          console.log(`[extractor] Normalized Shorts URL: ${url} -> ${newUrl}`);
+          url = newUrl;
         }
+      } catch (e) {
+        console.warn('[extractor] Failed to normalize shorts URL:', e);
+        url = url.replace('shorts/', 'watch?v=');
+      }
     }
 
     // 1. Get Metadata (Title/Desc) via oEmbed (Official & Free)
@@ -114,101 +115,113 @@ async function extractYoutube(url: string): Promise<ExtractedContent> {
       // FALLBACK 1: Try Generic Extractor (Jina) to get page content/description
       // This is crucial for Shorts where transcripts are often missing but we need the title/context
       try {
-         // Jina works better with standard watch URLs than shorts/ URLs
-         // Robust conversion using URL object to handle query params safely
-         let fallbackUrl = url;
-         try {
-            const urlObj = new URL(url);
-            if (urlObj.pathname.includes('/shorts/')) {
-                const pathParts = urlObj.pathname.split('/').filter(Boolean);
-                const videoId = pathParts[pathParts.length - 1];
-                if (videoId) fallbackUrl = `https://www.youtube.com/watch?v=${videoId}`;
-            }
-         } catch (e) { fallbackUrl = url.replace('shorts/', 'watch?v='); }
-         console.log(`[extractor] specific transcript failed, trying generic fallback for ${fallbackUrl}`);
+        // Jina works better with standard watch URLs than shorts/ URLs
+        // Robust conversion using URL object to handle query params safely
+        let fallbackUrl = url;
+        try {
+          const urlObj = new URL(url);
+          if (urlObj.pathname.includes('/shorts/')) {
+            const pathParts = urlObj.pathname.split('/').filter(Boolean);
+            const videoId = pathParts[pathParts.length - 1];
+            if (videoId) fallbackUrl = `https://www.youtube.com/watch?v=${videoId}`;
+          }
+        } catch (e) {
+          fallbackUrl = url.replace('shorts/', 'watch?v=');
+        }
+        console.log(`[extractor] specific transcript failed, trying generic fallback for ${fallbackUrl}`);
 
-         const fallbackResult = await extractGeneric(fallbackUrl, 'youtube');
-         if (fallbackResult.success && fallbackResult.content && fallbackResult.content.length > 50) {
-            console.log(`[extractor] Fallback generic extraction successful for ${url}`);
+        const fallbackResult = await extractGeneric(fallbackUrl, 'youtube');
+        if (fallbackResult.success && fallbackResult.content && fallbackResult.content.length > 50) {
+          console.log(`[extractor] Fallback generic extraction successful for ${url}`);
 
-            // CLEANUP: Jina returns the WHOLE page (sidebar, comments, next videos).
-            // We must strip this noise to prevent hallucinations (e.g. "Rat at Popeyes" from recommended feed).
-            let cleanContent = fallbackResult.content;
+          // CLEANUP: Jina returns the WHOLE page (sidebar, comments, next videos).
+          // We must strip this noise to prevent hallucinations (e.g. "Rat at Popeyes" from recommended feed).
+          let cleanContent = fallbackResult.content;
 
-            // 1. Remove "Transcript" section and everything after
-            const transcriptIndex = cleanContent.indexOf('\nTranscript\n');
-            if (transcriptIndex !== -1) cleanContent = cleanContent.substring(0, transcriptIndex);
+          // 1. Remove "Transcript" section and everything after
+          const transcriptIndex = cleanContent.indexOf('\nTranscript\n');
+          if (transcriptIndex !== -1) cleanContent = cleanContent.substring(0, transcriptIndex);
 
-            // 2. Remove "Comments" section
-            const commentsIndex = cleanContent.indexOf('\nComments\n');
-            if (commentsIndex !== -1) cleanContent = cleanContent.substring(0, commentsIndex);
+          // 2. Remove "Comments" section
+          const commentsIndex = cleanContent.indexOf('\nComments\n');
+          if (commentsIndex !== -1) cleanContent = cleanContent.substring(0, commentsIndex);
 
-            // 3. Remove "Sign in" noise
-            const signInIndex = cleanContent.indexOf('Sign in to confirm');
-            if (signInIndex !== -1) cleanContent = cleanContent.substring(0, signInIndex);
+          // 3. Remove "Sign in" noise
+          const signInIndex = cleanContent.indexOf('Sign in to confirm');
+          if (signInIndex !== -1) cleanContent = cleanContent.substring(0, signInIndex);
 
-            // 5. Intelligent Description Extraction
-            // Jina's YouTube MD often has stats line: "1,069 views • Jan 12, 2026 • #Hashtags"
-            // Followed by the Description.
-            // Followed by "Show less" or "Transcript".
-            let description = '';
-            const statsLineRegex = /(\d+ views|views •)/i;
-            const lines = cleanContent.split('\n');
-            let foundStats = false;
-            let capturedDescriptionLines: string[] = [];
+          // 5. Intelligent Description Extraction
+          // Jina's YouTube MD often has stats line: "1,069 views • Jan 12, 2026 • #Hashtags"
+          // Followed by the Description.
+          // Followed by "Show less" or "Transcript".
+          let description = '';
+          const statsLineRegex = /(\d+ views|views •)/i;
+          const lines = cleanContent.split('\n');
+          let foundStats = false;
+          const capturedDescriptionLines: string[] = [];
 
-            for (const line of lines) {
-                if (!foundStats) {
-                    if (statsLineRegex.test(line)) {
-                        foundStats = true;
-                        continue;
-                    }
-                } else {
-                    // Stop capturing if we hit typical UI buttons
-                    if (line.includes('Show less') || line.includes('Transcript') || line.includes('Altered or synthetic content')) {
-                        break;
-                    }
-                    if (line.trim().length > 0) {
-                        capturedDescriptionLines.push(line.trim());
-                    }
-                }
-            }
-
-            if (capturedDescriptionLines.length > 0) {
-                const extractedDesc = capturedDescriptionLines.join('\n');
-                // Use this as the main content if it's better than the raw blob
-                if (extractedDesc.length > 20) {
-                   cleanContent = extractedDesc;
-                   description = extractedDesc;
-                }
+          for (const line of lines) {
+            if (!foundStats) {
+              if (statsLineRegex.test(line)) {
+                foundStats = true;
+              }
             } else {
-                // Fallback: If we couldn't parse description, just use the cleaned content but truncated
-                // to avoid sidebar noise.
-                if (cleanContent.length > 1000) {
-                    console.log('[extractor] Intelligent parsing failed, truncating content to safely limit noise.');
-                    cleanContent = cleanContent.substring(0, 1000) + '... [truncated for relevance]';
-                }
+              // Stop capturing if we hit typical UI buttons
+              if (
+                line.includes('Show less') ||
+                line.includes('Transcript') ||
+                line.includes('Altered or synthetic content')
+              ) {
+                break;
+              }
+              if (line.trim().length > 0) {
+                capturedDescriptionLines.push(line.trim());
+              }
             }
+          }
 
-            // PRIORITIZE oEmbed Title
-            // Jina often returns "Extracted Web Content" or "YouTube" if it hits a wall.
-            // We already fetched the official title via oEmbed at the start.
-            let finalTitle = fallbackResult.title;
-            if ((!finalTitle || finalTitle === 'Extracted Web Content' || finalTitle === 'YouTube' || finalTitle === 'Before you continue') && title && title !== 'YouTube Video') {
-                 console.log(`[extractor] Overwriting generic Jina title with oEmbed title: "${title}"`);
-                 finalTitle = title;
+          if (capturedDescriptionLines.length > 0) {
+            const extractedDesc = capturedDescriptionLines.join('\n');
+            // Use this as the main content if it's better than the raw blob
+            if (extractedDesc.length > 20) {
+              cleanContent = extractedDesc;
+              description = extractedDesc;
             }
+          } else {
+            // Fallback: If we couldn't parse description, just use the cleaned content but truncated
+            // to avoid sidebar noise.
+            if (cleanContent.length > 1000) {
+              console.log('[extractor] Intelligent parsing failed, truncating content to safely limit noise.');
+              cleanContent = cleanContent.substring(0, 1000) + '... [truncated for relevance]';
+            }
+          }
 
-            return {
-                ...fallbackResult,
-                urlType: 'youtube',
-                title: finalTitle,
-                description: description || fallbackResult.description,
-                content: cleanContent
-            };
-         }
+          // PRIORITIZE oEmbed Title
+          // Jina often returns "Extracted Web Content" or "YouTube" if it hits a wall.
+          // We already fetched the official title via oEmbed at the start.
+          let finalTitle = fallbackResult.title;
+          if (
+            (!finalTitle ||
+              finalTitle === 'Extracted Web Content' ||
+              finalTitle === 'YouTube' ||
+              finalTitle === 'Before you continue') &&
+            title &&
+            title !== 'YouTube Video'
+          ) {
+            console.log(`[extractor] Overwriting generic Jina title with oEmbed title: "${title}"`);
+            finalTitle = title;
+          }
+
+          return {
+            ...fallbackResult,
+            urlType: 'youtube',
+            title: finalTitle,
+            description: description || fallbackResult.description,
+            content: cleanContent,
+          };
+        }
       } catch (fallbackErr) {
-         console.warn(`[extractor] Fallback failed:`, fallbackErr);
+        console.warn('[extractor] Fallback failed:', fallbackErr);
       }
 
       // FALLBACK 2: Return success with just metadata if we have at least a title
@@ -306,7 +319,7 @@ async function extractGeneric(url: string, type: UrlType = 'generic'): Promise<E
         }
       );
 
-      if (firecrawlData && firecrawlData.success && firecrawlData.data) {
+      if (firecrawlData?.success && firecrawlData?.data) {
         return {
           success: true,
           urlType: type,

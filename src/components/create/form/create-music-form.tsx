@@ -67,6 +67,8 @@ interface CreateMusicFormProps {
   musicError?: string | null;
   isAdmin?: boolean;
   onClearError?: () => void;
+  hasJustQueued?: boolean;
+  onReset?: () => void;
 }
 
 // ==================== Main Component ====================
@@ -86,6 +88,8 @@ export function CreateMusicForm({
   musicError,
   isAdmin = false,
   onClearError,
+  hasJustQueued = false,
+  onReset,
 }: CreateMusicFormProps) {
   // Logic 1: Separate States for Independent Control
   const [activePersonaId, setActivePersonaId] = useState<string | null>(() => {
@@ -524,6 +528,22 @@ export function CreateMusicForm({
           <div className="flex-1">
             {isGenerating ? (
               <GenerationProgress />
+            ) : hasJustQueued ? (
+              <Button
+                onClick={onReset}
+                className={cn(
+                  'w-full h-[68px] text-lg font-black tracking-wide transition-all rounded-2xl relative overflow-hidden shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-1 group',
+                  'bg-linear-to-r from-emerald-500 via-teal-400 to-emerald-600 text-white'
+                )}
+              >
+                <div className="absolute inset-0 w-full h-full">
+                  <div className="absolute top-0 -left-full w-1/2 h-full bg-linear-to-r from-transparent via-white/30 to-transparent group-hover:animate-shimmer-fast" />
+                </div>
+                <div className="relative z-10 flex items-center justify-center w-full">
+                  <Sparkles className="mr-2.5 size-5 fill-current text-white/90 group-hover:animate-pulse" />
+                  Create Another Track ✨
+                </div>
+              </Button>
             ) : (
               <Button
                 onClick={handleGenerate}

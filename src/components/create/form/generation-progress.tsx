@@ -78,40 +78,51 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
   return (
     <div
       className={cn(
-        'w-full h-[68px] relative overflow-hidden rounded-2xl bg-zinc-900 border border-indigo-500/30 flex items-center px-6 shadow-xl shadow-indigo-500/20',
+        'w-full h-[68px] relative overflow-hidden rounded-2xl border flex items-center px-6 shadow-xl transition-all duration-300',
+        // Base Look (Empty Part)
+        'bg-slate-100 dark:bg-zinc-900/50 border-slate-200 dark:border-white/10',
         className
       )}
     >
-      {/* Background Progress Bar */}
+      {/* Background Progress Bar (Filling with Magic) */}
       <div
-        className="absolute left-0 top-0 bottom-0 bg-indigo-600/20 transition-all duration-300 ease-out"
-        style={{ width: `${percent}%` }}
+        className="absolute left-0 top-0 bottom-0 bg-linear-to-r from-violet-600 via-fuchsia-400 to-indigo-600 transition-all duration-300 ease-out shadow-[0_0_20px_rgba(139,92,246,0.5)]"
+        style={{ width: `${Math.max(percent, 5)}%` }} // Always show a little bit so it looks active
       />
 
-      {/* Animated Gradient Overlay */}
-      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-shimmer" />
+      {/* Shimmer Overlay on the Filled Part */}
+      <div className="absolute inset-0 w-full h-full opacity-30">
+        <div className="absolute top-0 -left-full w-1/2 h-full bg-linear-to-r from-transparent via-white to-transparent animate-shimmer-fast" />
+      </div>
 
       <div className="relative z-10 w-full flex items-center justify-between gap-4">
         {/* Status Text & Spinner */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative">
-            <div className="absolute inset-0 bg-indigo-500 blur-sm rounded-full opacity-50 animate-pulse" />
-            <Loader2 className="relative size-5 text-indigo-300 animate-spin" />
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 bg-white blur-md rounded-full opacity-30 animate-pulse" />
+            {/* White Spinner for contrast against the Gradient */}
+            <Loader2 className="relative size-5 text-white animate-spin drop-shadow-md" />
           </div>
 
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-sm tracking-wide">
-              {phase === 'initializing' && 'Connecting to Studio...'}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-white font-black text-sm tracking-wide drop-shadow-sm flex items-center gap-2">
+              {phase === 'initializing' && 'Connecting...'}
               {phase === 'composing' && 'Composing Melody...'}
               {phase === 'synthesizing' && 'Synthesizing Vocals...'}
               {phase === 'finalizing' && 'Mastering Audio...'}
             </span>
-            <span className="text-indigo-300/70 text-[10px] font-mono">{percent.toFixed(0)}% Completed</span>
+            <div className="flex items-center gap-2">
+              <span className="text-white/80 text-[10px] font-mono font-bold">{percent.toFixed(0)}%</span>
+              {/* Tiny progress line for precision */}
+              <div className="w-12 h-1 bg-black/20 rounded-full overflow-hidden">
+                <div className="h-full bg-white/50" style={{ width: `${percent % 100}%` }} />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Steps Visualizer */}
-        <div className="hidden sm:flex items-center gap-1">
+        {/* Steps Visualizer (Simplified Glassmorphism) */}
+        <div className="hidden sm:flex items-center gap-1.5 p-1.5 rounded-full bg-black/10 backdrop-blur-sm border border-white/10">
           {steps.map((step, idx) => {
             const isCurrent = step.id === phase;
             const isPast = steps.findIndex((s) => s.id === phase) > idx;
@@ -120,12 +131,12 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
               <div key={step.id} className="flex items-center">
                 <div
                   className={cn(
-                    'flex items-center justify-center size-8 rounded-full border transition-all duration-500',
+                    'flex items-center justify-center size-7 rounded-full border transition-all duration-500',
                     isPast
-                      ? 'bg-indigo-500 border-indigo-500 text-white'
+                      ? 'bg-white text-indigo-600 border-white shadow-sm'
                       : isCurrent
-                        ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300 scale-110 shadow-lg shadow-indigo-500/25'
-                        : 'bg-white/5 border-white/10 text-white/20'
+                        ? 'bg-white/90 border-white text-indigo-600 scale-110 shadow-lg'
+                        : 'bg-transparent border-white/20 text-white/40' // On colored bg, needs to be white-ish
                   )}
                 >
                   <step.icon className="size-3.5" />
@@ -133,8 +144,8 @@ export function GenerationProgress({ className }: GenerationProgressProps) {
                 {idx < steps.length - 1 && (
                   <div
                     className={cn(
-                      'w-3 h-0.5 mx-1 rounded-full transition-colors duration-500',
-                      isPast ? 'bg-indigo-500' : 'bg-white/10'
+                      'w-2 h-0.5 mx-1 rounded-full transition-colors duration-500',
+                      isPast ? 'bg-white/80' : 'bg-white/10'
                     )}
                   />
                 )}

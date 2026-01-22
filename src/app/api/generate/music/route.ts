@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   let session: any = null;
   let userId: string | undefined;
   const startTime = performance.now();
-  console.log('[Performance] generate-music: New Request');
+  // console.log('[Performance] generate-music: New Request');
 
   try {
     // 0. Rate Limiting
@@ -145,7 +145,7 @@ export async function POST(req: Request) {
       creditsDeducted: false,
       isAdminGenerated: session?.user?.role === 'admin',
     });
-    console.log(`[Performance] Initial DB record created in ${(performance.now() - dbStartTime).toFixed(2)}ms`);
+    // console.log(`[Performance] Initial DB record created in ${(performance.now() - dbStartTime).toFixed(2)}ms`);
 
     // 3. Generate Audio (Blocking - The "Synchronous" Part)
     // We still do this synchronously so the user gets "Instant Playback".
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
     // --- AI Prompt Enhancement (MiniMax 2.0 Optimization) ---
     try {
       if (prompt && lyrics) {
-        console.log(`[Music Prompt] Enhancing raw tags: "${prompt}"`);
+        // console.log(`[Music Prompt] Enhancing raw tags: "${prompt}"`);
         const { enhanceMusicPrompt } = await import('@/ai/text/lib/generation');
 
         // Timeout protection for the enhancement step (don't let prompt engineering block the main gen too long)
@@ -167,7 +167,7 @@ export async function POST(req: Request) {
         ]);
 
         if (enhanced) {
-          console.log(`[Music Prompt] Enhanced result: "${enhanced}"`);
+          // console.log(`[Music Prompt] Enhanced result: "${enhanced}"`);
           effectivePrompt = enhanced.slice(0, 500); // Safety clamp for MiniMax limit
         }
       }
@@ -197,43 +197,22 @@ export async function POST(req: Request) {
     cleanedLyrics = cleanedLyrics.replace(/\s*\([^)]*\)/g, '').trim();
 
     if (cleanedLyrics.length < 5) {
-      console.warn(`[Lyrics Cleaning] Cleaned lyrics too short, reverting to original.`);
+      console.warn('[Lyrics Cleaning] Cleaned lyrics too short, reverting to original.');
       cleanedLyrics = lyrics;
     }
     // ----------------------------------------------
 
-    // 3.1 Start Cover Image Generation (Parallel / Optimistic)
-    // We pass the raw data so the service can construct the optimal prompt.
-    const coverImagePromise = generateCoverWithRetry({
-      title: effectiveTitle,
-      lyrics: lyrics, // Cover gen uses full context
-      sourceText: effectivePrompt,
-    });
+    // 3. ASYNC ARCHITECTURE UPGRADE
+    // We NO LONGER generate music synchronously here to avoid Vercel 60s timeouts.
+    // Instead, we skip generation and let the Worker handle it.
 
-    // Call MiniMaxi
-    const musicResult = await generateMusic({
-      apiKey,
-      prompt: effectivePrompt,
-      lyrics: cleanedLyrics, // Audio model gets CLEANED lyrics
-      outputFormat: 'url',
-      audioFormat,
-      stream: false, // Force non-streaming for URL
-    });
-
-    if (!musicResult.success || !musicResult.audioContent) {
-      // Fail fast
-      await db
-        .update(songTable)
-        .set({ processingStatus: 'failed_generation', creditError: musicResult.error })
-        .where(eq(songTable.id, songId));
-      return NextResponse.json(mapGenerationError(musicResult as any), { status: 500 });
-    }
-
-    const tempAudioUrl = musicResult.audioContent as string;
+    // We still clean lyrics and prompt for the worker.
+    const tempAudioUrl = ''; // Empty signal for Worker to start generation
+    const coverImagePromise = null; // Worker will handle this
 
     // 3.5 Deduct Credits Synchronously (CRITICAL for Real-time Balance Update)
     try {
-      console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
+      // console.log(`[generate-music] Deducting credits synchronously for ${songId}...`);
       await consumeCredits({
         userId,
         amount: 2,
@@ -258,8 +237,8 @@ export async function POST(req: Request) {
 
     // Construct the Options object needed by the worker (and fallback)
     const processOptions: ProcessMusicOptions = {
-      lyrics: lyrics || '',
-      prompt,
+      lyrics: cleanedLyrics, // Pass CLEANED lyrics to worker
+      prompt: effectivePrompt, // Pass ENHANCED prompt to worker
       title: effectiveTitle,
       sourceText,
       sourceUrl,
@@ -270,7 +249,7 @@ export async function POST(req: Request) {
     };
 
     try {
-      console.log(`[QStash] Publishing job for song ${songId}...`);
+      // console.log(`[QStash] Publishing job for song ${songId}...`);
 
       const workerUrl = getWorkerUrl('api/worker/generate-music');
 
@@ -297,8 +276,13 @@ export async function POST(req: Request) {
 
         // Create background work function
         const fireBackgroundWork = () => {
-          const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, coverImagePromise);
-          backgroundWork.catch((err) => console.error('Inline background work failed:', err));
+          // Note: processMusicBackground now supports internal generation if audio is empty.
+          // It also handles cover generation if the promise is null/missing.
+          // This makes the Inline Fallback fully functional even for generation tasks.
+
+          const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, null);
+
+          backgroundWork.catch((err) => console.error('[Inline Fallback] Background work failed:', err));
         };
 
         // Execution Check:
@@ -306,16 +290,16 @@ export async function POST(req: Request) {
         // 2. Fallback: Use setImmediate/setTimeout to detach from main loop.
         // @ts-ignore
         if (typeof waitUntil === 'function') {
-           // @ts-ignore
-           waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
+          // @ts-ignore
+          waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
         }
         // @ts-ignore
         else if ((req as any).waitUntil) {
-           // @ts-ignore
+          // @ts-ignore
           (req as any).waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
         } else {
-           // Node.js Local Fallback: Fire on next tick to allow return
-           setTimeout(fireBackgroundWork, 0);
+          // Node.js Local Fallback: Fire on next tick to allow return
+          setTimeout(fireBackgroundWork, 0);
         }
 
         // We do NOT update status to 'failed'. We assume inline might succeed.
@@ -354,7 +338,7 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log(`[Performance] Optimistic Response sent in ${(performance.now() - startTime).toFixed(2)}ms`);
+    // console.log(`[Performance] Optimistic Response sent in ${(performance.now() - startTime).toFixed(2)}ms`);
 
     return NextResponse.json({
       success: true,
@@ -362,7 +346,7 @@ export async function POST(req: Request) {
       song: {
         id: songId,
         title: effectiveTitle,
-        audioUrl: tempAudioUrl, // Immediate playback
+        audioUrl: null, // Frontend must poll
         coverImageUrl: null, // Cover arrives later via socket or poll
       },
       meta: {

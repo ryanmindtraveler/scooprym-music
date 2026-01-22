@@ -7,7 +7,7 @@ import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Mic2, Sparkles } from 'lucide-react';
+import { AlertCircle, Loader2, Mic2, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BeatPad } from '../immersive/beat-pad';
 import { SpectrumLoader } from '../immersive/spectrum-loader';
@@ -92,7 +92,8 @@ export function LyricsStageView({
       id: songId,
       audioUrl: musicUrl,
       title: songTitle || 'New Creation',
-      coverImageUrl: coverImageUrl || (currentSong?.id === songId ? (currentSong?.coverImageUrl ?? undefined) : undefined),
+      coverImageUrl:
+        coverImageUrl || (currentSong?.id === songId ? (currentSong?.coverImageUrl ?? undefined) : undefined),
     };
   }, [musicUrl, songId, songTitle, currentSong, coverImageUrl]);
 
@@ -106,10 +107,10 @@ export function LyricsStageView({
     currentSong?.newsLink;
 
   return (
-      <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
       {/* === Main Content Area (Background Layer) === */}
       <div className="absolute inset-0 z-0 flex flex-col h-full w-full">
-        {/* Overlay for BeatPad */}
+        {/* Overlay for BeatPad (Processing) */}
         {showOverlay && (
           <div className="absolute inset-0 z-50 overflow-hidden flex flex-col items-center justify-center bg-transparent pointer-events-none pb-24">
             <div className="relative z-30 mb-8 animate-in zoom-in-50 fade-in duration-700">
@@ -125,49 +126,49 @@ export function LyricsStageView({
           <div className="relative flex-1 h-full flex flex-col transition-all duration-1000 opacity-100 group/lyrics-container">
             {/* Lyrics Scroll Area */}
             <div className="flex-1 relative overflow-hidden h-full">
-                {isEditing ? (
+              {isEditing ? (
                 <Textarea
-                    value={lyrics}
-                    onChange={(e) => {
+                  value={lyrics}
+                  onChange={(e) => {
                     const value = e.target.value;
                     setLyrics(value);
                     if (musicLyricsSnapshot) {
-                        setHasUnsavedLyricsChanges(value.trim() !== musicLyricsSnapshot);
+                      setHasUnsavedLyricsChanges(value.trim() !== musicLyricsSnapshot);
                     }
-                    }}
-                    onSelect={(e) => {
+                  }}
+                  onSelect={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     if (target.selectionStart !== target.selectionEnd) {
-                        setSelectionRange({ start: target.selectionStart, end: target.selectionEnd });
+                      setSelectionRange({ start: target.selectionStart, end: target.selectionEnd });
                     } else {
-                        setSelectionRange(null);
+                      setSelectionRange(null);
                     }
-                    }}
-                    placeholder="Type your lyrics here..."
-                    className="h-full w-full overflow-y-auto resize-none font-sans text-xl md:text-2xl font-bold leading-relaxed tracking-wide bg-transparent border-0 focus:bg-white/50 dark:focus:bg-black/40 transition-colors duration-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400/50 px-8 pt-36 pb-48 outline-none caret-indigo-500 selection:bg-indigo-500/30"
+                  }}
+                  placeholder="Type your lyrics here..."
+                  className="h-full w-full overflow-y-auto resize-none font-sans text-xl md:text-2xl font-bold leading-relaxed tracking-wide bg-transparent border-0 focus:bg-white/50 dark:focus:bg-black/40 transition-colors duration-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400/50 px-8 pt-36 pb-48 outline-none caret-indigo-500 selection:bg-indigo-500/30"
                 />
-                ) : (
+              ) : (
                 <FormattedLyricsView lyrics={lyrics} />
-                )}
+              )}
 
-                {/* Rewrite Button */}
-                {selectionRange && isEditing && (
+              {/* Rewrite Button */}
+              {selectionRange && isEditing && (
                 <div className="absolute bottom-24 right-6 z-40 animate-in zoom-in-90 fade-in duration-300">
-                    <Button
+                  <Button
                     size="sm"
                     onClick={handleRewriteLyrics}
                     disabled={isRewriting}
                     className="shadow-2xl bg-slate-900/90 dark:bg-white/90 text-white dark:text-slate-900 backdrop-blur-md border border-white/10 hover:scale-105 transition-all rounded-full px-5 h-9"
-                    >
+                  >
                     {isRewriting ? (
-                        <Loader2 className="mr-2 size-3 animate-spin" />
+                      <Loader2 className="mr-2 size-3 animate-spin" />
                     ) : (
-                        <Sparkles className="mr-2 size-3" />
+                      <Sparkles className="mr-2 size-3" />
                     )}
                     Rewrite
-                    </Button>
+                  </Button>
                 </div>
-                )}
+              )}
             </div>
           </div>
         ) : (
@@ -178,91 +179,108 @@ export function LyricsStageView({
         )}
       </div>
 
-       {/* === UNIFIED HEADER AREA (Foreground Layer) === */}
-       <div className="absolute top-0 inset-x-0 z-20 flex justify-between items-start px-6 pt-6 pb-12 gap-6 bg-linear-to-b from-white via-white/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 pointer-events-none">
+      {/* === UNIFIED HEADER AREA (Foreground Layer) === */}
+      <div className="absolute top-0 inset-x-0 z-20 flex justify-between items-start px-6 pt-6 pb-12 gap-6 bg-linear-to-b from-white via-white/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 pointer-events-none">
         {/* LEFT COLUMN */}
         <div className="flex items-center gap-6 max-w-[70%] pointer-events-auto">
-            {/* Visual Anchor */}
-            <div className={cn(
-              "flex items-center justify-center size-24 rounded-2xl text-white shadow-xl shadow-indigo-500/20 ring-1 ring-black/5 dark:ring-white/10 shrink-0 overflow-hidden relative group",
-              coverImageUrl ? "bg-slate-100 dark:bg-slate-800" : "bg-indigo-600"
-            )}>
-              {coverImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={coverImageUrl} alt="Cover" className="size-full object-cover transition-transform duration-700 group-hover:scale-110" />
-              ) : (
-                <Mic2 className="size-10" />
-              )}
-            </div>
+          {/* Visual Anchor */}
+          <div
+            className={cn(
+              'flex items-center justify-center size-24 rounded-2xl text-white shadow-xl shadow-indigo-500/20 ring-1 ring-black/5 dark:ring-white/10 shrink-0 overflow-hidden relative group',
+              coverImageUrl ? 'bg-slate-100 dark:bg-slate-800' : 'bg-indigo-600'
+            )}
+          >
+            {coverImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverImageUrl}
+                alt="Cover"
+                className="size-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            ) : (
+              // Frontend Fallback for missing covers
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/images/funny-censored-fallback.png"
+                alt="Fallback Cover"
+                className="size-full object-cover opacity-80"
+              />
+            )}
+          </div>
 
-            {/* Content */}
-            <div className="flex flex-col justify-center gap-1.5 min-w-0">
-                <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-tight drop-shadow-sm line-clamp-1 py-0.5">
-                  {songTitle || 'New Creation'}
-                </h2>
-                <div className="flex flex-col gap-1">
-                   <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 max-w-xl">
-                     {displaySummary || <span className="opacity-50 italic">No context available</span>}
-                   </p>
-                </div>
+          {/* Content */}
+          <div className="flex flex-col justify-center gap-1.5 min-w-0">
+            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-tight drop-shadow-sm line-clamp-1 py-0.5">
+              {songTitle || 'New Creation'}
+            </h2>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 max-w-xl">
+                {displaySummary || <span className="opacity-50 italic">No context available</span>}
+              </p>
             </div>
+          </div>
         </div>
 
         {/* RIGHT COLUMN */}
         <div className="flex flex-col items-end gap-3 shrink-0 pointer-events-auto">
-             <div className="h-10 w-px" />
-             <div className="flex items-center gap-3 pt-1">
-                 <AnimatePresence>
-                  {isEditing && musicLyricsSnapshot && hasUnsavedLyricsChanges && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                    >
-                      <Button
-                        size="sm"
-                        onClick={handleRegenerateAudio}
-                        disabled={musicLoading}
-                        className="h-8 px-4 rounded-full bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
-                      >
-                        Regenerate
-                      </Button>
-                    </motion.div>
-                  )}
-                 </AnimatePresence>
+          <div className="h-10 w-px" />
+          <div className="flex items-center gap-3 pt-1">
+            <AnimatePresence>
+              {isEditing && musicLyricsSnapshot && hasUnsavedLyricsChanges && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                >
+                  <Button
+                    size="sm"
+                    onClick={handleRegenerateAudio}
+                    disabled={musicLoading}
+                    className="h-8 px-4 rounded-full bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
+                  >
+                    Regenerate
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                 <div className="flex items-center gap-2.5 bg-slate-100/80 dark:bg-white/5 p-1.5 pr-2.5 rounded-full border border-slate-200/50 dark:border-white/10 backdrop-blur-sm shadow-sm">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">
-                      Edit
-                    </span>
-                    <Switch
-                      checked={isEditing}
-                      onCheckedChange={setIsEditing}
-                      disabled={!lyrics || musicLoading || isPlayingThisSong}
-                      className="data-[state=checked]:bg-indigo-600 scale-90"
-                    />
-                 </div>
+            <div className="flex items-center gap-2.5 bg-slate-100/80 dark:bg-white/5 p-1.5 pr-2.5 rounded-full border border-slate-200/50 dark:border-white/10 backdrop-blur-sm shadow-sm">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">Edit</span>
+              <Switch
+                checked={isEditing}
+                onCheckedChange={setIsEditing}
+                disabled={!lyrics || musicLoading}
+                className="data-[state=checked]:bg-indigo-600 scale-90"
+              />
             </div>
+          </div>
         </div>
       </div>
-
-      {/* === SEAMLESS PLAYER FOOTER (Foreground Layer) === */}
       <div className="absolute bottom-0 inset-x-0 z-30 pb-0 pt-12 bg-linear-to-t from-white via-white/95 to-transparent dark:from-slate-900 dark:via-slate-900/95 pointer-events-none">
-        <HeaderPlayer
-          variant="footer"
-          className="w-full pointer-events-auto"
-          contextSong={contextSong ?? undefined}
-          onPrevious={onPrevious}
-          onNext={onNext}
-          hasPrevious={hasPrevious}
-          hasNext={hasNext}
-        />
+        {processingStatus === 'failed' ? (
+          <div className="w-full py-6 px-6 flex items-center justify-center pointer-events-auto bg-red-50/50 dark:bg-red-900/10 backdrop-blur-sm border-t border-red-100 dark:border-red-900/20">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="size-5 text-red-500" />
+              <p className="text-sm font-bold text-red-800 dark:text-red-300 tracking-wide uppercase">
+                Generation Failed
+              </p>
+            </div>
+          </div>
+        ) : (
+          <HeaderPlayer
+            variant="footer"
+            className="w-full pointer-events-auto"
+            contextSong={contextSong ?? undefined}
+            onPrevious={onPrevious}
+            onNext={onNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        )}
       </div>
-
     </div>
   );
 }
-
 
 /**
  * FormattedLyricsView (Cinematic Lyrics Overhaul)
@@ -323,12 +341,21 @@ function FormattedLyricsView({ lyrics }: { lyrics: string }) {
       container.addEventListener('scroll', handleScroll, { passive: true });
       updateCenter();
       window.addEventListener('resize', updateCenter);
-    }
 
-    return () => {
-      container?.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', updateCenter);
-    };
+      // Robust Resize Observer for layout shifts (Sidebar, Keyboard)
+      const resizeObserver = new ResizeObserver(() => {
+        updateCenter();
+        handleScroll(); // Re-read scroll pos
+      });
+      resizeObserver.observe(container);
+
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', updateCenter);
+        resizeObserver.disconnect();
+      };
+    }
+    return () => {};
   }, []);
 
   // Handle Heuristic Auto-Scroll: Map currentTime percentage to scroll position

@@ -40,6 +40,7 @@ function TabItem({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         'relative flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold transition-colors z-10',

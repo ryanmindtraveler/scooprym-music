@@ -76,7 +76,7 @@ export async function generateCoverImageDataUrl(options: {
 
   descriptionParts.push('Style: bold colors, high contrast, clean composition, NO TEXT, square 1:1 album art.');
   descriptionParts.push(
-    'Resolution: 1024x1024. COMPOSITION RULE: The image MUST fill the entire square canvas from edge to edge. NO borders, NO frames, NO letterboxing, NO padding, NO blur bars. If the subject is wide, crop it to fill the square.'
+    'Quality: High resolution 8k, masterpiece, highly detailed, sharp focus. COMPOSITION RULE: The image MUST be full bleed and fill the entire square canvas from edge to edge. NO borders, NO frames, NO letterboxing, NO padding, NO white background. The subject should be prominent and fill the frame.'
   );
 
   const prompt = descriptionParts.join('\n\n');
@@ -89,10 +89,10 @@ export async function generateCoverImageDataUrl(options: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
+        model: 'google/gemini-2.5-flash-image',
         messages: [{ role: 'user', content: prompt }],
         modalities: ['image', 'text'],
-        image_config: { aspect_ratio: '1:1' },
+        image_config: { aspect_ratio: '1:1', size: '1024x1024' },
         stream: false,
       }),
     });

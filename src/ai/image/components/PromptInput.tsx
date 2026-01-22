@@ -6,7 +6,6 @@ import { type Suggestion, getRandomSuggestions } from '../lib/suggestions';
 
 type QualityMode = 'performance' | 'quality';
 
-// showProviders/onToggleProviders/mode/onModeChange are not used yet
 interface PromptInputProps {
   onSubmit: (prompt: string) => void;
   isLoading?: boolean;
@@ -26,7 +25,6 @@ export function PromptInput({ suggestions: initSuggestions, isLoading, onSubmit 
   };
   const handleSuggestionSelect = (prompt: string) => {
     setInput(prompt);
-    // onSubmit(prompt);
   };
 
   const handleSubmit = () => {
@@ -34,10 +32,6 @@ export function PromptInput({ suggestions: initSuggestions, isLoading, onSubmit 
       onSubmit(input);
     }
   };
-
-  // const handleRefreshSuggestions = () => {
-  //   setCurrentSuggestions(getRandomSuggestions());
-  // };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

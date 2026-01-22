@@ -133,6 +133,11 @@ export async function generateLyrics({ newsUrl, prompt, provider }: GenerateLyri
     - For high-energy styles (e.g., Rap): Use dense flows, triplets, and slang.
     - For melodic styles: Use poetic imagery and emotional metaphors.
     - For punchy styles: Use short, aggressive statements.
+  - **Anti-Cliché Protocol (STRICT ENFORCEMENT)**:
+    - **FORBIDDEN START**: Do **NOT** start the song with "Yeah", "Yo", "Listen", "Check it", "Uh", "Let's go", or any generic ad-libs.
+    - **Direct Start**: Start immediately with the first line of the Verse or Chorus. Dive straight into the story or theme.
+    - **No Meta-Commentary**: Do not write lines like "This is a story about..." or "I'm gonna tell you...". Just tell it.
+
   - **Section Meta-Tagging (THE CONDUCTOR'S PROTOCOL)**:
     - **Do NOT** use paretheses like '(fast flow)' anymore.
     - **Instead**, embed style instructions directly in the **Section Tags**.

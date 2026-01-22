@@ -47,16 +47,72 @@ export interface BackgroundProcessResult {
  * 5. Update Database Status
  */
 export async function processMusicBackground(
-  audioContent: string,
+  audioContent: string | null | undefined, // Support missing audio (Async Generation)
   options: ProcessMusicOptions,
-  coverImagePromise: Promise<string | null>
+  coverImagePromise: Promise<string | null> | null // Nullable for robustness
 ): Promise<BackgroundProcessResult> {
   const bgStartTime = performance.now();
-  const { userId, songId, title, outputFormat, audioFormat } = options;
+  const { userId, songId, title, outputFormat, audioFormat, lyrics, prompt } = options;
 
   console.log(`[song-workflow] Starting background processing for song ${songId}...`);
   const effectiveTitle = title?.trim() || 'Generated Track';
   const db = await getDb();
+
+  // --- ASYNC GENERATION LOGIC ---
+  let finalAudioContent = audioContent;
+
+  if (!finalAudioContent) {
+    console.log(
+      `[song-workflow] No audio content provided. Starting Async Generation for ${songId} (Inline/Worker)...`
+    );
+    try {
+      // Dynamic import to avoid circular deps with route->workflow->generation
+      const { generateMusic } = await import('@/ai/music/lib/generation');
+      const apiKey = process.env.MINIMAXI_API_KEY;
+
+      if (!apiKey) throw new Error('System missing MINIMAXI_API_KEY');
+
+      const musicResult = await generateMusic({
+        apiKey,
+        prompt: prompt || '',
+        lyrics: lyrics || '',
+        outputFormat,
+        audioFormat,
+        stream: false,
+      });
+
+      if (!musicResult.success || !musicResult.audioContent) {
+        throw new Error(musicResult.error || 'Async Generation Failed');
+      }
+
+      finalAudioContent = musicResult.audioContent;
+      console.log(
+        `[song-workflow] Async Generation Succeeded for ${songId}. Content Length: ${finalAudioContent?.length}`
+      );
+    } catch (genError: any) {
+      console.error(`[song-workflow] Async Generation Failed for ${songId}:`, genError);
+
+      // Handle Failure: Update DB & Refund
+      await db
+        .update(songTable)
+        .set({
+          processingStatus: 'failed_generation',
+          creditError: genError.message,
+          creditsDeducted: false,
+        })
+        .where(eq(songTable.id, songId));
+
+      const { refundCredits } = await import('@/credits/credits');
+      await refundCredits({
+        userId,
+        amount: 2,
+        description: `Generation failed (Async Workflow) [ID:${songId}]`,
+      }).catch((e) => console.error('[song-workflow] Refund Failed:', e));
+
+      return { success: false, error: genError.message };
+    }
+  }
+  // ------------------------------
 
   try {
     // ==================== Parallel Execution: Audio & Cover Pipelines ====================
@@ -70,7 +126,7 @@ export async function processMusicBackground(
           const fileExt = audioFormat === 'wav' ? 'wav' : 'mp3';
 
           if (outputFormat === 'hex') {
-            const hex = audioContent;
+            const hex = finalAudioContent;
             if (!hex || hex.length === 0) {
               throw new Error('Empty hex string received from audio generation');
             }
@@ -85,7 +141,8 @@ export async function processMusicBackground(
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 60_000); // Increased timeout for larger files
 
-            const audioRes = await fetch(audioContent, { signal: controller.signal });
+            // @ts-ignore
+            const audioRes = await fetch(finalAudioContent, { signal: controller.signal });
             clearTimeout(timeout);
 
             if (!audioRes.ok) throw new Error(`Download failed: ${audioRes.status}`);
@@ -125,8 +182,26 @@ export async function processMusicBackground(
       // Task B: Cover Pipeline
       (async () => {
         try {
-          // B1. Await generation
-          const imageDataUrl = await coverImagePromise; // awaited here
+          // B1. Await generation (or null if not started)
+          let imageDataUrl = coverImagePromise ? await coverImagePromise : null;
+
+          // If no image url (e.g. Inline Fallback passed null), try to generate it now
+          if (!imageDataUrl) {
+            try {
+              const { generateCoverWithRetry } = await import('@/ai/image/lib/cover-generation');
+              // Use a fallback source text if prompt is missing
+              const coverSource = options.prompt || options.lyrics?.slice(0, 100) || options.title || 'Music Cover';
+
+              imageDataUrl = await generateCoverWithRetry({
+                title: options.title || 'Untitled',
+                lyrics: options.lyrics || '',
+                sourceText: coverSource,
+              });
+            } catch (coverGenErr) {
+              console.error('[song-workflow] Background Cover Generation failed (non-fatal):', coverGenErr);
+              // Continue to use fallback image
+            }
+          }
 
           if (imageDataUrl) {
             // B2. Convert & Upload
@@ -202,18 +277,26 @@ export async function processMusicBackground(
 
         // Determine final status
         const coverSuccess = coverGenerateResult.status === 'fulfilled' && !!coverGenerateResult.value;
-        const finalStatus = coverSuccess ? 'completed' : 'completed_without_cover';
+        const finalStatus = 'completed'; // Always complete, even if we use fallback
+
+        // Use generated cover OR static fallback
+        const coverUpload = coverGenerateResult.status === 'fulfilled' ? coverGenerateResult.value : null;
+
+        const finalCoverUrl = coverUpload?.url || '/images/funny-censored-fallback.png';
 
         await db
           .update(songTable)
           .set({
             creditsDeducted: true,
             processingStatus: finalStatus,
+            coverImageUrl: finalCoverUrl, // Ensure DB has the fallback
             updatedAt: new Date(),
           })
           .where(eq(songTable.id, songId));
 
-        console.log(`[song-workflow] Background processing succeeded for ${songId}. Status: ${finalStatus}`);
+        console.log(
+          `[song-workflow] Background processing succeeded for ${songId}. Status: ${finalStatus} (Cover: ${coverSuccess ? 'Generated' : 'Fallback'})`
+        );
         console.log(
           `[Performance] Background worker for ${songId} total time: ${(performance.now() - bgStartTime).toFixed(2)}ms`
         );
@@ -221,10 +304,7 @@ export async function processMusicBackground(
         return {
           success: true,
           audioUrl: audioUploadResult.value.url,
-          coverImageUrl:
-            coverGenerateResult.status === 'fulfilled' && coverGenerateResult.value
-              ? coverGenerateResult.value.url
-              : undefined,
+          coverImageUrl: finalCoverUrl,
         };
       } catch (creditError) {
         console.error(`[song-workflow] Credit deduction failed for ${songId}:`, creditError);

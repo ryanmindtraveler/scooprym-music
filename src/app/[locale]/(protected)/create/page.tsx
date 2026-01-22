@@ -56,7 +56,6 @@ export default function CreateMusicPage() {
     reset,
   } = useCreateStore();
 
-
   const playSong = usePlayerStore((state) => state.play);
   const stopPlayer = usePlayerStore((state) => state.stop);
   const setGlobalIsGenerating = usePlayerStore((state) => state.setIsGenerating);
@@ -72,6 +71,7 @@ export default function CreateMusicPage() {
   const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string | null>(null); // For current stage
   const [error, setError] = useState<string | null>(null);
+  const [hasJustQueued, setHasJustQueued] = useState(false);
 
   const MUSIC_CREDIT_COST = 2;
 
@@ -121,6 +121,13 @@ export default function CreateMusicPage() {
     }
   }, [shouldAutoGenerate, newsContent, newsLink, isGenerating]);
 
+  // Safety: If user edits inputs manually after queuing, cancel the "Create Another" (Reset) mode
+  useEffect(() => {
+    if (hasJustQueued) {
+      setHasJustQueued(false);
+    }
+  }, [newsContent, newsLink, musicPrompt, lyrics, musicTitle]);
+
   const normalizeLyricsSections = (raw: string) => {
     // ... existing normalization ...
     return raw
@@ -136,11 +143,16 @@ export default function CreateMusicPage() {
     // Find active tasks
     // Find active tasks
     // FIX: Also poll 'completed' tasks if they are missing a cover URL (and not explicitly failed/skipped)
-    const activeTasks = tasks.filter((t) =>
-      t.status === 'processing' ||
-      t.status === 'generating_cover' ||
-      (t.status === 'completed' && !t.coverUrl)
-    );
+    // TIMEOUT: Stop polling if task is older than 3 minutes to prevent resource waste
+    const MAX_POLL_DURATION = 3 * 60 * 1000; // 3 minutes
+
+    const activeTasks = tasks.filter((t) => {
+      // 1. Check Age (Initial Filter)
+      if (Date.now() - t.createdAt > MAX_POLL_DURATION) return false;
+
+      // 2. Check Status
+      return t.status === 'processing' || t.status === 'generating_cover' || (t.status === 'completed' && !t.coverUrl);
+    });
     if (activeTasks.length === 0) return;
 
     let isCancelled = false;
@@ -151,6 +163,9 @@ export default function CreateMusicPage() {
 
       await Promise.all(
         activeTasks.map(async (task) => {
+          // Dynamic Timeout Check inside loop (prevents stale closure infinite loop)
+          if (Date.now() - task.createdAt > MAX_POLL_DURATION) return;
+
           try {
             const res = await fetch(`/api/songs/${task.id}/processing-status`);
             const result = await res.json();
@@ -238,16 +253,26 @@ export default function CreateMusicPage() {
       lyrics: targetLyrics,
       style: musicPrompt,
       // Context Inheritance: Use Store (New) -> Current Task (Regen) -> Empty
-      newsSummary: useCreateStore.getState().newsSummary || useCreateStore.getState().tasks.find(t => t.id === useCreateStore.getState().musicId)?.newsSummary,
-      newsContent: useCreateStore.getState().newsContent || useCreateStore.getState().tasks.find(t => t.id === useCreateStore.getState().musicId)?.newsContent,
-      newsLink: useCreateStore.getState().newsLink || useCreateStore.getState().tasks.find(t => t.id === useCreateStore.getState().musicId)?.newsLink,
+      newsSummary:
+        useCreateStore.getState().newsSummary ||
+        useCreateStore.getState().tasks.find((t) => t.id === useCreateStore.getState().musicId)?.newsSummary,
+      newsContent:
+        useCreateStore.getState().newsContent ||
+        useCreateStore.getState().tasks.find((t) => t.id === useCreateStore.getState().musicId)?.newsContent,
+      newsLink:
+        useCreateStore.getState().newsLink ||
+        useCreateStore.getState().tasks.find((t) => t.id === useCreateStore.getState().musicId)?.newsLink,
       createdAt: Date.now(),
     };
 
     // 2. Add to Queue immediately
     addTask(newTask);
     setMusicId(clientSongId); // Link Stage to this Task
-    toast.success('Added to Queue! Cooking in background...');
+    setHasJustQueued(true); // Enable "Create Another" button mode
+    toast.success('Added to Queue!', {
+      description: 'Your song is cooking in the background.',
+      duration: 5000,
+    });
 
     // 3. Clear Input (Unlock UI) - REMOVED to allow multiple generations
     // setNewsContent('');
@@ -415,57 +440,69 @@ export default function CreateMusicPage() {
             musicCreditCost={MUSIC_CREDIT_COST}
             error={error}
             onClearError={() => setError(null)}
+            hasJustQueued={hasJustQueued}
+            onReset={() => {
+              setNewsLink('');
+              setNewsContent('');
+              setLyrics('');
+              setMusicTitle('');
+              setMusicPrompt(DEFAULT_CUSTOM_VIBE_PROMPT);
+              setHasJustQueued(false);
+              // Clear URL params if any
+              window.history.replaceState(null, '', Routes.Create);
+            }}
           />
         </div>
 
         {/* Right: Stage & Queue (Fixed Full Height) */}
         <div className="flex-1 w-full min-h-0">
-        {/* Derive Stage Data from Active Task (Persistence) OR Store (Drafting) */}
-        {(() => {
-          const activeTask = tasks.find((t) => t.id === musicId);
-          const displayNewsSummary = activeTask?.newsSummary || newsSummary;
-          const displayNewsContent = activeTask?.newsContent || newsContent;
-          const displayNewsLink = activeTask?.newsLink || newsLink;
+          {/* Derive Stage Data from Active Task (Persistence) OR Store (Drafting) */}
+          {(() => {
+            const activeTask = tasks.find((t) => t.id === musicId);
+            const displayNewsSummary = activeTask?.newsSummary || newsSummary;
+            const displayNewsContent = activeTask?.newsContent || newsContent;
+            const displayNewsLink = activeTask?.newsLink || newsLink;
 
-          return (
-            <CreationStage
-              lyrics={lyrics}
-              setLyrics={setLyrics}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-              musicLyricsSnapshot={musicLyricsSnapshot}
-              hasUnsavedLyricsChanges={hasUnsavedLyricsChanges}
-              setHasUnsavedLyricsChanges={setHasUnsavedLyricsChanges}
-              processingStatus={activeTask?.status || processingStatus}
-              handleRegenerateAudio={handleGenerateMusic}
-              musicLoading={musicLoading}
-              handleRewriteLyrics={handleRewriteLyrics}
-              isRewriting={isRewriting}
-              setSelectionRange={setSelectionRange}
-              selectionRange={selectionRange}
-              newsSummary={displayNewsSummary}
-              newsContent={displayNewsContent}
-              newsLink={displayNewsLink}
-              musicUrl={musicUrl}
-              songTitle={musicTitle}
-              songId={musicId}
-              coverImageUrl={musicCoverUrl}
-              onPrevious={() => {
-                const currentIndex = tasks.findIndex(t => t.id === musicId);
-                if (currentIndex > 0) {
-                   const prevTask = tasks[currentIndex - 1];
-                   setMusicId(prevTask.id);
-                   setLyrics(prevTask.lyrics || '');
-                   setMusicTitle(prevTask.title || '');
-                   setNewsContent(prevTask.newsContent || '');
-                   setNewsLink(prevTask.newsLink || '');
-                   setNewsSummary(prevTask.newsSummary || '');
-                   setMusicUrl(prevTask.audioUrl || null);
-                   setMusicCoverUrl(prevTask.coverUrl || null);
-                   setProcessingStatus(prevTask.status);
+            return (
+              <CreationStage
+                lyrics={lyrics}
+                setLyrics={setLyrics}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+                musicLyricsSnapshot={musicLyricsSnapshot}
+                hasUnsavedLyricsChanges={hasUnsavedLyricsChanges}
+                setHasUnsavedLyricsChanges={setHasUnsavedLyricsChanges}
+                processingStatus={activeTask?.status || processingStatus}
+                handleRegenerateAudio={handleGenerateMusic}
+                musicLoading={musicLoading}
+                handleRewriteLyrics={handleRewriteLyrics}
+                isRewriting={isRewriting}
+                setSelectionRange={setSelectionRange}
+                selectionRange={selectionRange}
+                newsSummary={displayNewsSummary}
+                newsContent={displayNewsContent}
+                newsLink={displayNewsLink}
+                musicUrl={musicUrl}
+                songTitle={musicTitle}
+                songId={musicId}
+                coverImageUrl={musicCoverUrl}
+                onPrevious={() => {
+                  const currentIndex = tasks.findIndex((t) => t.id === musicId);
+                  if (currentIndex > 0) {
+                    const prevTask = tasks[currentIndex - 1];
+                    setMusicId(prevTask.id);
+                    setLyrics(prevTask.lyrics || '');
+                    setMusicTitle(prevTask.title || '');
+                    setNewsContent(prevTask.newsContent || '');
+                    setNewsLink(prevTask.newsLink || '');
+                    setNewsSummary(prevTask.newsSummary || '');
+                    setMusicPrompt(prevTask.style || '');
+                    setMusicUrl(prevTask.audioUrl || null);
+                    setMusicCoverUrl(prevTask.coverUrl || null);
+                    setProcessingStatus(prevTask.status);
 
-                   // Auto-play new song (or stop if invalid)
-                   if (prevTask.audioUrl) {
+                    // Auto-play new song (or stop if invalid)
+                    if (prevTask.audioUrl) {
                       playSong({
                         id: prevTask.id,
                         title: prevTask.title || 'Untitled',
@@ -473,27 +510,28 @@ export default function CreateMusicPage() {
                         coverImageUrl: prevTask.coverUrl || null,
                         artist: 'AI Generation',
                       });
-                   } else {
+                    } else {
                       stopPlayer();
-                   }
-                }
-              }}
-              onNext={() => {
-                const currentIndex = tasks.findIndex(t => t.id === musicId);
-                if (currentIndex < tasks.length - 1 && currentIndex !== -1) {
-                   const nextTask = tasks[currentIndex + 1];
-                   setMusicId(nextTask.id);
-                   setLyrics(nextTask.lyrics || '');
-                   setMusicTitle(nextTask.title || '');
-                   setNewsContent(nextTask.newsContent || '');
-                   setNewsLink(nextTask.newsLink || '');
-                   setNewsSummary(nextTask.newsSummary || '');
-                   setMusicUrl(nextTask.audioUrl || null);
-                   setMusicCoverUrl(nextTask.coverUrl || null);
-                   setProcessingStatus(nextTask.status);
+                    }
+                  }
+                }}
+                onNext={() => {
+                  const currentIndex = tasks.findIndex((t) => t.id === musicId);
+                  if (currentIndex < tasks.length - 1 && currentIndex !== -1) {
+                    const nextTask = tasks[currentIndex + 1];
+                    setMusicId(nextTask.id);
+                    setLyrics(nextTask.lyrics || '');
+                    setMusicTitle(nextTask.title || '');
+                    setNewsContent(nextTask.newsContent || '');
+                    setNewsLink(nextTask.newsLink || '');
+                    setNewsSummary(nextTask.newsSummary || '');
+                    setMusicPrompt(nextTask.style || '');
+                    setMusicUrl(nextTask.audioUrl || null);
+                    setMusicCoverUrl(nextTask.coverUrl || null);
+                    setProcessingStatus(nextTask.status);
 
-                   // Auto-play new song (or stop if invalid)
-                   if (nextTask.audioUrl) {
+                    // Auto-play new song (or stop if invalid)
+                    if (nextTask.audioUrl) {
                       playSong({
                         id: nextTask.id,
                         title: nextTask.title || 'Untitled',
@@ -501,20 +539,21 @@ export default function CreateMusicPage() {
                         coverImageUrl: nextTask.coverUrl || null,
                         artist: 'AI Generation',
                       });
-                   } else {
+                    } else {
                       stopPlayer();
-                   }
+                    }
+                  }
+                }}
+                hasPrevious={tasks.findIndex((t) => t.id === musicId) > 0}
+                hasNext={
+                  tasks.findIndex((t) => t.id === musicId) < tasks.length - 1 &&
+                  tasks.findIndex((t) => t.id === musicId) !== -1
                 }
-              }}
-              hasPrevious={tasks.findIndex(t => t.id === musicId) > 0}
-              hasNext={tasks.findIndex(t => t.id === musicId) < tasks.length - 1 && tasks.findIndex(t => t.id === musicId) !== -1}
-            />
-          );
-        })()}
-      </div>
+              />
+            );
+          })()}
+        </div>
       </main>
-
-
     </div>
   );
 }

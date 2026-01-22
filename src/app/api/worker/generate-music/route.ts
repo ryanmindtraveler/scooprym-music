@@ -22,7 +22,12 @@ async function handler(req: NextRequest) {
       options: ProcessMusicOptions;
     };
 
-    console.log(`[Worker] Received job for song: ${options.songId}`);
+    console.log(`[Worker] Received job for song: ${options.songId}. AudioContent Present: ${!!audioContent}`);
+
+    // --- ASYNC GENERATION SUPPORT ---
+    // Logic moved to processMusicBackground in song-workflow.ts for robustness.
+    // It will detect empty audioContent and generate it internally.
+    // ----------------------------
 
     // Re-instantiate the cover image promise logic here
     // In the original sync flow, we started this promise earlier.

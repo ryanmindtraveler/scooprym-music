@@ -8,13 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useMounted } from '@/hooks/ui/use-mounted';
 import { LocaleLink } from '@/i18n/navigation';
+import { useLocaleRouter as useRouter } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { useCreateStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Check, Mic, Sparkles, Wand2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-
 import { useState } from 'react';
 
 export function MusicGeneratorBlock() {
@@ -73,11 +72,7 @@ export function MusicGeneratorBlock() {
   const getDestinationUrl = () => {
     if (!canGenerate) return undefined;
 
-    const prompt = getComposedPrompt();
-    // Pack the style into the content signature
-    const packedContent = `${newsContent} [[STYLE:${prompt}]]`;
-
-    return `${Routes.Create}?content=${encodeURIComponent(packedContent)}`;
+    return Routes.Create;
   };
 
   // Micro-motion Variants
@@ -113,7 +108,7 @@ export function MusicGeneratorBlock() {
   return (
     <section
       id="generator"
-      className="relative z-20 w-full overflow-hidden py-32 font-sans selection:bg-black selection:text-white"
+      className="relative z-20 w-full overflow-hidden py-16 md:py-32 font-sans selection:bg-black selection:text-white"
     >
       <div className="absolute top-0 left-0 right-0 z-30 border-y-4 border-black bg-[#ecec3a] py-3 overflow-hidden shadow-xl">
         <ConstantVelocityMarquee velocity={150}>
@@ -122,7 +117,7 @@ export function MusicGeneratorBlock() {
             .map((text, i) => (
               <span
                 key={i}
-                className="text-2xl md:text-3xl font-black italic uppercase text-black mx-4 tracking-tighter"
+                className="text-xl md:text-3xl font-black italic uppercase text-black mx-4 tracking-tighter"
               >
                 {text}
               </span>
@@ -142,7 +137,7 @@ export function MusicGeneratorBlock() {
         <div className="absolute inset-0 bg-indigo-50/10 backdrop-blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-[1600px] relative z-10 px-6 md:px-12">
+      <div className="mx-auto max-w-[1600px] relative z-10 px-4 md:px-12">
         {/* Main Interface - Floating Dashboard */}
         <motion.div
           initial={{ y: 100, opacity: 0 }}
@@ -161,10 +156,10 @@ export function MusicGeneratorBlock() {
           </div>
 
           {/* Card Container - White Glass */}
-          <div className="bg-white/40 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.2)] rounded-[40px] p-2 md:p-3 relative overflow-hidden group">
+          <div className="bg-white/40 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.2)] rounded-[32px] md:rounded-[40px] p-2 md:p-3 relative overflow-hidden group">
             {/* Inner Content Area */}
-            <div className="w-full h-full rounded-[32px] p-6 md:p-12 relative overflow-hidden">
-              <div className="grid gap-12 lg:grid-cols-12 relative z-10">
+            <div className="w-full h-full rounded-[24px] md:rounded-[32px] p-4 md:p-12 relative overflow-hidden">
+              <div className="grid gap-6 md:gap-12 lg:grid-cols-12 relative z-10">
                 {/* Left: Interactive Input Canvas */}
                 <div className="lg:col-span-7 flex flex-col gap-6">
                   <div className="flex items-center justify-between pl-2">
@@ -187,13 +182,14 @@ export function MusicGeneratorBlock() {
                   </div>
 
                   {/* UNIFIED INPUT CARD - White Solid */}
-                  <div className="relative group flex flex-col flex-1 min-h-[550px] bg-white rounded-3xl shadow-sm border border-transparent group-hover:border-indigo-300 focus-within:border-[#22d3ee] focus-within:ring-4 focus-within:ring-[#22d3ee]/20 focus-within:shadow-[0_0_30px_-5px_rgba(34,211,238,0.3)] transition-all duration-300 overflow-hidden">
+                  <div className="relative group flex flex-col flex-1 h-[400px] md:h-[600px] bg-white rounded-3xl shadow-sm border border-transparent group-hover:border-indigo-300 focus-within:border-[#22d3ee] focus-within:ring-4 focus-within:ring-[#22d3ee]/20 focus-within:shadow-[0_0_30px_-5px_rgba(34,211,238,0.3)] transition-all duration-300 overflow-hidden">
                     {/* Top: Textarea (Takes available space) */}
                     <div className="flex-1 relative">
                       <Textarea
                         placeholder="Paste news link or enter content here..."
-                        className="w-full h-full bg-transparent border-none text-2xl md:text-3xl font-bold text-slate-800 placeholder:text-slate-300 p-8 md:p-10 resize-none focus:ring-0 leading-tight selection:bg-indigo-100"
+                        className="w-full h-full bg-transparent border-none text-xl md:text-3xl font-bold text-slate-800 placeholder:text-slate-300 p-6 md:p-10 resize-none focus:ring-0 leading-tight selection:bg-indigo-100 overflow-y-auto"
                         value={newsContent}
+                        style={{ fieldSizing: 'fixed' } as React.CSSProperties}
                         onChange={(e) => setNewsContent(e.target.value)}
                       />
                     </div>
@@ -393,7 +389,7 @@ export function MusicGeneratorBlock() {
                           router.push(Routes.Create);
                         }}
                         className={cn(
-                          'w-full h-auto py-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
+                          'w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
                           !canGenerate &&
                             'opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none'
                         )}
@@ -442,7 +438,7 @@ export function MusicGeneratorBlock() {
                         <Button
                           disabled={!canGenerate}
                           className={cn(
-                            'w-full h-auto py-8 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
+                            'w-full h-auto py-8 bg-linear-to-r from-blue-600 via-purple-600 to-pink-500 hover:opacity-90 text-white rounded-3xl shadow-[0_20px_40px_-10px_rgba(99,102,241,0.4)] hover:shadow-[0_25px_50px_-10px_rgba(99,102,241,0.5)] hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group border-2 border-black cursor-pointer',
                             !canGenerate &&
                               'opacity-50 grayscale cursor-not-allowed hover:translate-y-0 hover:shadow-none'
                           )}
@@ -451,7 +447,10 @@ export function MusicGeneratorBlock() {
                               e.preventDefault();
                               return;
                             }
-                            // Store Logic for instant feel if pre-login storage works
+                            // Persistence Strategy:
+                            // We trigger handleGlobalGenerate() here to save the user's input to the Persisted CreateStore (localStorage).
+                            // This ensures that when the user returns from the Social Login redirect (which callbackUrl sends to Routes.Create),
+                            // the store will rehydrate their content and 'shouldAutoGenerate' will trigger the workflow.
                             if (canGenerate) {
                               handleGlobalGenerate();
                             }
