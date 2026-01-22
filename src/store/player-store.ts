@@ -13,6 +13,7 @@ export interface Song {
 
 interface PlayerState {
   isPlaying: boolean;
+  isLoading: boolean;
   currentSong: Song | null;
   currentTime: number;
   duration: number;
@@ -32,11 +33,13 @@ interface PlayerState {
   toggleExpanded: () => void;
   setExpanded: (expanded: boolean) => void;
   setCoverImage: (url: string) => void;
+  setIsLoading: (isLoading: boolean) => void;
   setIsGenerating: (isGenerating: boolean) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
   isPlaying: false,
+  isLoading: false,
   currentSong: null,
   currentTime: 0,
   duration: 0,
@@ -48,7 +51,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const { currentSong } = get();
     if (song) {
       if (currentSong?.id !== song.id) {
-        set({ currentSong: song, isPlaying: true, currentTime: 0 });
+        set({ currentSong: song, isPlaying: true, isLoading: true, currentTime: 0 });
       } else {
         set({ isPlaying: true });
       }
@@ -75,7 +78,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setSong: (song) => {
     const { currentSong } = get();
     if (currentSong?.id !== song.id) {
-      set({ currentSong: song, isPlaying: true, currentTime: 0 });
+      set({ currentSong: song, isPlaying: true, isLoading: true, currentTime: 0 });
     }
   },
 
@@ -104,6 +107,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (currentSong) {
       set({ currentSong: { ...currentSong, coverImageUrl: url } });
     }
+  },
+
+  setIsLoading: (isLoading) => {
+    set({ isLoading });
   },
 
   setIsGenerating: (isGenerating) => {

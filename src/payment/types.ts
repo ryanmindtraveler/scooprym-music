@@ -1,7 +1,7 @@
 import type { Locale } from 'next-intl';
 
 /**
- * Interval types for subscription plans
+ * 订阅计划的周期类型
  */
 export type PlanInterval = PlanIntervals.MONTH | PlanIntervals.YEAR;
 
@@ -11,7 +11,7 @@ export enum PlanIntervals {
 }
 
 /**
- * Payment type (subscription or one-time)
+ * 支付类型（订阅或一次性）
  */
 export type PaymentType = PaymentTypes.SUBSCRIPTION | PaymentTypes.ONE_TIME;
 
@@ -21,7 +21,7 @@ export enum PaymentTypes {
 }
 
 /**
- * Payment scene (lifetime, credit, subscription)
+ * 支付场景（终身、积分、订阅）
  */
 export type PaymentScene = PaymentScenes.LIFETIME | PaymentScenes.CREDIT | PaymentScenes.SUBSCRIPTION;
 
@@ -32,7 +32,7 @@ export enum PaymentScenes {
 }
 
 /**
- * Status of a payment or subscription
+ * 支付或订阅的状态
  */
 export type PaymentStatus =
   | 'active'                         // Subscription is active
@@ -48,7 +48,7 @@ export type PaymentStatus =
   | 'failed';                        // Payment failed
 
 /**
- * Price definition for a plan
+ * 计划的价格定义
  */
 export interface Price {
   type: PaymentType;                 // Type of payment (subscription or one_time)
@@ -62,7 +62,7 @@ export interface Price {
 }
 
 /**
- * Credits configuration for a plan
+ * 计划的积分配置
  */
 export interface Credits {
   enable: boolean;                   // Whether to enable credits for this plan
@@ -71,15 +71,13 @@ export interface Credits {
 }
 
 /**
- * Price plan definition
+ * 价格计划定义
  *
- * 1. When to set the plan disabled?
- * When the plan is not available anymore, but you should keep it for existing users
- * who have already purchased it, otherwise they can not see the plan in the Billing page.
+ * 1. 何时禁用计划？
+ * 当计划不再可用，但应为已购买的现有用户保留时，否则他们在账单页面看不到该计划。
  *
- * 2. When to set the price disabled?
- * When the price is not available anymore, but you should keep it for existing users
- * who have already purchased it, otherwise they can not see the price in the Billing page.
+ * 2. 何时禁用价格？
+ * 当价格不再可用，但应为已购买的现有用户保留时，否则他们在账单页面看不到该价格。
  */
 export interface PricePlan {
   id: string;                        // Unique identifier for the plan
@@ -96,7 +94,7 @@ export interface PricePlan {
 }
 
 /**
- * Customer data
+ * 客户数据
  */
 export interface Customer {
   id: string;
@@ -106,7 +104,7 @@ export interface Customer {
 }
 
 /**
- * Subscription data
+ * 订阅数据
  */
 export interface Subscription {
   id: string;
@@ -124,7 +122,7 @@ export interface Subscription {
 }
 
 /**
- * Payment data
+ * 支付数据
  */
 export interface Payment {
   id: string;
@@ -137,7 +135,7 @@ export interface Payment {
 }
 
 /**
- * Parameters for creating a checkout session
+ * 创建结账会话的参数
  */
 export interface CreateCheckoutParams {
   planId: string;
@@ -150,7 +148,7 @@ export interface CreateCheckoutParams {
 }
 
 /**
- * Parameters for creating a credit checkout session
+ * 创建积分结账会话的参数
  */
 export interface CreateCreditCheckoutParams {
   packageId: string;
@@ -163,7 +161,7 @@ export interface CreateCreditCheckoutParams {
 }
 
 /**
- * Result of creating a checkout session
+ * 创建结账会话的结果
  */
 export interface CheckoutResult {
   url: string;
@@ -171,7 +169,7 @@ export interface CheckoutResult {
 }
 
 /**
- * Parameters for creating a customer portal
+ * 创建客户门户的参数
  */
 export interface CreatePortalParams {
   customerId: string;
@@ -180,21 +178,21 @@ export interface CreatePortalParams {
 }
 
 /**
- * Result of creating a customer portal
+ * 创建客户门户的结果
  */
 export interface PortalResult {
   url: string;
 }
 
 /**
- * Parameters for getting customer subscriptions
+ * 获取客户订阅的参数
  */
 export interface getSubscriptionsParams {
   userId: string;
 }
 
 /**
- * Payment provider interface
+ * 支付提供商接口
  */
 export interface PaymentProvider {
   /**
@@ -216,4 +214,9 @@ export interface PaymentProvider {
    * Handle webhook events
    */
   handleWebhookEvent(payload: string, signature: string): Promise<void>;
+
+  /**
+   * Create a customer
+   */
+  createCustomer(email: string, name?: string): Promise<string>;
 }

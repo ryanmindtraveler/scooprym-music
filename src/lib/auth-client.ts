@@ -1,4 +1,4 @@
-import { adminClient, inferAdditionalFields, oneTapClient } from 'better-auth/client/plugins';
+import { adminClient, inferAdditionalFields } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 import type { auth } from './auth';
 import { getBaseUrl } from './urls/urls';
@@ -13,13 +13,5 @@ export const authClient = createAuthClient({
     adminClient(),
     // https://www.better-auth.com/docs/concepts/typescript#inferring-additional-fields-on-client
     inferAdditionalFields<typeof auth>(),
-    // https://www.better-auth.com/docs/plugins/one-tap
-    oneTapClient({
-      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      autoSelect: false, // disable auto select to prevent conflict
-      additionalOptions: {
-        use_fedcm_for_prompt: true,
-      },
-    }),
   ],
 });

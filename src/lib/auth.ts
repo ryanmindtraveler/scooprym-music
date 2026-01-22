@@ -23,6 +23,7 @@ import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from './urls/urls';
 export const auth = betterAuth({
   baseURL: getBaseUrl(),
   appName: defaultMessages.Metadata.name,
+  trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
   database: drizzleAdapter(getDb(), {
     provider: 'pg', // or "mysql", "sqlite"
   }),
@@ -208,5 +209,14 @@ async function onCreateUser(user: User) {
         console.error('Free monthly credits error:', error);
       }
     }
+  }
+
+  // Create Stripe customer for the user
+  try {
+    const { getPaymentProvider } = await import('@/payment/server');
+    await getPaymentProvider().createCustomer(user.email, user.name);
+    console.log(`Created Stripe customer for user ${user.id}`);
+  } catch (error) {
+    console.error('Failed to create Stripe customer:', error);
   }
 }

@@ -19,6 +19,40 @@ export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   console.log('>> middleware start, pathname', nextUrl.pathname);
 
+  // 0. CORS handling for /api/auth routes (Google One Tap / FedCM)
+  // This logic must come before intlMiddleware and other checks to intercept API calls correctly.
+  if (nextUrl.pathname.startsWith('/api/auth')) {
+    const origin = req.headers.get('origin') ?? '';
+    console.log('middleware: CORS check', { origin, pathname: nextUrl.pathname });
+    const allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000', 'https://accounts.google.com'];
+
+    // Check if origin is allowed (localhost or production domain)
+    // We allow matching origins or vercel preview URLs dynamically for flexibility
+    const isAllowed =
+      allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin === process.env.NEXT_PUBLIC_APP_URL;
+
+    // Standard CORS headers required for Credentialed requests (no *)
+    const corsHeaders = {
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
+      'Access-Control-Allow-Methods': 'GET,DELETE,PATCH,POST,PUT,OPTIONS',
+      'Access-Control-Allow-Headers':
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+    };
+
+    // Handle Preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+      return NextResponse.json({}, { status: 200, headers: corsHeaders });
+    }
+
+    // Handle actual request
+    const response = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
+
   // Handle internal docs link redirection for internationalization
   // Check if this is a docs page without locale prefix
   if (nextUrl.pathname.startsWith('/docs/') || nextUrl.pathname === '/docs') {
@@ -35,7 +69,6 @@ export default async function middleware(req: NextRequest) {
   }
 
   // do not use getSession() here, it will cause error related to edge runtime
-  // const session = await getSession();
 
   // Check session using cookie instead of making HTTP request to avoid fetch failures
   const sessionCookie =
@@ -97,5 +130,7 @@ export const config = {
     // - if they start with `/api`, `/_next` or `/_vercel`
     // - if they contain a dot (e.g. `favicon.ico`)
     '/((?!api|_next|_vercel|manifest.webmanifest|.*\\..*).*)',
+    // Explicitly include auth API routes for CORS handling
+    '/api/auth/:path*',
   ],
 };

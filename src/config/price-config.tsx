@@ -5,23 +5,23 @@ import { useTranslations } from 'next-intl';
 import { websiteConfig } from './website';
 
 /**
- * Get price plans with translations for client components
+ * 获取带有翻译内容的价格方案
  *
- * NOTICE: This function should only be used in client components.
- * If you need to get the price plans in server components, use getAllPricePlans instead.
- * Use this function when showing the pricing table or the billing card to the user.
+ * 注意：此函数仅应在客户端组件中使用。
+ * 如果需要在服务端组件中获取价格方案，请改用 getAllPricePlans。
+ * 当需要向用户展示价格表或账单卡片时使用此函数。
  *
- * docs:
+ * 文档:
  * https://scooprym.com/docs/config/price
  *
- * @returns The price plans with translated content
+ * @returns 带有翻译内容的价格方案
  */
 export function usePricePlans(): Record<string, PricePlan> {
   const t = useTranslations('PricePlans');
   const priceConfig = websiteConfig.price;
   const plans: Record<string, PricePlan> = {};
 
-  // Add translated content to each plan
+  // 为每个方案添加翻译内容
   const freePlan = priceConfig.plans.free;
   if (freePlan) {
     plans.free = {
@@ -39,7 +39,7 @@ export function usePricePlans(): Record<string, PricePlan> {
     };
   }
 
-  // Basic plan
+  // 基础版方案
   const basicPlan = priceConfig.plans.basic;
   if (basicPlan) {
     plans.basic = {
@@ -57,7 +57,7 @@ export function usePricePlans(): Record<string, PricePlan> {
     };
   }
 
-  // Advanced plan
+  // 高级版方案
   const advancedPlan = priceConfig.plans.advanced;
   if (advancedPlan) {
     plans.advanced = {
@@ -72,27 +72,9 @@ export function usePricePlans(): Record<string, PricePlan> {
         t('advanced.features.feature-5'),
         t('advanced.features.feature-6'),
       ],
-      limits: [t('advanced.limits.limit-1'), t('advanced.limits.limit-2')],
+      limits: [],
     };
   }
-
-  // Backward-compat: still support legacy `pro` if present
-  // const proPlan = priceConfig.plans.pro;
-  // if (proPlan) {
-  //   plans.pro = {
-  //     ...proPlan,
-  //     name: t('pro.name'),
-  //     description: t('pro.description'),
-  //     features: [
-  //       t('pro.features.feature-1'),
-  //       t('pro.features.feature-2'),
-  //       t('pro.features.feature-3'),
-  //       t('pro.features.feature-4'),
-  //       t('pro.features.feature-5'),
-  //     ],
-  //     limits: [t('pro.limits.limit-1'), t('pro.limits.limit-2')],
-  //   };
-  // }
 
   const lifetimePlan = priceConfig.plans.lifetime;
   if (lifetimePlan) {

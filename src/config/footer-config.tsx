@@ -18,6 +18,7 @@ import { websiteConfig } from './website';
 export function useFooterLinks(): NestedMenuItem[] {
   const t = useTranslations('Marketing.navbar');
   const tLegal = useTranslations('Marketing.footer.legal');
+  const tResources = useTranslations('Marketing.footer.resources');
 
   return [
     {
@@ -50,6 +51,7 @@ export function useFooterLinks(): NestedMenuItem[] {
         },
       ],
     },
+
     {
       title: tLegal('title'),
       items: [
@@ -70,7 +72,7 @@ export function useFooterLinks(): NestedMenuItem[] {
         },
         {
           title: tLegal('items.companyEmail'),
-          href: 'mailto:contact@900mounts.com',
+          href: 'mailto:support@scooprym.app',
           external: true,
         },
       ],

@@ -120,13 +120,13 @@ export class S3Provider implements StorageProvider {
       if (publicUrl) {
         // Use custom domain if provided
         url = `${publicUrl.replace(/\/$/, '')}/${key}`;
-        console.log('uploadFile, public url', url);
+        // console.log('uploadFile, public url', url);
       } else {
         // For s3mini, we construct the URL manually
         // Since bucket is included in endpoint, we just append the key
         const baseUrl = this.config.endpoint?.replace(/\/$/, '') || '';
         url = `${baseUrl}/${key}`;
-        console.log('uploadFile, constructed url', url);
+        // console.log('uploadFile, constructed url', url);
       }
 
       return { url, key };

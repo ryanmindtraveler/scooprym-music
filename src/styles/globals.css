@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 html {
-  overflow-y: scroll;
+  /* overflow-y: scroll; - Removed to prevent scroll locking issues */
 }
 
 /*
@@ -541,4 +541,33 @@ div[class*="border-t"][class*="bg-fd-secondary"]:not(:has(*)):not([data-content]
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.4); /* Indigo-400 / 40% */
+}
+
+/* Popcorn Ring Animation (Copied from Song Detail Component) */
+@keyframes ring {
+  0% {
+    transform: rotate(0);
+  }
+  10% {
+    transform: rotate(-15deg);
+  }
+  20% {
+    transform: rotate(15deg);
+  }
+  30% {
+    transform: rotate(-15deg);
+  }
+  40% {
+    transform: rotate(15deg);
+  }
+  50% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(0);
+  }
+}
+
+.animate-ring {
+  animation: ring 1.5s ease-in-out infinite;
 }

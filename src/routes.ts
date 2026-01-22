@@ -13,7 +13,7 @@ export enum Routes {
   // --- 营销页路由 (Marketing Pages) ---
   FAQ = '/#faqs', // 常见问题 (首页锚点)
   Features = '/#features', // 功能介绍 (首页锚点)
-  Pricing = '/#pricing', // 价格方案 (当前配置为首页锚点，也可改为独立页面 /pricing)
+  Pricing = '/#pricing', // 价格方案 (Homepage anchor)
   Blog = '/blog', // 博客文章
   Docs = '/docs', // 帮助文档中心
   About = '/about', // 关于我们

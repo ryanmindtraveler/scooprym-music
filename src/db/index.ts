@@ -32,8 +32,7 @@ export function getDb() {
  * Connect to Neon Database
  * https://orm.drizzle.team/docs/tutorials/drizzle-with-neon
  */
-// import { drizzle } from 'drizzle-orm/neon-http';
-// const db = drizzle(process.env.DATABASE_URL!);
+
 
 /**
  * Database connection with Drizzle

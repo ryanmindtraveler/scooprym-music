@@ -13,7 +13,7 @@ const redis = new Redis({
 // Create a new ratelimiter, that allows 6 requests per 60 seconds
 export const ratelimit = new Ratelimit({
   redis: redis,
-  limiter: Ratelimit.slidingWindow(6, '60 s'),
+  limiter: Ratelimit.slidingWindow(10, '60 s'),
   analytics: true,
   prefix: '@scooprym/ratelimit',
 });

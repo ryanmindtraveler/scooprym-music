@@ -15,14 +15,14 @@ export async function POST(request: NextRequest) {
 
     // Validate file size (max 10MB)
     if (file.size > MAX_FILE_SIZE) {
-      console.log('uploadFile, file size exceeds the server limit', file.size);
+      // console.log('uploadFile, file size exceeds the server limit', file.size);
       return NextResponse.json({ error: 'File size exceeds the server limit' }, { status: 400 });
     }
 
     // Validate file type (optional, based on your requirements)
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      console.log('uploadFile, file type not supported', file.type);
+      // console.log('uploadFile, file type not supported', file.type);
       return NextResponse.json({ error: 'File type not supported' }, { status: 400 });
     }
 
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Upload to storage
     const result = await uploadFile(buffer, file.name, file.type, folder || undefined);
 
-    console.log('uploadFile, result', result);
+    // console.log('uploadFile, result', result);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error uploading file:', error);

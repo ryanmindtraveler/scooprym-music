@@ -60,6 +60,16 @@ export class StripeProvider implements PaymentProvider {
    * @param name Optional customer name
    * @returns Stripe customer ID
    */
+  public async createCustomer(email: string, name?: string): Promise<string> {
+    return this.createOrGetCustomer(email, name);
+  }
+
+  /**
+   * Create a customer in Stripe if not exists (Internal)
+   * @param email Customer email
+   * @param name Optional customer name
+   * @returns Stripe customer ID
+   */
   private async createOrGetCustomer(email: string, name?: string): Promise<string> {
     try {
       // Search for existing customer
@@ -78,7 +88,7 @@ export class StripeProvider implements PaymentProvider {
         // This can happen when user was created before Stripe integration or data got out of sync
         // Fix the data inconsistency by updating the user's customerId field
         if (!userId) {
-          console.log('User exists but missing customerId, fixing data inconsistency');
+          // console.log('User exists but missing customerId, fixing data inconsistency');
           await this.updateUserWithCustomerId(customerId, email);
         }
         return customerId;
@@ -120,9 +130,9 @@ export class StripeProvider implements PaymentProvider {
         .returning({ id: user.id });
 
       if (result.length > 0) {
-        console.log('Updated user with customer ID (hidden)');
+        // console.log('Updated user with customer ID (hidden)');
       } else {
-        console.log('No user found with given email');
+        // console.log('No user found with given email');
       }
     } catch (error) {
       console.error('Update user with customer ID error:', error);
@@ -368,7 +378,7 @@ export class StripeProvider implements PaymentProvider {
       // Verify the event signature if webhook secret is available
       const event = this.stripe.webhooks.constructEvent(payload, signature, this.webhookSecret);
       const eventType = event.type;
-      console.log(`handle webhook event, type: ${eventType}`);
+      // console.log(`handle webhook event, type: ${eventType}`);
 
       // Handle subscription events
       if (eventType.startsWith('customer.subscription.')) {
@@ -430,7 +440,7 @@ export class StripeProvider implements PaymentProvider {
           .limit(1);
 
         if (paymentsByInvoice.length > 0) {
-          console.log('Found payment record by invoice ID');
+          // console.log('Found payment record by invoice ID');
           return paymentsByInvoice[0];
         }
       }
@@ -446,7 +456,7 @@ export class StripeProvider implements PaymentProvider {
           .limit(1);
 
         if (paymentsBySubscription.length > 0) {
-          console.log('Found payment record by subscription ID');
+          // console.log('Found payment record by subscription ID');
           return paymentsBySubscription[0];
         }
       }
@@ -465,7 +475,7 @@ export class StripeProvider implements PaymentProvider {
    * @returns Payment record or null if not found after all retries
    */
   private async findPaymentRecordWithRetry(invoice: Stripe.Invoice): Promise<Payment | null> {
-    console.log(`>> Find payment record for invoice: ${invoice.id}`);
+    // console.log(`>> Find payment record for invoice: ${invoice.id}`);
 
     for (let attempt = 1; attempt <= PAYMENT_RECORD_RETRY_ATTEMPTS; attempt++) {
       const paymentRecord = await this.findPaymentRecord(invoice);
@@ -510,7 +520,7 @@ export class StripeProvider implements PaymentProvider {
    * @param invoice Stripe invoice
    */
   private async onInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
-    console.log('>> Handle invoice paid, invoiceId:', invoice.id);
+    // console.log('>> Handle invoice paid, invoiceId:', invoice.id);
 
     try {
       // Find existing payment record with retry mechanism
@@ -544,7 +554,7 @@ export class StripeProvider implements PaymentProvider {
       throw error;
     }
 
-    console.log('<< Handle invoice paid success');
+    // console.log('<< Handle invoice paid success');
   }
 
   /**
@@ -560,7 +570,7 @@ export class StripeProvider implements PaymentProvider {
    * @param paymentRecord Payment record
    */
   private async updateSubscriptionPayment(invoice: Stripe.Invoice, paymentRecord: Payment): Promise<void> {
-    console.log('>> Update subscription payment record');
+    // console.log('>> Update subscription payment record');
 
     try {
       let subscriptionId = invoice.subscription as string | null;
@@ -568,7 +578,7 @@ export class StripeProvider implements PaymentProvider {
       // If invoice.subscription is null, try to use paymentRecord.subscriptionId
       if (!subscriptionId && paymentRecord.subscriptionId) {
         subscriptionId = paymentRecord.subscriptionId;
-        console.log('subscriptionId from paymentRecord:', subscriptionId);
+        // console.log('subscriptionId from paymentRecord:', subscriptionId);
       }
 
       if (!subscriptionId) {
@@ -592,7 +602,7 @@ export class StripeProvider implements PaymentProvider {
 
       // If no userId in metadata (common in renewals), find by customerId
       if (!userId) {
-        console.log('No userId in metadata, finding by customerId');
+        // console.log('No userId in metadata, finding by customerId');
         userId = await this.findUserIdByCustomerId(customerId);
 
         if (!userId) {
@@ -632,7 +642,7 @@ export class StripeProvider implements PaymentProvider {
       throw error;
     }
 
-    console.log('<< Update subscription payment record success');
+    // console.log('<< Update subscription payment record success');
   }
 
   /**
@@ -641,14 +651,14 @@ export class StripeProvider implements PaymentProvider {
    * @param priceId Price ID
    */
   private async processSubscriptionPurchase(userId: string, priceId: string): Promise<void> {
-    console.log('>> Process subscription purchase');
+    // console.log('>> Process subscription purchase');
 
     if (websiteConfig.credits?.enableCredits) {
       await addSubscriptionCredits(userId, priceId);
-      console.log('Added subscription credits for user:', userId);
+      // console.log('Added subscription credits for user:', userId);
     }
 
-    console.log('<< Process subscription purchase success');
+    // console.log('<< Process subscription purchase success');
   }
 
   /**

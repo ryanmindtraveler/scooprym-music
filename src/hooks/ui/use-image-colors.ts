@@ -53,8 +53,17 @@ export function useImageColors(imageUrl: string | null | undefined): ImageColors
         // Dynamic import to ensure it only loads in browser
         const { Vibrant } = await import('node-vibrant/browser');
 
-        // node-vibrant can extract from URL directly
-        const palette = await Vibrant.from(imageUrl!).getPalette();
+        // Proxy the URL to bypass CORS if it's an external http/https link
+        // We exclude local paths (starting with /) and data URLs (starting with data:)
+        let targetUrl = imageUrl!;
+        const isExternal = imageUrl?.startsWith('http') && !imageUrl?.includes(window.location.origin);
+
+        if (isExternal) {
+          targetUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl || '')}`;
+        }
+
+        // node-vibrant can extract from the proxied URL
+        const palette = await Vibrant.from(targetUrl).getPalette();
 
         if (isCancelled) return;
 

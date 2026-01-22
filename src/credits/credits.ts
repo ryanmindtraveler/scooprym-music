@@ -8,9 +8,9 @@ import { and, asc, eq, gt, isNull, not, or, sql } from 'drizzle-orm';
 import { CREDIT_TRANSACTION_TYPE } from './types';
 
 /**
- * Get user's current credit balance
- * @param userId - User ID
- * @returns User's current credit balance
+ * 获取用户当前的积分余额
+ * @param userId - 用户ID
+ * @returns 用户当前的积分余额
  */
 export async function getUserCredits(userId: string): Promise<number> {
   try {
@@ -33,9 +33,9 @@ export async function getUserCredits(userId: string): Promise<number> {
 }
 
 /**
- * Update user's current credit balance
- * @param userId - User ID
- * @param credits - New credit balance
+ * 更新用户当前的积分余额
+ * @param userId - 用户ID
+ * @param credits - 新的积分余额
  */
 export async function updateUserCredits(userId: string, credits: number) {
   try {
@@ -50,8 +50,8 @@ export async function updateUserCredits(userId: string, credits: number) {
 }
 
 /**
- * Write a credit transaction record
- * @param params - Credit transaction parameters
+ * 记录积分交易记录
+ * @param params - 积分交易参数
  */
 export async function saveCreditTransaction({
   userId,
@@ -94,8 +94,8 @@ export async function saveCreditTransaction({
 }
 
 /**
- * Add credits (registration, monthly, purchase, etc.)
- * @param params - Credit creation parameters
+ * 添加积分 (注册、月度赠送、购买等)
+ * @param params - 积分创建参数
  */
 export async function addCredits({
   userId,
@@ -127,7 +127,7 @@ export async function addCredits({
   // Update user credit balance
   const db = await getDb();
   const current = await db.select().from(userCredit).where(eq(userCredit.userId, userId)).limit(1);
-  // const newBalance = (current[0]?.currentCredits || 0) + amount;
+
   if (current.length > 0) {
     const newBalance = (current[0]?.currentCredits || 0) + amount;
     console.log('addCredits, update user credit', userId, newBalance);
@@ -161,9 +161,9 @@ export async function addCredits({
 }
 
 /**
- * Check if user has enough credits
- * @param userId - User ID
- * @param requiredCredits - Required credits
+ * 检查用户是否有足够的积分
+ * @param userId - 用户ID
+ * @param requiredCredits - 需要的积分
  */
 export async function hasEnoughCredits({
   userId,
@@ -177,8 +177,8 @@ export async function hasEnoughCredits({
 }
 
 /**
- * Consume credits (FIFO, by expiration)
- * @param params - Credit consumption parameters
+ * 消耗积分 (FIFO 先入先出, 根据过期时间)
+ * @param params - 积分消耗参数
  */
 export async function consumeCredits({
   userId,

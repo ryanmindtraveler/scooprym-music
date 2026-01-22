@@ -2,9 +2,9 @@ import { PaymentTypes, PlanIntervals } from '@/payment/types';
 import type { WebsiteConfig } from '@/types';
 
 /**
- * website config, without translations
+ * 网站配置（无翻译）
  *
- * docs:
+ * 文档:
  * https://scooprym.com/docs/config/website
  */
 export const websiteConfig: WebsiteConfig = {
@@ -80,8 +80,8 @@ export const websiteConfig: WebsiteConfig = {
   },
   mail: {
     provider: 'resend',
-    fromEmail: 'Scooprym Music <support@scooprym.com>',
-    supportEmail: '',
+    fromEmail: 'Scooprym Music <support@scooprym.app>',
+    supportEmail: 'support@scooprym.app',
   },
   newsletter: {
     enable: true,
