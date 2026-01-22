@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import { type InputHTMLAttributes, type ReactNode, useId } from 'react';
 
 interface GlitchInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -26,6 +26,9 @@ export function GlitchInput({
     high: 'glitch-always animate-glitch-text',
   };
 
+  const uniqueId = useId();
+  const inputId = props.id || uniqueId;
+
   const variantClasses = {
     cyan: cn(
       'bg-black/50 border border-[#00ffff]/50 text-[#00ffff]',
@@ -47,7 +50,10 @@ export function GlitchInput({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#ff00ff]">
+        <label
+          htmlFor={inputId}
+          className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#ff00ff]"
+        >
           {icon && <span className="text-[#00ffff]">{icon}</span>}
           {label}
         </label>
@@ -55,6 +61,7 @@ export function GlitchInput({
 
       <div className="relative">
         <input
+          id={inputId}
           className={cn(
             'w-full px-4 py-3 rounded-lg',
             'font-mono transition-all duration-200',
@@ -129,10 +136,16 @@ export function PunkInput({
     ),
   };
 
+  const uniqueId = useId();
+  const inputId = props.id || uniqueId;
+
   return (
     <div className="space-y-2">
       {label && (
-        <label className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-white">
+        <label
+          htmlFor={inputId}
+          className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-white"
+        >
           {icon && <span className="text-[#ff00ff]">{icon}</span>}
           <span className="bg-black px-2 py-1 border border-white">{label}</span>
         </label>
@@ -140,6 +153,7 @@ export function PunkInput({
 
       <div className={cn('relative', tornEdges && 'punk-torn-edges')}>
         <input
+          id={inputId}
           className={cn(
             'w-full px-4 py-3',
             'font-bold transition-all duration-200',
@@ -222,10 +236,16 @@ export function MaximalistInput({
     ),
   };
 
+  const uniqueId = useId();
+  const inputId = props.id || uniqueId;
+
   return (
     <div className="space-y-3">
       {label && (
-        <label className="flex items-center gap-3 text-lg font-black uppercase tracking-wider text-white">
+        <label
+          htmlFor={inputId}
+          className="flex items-center gap-3 text-lg font-black uppercase tracking-wider text-white"
+        >
           {icon && <span className="text-[#ffff00]">{icon}</span>}
           <span className="bg-gradient-to-r from-[#ff00ff] to-[#00ffff] bg-clip-text text-transparent">{label}</span>
         </label>
@@ -233,6 +253,7 @@ export function MaximalistInput({
 
       <div className="relative">
         <input
+          id={inputId}
           className={cn(
             'w-full px-5 py-4 rounded-xl',
             'font-bold transition-all duration-300',

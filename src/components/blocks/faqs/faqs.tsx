@@ -1,5 +1,6 @@
 'use client';
 
+import { FaqJsonLd } from '@/components/seo/json-ld';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
 import { HelpCircle } from 'lucide-react';
@@ -15,8 +16,6 @@ type FAQItem = {
 
 export default function FaqSection() {
   const locale = useLocale();
-  // const t = useTranslations('HomePage.faqs');
-
   const faqItems: FAQItem[] = [
     {
       id: 'item-1',
@@ -52,7 +51,11 @@ export default function FaqSection() {
 
   return (
     <section id="faqs" className="relative px-4 py-32 overflow-hidden bg-[#ee7752]">
+      {/* GEO: Feed AI engines with direct Q&A data */}
+      <FaqJsonLd items={faqItems} />
+
       {/* Background - Fluid Mesh */}
+
       <div className="absolute inset-0 z-0 opacity-90">
         <div
           className="absolute inset-0 animate-gradient-xy"

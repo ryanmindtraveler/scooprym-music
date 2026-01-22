@@ -53,14 +53,14 @@ export default function Features2Section() {
               <Image
                 src="/blocks/dark-card.webp"
                 className="hidden rounded-[15px] dark:block"
-                alt="card illustration dark"
+                alt="ScoopRYM dashboard preview - Dark Mode"
                 width={1207}
                 height={929}
               />
               <Image
                 src="/blocks/card.png"
                 className="rounded-[15px] shadow dark:hidden"
-                alt="card illustration light"
+                alt="ScoopRYM dashboard preview - Light Mode"
                 width={1207}
                 height={929}
               />

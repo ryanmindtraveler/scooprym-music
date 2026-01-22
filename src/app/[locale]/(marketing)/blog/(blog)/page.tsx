@@ -28,11 +28,9 @@ export default async function BlogIndexPage(props: NextPageProps) {
   }
 
   return (
-    <div className="container mx-auto py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-8 text-center">
-        <h1 className="text-4xl font-bold">Blog</h1>
-        <p className="text-xl text-muted-foreground">Blog is temporarily unavailable.</p>
-      </div>
+    <div className="container mx-auto py-32 px-4 text-center">
+      <h1 className="text-4xl font-bold mb-4">Blog</h1>
+      <p className="text-xl text-muted-foreground">Temporarily unavailable. Check back soon!</p>
     </div>
   );
 }

@@ -75,7 +75,10 @@ export function TrendingSongCard({
         <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent to-transparent opacity-40 transition-opacity duration-300 group-hover:opacity-60" />
 
         <div className="absolute top-3 left-3 z-10">
-          <span className="inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-xl border border-white/10 shadow-sm">
+          <span
+            suppressHydrationWarning
+            className="translate-no inline-flex items-center rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-xl border border-white/10 shadow-sm"
+          >
             {song.category || 'News'}
           </span>
         </div>

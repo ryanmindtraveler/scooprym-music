@@ -138,7 +138,11 @@ export function GhostIcon({
                     duration: 0.2,
                     type: "spring",
                     stiffness: 300,
-                    damping: 20
+                    damping: 20,
+                    filter: {
+                      type: 'tween',
+                      duration: 0.2,
+                    },
                   }
                 : {
                     // 10s Infinite Loop

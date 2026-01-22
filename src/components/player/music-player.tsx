@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { LoadingTicker } from '@/components/ui/loading-ticker';
 import { Slider } from '@/components/ui/slider';
-import { cn } from '@/lib/utils';
+import { cn, slugify } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -142,7 +142,9 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const activeShareUrl = propShareUrl || (currentSong ? `${window.location.origin}/songs/${currentSong.id}` : '');
+  const activeShareUrl =
+    propShareUrl ||
+    (currentSong ? `${window.location.origin}/songs/${slugify(currentSong.title || 'song')}-${currentSong.id}` : '');
 
   const handleDownload = async () => {
     if (!currentSong?.audioUrl || isDownloading) return;

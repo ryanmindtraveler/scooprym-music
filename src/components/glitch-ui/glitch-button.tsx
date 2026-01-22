@@ -62,6 +62,7 @@ export function GlitchButton({
 
   return (
     <button
+      type="button"
       className={cn(
         'glitch-button relative overflow-hidden font-mono uppercase tracking-wider',
         'transition-all duration-200 ease-out',
@@ -144,6 +145,7 @@ export function PunkButton({
 
   return (
     <button
+      type="button"
       className={cn(
         'punk-button relative overflow-hidden uppercase tracking-wider',
         'transition-all duration-200 ease-out',
@@ -245,6 +247,7 @@ export function MaximalistButton({
 
   return (
     <button
+      type="button"
       className={cn(
         'maximalist-button relative overflow-hidden uppercase tracking-wider',
         'transition-all duration-300 ease-out',

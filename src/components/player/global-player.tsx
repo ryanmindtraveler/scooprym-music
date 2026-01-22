@@ -18,6 +18,7 @@ export function GlobalPlayer() {
   const setCurrentTime = usePlayerStore((state) => state.setCurrentTime);
   const setDuration = usePlayerStore((state) => state.setDuration);
   const pause = usePlayerStore((state) => state.pause);
+  const setIsLoading = usePlayerStore((state) => state.setIsLoading);
 
   // Helper to safely play audio and handle interruptions
   const safePlay = async (audio: HTMLAudioElement) => {
@@ -71,6 +72,23 @@ export function GlobalPlayer() {
     const handleEnded = () => {
       pause();
       setCurrentTime(0);
+      setIsLoading(false);
+    };
+
+    const handleWaiting = () => {
+      setIsLoading(true);
+    };
+
+    const handleCanPlay = () => {
+      setIsLoading(false);
+    };
+
+    const handlePlayingEvent = () => {
+      setIsLoading(false);
+    };
+
+    const handleLoadedData = () => {
+      setIsLoading(false);
     };
 
     const handlePlay = () => {
@@ -112,6 +130,8 @@ export function GlobalPlayer() {
 
       // Since this is a component, we can import { toast } from 'sonner'
       toast.error(message);
+      toast.error(message);
+      setIsLoading(false);
       pause();
     };
 
@@ -120,6 +140,10 @@ export function GlobalPlayer() {
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('error', handleError);
+    audio.addEventListener('waiting', handleWaiting); // Buffering...
+    audio.addEventListener('canplay', handleCanPlay); // Ready
+    audio.addEventListener('playing', handlePlayingEvent); // More reliable for "Actually Started"
+    audio.addEventListener('loadeddata', handleLoadedData); // Early data availability
 
     return () => {
       audio.pause();
@@ -128,9 +152,13 @@ export function GlobalPlayer() {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('playing', handlePlayingEvent);
+      audio.removeEventListener('loadeddata', handleLoadedData);
       audio.src = '';
     };
-  }, [setCurrentTime, setDuration, pause]);
+  }, [setCurrentTime, setDuration, pause, setIsLoading]);
 
   // Track the currently loaded URL to avoid infinite re-loading if `audio.src` (absolute) != `audioUrl` (relative)
   const currentUrlRef = useRef<string | null>(null);

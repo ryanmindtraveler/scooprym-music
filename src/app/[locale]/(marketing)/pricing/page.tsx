@@ -3,10 +3,31 @@ import Container from '@/components/layout/container';
 import { PricingTable } from '@/components/pricing/pricing-table';
 import { Zap } from 'lucide-react';
 
+import { constructMetadata } from '@/lib/metadata';
+import type { Metadata } from 'next';
+import type { Locale } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata | undefined> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'PricingPage' });
+
+  return constructMetadata({
+    title: t('title'),
+    description: t('description'),
+    locale,
+    pathname: '/pricing',
+  });
+}
+
 export default async function PricingPage() {
   return (
     <div className="min-h-screen bg-background pt-20">
-      <section className="relative py-20 overflow-hidden">
+      <section className="relative py-20">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-secondary/10 blur-[100px] rounded-full pointer-events-none" />
 
         <Container className="relative z-10 max-w-6xl px-4 flex flex-col gap-16">

@@ -23,9 +23,9 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
     <LocaleLink href={`/blog/${post.slugs}`} className="block h-full">
       <div className="group flex flex-col border border-border rounded-lg overflow-hidden h-full transition-all duration-300 ease-in-out hover:border-primary hover:shadow-lg hover:shadow-primary/20">
         {/* Image container - fixed aspect ratio */}
-        <div className="group overflow-hidden relative aspect-16/9 w-full">
+        <div className="group overflow-hidden relative aspect-video w-full">
           <div className="relative w-full h-full">
-            <BlogImage src={image} alt={title || 'image for blog post'} title={title || 'image for blog post'} />
+            <BlogImage src={image} alt={title || 'ScoopRYM Blog Post'} title={title || 'ScoopRYM Blog Post'} />
 
             {/* Premium badge - top right */}
             {premium && (
@@ -93,7 +93,7 @@ export default function BlogCard({ locale, post }: BlogCardProps) {
 export function BlogCardSkeleton() {
   return (
     <div className="border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden h-full">
-      <div className="overflow-hidden relative aspect-16/9 w-full">
+      <div className="overflow-hidden relative aspect-video w-full">
         <Skeleton className="h-full w-full rounded-b-none" />
       </div>
       <div className="p-4 flex flex-col justify-between flex-1">

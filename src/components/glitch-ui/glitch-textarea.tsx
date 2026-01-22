@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { ReactNode, TextareaHTMLAttributes } from 'react';
+import { type ReactNode, type TextareaHTMLAttributes, useId } from 'react';
 
 interface GlitchTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
@@ -26,6 +26,9 @@ export function GlitchTextarea({
     high: 'glitch-always animate-glitch-text',
   };
 
+  const uniqueId = useId();
+  const textareaId = props.id || uniqueId;
+
   const variantClasses = {
     cyan: cn(
       'bg-black/50 border border-[#00ffff]/50 text-[#00ffff]',
@@ -47,7 +50,10 @@ export function GlitchTextarea({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#ff00ff]">
+        <label
+          htmlFor={textareaId}
+          className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-[#ff00ff]"
+        >
           {icon && <span className="text-[#00ffff]">{icon}</span>}
           {label}
         </label>
@@ -55,6 +61,7 @@ export function GlitchTextarea({
 
       <div className="relative">
         <textarea
+          id={textareaId}
           className={cn(
             'w-full px-4 py-3 rounded-lg resize-none',
             'font-mono transition-all duration-200',
@@ -134,10 +141,16 @@ export function PunkTextarea({
     ),
   };
 
+  const uniqueId = useId();
+  const textareaId = props.id || uniqueId;
+
   return (
     <div className="space-y-2">
       {label && (
-        <label className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-white">
+        <label
+          htmlFor={textareaId}
+          className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-white"
+        >
           {icon && <span className="text-[#ff00ff]">{icon}</span>}
           <span className="bg-black px-2 py-1 border border-white">{label}</span>
         </label>
@@ -145,6 +158,7 @@ export function PunkTextarea({
 
       <div className={cn('relative', tornEdges && 'punk-torn-edges')}>
         <textarea
+          id={textareaId}
           rows={rows}
           className={cn(
             'w-full px-4 py-3',
@@ -230,10 +244,16 @@ export function MaximalistTextarea({
     ),
   };
 
+  const uniqueId = useId();
+  const textareaId = props.id || uniqueId;
+
   return (
     <div className="space-y-3">
       {label && (
-        <label className="flex items-center gap-3 text-lg font-black uppercase tracking-wider text-white">
+        <label
+          htmlFor={textareaId}
+          className="flex items-center gap-3 text-lg font-black uppercase tracking-wider text-white"
+        >
           {icon && <span className="text-[#ffff00]">{icon}</span>}
           <span className="bg-gradient-to-r from-[#ff00ff] to-[#00ffff] bg-clip-text text-transparent">{label}</span>
         </label>
@@ -241,6 +261,7 @@ export function MaximalistTextarea({
 
       <div className="relative">
         <textarea
+          id={textareaId}
           rows={rows}
           className={cn(
             'w-full px-5 py-4 rounded-xl resize-none',

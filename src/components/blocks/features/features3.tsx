@@ -35,8 +35,8 @@ export default function Features3Section() {
             transition={{ delay: 0.1 }}
             className="text-5xl md:text-7xl font-black tracking-tighter drop-shadow-md"
           >
-            Why Choose{' '}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-yellow-300 to-pink-300">ScoopRYM?</span>
+            Turn Chaos into{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-300">Comedy</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -45,46 +45,46 @@ export default function Features3Section() {
             transition={{ delay: 0.2 }}
             className="mt-6 text-2xl font-bold max-w-2xl mx-auto drop-shadow-sm"
           >
-            Turn daily news into viral tracks. No musical skills required. Just pure vibes.
+            News, gossip, and memes—roast them all with AI-generated diss tracks.
           </motion.p>
         </div>
 
         <div className="relative mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              title: 'Instant Banger',
-              desc: 'From headline to hit in seconds. Our AI spits bars faster than you can type.',
+              title: 'News Parody',
+              desc: 'Political satires & social news. If they say it, you can diss it.',
               icon: ZapIcon,
               color: 'text-yellow-300',
             },
             {
-              title: 'Studio Quality',
-              desc: 'Crisp vocals, heavy 808s, and professional mixing. Ready for the charts.',
-              icon: CpuIcon,
-              color: 'text-cyan-300',
-            },
-            {
-              title: '1 of 1 Beats',
-              desc: 'Every track is unique. No recycled beats. Your diss track is yours alone.',
-              icon: FingerprintIcon,
+              title: 'Gossip Roast',
+              desc: 'The latest tea, served hot. Turn celebrity meltdowns into hit singles.',
+              icon: SparklesIcon,
               color: 'text-pink-300',
             },
             {
-              title: 'Spit Your Own',
-              desc: 'Full control. Tweaked lyrics, punchlines, and flow for maximum damage.',
-              icon: PencilIcon,
+              title: 'Meme Culture',
+              desc: 'Weird trends and viral fails? Roast them before they go cold.',
+              icon: FingerprintIcon,
+              color: 'text-cyan-300',
+            },
+            {
+              title: 'Comedy Drill',
+              desc: 'Hard beats, funny lyrics. Trap, Drill, and Glitch Rap tailored for laughs.',
+              icon: CpuIcon,
               color: 'text-green-300',
             },
             {
-              title: 'Dope Cover Art',
-              desc: 'Auto-generated album covers that match the vibe of your track immediately.',
+              title: 'Instant Earworm',
+              desc: 'Designed for TikTok. Short, catchy, and impossible to get out of your head.',
               icon: Settings2Icon,
               color: 'text-orange-300',
             },
             {
-              title: 'TikTok Ready',
-              desc: 'Optimized for viral sharing. Post straight to TikTok, Reels, and Shorts.',
-              icon: SparklesIcon,
+              title: 'Zero Filter',
+              desc: 'Pure satire. No rules, just jokes. The ultimate parody machine.',
+              icon: PencilIcon,
               color: 'text-purple-300',
             },
           ].map((feature, idx) => (
@@ -106,7 +106,7 @@ export default function Features3Section() {
                 }}
               />
               {/* Fallback Static Spotlight for simple hover if mouse tracking not enabled */}
-              <div className="absolute inset-0 bg-linear-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
               <div className="flex items-center gap-4 mb-6 relative z-10">
                 <div

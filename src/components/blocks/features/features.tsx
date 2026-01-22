@@ -22,22 +22,22 @@ export default function FeaturesSection() {
     'item-1': {
       image: '/blocks/charts-light.png',
       darkImage: '/blocks/charts.png',
-      alt: 'Product Feature One',
+      alt: 'Analytics Dashboard showing chart growth',
     },
     'item-2': {
       image: '/blocks/music-light.png',
       darkImage: '/blocks/music.png',
-      alt: 'Product Feature Two',
+      alt: 'Music Player Interface with waveforms',
     },
     'item-3': {
       image: '/blocks/mail2-light.png',
       darkImage: '/blocks/mail2.png',
-      alt: 'Product Feature Three',
+      alt: 'Email Notification System',
     },
     'item-4': {
       image: '/blocks/payments-light.png',
       darkImage: '/blocks/payments.png',
-      alt: 'Product Feature Four',
+      alt: 'Secure Payment Processing Interface',
     },
   };
 
@@ -117,14 +117,14 @@ export default function FeaturesSection() {
                 >
                   <Image
                     src={images[activeItem].image}
-                    className="size-full object-cover object-left-top dark:hidden"
+                    className="size-full object-cover object-top-left dark:hidden"
                     alt={images[activeItem].alt}
                     width={1207}
                     height={929}
                   />
                   <Image
                     src={images[activeItem].darkImage}
-                    className="size-full object-cover object-left-top dark:block hidden"
+                    className="size-full object-cover object-top-left dark:block hidden"
                     alt={images[activeItem].alt}
                     width={1207}
                     height={929}

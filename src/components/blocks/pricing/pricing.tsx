@@ -103,7 +103,7 @@ export default function PricingSection() {
             className="text-6xl md:text-8xl font-black tracking-tighter drop-shadow-sm text-gray-900"
           >
             Invest In Your{' '}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-600">Flow</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-600">Flow</span>
           </motion.h2>
 
           <motion.p
@@ -125,7 +125,7 @@ export default function PricingSection() {
           className="p-8 md:p-12 relative overflow-hidden"
         >
           {/* Inner Soft Glow Decor */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-linear-to-b from-white to-transparent opacity-60 pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-white to-transparent opacity-60 pointer-events-none" />
           <PricingTable />
         </motion.div>
       </div>

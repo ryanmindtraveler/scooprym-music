@@ -2,8 +2,6 @@ import { HeroUI } from '@/components/ui/hero';
 import { getTranslations } from 'next-intl/server';
 
 export default async function HeroSection() {
-  // const t = await getTranslations('HomePage.hero');
-
   return (
     <HeroUI
       title="ScoopRYM"

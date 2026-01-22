@@ -23,7 +23,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
       )}
     >
       <Container className="px-4">
-        <div className="grid grid-cols-2 gap-12 py-16 md:grid-cols-6">
+        <div className="grid grid-cols-2 gap-12 py-16 lg:grid-cols-4">
           <div className="flex flex-col items-start col-span-full md:col-span-2">
             <div className="space-y-6">
               {/* logo and name */}

@@ -1,4 +1,4 @@
-import FaqSection from '@/components/blocks/faqs/faqs';
+import FaqSection from '@/components/blocks/faqs/no-ssr-faqs';
 import Features3Section from '@/components/blocks/features/features3';
 import GallerySection from '@/components/blocks/gallery/gallery';
 import { MusicGeneratorBlock as MusicGeneratorSection } from '@/components/blocks/generator/music-generator';

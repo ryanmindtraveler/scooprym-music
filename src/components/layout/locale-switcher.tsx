@@ -13,7 +13,7 @@ import { useLocaleStore } from '@/store';
 import { Languages } from 'lucide-react';
 import { type Locale, useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useEffect, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 
 /**
  * LocaleSwitcher component
@@ -24,8 +24,15 @@ import { useEffect, useTransition } from 'react';
  * https://next-intl.dev/docs/routing/navigation#userouter
  */
 export default function LocaleSwitcher() {
+  const [mounted, setMounted] = useState(false);
+
   // Return null if there's only one locale available
   const showLocaleSwitch = Object.keys(websiteConfig.i18n.locales).length > 1;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!showLocaleSwitch) {
     return null;
   }
@@ -55,6 +62,15 @@ export default function LocaleSwitcher() {
       );
     });
   };
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="sm" className="size-8 p-0.5 border border-border rounded-full cursor-pointer">
+        <Languages className="size-3" />
+        <span className="sr-only">{t('language')}</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

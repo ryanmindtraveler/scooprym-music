@@ -1,12 +1,8 @@
 'use client';
 
-import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { useActionPermission } from '@/hooks/auth/use-permission';
-import { useSongLike } from '@/hooks/songs/use-song-like';
-import { authClient } from '@/lib/auth-client';
-// import { LocaleLink, useLocaleRouter } from '@/i18n/navigation'; // causing error
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
@@ -19,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
+import { SongDetailModal } from '@/components/songs/song-detail-modal';
 import type { Song } from '@/types/song';
 
 interface GallerySectionProps {
@@ -26,34 +23,9 @@ interface GallerySectionProps {
   initialSelectedSong?: Song | null;
 }
 
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
-
 export default function GallerySection({ songs = [], initialSelectedSong = null }: GallerySectionProps) {
   const router = useRouter();
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [selectedSong, setSelectedSong] = useState<Song | null>(initialSelectedSong);
-
-  // Load favorites for initial state of heart icons
-  useEffect(() => {
-    const loadFavorites = async () => {
-      try {
-        const session = await authClient.getSession();
-        if (!session.data?.user) return;
-
-        const res = await fetch('/api/songs/favorites');
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (data?.success && Array.isArray(data.data)) {
-          setFavoriteIds(data.data.map((item: { songId?: string }) => item.songId).filter(Boolean));
-        }
-      } catch {
-        // ignore
-      }
-    };
-
-    void loadFavorites();
-  }, []);
 
   // Use passed songs or empty array if none
   const displayItems = songs.length > 0 ? songs : [];
@@ -133,6 +105,18 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
         </div>
       </div>
 
+      {/* Modal for Selected Song (Client Side Only - No URL Change) */}
+      {selectedSong && (
+        <SongDetailModal
+          song={selectedSong}
+          initialIsFavorite={selectedSong.isLiked || false}
+          defaultOpen={true}
+          navigationMode="manual"
+          autoPlay={true}
+          onClose={() => setSelectedSong(null)}
+        />
+      )}
+
       {/* Main Content Area */}
       <div className="mx-auto max-w-[1800px] px-4 md:px-8 space-y-12 relative z-10">
         <div className="text-center space-y-4">
@@ -175,7 +159,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {displayItems.map((item, index) => (
-              <GallerySongCard key={item.id} item={item} onSongClick={setSelectedSong} />
+              <GallerySongCard key={item.id} item={item} onSelect={(song) => setSelectedSong(song)} />
             ))}
           </div>
         )}
@@ -190,19 +174,6 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
           </button>
         </div>
       </div>
-
-      {/* Manual Modal */}
-      {selectedSong && (
-        <SongDetailModal
-          key={selectedSong.id}
-          song={selectedSong}
-          initialIsFavorite={favoriteIds.includes(selectedSong.id)}
-          defaultOpen={true}
-          navigationMode="manual"
-          onClose={() => setSelectedSong(null)}
-          hideActions={true}
-        />
-      )}
     </section>
   );
 }
