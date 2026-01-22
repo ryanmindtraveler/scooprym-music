@@ -2,7 +2,8 @@
   "Metadata": {
     "name": "ScoopRYM",
     "title": "ScoopRYM - Turning news, entertainment, and gossip into beats",
-    "description": "ScoopRYM: News-to-Hip-Hop Hit Factory — transforming the day’s wildest headlines and juiciest gossip into an endless feed of unskippable diss tracks."
+    "description": "Turn ridiculous news and daily gossip into hilarious diss tracks. The #1 AI comedy rap generator for memes, roasts, and viral content.",
+    "keywords": "AI parody songs, comedy rap generator, roast track maker, meme music, funny rap songs, absurd news rap, diss track generator, viral tiktok sounds, gossip rap, suno alternative for comedy"
   },
   "Common": {
     "premium": "Premium",
@@ -164,8 +165,8 @@
     "title": "About",
     "description": "ScoopRYM is the ultimate News-to-Hip-Hop Hit Factory, transforming the day's wildest headlines and juiciest gossip into an endless feed of unskippable diss tracks.",
     "authorName": "ScoopRYM",
-    "authorBio": "News-to-Hip-Hop Hit Factory",
-    "introduction": "👋 Hi there! This is ScoopRYM, the factory where we turn news and gossip into fire beats. We help you stay on top of trends through rhythm and rhyme.",
+    "authorBio": "Comedy & Parody Rap Factory",
+    "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn absurd news and memes into bangers. Stay for the gossip, share for the roast.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
   },
@@ -480,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "Turning news, entertainment, and gossip into Music Beats.",
+      "tagline": "Turning ridiculous news and gossip into Comedy Raps.",
       "product": {
         "title": "Product",
         "items": {
@@ -512,7 +513,7 @@
           "cookiePolicy": "Cookie Policy",
           "privacyPolicy": "Privacy Policy",
           "termsOfService": "Terms of Service",
-          "companyEmail": "Company Email:contact@900mounts.com"
+          "companyEmail": "Email: support@scooprym.app"
         }
       }
     },

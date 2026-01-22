@@ -1,8 +1,9 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - 将新闻、娱乐和八卦转化为音乐节奏",
-    "description": "ScoopRYM：新闻生成嘻哈音乐的热门工厂 —— 将每天最狂野的头条和最劲爆的八卦转化为无穷无尽的嘻哈音乐节奏。"
+    "title": "ScoopRYM - 搞怪说唱与鬼畜神曲生成器",
+    "description": "将每日最离谱的新闻八卦，转化为刷不完的 diss 神曲。专为Z世代打造的AI搞笑说唱与新闻吐槽神器。",
+    "keywords": "搞笑说唱, 鬼畜音乐生成器, AI 吐槽歌, 恶搞歌曲制作, 朋友圈神曲, 梗图音乐, 新闻荒诞剧, 吃瓜说唱, 明星Diss曲, 病毒式传播, 喜剧Rap"
   },
   "Common": {
     "premium": "付费文章",
@@ -162,10 +163,10 @@
   },
   "AboutPage": {
     "title": "关于我们",
-    "description": "ScoopRYM 是新闻转成嘻哈音乐的热门工厂，将每天最狂野的头条和最劲爆的八卦转化为无穷无尽的必备 Diss 轨道。",
+    "description": "ScoopRYM 是终极搞笑说唱工厂。我们将每日最离谱的新闻头条和最劲爆的八卦，转化为刷不完的 Diss 神曲。",
     "authorName": "ScoopRYM",
-    "authorBio": "新闻到嘻哈的热门工厂",
-    "introduction": "👋 你好！这里是 ScoopRYM，我们将新闻和八卦转化为炸裂节奏的工厂。我们通过韵律和节奏助您紧跟潮流。",
+    "authorBio": "搞怪说唱与鬼畜音乐工厂",
+    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们只生产梗图和神曲。把荒诞新闻变成洗脑 Rap，这就是我们的态度。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -480,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "在几秒钟内简单轻松地创作独特的 AI 音乐",
+      "tagline": "将离谱新闻和八卦转化为搞笑神曲。",
       "product": {
         "title": "产品",
         "items": {
@@ -512,12 +513,14 @@
           "cookiePolicy": "Cookie政策",
           "privacyPolicy": "隐私政策",
           "termsOfService": "服务条款",
-          "companyEmail": "公司邮箱：contact@900mounts.com"
+          "companyEmail": "邮箱：support@scooprym.app"
         }
       }
     },
     "avatar": {
-      "dashboard": "工作台",
+      "home": "首页",
+      "create": "创作",
+      "mySongs": "我的歌曲",
       "billing": "账单",
       "credits": "积分",
       "settings": "设置"
@@ -538,6 +541,9 @@
     },
     "admin": {
       "title": "系统管理",
+      "songs": {
+        "title": "发布歌曲"
+      },
       "users": {
         "title": "用户管理",
         "fakeData": "注：只为演示功能，数据为假数据，封禁功能不可用",
