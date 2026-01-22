@@ -8,11 +8,12 @@ export interface Song {
   coverImageUrl?: string | null;
   lyrics?: string | null;
   prompt?: string | null;
-  category?: string | null;
   sourceText?: string | null;
   sourceUrl?: string | null;
   newsSummary?: string | null;
   isLiked?: boolean;
   updatedAt?: Date | string | null;
   processingStatus?: string | null;
+  category?: string | null;
+  style?: string | null;
 }

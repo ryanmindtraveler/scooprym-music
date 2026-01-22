@@ -16,6 +16,7 @@ export function constructMetadata({
   noIndex = false,
   locale,
   pathname,
+  keywords = [],
 }: {
   title?: string;
   description?: string;
@@ -23,6 +24,7 @@ export function constructMetadata({
   noIndex?: boolean;
   locale?: Locale;
   pathname?: string;
+  keywords?: string[];
 } = {}): Metadata {
   title = title || defaultMessages.Metadata.title;
   description = description || defaultMessages.Metadata.description;
@@ -43,10 +45,39 @@ export function constructMetadata({
         ? { canonical: canonicalUrl }
         : undefined;
 
+  const defaultKeywords = [
+    // Core Identity
+    'Comedy Rap',
+    'Diss Track Generator',
+    'Parody Songs',
+    'Roast Music',
+    'Viral AI Songs',
+
+    // Genres & Style
+    'Trap Music',
+    'Drill Rap',
+    'Boom Bap',
+    'Hyperpop',
+    'Glitch Rap',
+    'Lo-fi Hip Hop',
+
+    // Content Type
+    'News Rap',
+    'Celebrity Gossip Song',
+    'Social Satire',
+    'Meme Music',
+
+    // General AI
+    'AI Music',
+    'Text to Song',
+    'Suno AI',
+    'ScoopRYM',
+  ];
+
   return {
     title,
     description,
-    keywords: ['AI Music', 'Suno', 'Music Generator', 'Text to Song', 'ScoopRYM', 'Free Music AI', 'AI Song Maker'],
+    keywords: [...defaultKeywords, ...keywords],
     alternates,
     openGraph: {
       type: 'website',

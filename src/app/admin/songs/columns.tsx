@@ -33,6 +33,7 @@ const AudioCell = ({ url }: { url: string }) => {
   if (!url || url === 'processing' || url.startsWith('pending'))
     return <span className="text-muted-foreground text-xs">N/A</span>;
 
+  // biome-ignore lint/a11y/useMediaCaption: Admin preview only
   return <audio controls src={url} className="h-8 w-40" />;
 };
 

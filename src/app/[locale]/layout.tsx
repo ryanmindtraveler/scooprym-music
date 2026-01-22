@@ -16,14 +16,13 @@ import { Toaster } from 'sonner';
 import { Providers } from './providers';
 
 import '@/styles/globals.css';
+import { JsonLd, websiteJsonLd } from '@/components/seo/json-ld';
 
 interface LocaleLayoutProps {
   children: ReactNode;
   modal: ReactNode;
   params: Promise<{ locale: Locale }>;
 }
-
-
 
 /**
  * GENERATE METADATA (SEO)
@@ -34,21 +33,40 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
 
   return {
     metadataBase: new URL('https://www.scooprym.app'),
-    alternates: {
-      canonical: '/',
-      languages: {
-        'en': '/en',
-        'zh': '/zh',
-      },
-    },
     title: {
       default: t('title'),
       template: `%s | ${t('name')}`,
     },
     description: t('description'),
+    keywords: t('keywords', {
+      default:
+        'AI music generator, AI rap generator, diss track maker, Suno AI, Udio AI, text to music, viral song creator, ScoopRYM, hip-hop generator',
+    }),
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      url: 'https://www.scooprym.app',
+      siteName: t('name'),
+      locale: locale,
+      type: 'website',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: t('name'),
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('title'),
+      description: t('description'),
+      images: ['/og-image.png'],
+    },
     appleWebApp: {
-        title: t('name'),
-        statusBarStyle: 'default',
+      title: t('name'),
+      statusBarStyle: 'default',
     },
     icons: {
       icon: '/favicon.ico',
@@ -57,6 +75,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     },
   };
 }
+
+export const viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Often requested for "app-like" feel, though accessibility warns against it. User asked for "Good UX".
+};
 
 /**
  * 1. Locale Layout
@@ -84,7 +113,7 @@ export default async function LocaleLayout({ children, modal, params }: LocaleLa
       <body
         suppressHydrationWarning
         className={cn(
-          'size-full antialiased',
+          'min-h-screen w-full antialiased',
           fontNotoSans.className,
           fontNotoSerif.variable,
           fontNotoSansMono.variable,
@@ -101,6 +130,7 @@ export default async function LocaleLayout({ children, modal, params }: LocaleLa
               <Toaster richColors position="top-right" offset={64} />
               <TailwindIndicator />
               <Analytics />
+              <JsonLd data={websiteJsonLd} />
             </Providers>
           </NextIntlClientProvider>
         </NuqsAdapter>

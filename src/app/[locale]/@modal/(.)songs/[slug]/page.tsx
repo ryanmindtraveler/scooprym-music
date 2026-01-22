@@ -2,13 +2,14 @@ import { SongDetailModal } from '@/components/songs/song-detail-modal';
 import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
+import { getIdFromSlug } from '@/lib/utils';
 import { and, eq } from 'drizzle-orm';
 import type { Locale } from 'next-intl';
 import { notFound } from 'next/navigation';
 
 interface SongDetailPageProps {
   params: Promise<{
-    id: string;
+    slug: string;
     locale: Locale;
   }>;
 }
@@ -18,7 +19,9 @@ export const dynamic = 'force-dynamic';
 export default async function SongDetailInterceptPage({ params }: SongDetailPageProps) {
   try {
     const resolvedParams = await params;
-    const { id } = resolvedParams;
+    const { slug } = resolvedParams;
+    const id = getIdFromSlug(slug);
+
     const db = await getDb();
     const session = await getSession();
     const userId = session?.user?.id;

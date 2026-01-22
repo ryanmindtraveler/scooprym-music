@@ -12,6 +12,7 @@ import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
+import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
@@ -38,6 +39,8 @@ interface SongDetailClientProps {
   onClose?: () => void;
   autoPlay?: boolean;
   hideActions?: boolean;
+  variant?: 'card' | 'clean';
+  // layoutMode?: 'default' | 'immersive'; // Removed immersive mode
 }
 
 export function SongDetailClient({
@@ -46,6 +49,8 @@ export function SongDetailClient({
   onClose,
   autoPlay = false,
   hideActions = false,
+  variant = 'card', // 'card' | 'clean'
+  // layoutMode = 'default',
 }: SongDetailClientProps) {
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
@@ -113,7 +118,11 @@ export function SongDetailClient({
     const locale = localeMatch ? localeMatch[1] : '';
     const localePrefix = locale ? `/${locale}` : '';
 
-    const url = `${window.location.origin}${localePrefix}/songs/${song.id}`;
+    // Generate strict canonical URL for sharing
+    const titleSlug = slugify(song.title || 'song');
+    const url = `${window.location.origin}${localePrefix}/songs/${titleSlug}-${song.id}`;
+
+    // Copy to clipboard
     navigator.clipboard.writeText(url);
     toast.success('Link copied to clipboard');
   };
@@ -133,8 +142,16 @@ export function SongDetailClient({
       .filter(Boolean)
       .filter((t) => t.length <= 20) || [];
 
+  const isClean = variant === 'clean';
+
   return (
-    <div className="relative flex size-full flex-col overflow-hidden text-white selection:bg-pink-500/30">
+    <div
+      className={cn(
+        'relative flex size-full flex-col selection:bg-pink-500/30',
+        'overflow-hidden',
+        !isClean && 'text-white'
+      )}
+    >
       <style>{`
         @keyframes ring {
           0% { transform: rotate(0); }
@@ -147,19 +164,22 @@ export function SongDetailClient({
         }
       `}</style>
       {/* --- Dynamic Gradient Background --- */}
-      <div
-        className="absolute inset-0 z-0 transition-all duration-1000 ease-out"
-        style={{
-          background: colorsLoading
-            ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%)' // Neutral Midnight: Slate-900 -> Indigo-950 -> Black
-            : `
-              radial-gradient(ellipse at 20% 20%, ${primary}40 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 80%, ${secondary}30 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 50%, ${muted}20 0%, transparent 70%),
-              linear-gradient(180deg, ${darkMuted || '#0a0a0f'} 0%, #0a0a0f 100%)
-            `,
-        }}
-      />
+      {/* --- Dynamic Gradient Background (Only for Card Mode) --- */}
+      {!isClean && (
+        <div
+          className="absolute inset-0 z-0 transition-all duration-1000 ease-out"
+          style={{
+            background: colorsLoading
+              ? 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%)' // Neutral Midnight: Slate-900 -> Indigo-950 -> Black
+              : `
+                radial-gradient(ellipse at 20% 20%, ${primary}40 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, ${secondary}30 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, ${muted}20 0%, transparent 70%),
+                linear-gradient(180deg, ${darkMuted || '#0a0a0f'} 0%, #0a0a0f 100%)
+                `,
+          }}
+        />
+      )}
 
       {/* Animated Glow Layer (when playing) */}
       {isThisSongPlaying && (
@@ -172,18 +192,20 @@ export function SongDetailClient({
         />
       )}
 
-      {/* Subtle Album Art Blur Overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-          alt="bg"
-          fill
-          className="object-cover opacity-10 blur-[120px] scale-125 saturate-150"
-        />
-      </div>
-
-      {/* Noise Texture */}
-      <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+      {/* Subtle Album Art Blur Overlay & Noise (Only for Card Mode) */}
+      {!isClean && (
+        <>
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
+              alt="bg"
+              fill
+              className="object-cover opacity-10 blur-[120px] scale-125 saturate-150"
+            />
+          </div>
+          <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+        </>
+      )}
 
       {/* --- Close Button --- */}
       {onClose && (
@@ -199,9 +221,7 @@ export function SongDetailClient({
 
       {/* --- Main Content Layout --- */}
       <div className="relative z-10 flex flex-col md:flex-row h-full w-full overflow-hidden p-4 md:p-6 gap-6">
-        {/* Left: Vinyl Player */}
         <div className="relative flex-none w-full md:w-[420px] h-full overflow-hidden">
-          {/* Share Button - Abstracted to Top Right */}
           <div className="absolute top-0 right-0 z-20 flex items-center gap-2">
             <LikeButton
               songId={song.id}
@@ -217,7 +237,10 @@ export function SongDetailClient({
             )}
             <ShareButton
               songId={song.id}
-              className="rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none"
+              className={cn(
+                'rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none',
+                isClean && 'bg-black/5 hover:bg-black/10 text-black/60 hover:text-black'
+              )}
             />
           </div>
           <div className="w-full h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -234,7 +257,7 @@ export function SongDetailClient({
                   style={{
                     animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
                     boxShadow: isThisSongPlaying
-                      ? '0 0 60px rgba(255, 255, 255, 0.15), 0 0 100px rgba(255, 255, 255, 0.05)'
+                      ? `0 0 160px ${primary}aa, 0 0 320px ${primary}60`
                       : '0 20px 40px rgba(0,0,0,0.6)',
                   }}
                 >
@@ -272,10 +295,20 @@ export function SongDetailClient({
 
               {/* Song Meta */}
               <div className="text-center space-y-2">
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none">
+                <h1
+                  className={cn(
+                    'text-2xl md:text-3xl font-bold tracking-tight text-white line-clamp-2 md:line-clamp-none',
+                    isClean && 'text-slate-900 dark:text-white'
+                  )}
+                >
                   {song.title}
                 </h1>
-                <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+                <div
+                  className={cn(
+                    'flex items-center justify-center gap-2 text-sm text-white/50',
+                    isClean && 'text-slate-500 dark:text-slate-400'
+                  )}
+                >
                   <Badge
                     variant="secondary"
                     className="bg-white/10 text-white/70 hover:bg-white/20 border-0 h-5 px-2 text-[10px]"
@@ -312,9 +345,19 @@ export function SongDetailClient({
                     onValueChange={(val) => usePlayerStore.getState().setCurrentTime(val[0])}
                     className="cursor-pointer relative z-10"
                   />
-                  <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 rounded-full -translate-y-1/2 z-0 blur-sm group-hover:bg-white/10 transition-colors" />
+                  <div
+                    className={cn(
+                      'absolute top-1/2 left-0 w-full h-1 bg-white/5 rounded-full -translate-y-1/2 z-0 blur-sm group-hover:bg-white/10 transition-colors',
+                      isClean && 'bg-black/5 group-hover:bg-black/10'
+                    )}
+                  />
                 </div>
-                <div className="flex justify-between text-[11px] text-white/50 font-medium font-mono tracking-wider">
+                <div
+                  className={cn(
+                    'flex justify-between text-[11px] text-white/50 font-medium font-mono tracking-wider',
+                    isClean && 'text-slate-500'
+                  )}
+                >
                   <span>
                     {(() => {
                       if (!currentTime || Number.isNaN(currentTime)) return '0:00';
@@ -347,7 +390,7 @@ export function SongDetailClient({
                       <div className="p-1.5 rounded-md bg-white/5">
                         <Newspaper className="size-3.5" />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-[0.2em]">Background</span>
+                      <span className="text-[10px] font-black tracking-[0.2em]">Background</span>
                     </div>
 
                     <Tooltip>
@@ -380,8 +423,14 @@ export function SongDetailClient({
                     </Tooltip>
                   </div>
 
+                  {/* News Summary Content */}
                   <div className="relative z-10">
-                    <p className="text-sm text-white/80 leading-relaxed font-light text-left tracking-wide opacity-90">
+                    <p
+                      className={cn(
+                        'text-sm text-white/80 leading-relaxed font-light text-left tracking-wide opacity-90',
+                        isClean && 'text-slate-700 font-normal'
+                      )}
+                    >
                       {song.newsSummary || song.sourceText}
                     </p>
                   </div>
@@ -390,12 +439,24 @@ export function SongDetailClient({
             </div>
           </div>
         </div>
-
-        {/* Right: Lyrics With Card Style */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white/3 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-md">
-          {/* Header - Fixed at top */}
-          <div className="flex-none px-6 py-4 flex items-center justify-between z-10 border-b border-white/5">
-            <span className="text-xs font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+        <div
+          className={cn(
+            'flex-1 flex flex-col min-h-0 bg-white/3 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-md',
+            isClean && 'bg-slate-100 dark:bg-slate-900/50 border-0 rounded-3xl shadow-inner'
+          )}
+        >
+          <div
+            className={cn(
+              'flex-none px-6 py-4 flex items-center justify-between z-10 border-b border-white/5',
+              isClean && 'border-slate-200 dark:border-white/5'
+            )}
+          >
+            <span
+              className={cn(
+                'text-xs font-bold tracking-widest text-white/40 flex items-center gap-2',
+                isClean && 'text-slate-400'
+              )}
+            >
               <Disc3 className="size-4" /> Lyrics
             </span>
             {song.category && (
@@ -404,11 +465,15 @@ export function SongDetailClient({
               </span>
             )}
           </div>
-
-          {/* Lyrics Scroll Area - Only this scrolls */}
           <div className="flex-1 relative">
             <div className="absolute inset-0">
-              <FormattedLyricsView lyrics={song.lyrics} duration={duration} songId={song.id} />
+              <FormattedLyricsView
+                lyrics={song.lyrics}
+                duration={duration}
+                songId={song.id}
+                isClean={isClean}
+                className="custom-scrollbar"
+              />
             </div>
           </div>
         </div>
@@ -424,7 +489,23 @@ function FormattedLyricsView({
   lyrics,
   duration,
   songId,
-}: { lyrics: string | null | undefined; duration?: number | null; songId: string }) {
+  isClean = false,
+  className,
+  activeClassName,
+  inactiveClassName,
+  children,
+  lineClassName,
+}: {
+  lyrics: string | null | undefined;
+  duration?: number | null;
+  songId: string;
+  isClean?: boolean;
+  className?: string;
+  activeClassName?: string;
+  inactiveClassName?: string;
+  children?: React.ReactNode;
+  lineClassName?: string;
+}) {
   const { currentTime, isPlaying, currentSong } = usePlayerStore();
 
   // Refs for scroll control
@@ -434,7 +515,12 @@ function FormattedLyricsView({
   // --- Empty State ---
   if (!lyrics) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-white/30 italic">
+      <div
+        className={cn(
+          'flex flex-col items-center justify-center h-full text-white/30 italic',
+          isClean && 'text-slate-400'
+        )}
+      >
         <span>No lyrics available for this track.</span>
       </div>
     );
@@ -508,13 +594,17 @@ function FormattedLyricsView({
   return (
     <div
       ref={containerRef}
-      className="h-full overflow-y-auto custom-scrollbar px-4 py-6 flex flex-col items-center text-center gap-2"
+      className={cn('h-full overflow-y-auto custom-scrollbar px-4 py-6 flex flex-col text-center gap-4', className)}
     >
-      {/* Top spacer for centering first line */}
-      <div className="h-[40%] shrink-0" aria-hidden="true" />
+      {/* Top spacer for centering first line (reduced if children present) */}
+      <div className={cn('shrink-0', children ? 'h-12' : 'h-[40%]')} aria-hidden="true" />
+
+      {/* Render Header Content (News, etc.) */}
+      {children}
 
       {displayLines.map((line, index) => {
         const isSection = line.startsWith('[') && line.endsWith(']');
+        const isFocusZone = index >= activeIndex - 2 && index <= activeIndex + 2;
 
         return (
           <div
@@ -524,22 +614,26 @@ function FormattedLyricsView({
             }}
             onClick={() => handleLineClick(index)}
             className={cn(
-              'w-full max-w-2xl flex flex-col items-center cursor-pointer',
-              'transition-all duration-300 ease-out',
-              'opacity-60 hover:opacity-100',
-              'py-1'
+              'w-full max-w-2xl cursor-pointer transition-all duration-500 ease-out origin-left',
+              // High Tolerance Zone Styling
+              isSection ? 'py-4' : 'py-1',
+              !isSection && isFocusZone
+                ? activeClassName || 'opacity-100 scale-100 text-white font-medium blur-none'
+                : inactiveClassName || 'opacity-30 hover:opacity-80 scale-95 text-white/50 blur-[1px]'
             )}
           >
             {isSection ? (
               // Section marker (e.g., [VERSE], [CHORUS])
-              <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md my-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-300 select-none">
+              <div className="inline-block px-3 py-1 rounded-full bg-slate-200/50 dark:bg-white/10 my-4 transform -translate-x-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-indigo-300 select-none">
                   {line.slice(1, -1)}
                 </span>
               </div>
             ) : (
               // Regular lyric line
-              <p className="text-base md:text-lg font-medium leading-relaxed text-white/90">{line}</p>
+              <p className={cn('leading-relaxed transition-all duration-500', lineClassName || 'text-base md:text-lg')}>
+                {line}
+              </p>
             )}
           </div>
         );

@@ -4,8 +4,9 @@ import { song as songTable } from '@/db/schema';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { generateHreflangUrls } from '@/lib/hreflang';
+import { slugify } from '@/lib/utils';
 import { and, desc, isNotNull, ne } from 'drizzle-orm';
-// import { blogSource, categorySource, source } from '@/lib/source'; // Disabled to fix build crash
+
 import type { MetadataRoute } from 'next';
 import type { Locale } from 'next-intl';
 import { getBaseUrl } from '../lib/urls/urls';
@@ -59,6 +60,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const songs = await db
       .select({
         id: songTable.id,
+        title: songTable.title,
         updatedAt: songTable.updatedAt,
         createdAt: songTable.createdAt,
       })
@@ -68,8 +70,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .limit(1000); // Limit to 1000 for performance
 
     sitemapList.push(
-      ...songs.flatMap((songItem: { id: string; updatedAt: Date; createdAt: Date }) => {
-        const route = `/songs/${songItem.id}`;
+      ...songs.flatMap((songItem: { id: string; title: string | null; updatedAt: Date; createdAt: Date }) => {
+        // Generate SEO slug: title-uuid
+        const slug = `${slugify(songItem.title || 'song')}-${songItem.id}`;
+        const route = `/songs/${slug}`;
         const lastModified = songItem.updatedAt ? new Date(songItem.updatedAt) : new Date(songItem.createdAt);
 
         return routing.locales.map((locale) => ({
