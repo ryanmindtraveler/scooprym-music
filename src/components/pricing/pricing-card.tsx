@@ -32,19 +32,19 @@ interface PricingCardProps {
 }
 
 /**
- * Get the appropriate price object for the selected interval and payment type
- * @param plan The price plan
- * @param interval The selected interval (month or year)
- * @param paymentType The payment type (SUBSCRIPTION or one_time)
- * @returns The price object or undefined if not found
+ * 根据选择的周期和支付类型获取相应的价格对象
+ * @param plan 价格方案
+ * @param interval 选择的周期（月付或年付）
+ * @param paymentType 支付类型（订阅或一次性）
+ * @returns 价格对象，如果未找到则返回 undefined
  */
 function getPriceForPlan(plan: PricePlan, interval?: PlanInterval, paymentType?: PaymentType): Price | undefined {
   if (plan.isFree) {
-    // Free plan has no price
+    // 免费方案没有价格
     return undefined;
   }
 
-  // non-free plans must have a price
+  // 非免费方案必须有价格
   return plan.prices.find((price) => {
     if (paymentType === PaymentTypes.ONE_TIME) {
       return price.type === PaymentTypes.ONE_TIME;
@@ -54,9 +54,9 @@ function getPriceForPlan(plan: PricePlan, interval?: PlanInterval, paymentType?:
 }
 
 /**
- * Pricing Card Component
+ * 定价卡片组件
  *
- * Displays a single pricing plan with features and action button
+ * 显示带有功能和操作按钮的单个定价方案
  */
 export function PricingCard({
   plan,
@@ -68,13 +68,12 @@ export function PricingCard({
   isHighlighted = false,
   onHover,
 }: PricingCardProps) {
-  // const t = useTranslations('PricingPage.PricingCard');
   const price = getPriceForPlan(plan, interval, paymentType);
   const currentUser = useCurrentUser();
   const currentPath = useLocalePathname();
   const mounted = useMounted();
 
-  // generate formatted price and price label
+  // 生成格式化的价格和价格标签
   let formattedPrice = '';
   let priceLabel = '';
   let originalPrice = '';
@@ -82,7 +81,7 @@ export function PricingCard({
   if (plan.isFree) {
     formattedPrice = 'Free';
   } else if (price && price.amount > 0) {
-    // price is available
+    // 价格可用
     if (interval === PlanIntervals.YEAR && paymentType === PaymentTypes.SUBSCRIPTION) {
       formattedPrice = formatPrice(price.amount / 12, price.currency);
       priceLabel = '/month';
@@ -103,9 +102,9 @@ export function PricingCard({
     formattedPrice = 'Not Available';
   }
 
-  // check if plan is not free and has a price
+  // 检查方案是否非免费且有价格
   const isPaidPlan = !plan.isFree && !!price;
-  // check if plan has a trial period, period is greater than 0
+  // 检查方案是否有试用期，且试用期大于0
   const hasTrialPeriod = price?.trialPeriodDays && price.trialPeriodDays > 0;
 
   return (
@@ -114,7 +113,7 @@ export function PricingCard({
       className={cn(
         'flex flex-col h-full overflow-hidden transition-all duration-300 rounded-[2.5rem] group relative border-2',
         isHighlighted
-          ? 'border-purple-500 bg-linear-to-br from-pink-100 via-purple-100 to-indigo-100 shadow-[0_20px_50px_-12px_rgba(168,85,247,0.4)] scale-105 z-10'
+          ? 'border-purple-500 bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 shadow-[0_20px_50px_-12px_rgba(168,85,247,0.4)] scale-105 z-10'
           : 'border-transparent bg-white/60 backdrop-blur-md shadow-xl hover:bg-white/80',
         isCurrentPlan && !isHighlighted && 'border-purple-200',
         className
@@ -127,7 +126,7 @@ export function PricingCard({
        */}
       {plan.popular && (
         <div className="absolute top-6 right-6">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-linear-to-r from-pink-500 to-purple-600 text-white shadow-lg shadow-pink-500/30">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg shadow-pink-500/30">
             Most Popular
           </span>
         </div>
@@ -211,7 +210,7 @@ export function PricingCard({
                 className={cn(
                   'w-full rounded-2xl font-black text-lg h-14 transition-all hover:scale-[1.02] active:scale-[0.98]',
                   isHighlighted
-                    ? 'bg-linear-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
+                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
                     : 'bg-slate-900 text-white hover:bg-slate-800'
                 )}
               >
@@ -223,7 +222,7 @@ export function PricingCard({
                   className={cn(
                     'w-full rounded-2xl font-black text-lg h-14 transition-all hover:scale-[1.02] active:scale-[0.98]',
                     isHighlighted
-                      ? 'bg-linear-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
+                      ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50'
                       : 'bg-slate-900 text-white hover:bg-slate-800'
                   )}
                 >
@@ -259,7 +258,7 @@ export function PricingCard({
                 className={cn(
                   'mt-0.5 rounded-full p-0.5 transition-colors',
                   isHighlighted
-                    ? 'bg-linear-to-r from-pink-500 to-purple-500'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500'
                     : 'bg-slate-200 group-hover/item:bg-slate-900'
                 )}
               >
