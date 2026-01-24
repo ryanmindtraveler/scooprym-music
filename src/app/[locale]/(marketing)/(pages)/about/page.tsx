@@ -57,9 +57,9 @@ export default async function AboutPage() {
                     </div>
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
-                    "We got tired of boring news. So we built an AI that turns headlines into diss tracks. Our mission
-                    is to make music creation accessible to everyone, no matter your background or skill level. If you
-                    got a story, you got a song."
+                    "We got tired of boring news. So we built an AI that turns headlines into viral comedy raps. Our
+                    mission is to make music creation accessible to everyone, no matter your background or skill level.
+                    If you got a story, you got a song."
                   </p>
 
                   <div className="flex gap-4 pt-4">

@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import type { Song } from '@/types/song';
 
 interface GallerySectionProps {
@@ -107,7 +107,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
 
       {/* Modal for Selected Song (Client Side Only - No URL Change) */}
       {selectedSong && (
-        <SongDetailModal
+        <SongDetailDialog
           song={selectedSong}
           initialIsFavorite={selectedSong.isLiked || false}
           defaultOpen={true}

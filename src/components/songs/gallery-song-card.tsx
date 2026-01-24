@@ -69,59 +69,41 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
         {/* Wrapper for Image Area */}
         <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-zinc-100 dark:bg-zinc-800">
           {/* Use div with onClick if onSelect is present, otherwise Link */}
-          {onSelect ? (
-            <div onClick={() => onSelect(item)} className="block w-full h-full cursor-pointer relative">
-              {item.coverImageUrl ? (
+          <LocaleLink
+            href={songUrl}
+            scroll={false}
+            onClick={(e) => {
+              if (onSelect) {
+                e.preventDefault();
+                onSelect(item);
+              }
+            }}
+            className="block w-full h-full cursor-pointer relative"
+          >
+            {item.coverImageUrl ? (
+              <Image
+                src={item.coverImageUrl}
+                alt={item.title}
+                fill
+                sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            ) : (
+              <div className="relative size-full bg-zinc-100 dark:bg-zinc-800">
                 <Image
-                  src={item.coverImageUrl}
-                  alt={item.title}
+                  src="/images/funny-censored-fallback.png"
+                  alt="Censored"
                   fill
-                  sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="object-cover opacity-80"
                 />
-              ) : (
-                <div className="relative size-full bg-zinc-100 dark:bg-zinc-800">
-                  <Image
-                    src="/images/funny-censored-fallback.png"
-                    alt="Censored"
-                    fill
-                    className="object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <span className="bg-black/80 text-white text-[10px] font-bold px-3 py-1.5 rounded backdrop-blur-md uppercase tracking-wider text-center">
-                      CONTENT FLAGGED: TOO HOT FOR AI ART
-                    </span>
-                  </div>
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                  <span className="bg-black/80 text-white text-[10px] font-bold px-3 py-1.5 rounded backdrop-blur-md uppercase tracking-wider text-center">
+                    CONTENT FLAGGED: TOO HOT FOR AI ART
+                  </span>
                 </div>
-              )}
-            </div>
-          ) : (
-            <LocaleLink href={songUrl} scroll={false} className="block w-full h-full cursor-pointer relative">
-              {item.coverImageUrl ? (
-                <Image
-                  src={item.coverImageUrl}
-                  alt={item.title}
-                  fill
-                  sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-              ) : (
-                <div className="relative size-full bg-zinc-100 dark:bg-zinc-800">
-                  <Image
-                    src="/images/funny-censored-fallback.png"
-                    alt="Censored"
-                    fill
-                    className="object-cover opacity-80"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <span className="bg-black/80 text-white text-[10px] font-bold px-3 py-1.5 rounded backdrop-blur-md uppercase tracking-wider text-center">
-                      CONTENT FLAGGED: TOO HOT FOR AI ART
-                    </span>
-                  </div>
-                </div>
-              )}
-            </LocaleLink>
-          )}
+              </div>
+            )}
+          </LocaleLink>
 
           {/* OVERLAYS (Outside Link, z-index higher) */}
 
@@ -165,26 +147,21 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
         <div className="flex flex-1 flex-col px-5 pt-7 pb-5 relative">
           {/* Title - Clean Editorial Style */}
           <div className="mb-2">
-            {onSelect ? (
-              <div
-                onClick={() => onSelect(item)}
-                className="block text-left w-full focus:outline-none group/title cursor-pointer"
-              >
-                <h3 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
-                  {item.title}
-                </h3>
-              </div>
-            ) : (
-              <LocaleLink
-                href={songUrl}
-                scroll={false}
-                className="block text-left w-full focus:outline-none group/title"
-              >
-                <h3 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
-                  {item.title}
-                </h3>
-              </LocaleLink>
-            )}
+            <LocaleLink
+              href={songUrl}
+              scroll={false}
+              onClick={(e) => {
+                if (onSelect) {
+                  e.preventDefault();
+                  onSelect(item);
+                }
+              }}
+              className="block text-left w-full focus:outline-none group/title"
+            >
+              <h3 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
+                {item.title}
+              </h3>
+            </LocaleLink>
           </div>
 
           {/* Music Meta (Genre / Stats) */}
@@ -208,30 +185,23 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
 
           {/* News Snippet - Editorial Quote Style */}
           {/* News Snippet - Editorial Quote Style */}
-          {onSelect ? (
-            <div
-              onClick={() => onSelect(item)}
-              className="block text-left w-full focus:outline-none mt-auto group/snippet cursor-pointer"
-            >
-              <div className="relative pl-3 border-l-2 border-pink-500 hover:border-pink-600 transition-colors">
-                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 group-hover/snippet:text-slate-900 dark:group-hover/snippet:text-slate-200 transition-colors">
-                  {description}
-                </p>
-              </div>
+          <LocaleLink
+            href={songUrl}
+            scroll={false}
+            onClick={(e) => {
+              if (onSelect) {
+                e.preventDefault();
+                onSelect(item);
+              }
+            }}
+            className="block text-left w-full focus:outline-none mt-auto group/snippet"
+          >
+            <div className="relative pl-3 border-l-2 border-pink-500 hover:border-pink-600 transition-colors">
+              <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 group-hover/snippet:text-slate-900 dark:group-hover/snippet:text-slate-200 transition-colors">
+                {description}
+              </p>
             </div>
-          ) : (
-            <LocaleLink
-              href={songUrl}
-              scroll={false}
-              className="block text-left w-full focus:outline-none mt-auto group/snippet"
-            >
-              <div className="relative pl-3 border-l-2 border-pink-500 hover:border-pink-600 transition-colors">
-                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 group-hover/snippet:text-slate-900 dark:group-hover/snippet:text-slate-200 transition-colors">
-                  {description}
-                </p>
-              </div>
-            </LocaleLink>
-          )}
+          </LocaleLink>
         </div>
       </div>
     </motion.div>

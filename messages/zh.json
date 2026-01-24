@@ -2,7 +2,7 @@
   "Metadata": {
     "name": "ScoopRYM",
     "title": "ScoopRYM - 搞怪说唱与鬼畜神曲生成器",
-    "description": "将每日最离谱的新闻八卦，转化为刷不完的 diss 神曲。专为Z世代打造的AI搞笑说唱与新闻吐槽神器。",
+    "description": "将荒诞新闻、娱乐八卦和劲爆猛料转化为病毒式音乐节拍。瞬间将每日最疯狂的头条变成了朗朗上口的喜剧说唱。",
     "keywords": "搞笑说唱, 鬼畜音乐生成器, AI 吐槽歌, 恶搞歌曲制作, 朋友圈神曲, 梗图音乐, 新闻荒诞剧, 吃瓜说唱, 明星Diss曲, 病毒式传播, 喜剧Rap"
   },
   "Common": {
@@ -163,10 +163,10 @@
   },
   "AboutPage": {
     "title": "关于我们",
-    "description": "ScoopRYM 是终极搞笑说唱工厂。我们将每日最离谱的新闻头条和最劲爆的八卦，转化为刷不完的 Diss 神曲。",
+    "description": "ScoopRYM 是首选的 AI 平台，用于将荒诞新闻、娱乐八卦和劲爆猛料转化为病毒式音乐节拍。瞬间将每日最疯狂的头条变成了朗朗上口的喜剧说唱。",
     "authorName": "ScoopRYM",
     "authorBio": "搞怪说唱与鬼畜音乐工厂",
-    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们只生产梗图和神曲。把荒诞新闻变成洗脑 Rap，这就是我们的态度。",
+    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们只生产梗图和神曲。把荒诞新闻变成洗脑 Rap，这就是我们的态度。因八卦而来，为病毒式热歌而分享。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -481,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "将离谱新闻和八卦转化为搞笑神曲。",
+      "tagline": "将新闻、娱乐和八卦转化为病毒式音乐节拍。",
       "product": {
         "title": "产品",
         "items": {
@@ -1150,7 +1150,7 @@
     "stats": {
       "title": "统计",
       "subtitle": "ScoopRYM 相关的数字",
-      "description": "ScoopRYM 可让您在几天内轻松构建您的 AI SaaS",
+      "description": "立即开始将新闻、娱乐和八卦转化为病毒式节拍。",
       "items": {
         "item-1": {
           "title": "GitHub 上的星星"
@@ -1165,7 +1165,7 @@
     },
     "calltoaction": {
       "title": "开始构建",
-      "description": "ScoopRYM 可让您在几天内轻松构建您的 AI SaaS",
+      "description": "立即开始将新闻、娱乐和八卦转化为病毒式节拍。",
       "primaryButton": "开始使用",
       "secondaryButton": "查看演示"
     }

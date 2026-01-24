@@ -115,7 +115,5 @@ export function useSocialLinks(): MenuItem[] {
     });
   }
 
-
-
   return socialLinks;
 }

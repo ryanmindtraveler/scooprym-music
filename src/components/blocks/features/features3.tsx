@@ -45,7 +45,7 @@ export default function Features3Section() {
             transition={{ delay: 0.2 }}
             className="mt-6 text-2xl font-bold max-w-2xl mx-auto drop-shadow-sm"
           >
-            News, gossip, and memes—roast them all with AI-generated diss tracks.
+            News, gossip, and memes—roast them all with AI-generated viral hits.
           </motion.p>
         </div>
 

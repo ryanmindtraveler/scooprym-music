@@ -2,8 +2,8 @@
   "Metadata": {
     "name": "ScoopRYM",
     "title": "ScoopRYM - Turning news, entertainment, and gossip into beats",
-    "description": "Turn ridiculous news and daily gossip into hilarious diss tracks. The #1 AI comedy rap generator for memes, roasts, and viral content.",
-    "keywords": "AI parody songs, comedy rap generator, roast track maker, meme music, funny rap songs, absurd news rap, diss track generator, viral tiktok sounds, gossip rap, suno alternative for comedy"
+    "description": "Turning absurd news, entertainment, and juicy gossip into viral music beats. Transform the day's wildest headlines into catchy comedy raps.",
+    "keywords": "AI parody songs, comedy rap generator, roast track maker, meme music, funny rap songs, absurd news rap, diss track generator, viral tiktok sounds, gossip rap, suno alternative for comedy, suno, udio, AI Music, AI Generated Music"
   },
   "Common": {
     "premium": "Premium",
@@ -163,10 +163,10 @@
   },
   "AboutPage": {
     "title": "About",
-    "description": "ScoopRYM is the ultimate News-to-Hip-Hop Hit Factory, transforming the day's wildest headlines and juiciest gossip into an endless feed of unskippable diss tracks.",
+    "description": "ScoopRYM is the #1 AI platform for turning absurd news, entertainment, and juicy gossip into viral music beats. Transform the day's wildest headlines into catchy comedy raps.",
     "authorName": "ScoopRYM",
     "authorBio": "Comedy & Parody Rap Factory",
-    "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn absurd news and memes into bangers. Stay for the gossip, share for the roast.",
+    "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn absurd news and memes into bangers. Stay for the gossip, share for the viral hits.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
   },
@@ -481,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "Turning ridiculous news and gossip into Comedy Raps.",
+      "tagline": "Turning news, entertainment, and gossip into viral music beats.",
       "product": {
         "title": "Product",
         "items": {
@@ -1150,7 +1150,7 @@
     "stats": {
       "title": "Stats",
       "subtitle": "ScoopRYM in numbers",
-      "description": "Turning news, entertainment, and gossip into beats.",
+      "description": "Start turning news, entertainment, and gossip into viral beats today.",
       "items": {
         "item-1": {
           "title": "Stars on GitHub"
@@ -1165,7 +1165,7 @@
     },
     "calltoaction": {
       "title": "Start Building",
-      "description": "Turning news, entertainment, and gossip into beats.",
+      "description": "Start turning news, entertainment, and gossip into viral beats today.",
       "primaryButton": "Get Started",
       "secondaryButton": "See Demo"
     }

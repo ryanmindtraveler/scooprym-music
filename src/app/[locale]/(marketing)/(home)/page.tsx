@@ -4,11 +4,13 @@ import GallerySection from '@/components/blocks/gallery/gallery';
 import { MusicGeneratorBlock as MusicGeneratorSection } from '@/components/blocks/generator/music-generator';
 import HeroSection from '@/components/blocks/hero/hero';
 import PricingSection from '@/components/blocks/pricing/pricing';
+import { JsonLd } from '@/components/seo/json-ld';
 import { getDb } from '@/db';
 import { song as songTable, user } from '@/db/schema';
 import { songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
+import { slugify } from '@/lib/utils'; // Re-importing utils
 import type { Song } from '@/types/song';
 import { and, desc, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
@@ -92,7 +94,7 @@ export default async function HomePage(props: HomePageProps) {
     isLiked: likedSongIds.has(song.id),
     createdAt: song.createdAt ? song.createdAt.toISOString() : new Date().toISOString(),
     updatedAt: song.updatedAt ? song.updatedAt.toISOString() : new Date().toISOString(),
-  }));
+  })) as unknown as Song[];
 
   // Handle shared song via query param ?s=xxxx
   const searchParams = await props.searchParams;
@@ -137,8 +139,34 @@ export default async function HomePage(props: HomePageProps) {
     }
   }
 
+  // Prepare Structured Data (JSON-LD) for the Gallery
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Trending AI Comedy Raps',
+    description: 'Top rated AI generated parody songs and roast tracks created by ScoopRYM community.',
+    numberOfItems: serializedSongs.length,
+    itemListElement: serializedSongs.map((song, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'MusicRecording',
+        name: song.title,
+        image: song.coverImageUrl || undefined,
+        datePublished: song.createdAt,
+        url: `https://www.scooprym.app/songs/${slugify(song.title || 'song')}-${song.id}`,
+        byArtist: {
+          '@type': 'MusicGroup',
+          name: 'ScoopRYM',
+          url: 'https://www.scooprym.app',
+        },
+      },
+    })),
+  };
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <div className="flex flex-col">
         <HeroSection />
 

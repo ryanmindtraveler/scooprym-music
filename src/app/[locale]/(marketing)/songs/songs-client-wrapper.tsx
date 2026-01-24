@@ -1,7 +1,7 @@
 'use client';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import type { Song } from '@/types/song';
 import { useState } from 'react';
 

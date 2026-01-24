@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     description: t('description'),
     keywords: t('keywords', {
       default:
-        'AI music generator, AI rap generator, diss track maker, Suno AI, Udio AI, text to music, viral song creator, ScoopRYM, hip-hop generator',
+        'AI music generator, AI rap generator, diss track maker, Suno AI, Udio AI, text to music, viral song creator, ScoopRYM, hip-hop generator, News Rap Generator, Gossip Rap Maker, Celebrity Roast Song, Turn news into rap, Roast My Friend AI, Funny diss track generator, Meme rap maker, Absurd Rap',
     }),
     openGraph: {
       title: t('title'),

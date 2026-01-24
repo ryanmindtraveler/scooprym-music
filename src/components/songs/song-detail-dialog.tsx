@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { SongDetailClient } from '@/components/songs/song-detail-client';
+import { SongDetailView } from '@/components/songs/song-detail-view';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 
 import type { Song } from '@/types/song';
 
-interface SongDetailModalProps {
+interface SongDetailDialogProps {
   song: Song;
   initialIsFavorite: boolean;
   defaultOpen?: boolean;
@@ -18,7 +18,7 @@ interface SongDetailModalProps {
   hideActions?: boolean;
 }
 
-export function SongDetailModal({
+export function SongDetailDialog({
   song,
   initialIsFavorite,
   defaultOpen = true,
@@ -26,7 +26,7 @@ export function SongDetailModal({
   onClose,
   autoPlay = false,
   hideActions = false,
-}: SongDetailModalProps) {
+}: SongDetailDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(defaultOpen);
 
@@ -57,7 +57,7 @@ export function SongDetailModal({
           Detailed view for song {song.title}, including player, lyrics, and metadata.
         </DialogDescription>
         <div className="h-full bg-background/95 backdrop-blur-md rounded-[32px] overflow-hidden border border-white/20 dark:border-white/5 shadow-2xl">
-          <SongDetailClient
+          <SongDetailView
             song={song}
             initialIsFavorite={initialIsFavorite}
             onClose={() => onOpenChange(false)}

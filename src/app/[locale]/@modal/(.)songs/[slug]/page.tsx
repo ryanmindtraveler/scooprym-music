@@ -1,4 +1,4 @@
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { getSession } from '@/lib/server';
@@ -52,7 +52,7 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
       plays: song.plays || 0,
     };
 
-    return <SongDetailModal song={serializableSong} initialIsFavorite={isFavorite} navigationMode="intercept" />;
+    return <SongDetailDialog song={serializableSong} initialIsFavorite={isFavorite} navigationMode="intercept" />;
   } catch (error) {
     console.error('Error fetching song details:', error);
     return (

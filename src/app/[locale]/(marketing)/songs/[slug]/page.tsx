@@ -1,3 +1,4 @@
+import { SongDetailClient } from './song-detail-client';
 import { getDb } from '@/db';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
@@ -7,7 +8,6 @@ import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { notFound } from 'next/navigation';
-import { SongDetailClient } from './song-detail-client';
 
 import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import { getIdFromSlug, slugify } from '@/lib/utils';
@@ -150,7 +150,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
 
   const breadcrumbs = [
     { name: 'Home', item: 'https://www.scooprym.app' },
-    { name: 'Songs', item: 'https://www.scooprym.app/songs' },
+    { name: 'Gallery', item: 'https://www.scooprym.app/#gallery' },
     { name: song.title, item: `https://www.scooprym.app/songs/${canonicalSlug}` },
   ];
 

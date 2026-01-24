@@ -1,7 +1,7 @@
 'use client';
 
 import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { SongRow } from '@/components/songs/song-row';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -196,7 +196,7 @@ export function SongsTable({
 
       {/* Song Detail Modal */}
       {selectedSong && (
-        <SongDetailModal
+        <SongDetailDialog
           song={selectedSong as unknown as Song}
           initialIsFavorite={false} // Admin view might not track favorites, defaulting to false
           defaultOpen={true}

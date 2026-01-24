@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 
 import type { Song } from '@/types/song';
 
-interface SongDetailClientProps {
+interface SongDetailViewProps {
   song: Song;
   initialIsFavorite: boolean;
   onClose?: () => void;
@@ -43,7 +43,7 @@ interface SongDetailClientProps {
   // layoutMode?: 'default' | 'immersive'; // Removed immersive mode
 }
 
-export function SongDetailClient({
+export function SongDetailView({
   song,
   initialIsFavorite,
   onClose,
@@ -51,7 +51,7 @@ export function SongDetailClient({
   hideActions = false,
   variant = 'card', // 'card' | 'clean'
   // layoutMode = 'default',
-}: SongDetailClientProps) {
+}: SongDetailViewProps) {
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
   const currentTime = usePlayerStore((state) => state.currentTime);
@@ -250,9 +250,9 @@ export function SongDetailClient({
                 {/* The Disc */}
                 <div
                   className={cn(
-                    'relative size-[220px] rounded-full shadow-2xl border-4 border-neutral-900 bg-neutral-950 overflow-hidden',
+                    'relative size-[220px] rounded-full shadow-2xl border-4 border-neutral-800 bg-black overflow-hidden',
                     'before:absolute before:inset-0 before:rounded-full before:border before:border-white/5 before:z-20',
-                    'after:absolute after:inset-[10px] after:rounded-full after:border-40 after:border-neutral-900/50 after:z-10'
+                    'after:absolute after:inset-[10px] after:rounded-full after:border-40 after:border-neutral-800/60 after:z-10'
                   )}
                   style={{
                     animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
@@ -261,15 +261,15 @@ export function SongDetailClient({
                       : '0 20px 40px rgba(0,0,0,0.6)',
                   }}
                 >
-                  <div className="absolute inset-[50px] rounded-full overflow-hidden z-0 bg-neutral-800">
+                  <div className="absolute inset-[50px] rounded-full overflow-hidden z-0 bg-black shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
                     <Image
                       src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
                       alt="Cover"
                       fill
-                      className="object-cover"
+                      className="object-cover z-10 scale-110"
                     />
                     {!song.coverImageUrl && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
+                      <div className="absolute inset-0 z-20 bg-black/40 flex items-center justify-center p-4">
                         <span className="text-[10px] font-black text-center text-white uppercase tracking-wider leading-relaxed">
                           Content flagged:
                           <br />

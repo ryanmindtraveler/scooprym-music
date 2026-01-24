@@ -42,11 +42,18 @@ const staticRoutes = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemapList: MetadataRoute.Sitemap = []; // final result
 
-  // add static routes
+  // 1. Add static routes with hreflang
   sitemapList.push(
     ...staticRoutes.flatMap((route) => {
+      // Prioritize Home and Pricing
+      const priority = route === '/' ? 1.0 : route === '/pricing' ? 0.9 : 0.8;
+      const changeFrequency = (route === '/' ? 'daily' : 'weekly') as 'daily' | 'weekly';
+
       return routing.locales.map((locale) => ({
         url: getUrl(route, locale),
+        lastModified: new Date(),
+        changeFrequency,
+        priority,
         alternates: {
           languages: generateHreflangUrls(route),
         },
@@ -54,7 +61,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  // Add dynamic song routes
+  // 2. Add dynamic song routes
   try {
     const db = getDb();
     const songs = await db
@@ -65,13 +72,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         createdAt: songTable.createdAt,
       })
       .from(songTable)
-      .where(and(isNotNull(songTable.audioUrl), ne(songTable.audioUrl, 'pending-stream'), ne(songTable.audioUrl, ''))) // Only public/completed songs
+      .where(and(isNotNull(songTable.audioUrl), ne(songTable.audioUrl, 'pending-stream'), ne(songTable.audioUrl, '')))
       .orderBy(desc(songTable.createdAt))
-      .limit(1000); // Limit to 1000 for performance
+      .limit(5000); // Increased limit to 5000
 
     sitemapList.push(
       ...songs.flatMap((songItem: { id: string; title: string | null; updatedAt: Date; createdAt: Date }) => {
-        // Generate SEO slug: title-uuid
         const slug = `${slugify(songItem.title || 'song')}-${songItem.id}`;
         const route = `/songs/${slug}`;
         const lastModified = songItem.updatedAt ? new Date(songItem.updatedAt) : new Date(songItem.createdAt);
@@ -79,6 +85,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         return routing.locales.map((locale) => ({
           url: getUrl(route, locale),
           lastModified,
+          changeFrequency: 'monthly' as const,
+          priority: 0.7,
           alternates: {
             languages: generateHreflangUrls(route),
           },

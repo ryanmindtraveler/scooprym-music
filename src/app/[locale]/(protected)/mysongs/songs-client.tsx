@@ -24,7 +24,7 @@
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -517,7 +517,7 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
 
         {/* Manual Modal */}
         {selectedSong && (
-          <SongDetailModal
+          <SongDetailDialog
             key={selectedSong.id}
             song={selectedSong}
             initialIsFavorite={favorites.some((f) => f.id === selectedSong.id)}

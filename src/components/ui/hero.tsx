@@ -174,7 +174,12 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                     </div>
                </div>
 
-                <div className="mt-8 bg-white/60 backdrop-blur-xl rounded-full px-6 md:px-12 py-5 border border-white/40 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] ring-1 ring-white/40 inline-block mx-auto transform transition-all duration-300 hover:scale-[1.02]">
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                  className="mt-8 bg-white/60 backdrop-blur-xl rounded-full px-6 md:px-12 py-5 border border-white/40 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] ring-1 ring-white/40 inline-block mx-auto transform transition-all duration-300 hover:scale-[1.02]"
+                >
                   <div className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-snug text-slate-800">
                      {subtitle || (
                          <>
@@ -182,7 +187,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                          </>
                      )}
                   </div>
-                </div>
+                </motion.h2>
             </motion.div>
         </div>
 

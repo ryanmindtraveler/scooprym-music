@@ -1,6 +1,6 @@
 'use client';
 
-import { SongDetailModal } from '@/components/songs/song-detail-modal';
+import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import {
   Pagination,
   PaginationContent,
@@ -105,7 +105,7 @@ export function TrendingGalleryClient({
       ))}
 
       {selectedSong && (
-        <SongDetailModal
+        <SongDetailDialog
           key={selectedSong.id}
           song={selectedSong}
           initialIsFavorite={selectedSong.isLiked ?? false}
