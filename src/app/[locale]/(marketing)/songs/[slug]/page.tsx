@@ -1,4 +1,3 @@
-import { SongDetailClient } from './song-detail-client';
 import { getDb } from '@/db';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
@@ -8,6 +7,7 @@ import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { notFound } from 'next/navigation';
+import { SongDetailClient } from './song-detail-client';
 
 import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import { getIdFromSlug, slugify } from '@/lib/utils';

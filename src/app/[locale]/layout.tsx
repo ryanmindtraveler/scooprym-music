@@ -49,20 +49,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
       siteName: t('name'),
       locale: locale,
       type: 'website',
-      images: [
-        {
-          url: '/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: t('name'),
-        },
-      ],
+      // images: handled automatically by opengraph-image.tsx
     },
     twitter: {
       card: 'summary_large_image',
       title: t('title'),
       description: t('description'),
-      images: ['/og-image.png'],
+      // images: ['/og-image.png'], // Removed to use dynamic opengraph-image.tsx
     },
     appleWebApp: {
       title: t('name'),
