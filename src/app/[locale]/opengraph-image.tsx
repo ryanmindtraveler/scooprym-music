@@ -30,7 +30,7 @@ export default async function Image() {
   // Load a custom font (Inter) for better typography
   // Accessing Google Fonts directly is standard for Next.js OG
   const interSemiBold = await fetch(
-    new URL('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff', import.meta.url)
+    'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff'
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
