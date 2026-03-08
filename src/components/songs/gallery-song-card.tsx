@@ -59,8 +59,7 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
 
   // Generate SEO-friendly Slug: "song-title-uuid"
   const titleSlug = slugify(item.title || 'song');
-  // fallback to just ID if title is empty, but titleSlug usually works.
-  // We explicitly want the ID at the end for parsing.
+  // Use full UUID with hyphens for maximum safety and compatibility
   const songUrl = `/songs/${titleSlug}-${item.id}`;
 
   return (
@@ -187,13 +186,8 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
           {/* News Snippet - Editorial Quote Style */}
           <LocaleLink
             href={songUrl}
-            scroll={false}
-            onClick={(e) => {
-              if (onSelect) {
-                e.preventDefault();
-                onSelect(item);
-              }
-            }}
+            target="_blank"
+            rel="noopener noreferrer"
             className="block text-left w-full focus:outline-none mt-auto group/snippet"
           >
             <div className="relative pl-3 border-l-2 border-pink-500 hover:border-pink-600 transition-colors">

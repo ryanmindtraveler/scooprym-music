@@ -13,6 +13,8 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
+import { ANALYZER_MODEL, TEXT_MODEL } from '@/ai/config/models';
+
 // 支持的 AI 供应商类型
 import type { TextProvider } from './provider-config';
 export type { TextProvider };
@@ -76,13 +78,13 @@ const deepseek = createDeepSeek({
 const getModel = (provider: TextProvider = 'openrouter') => {
   switch (provider) {
     case 'openrouter':
-      return openrouter('google/gemini-3-flash-preview');
+      return openrouter(TEXT_MODEL);
     case 'google':
-      return google('google/gemini-3-flash-preview');
+      return google(TEXT_MODEL);
     case 'deepseek':
       return deepseek('deepseek-chat');
     default:
-      return openai('gpt-4o-mini');
+      return openai(ANALYZER_MODEL);
   }
 };
 

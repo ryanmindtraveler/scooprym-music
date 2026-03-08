@@ -11,6 +11,65 @@ import { uploadFile } from '@/storage';
 import { and, eq, like, sql } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
 
+/**
+ * Generate SEO-friendly filename for cover image
+ * Format: person-event-uuid.ext
+ * Example: taylor-swift-eras-tour-e707ddb3.png
+ */
+function generateCoverFilename(
+  title: string,
+  sourceText: string | undefined,
+  songId: string,
+  extension: string
+): string {
+  // Try to extract person/entity from title or sourceText
+  const content = `${title} ${sourceText || ''}`;
+
+  // Common name patterns (celebrities, politicians, etc.)
+  const namePatterns = [
+    // Full names (2-3 capitalized words)
+    /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/,
+    // Single capitalized word that looks like a name
+    /\b([A-Z][a-z]{2,})\b/,
+  ];
+
+  let person = '';
+  for (const pattern of namePatterns) {
+    const match = content.match(pattern);
+    if (match) {
+      person = match[1].toLowerCase().replace(/\s+/g, '-');
+      break;
+    }
+  }
+
+  // Extract event/topic from title
+  // Remove common words and extract key topic
+  const stopWords = /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|need|dare|ought|used|to|of|in|for|on|with|at|by|from|as|into|through|during|before|after|above|below|between|under|again|further|then|once|here|there|when|where|why|how|all|each|few|more|most|other|some|such|no|nor|not|only|own|same|so|than|too|very|just|now)\b/gi;
+
+  let event = title
+    .replace(stopWords, ' ')
+    .replace(/[^\w\s-]/g, ' ')  // Remove special chars
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-');       // Convert spaces to hyphens
+
+  // Limit event length
+  event = event.slice(0, 50).replace(/-+$/, '');
+
+  // If no person extracted, use shortened UUID as person
+  if (!person) {
+    person = 'cover';
+  }
+
+  // Shorten UUID to first 8 chars for readability while maintaining uniqueness
+  const shortId = songId.slice(0, 8);
+
+  // Build filename: person-event-shortId.extension
+  const filename = `${person}-${event}-${shortId}.${extension}`;
+
+  return filename.replace(/-{2,}/g, '-').toLowerCase();  // Remove duplicate hyphens
+}
+
 export interface ProcessMusicOptions {
   lyrics: string;
   prompt?: string;
@@ -206,7 +265,14 @@ export async function processMusicBackground(
           if (imageDataUrl) {
             // B2. Convert & Upload
             const { buffer, mime, extension } = dataUrlToImageBuffer(imageDataUrl);
-            const coverUpload = await uploadFile(buffer, `song-cover.${extension}`, mime, `song-covers/${userId}`);
+            // Generate SEO-friendly filename: person-event-uuid.ext
+            const coverFilename = generateCoverFilename(
+              options.title || 'song',
+              options.sourceText,
+              songId,
+              extension
+            );
+            const coverUpload = await uploadFile(buffer, coverFilename, mime, `song-covers/${userId}`);
 
             // B3. Update DB
             await db

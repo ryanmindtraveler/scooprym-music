@@ -1,5 +1,6 @@
 'use client';
 
+import { chatModels } from '@/ai/config/models';
 import { Conversation, ConversationContent, ConversationScrollButton } from '@/ai/shared/components/conversation';
 import { Loader } from '@/ai/shared/components/loader';
 import { Message, MessageContent } from '@/ai/shared/components/message';
@@ -23,20 +24,9 @@ import { useChat } from '@ai-sdk/react';
 import { GlobeIcon } from 'lucide-react';
 import { useState } from 'react';
 
-const models = [
-  {
-    name: 'GPT 4o',
-    value: 'openai/gpt-4o',
-  },
-  {
-    name: 'Deepseek R1',
-    value: 'deepseek/deepseek-r1',
-  },
-];
-
 export default function ChatBot() {
   const [input, setInput] = useState('');
-  const [model, setModel] = useState<string>(models[0].value);
+  const [model, setModel] = useState<string>(chatModels[0].value);
   const [webSearch, setWebSearch] = useState(false);
   const { messages, sendMessage, status } = useChat();
 
@@ -130,7 +120,7 @@ export default function ChatBot() {
                   <PromptInputModelSelectValue />
                 </PromptInputModelSelectTrigger>
                 <PromptInputModelSelectContent>
-                  {models.map((model) => (
+                  {chatModels.map((model) => (
                     <PromptInputModelSelectItem key={model.value} value={model.value}>
                       {model.name}
                     </PromptInputModelSelectItem>

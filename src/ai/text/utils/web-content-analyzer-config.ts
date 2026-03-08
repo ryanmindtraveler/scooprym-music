@@ -5,6 +5,8 @@
  * including credit costs and other operational parameters.
  */
 
+import { ANALYZER_MODEL, ANALYZER_OPENROUTER_MODEL, analyzerProviderConfig } from '@/ai/config/models';
+
 export const webContentAnalyzerConfig = {
   /**
    * Maximum content length for AI analysis (in characters)
@@ -98,25 +100,22 @@ export const webContentAnalyzerConfig = {
    * AI model providers
    */
   openai: {
-    model: 'gpt-4o-mini',
-    temperature: 0.1, // Low temperature for consistent results
-    maxTokens: 2000, // Limit response tokens for performance
+    model: analyzerProviderConfig.openai.model,
+    temperature: 0.1,
+    maxTokens: 2000,
   },
   gemini: {
-    model: 'gemini-2.0-flash',
+    model: analyzerProviderConfig.gemini.model,
     temperature: 0.1,
     maxTokens: 2000,
   },
   deepseek: {
-    model: 'deepseek-chat',
+    model: analyzerProviderConfig.deepseek.model,
     temperature: 0.1,
     maxTokens: 2000,
   },
   openrouter: {
-    // model: 'openrouter/horizon-beta',
-    // model: 'x-ai/grok-3-beta',
-    model: 'openai/gpt-4o-mini',
-    // model: 'deepseek/deepseek-r1:free',
+    model: analyzerProviderConfig.openrouter.model,
     temperature: 0.1,
     maxTokens: 2000,
   },

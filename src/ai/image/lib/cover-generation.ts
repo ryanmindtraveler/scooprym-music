@@ -3,6 +3,8 @@
  * @description Encapsulates image generation logic, focusing on album covers.
  */
 
+import { IMAGE_MODEL } from '@/ai/config/models';
+
 interface OpenRouterImageChoice {
   image_url?: {
     url?: string;
@@ -89,7 +91,7 @@ export async function generateCoverImageDataUrl(options: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: IMAGE_MODEL,
         messages: [{ role: 'user', content: prompt }],
         modalities: ['image', 'text'],
         image_config: { aspect_ratio: '1:1', size: '1024x1024' },

@@ -3,6 +3,7 @@
  * @description Encapsulates music audio generation logic (MiniMax).
  */
 
+import { MUSIC_MODEL } from '@/ai/config/models';
 import { performance } from 'perf_hooks';
 
 interface MiniMaxRequestOptions {
@@ -52,7 +53,7 @@ export async function generateMusic(opt: MiniMaxRequestOptions): Promise<Generat
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'music-2.0',
+        model: MUSIC_MODEL,
         prompt,
         lyrics,
         stream,

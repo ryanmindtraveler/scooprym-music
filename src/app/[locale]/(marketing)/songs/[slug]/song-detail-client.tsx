@@ -6,6 +6,7 @@ import { ShareButton } from '@/components/songs/actions/share-button';
 import { Slider } from '@/components/ui/slider';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
+import { LocaleLink } from '@/i18n/navigation';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -105,6 +106,25 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-linear-to-b from-white/0 via-white/50 to-white/0 dark:from-black/0 dark:via-white/5 dark:to-black/0 rotate-45 blur-3xl opacity-30 pointer-events-none" />
 
           <div className="relative z-20 w-full text-left mb-6 md:mb-10 pl-2">
+            {/* Breadcrumb Navigation */}
+            <nav aria-label="breadcrumb" className="mb-3">
+              <ol className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                <li>
+                  <LocaleLink href="/" className="hover:text-indigo-500 transition-colors">
+                    Home
+                  </LocaleLink>
+                </li>
+                <li className="mx-2">/</li>
+                <li>
+                  <LocaleLink href="/#gallery" className="hover:text-indigo-500 transition-colors">
+                    Gallery
+                  </LocaleLink>
+                </li>
+                <li className="mx-2">/</li>
+                <li className="text-slate-900 dark:text-slate-200 font-medium truncate max-w-[150px]">{song.title}</li>
+              </ol>
+            </nav>
+
             <h1 className="font-serif text-base md:text-xl lg:text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-[0.9] drop-shadow-sm mb-3 whitespace-nowrap overflow-visible">
               {song.title}
             </h1>
@@ -221,7 +241,15 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                 <div className="absolute inset-[8px] md:inset-[12px] rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
                   <Image
                     src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                    alt="Cover"
+                    alt={(() => {
+                      // Extract filename from cover image URL
+                      // Format: person-event-uuid.ext, remove uuid for cleaner alt
+                      const urlParts = song.coverImageUrl?.split('/');
+                      const filename = urlParts?.[urlParts.length - 1]?.split('.')[0] || 'cover';
+                      // Remove uuid (last segment after last dash)
+                      const cleanName = filename.split('-').slice(0, -1).join('-') || filename;
+                      return `${cleanName} - ScoopRYM`;
+                    })()}
                     fill
                     className="object-cover"
                   />

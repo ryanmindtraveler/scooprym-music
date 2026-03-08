@@ -74,6 +74,12 @@ export function LyricsStageView({
 }: LyricsStageViewProps) {
   // Logic: Show overlay (BeatPad) when:
   const showOverlay = (!musicUrl && musicLoading) || (musicLoading && processingStatus === 'processing');
+  const showGeneratingBanner =
+    musicLoading && (processingStatus === 'processing' || processingStatus === 'generating_cover');
+  const generatingMessage =
+    processingStatus === 'generating_cover'
+      ? 'Audio is ready. Cover art is still generating.'
+      : 'Lyrics are ready. Your song is still generating.';
 
   const { currentSong, isPlaying } = usePlayerStore();
   const isPlayingThisSong = isPlaying && currentSong?.id === songId;
@@ -217,6 +223,12 @@ export function LyricsStageView({
               <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 max-w-xl">
                 {displaySummary || <span className="opacity-50 italic">No context available</span>}
               </p>
+              {showGeneratingBanner && (
+                <div className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50/90 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-sm ring-1 ring-amber-200/80 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-400/20">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>{generatingMessage}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

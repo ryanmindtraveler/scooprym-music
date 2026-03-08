@@ -268,6 +268,7 @@ export default function CreateMusicPage() {
     // 2. Add to Queue immediately
     addTask(newTask);
     setMusicId(clientSongId); // Link Stage to this Task
+    setMusicCoverUrl(null); // Reset cover to show loading state for new song
     setHasJustQueued(true); // Enable "Create Another" button mode
     toast.success('Added to Queue!', {
       description: 'Your song is cooking in the background.',
@@ -462,6 +463,8 @@ export default function CreateMusicPage() {
             const displayNewsSummary = activeTask?.newsSummary || newsSummary;
             const displayNewsContent = activeTask?.newsContent || newsContent;
             const displayNewsLink = activeTask?.newsLink || newsLink;
+            const stageMusicLoading =
+              musicLoading || activeTask?.status === 'processing' || activeTask?.status === 'generating_cover';
 
             return (
               <CreationStage
@@ -474,7 +477,7 @@ export default function CreateMusicPage() {
                 setHasUnsavedLyricsChanges={setHasUnsavedLyricsChanges}
                 processingStatus={activeTask?.status || processingStatus}
                 handleRegenerateAudio={handleGenerateMusic}
-                musicLoading={musicLoading}
+                musicLoading={stageMusicLoading}
                 handleRewriteLyrics={handleRewriteLyrics}
                 isRewriting={isRewriting}
                 setSelectionRange={setSelectionRange}
