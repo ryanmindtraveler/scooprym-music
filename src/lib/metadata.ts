@@ -46,31 +46,46 @@ export function constructMetadata({
         : undefined;
 
   const defaultKeywords = [
-    // Core Identity
-    'Comedy Rap',
+    // Core positioning
+    'AI Rap Songs',
+    'AI Rap Generator',
+    'AI Rap Song Generator',
+    'Headline Rap Generator',
+    'AI Headline Rap Generator',
+    'Entertainment Rap Generator',
+    'AI Entertainment Rap Generator',
+    'Gossip Rap Generator',
+    'AI Gossip Rap Generator',
+    'Parody Rap Songs',
+    'AI Parody Rap Songs',
+    'Comedy Rap Songs',
+    'AI Comedy Rap Songs',
+    'Viral Rap Songs',
+    'AI Viral Rap Songs',
     'Diss Track Generator',
-    'Parody Songs',
-    'Roast Music',
-    'Viral AI Songs',
+    'AI Diss Track Generator',
+    'Roast Song Generator',
+    'AI Roast Song Generator',
 
-    // Genres & Style
-    'Trap Music',
+    // Content angles
+    'Headlines to Rap',
+    'AI Headlines to Rap',
+    'News to Rap',
+    'AI News to Rap',
+    'Celebrity Gossip Rap',
+    'AI Celebrity Gossip Rap',
+    'Trending Topic Rap',
+    'AI Trending Topic Rap',
+    'Satirical Rap Songs',
+    'AI Satirical Rap Songs',
+    'Meme Rap',
+    'AI Meme Rap',
+
+    // Style and brand
+    'Trap Rap',
     'Drill Rap',
-    'Boom Bap',
-    'Hyperpop',
-    'Glitch Rap',
-    'Lo-fi Hip Hop',
-
-    // Content Type
-    'News Rap',
-    'Celebrity Gossip Song',
-    'Social Satire',
-    'Meme Music',
-
-    // General AI
-    'AI Music',
-    'Text to Song',
-    'Suno AI',
+    'Hip Hop Parody',
+    'AI Roast Songs',
     'ScoopRYM',
   ];
 

@@ -183,7 +183,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                   <div className="text-lg sm:text-2xl md:text-3xl font-extrabold tracking-tight leading-snug text-slate-800">
                      {subtitle || (
                          <>
-                         Turning <span className="text-cyan-600 drop-shadow-sm">news</span>, <span className="text-pink-600 drop-shadow-sm">entertainment</span> and <span className="text-orange-600 drop-shadow-sm">gossip</span> into <span className="text-slate-900 drop-shadow-sm">Music Beats</span>.
+                         Turn <span className="text-cyan-600 drop-shadow-sm">headlines</span>, <span className="text-pink-600 drop-shadow-sm">entertainment</span> and <span className="text-orange-600 drop-shadow-sm">gossip</span> into <span className="text-slate-900 drop-shadow-sm">AI Rap Songs</span>.
                          </>
                      )}
                   </div>

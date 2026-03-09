@@ -1,9 +1,9 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - Turning news, entertainment, and gossip into beats",
-    "description": "Turning absurd news, entertainment, and juicy gossip into viral music beats. Transform the day's wildest headlines into catchy comedy raps.",
-    "keywords": "AI parody songs, comedy rap generator, roast track maker, meme music, funny rap songs, absurd news rap, diss track generator, viral tiktok sounds, gossip rap, suno alternative for comedy, suno, udio, AI Music, AI Generated Music"
+    "title": "ScoopRYM - Turn headlines, entertainment, and gossip into AI rap songs",
+    "description": "Turn headlines, entertainment, and juicy gossip into AI rap songs. Transform the day's wildest stories into catchy comedy raps.",
+    "keywords": "AI rap songs, AI rap generator, AI rap song generator, AI headline rap generator, headline rap generator, AI entertainment rap generator, entertainment rap generator, AI gossip rap generator, gossip rap generator, AI parody rap songs, parody rap songs, AI comedy rap songs, comedy rap songs, AI viral rap songs, viral rap songs, AI diss track generator, diss track generator, AI roast song generator, headlines to rap, AI headlines to rap, news to rap, AI news to rap, celebrity gossip rap, AI celebrity gossip rap, trending topic rap, AI trending topic rap, satirical rap songs, AI satirical rap songs, meme rap, AI meme rap"
   },
   "Common": {
     "premium": "Premium",
@@ -163,10 +163,10 @@
   },
   "AboutPage": {
     "title": "About",
-    "description": "ScoopRYM is the #1 AI platform for turning absurd news, entertainment, and juicy gossip into viral music beats. Transform the day's wildest headlines into catchy comedy raps.",
+    "description": "ScoopRYM is the AI platform for turning headlines, entertainment, and juicy gossip into viral rap songs. Transform the day's wildest stories into catchy comedy raps.",
     "authorName": "ScoopRYM",
     "authorBio": "Comedy & Parody Rap Factory",
-    "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn absurd news and memes into bangers. Stay for the gossip, share for the viral hits.",
+    "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn wild headlines and memes into bangers. Stay for the gossip, share for the viral hits.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
   },
@@ -481,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "Turning news, entertainment, and gossip into viral music beats.",
+      "tagline": "Turn headlines, entertainment, and gossip into AI rap songs.",
       "product": {
         "title": "Product",
         "items": {
@@ -832,10 +832,10 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "Turning news, entertainment, and gossip into beats",
+    "description": "Turn headlines, entertainment, and gossip into AI rap songs",
     "hero": {
-      "title": "The Hip-Hop Voice of the News",
-      "description": "Turning news, entertainment, and gossip into beats."
+      "title": "The Hip-Hop Voice of the Headlines",
+      "description": "Turn headlines, entertainment, and gossip into AI rap songs."
     },
     "logocloud": {
       "title": "Your favorite companies are our partners"
@@ -875,14 +875,14 @@
     "generator": {
       "subtitle": "Create Your Hit",
       "description": "",
-      "headerInputPlaceholder": "Paste any trending news or story below, and watch AI transform it into a hip-hop track",
+      "headerInputPlaceholder": "Paste any headline, entertainment story, or gossip below, and watch AI transform it into a hip-hop track",
       "left": {
-        "label": "Enter News Content",
-        "placeholder": "Paste news link or enter content here...",
+        "label": "Enter Story Content",
+        "placeholder": "Paste a headline link or enter content here...",
         "supported": {
           "title": "Supported input formats:",
-          "item1": "News article URLs",
-          "item2": "Text content or headlines",
+          "item1": "Headline article URLs",
+          "item2": "Headlines or story text",
           "item3": "Social media posts",
           "item4": "Entertainment gossip",
           "item5": "Sports updates",
@@ -899,7 +899,7 @@
         "generate": "Generate Music"
       },
       "contentTypes": {
-        "newsFarce": "News Farce",
+        "newsFarce": "Headline Farce",
         "hotGossip": "Hot Gossip",
         "wtfSociety": "WTF Society"
       },
@@ -1150,7 +1150,7 @@
     "stats": {
       "title": "Stats",
       "subtitle": "ScoopRYM in numbers",
-      "description": "Start turning news, entertainment, and gossip into viral beats today.",
+      "description": "Start turning headlines, entertainment, and gossip into AI rap songs today.",
       "items": {
         "item-1": {
           "title": "Stars on GitHub"
@@ -1165,7 +1165,7 @@
     },
     "calltoaction": {
       "title": "Start Building",
-      "description": "Start turning news, entertainment, and gossip into viral beats today.",
+      "description": "Start turning headlines, entertainment, and gossip into AI rap songs today.",
       "primaryButton": "Get Started",
       "secondaryButton": "See Demo"
     }
@@ -1221,18 +1221,18 @@
   },
   "AIImagePage": {
     "title": "AI Image",
-    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
+    "description": "ScoopRYM lets you transform headlines, entertainment, and gossip into catchy AI songs in seconds."
   },
   "AIChatPage": {
     "title": "AI Chat",
-    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
+    "description": "ScoopRYM lets you transform headlines, entertainment, and gossip into catchy AI songs in seconds."
   },
   "AIVideoPage": {
     "title": "AI Video",
-    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
+    "description": "ScoopRYM lets you transform headlines, entertainment, and gossip into catchy AI songs in seconds."
   },
   "AIAudioPage": {
     "title": "AI Audio",
-    "description": "ScoopRYM lets you transform news and gossip into catchy AI songs in seconds, simply and effortlessly"
+    "description": "ScoopRYM lets you transform headlines, entertainment, and gossip into catchy AI songs in seconds."
   }
 }

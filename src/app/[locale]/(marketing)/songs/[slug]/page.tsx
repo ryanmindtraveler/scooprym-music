@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     image: song.coverImageUrl || undefined,
     locale,
     pathname: `/songs/${canonicalSlug}`, // Enforce strict canonical URL
-    keywords: [song.title, 'AI Rap', 'Comedy Music', 'Viral Song', 'Diss Track'],
+    keywords: [song.title, 'AI Rap Song', 'Comedy Rap', 'Viral Rap Song', 'Diss Track'],
   });
 }
 

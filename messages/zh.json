@@ -1,9 +1,9 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - 搞怪说唱与鬼畜神曲生成器",
-    "description": "将荒诞新闻、娱乐八卦和劲爆猛料转化为病毒式音乐节拍。瞬间将每日最疯狂的头条变成了朗朗上口的喜剧说唱。",
-    "keywords": "搞笑说唱, 鬼畜音乐生成器, AI 吐槽歌, 恶搞歌曲制作, 朋友圈神曲, 梗图音乐, 新闻荒诞剧, 吃瓜说唱, 明星Diss曲, 病毒式传播, 喜剧Rap"
+    "title": "ScoopRYM - 把头条、娱乐和八卦变成 AI 说唱神曲",
+    "description": "把头条、娱乐和八卦变成 AI 说唱神曲。瞬间将每天最离谱的故事改编成洗脑又好笑的 Rap。",
+    "keywords": "AI说唱神曲, AI说唱生成器, AI说唱歌曲生成器, AI头条说唱生成器, 头条说唱生成器, AI娱乐说唱生成器, 娱乐说唱生成器, AI八卦说唱生成器, 八卦说唱生成器, AI恶搞说唱, 恶搞说唱, AI搞笑说唱, 搞笑说唱, AI病毒式说唱神曲, 病毒式说唱神曲, AI Diss曲生成器, Diss曲生成器, AI吐槽神曲, 头条变说唱, AI头条变说唱, 新闻变说唱, AI新闻变说唱, 吃瓜说唱, AI吃瓜说唱, 热点说唱, AI热点说唱, 讽刺说唱, AI讽刺说唱, 梗图说唱, AI梗图说唱"
   },
   "Common": {
     "premium": "付费文章",
@@ -163,10 +163,10 @@
   },
   "AboutPage": {
     "title": "关于我们",
-    "description": "ScoopRYM 是首选的 AI 平台，用于将荒诞新闻、娱乐八卦和劲爆猛料转化为病毒式音乐节拍。瞬间将每日最疯狂的头条变成了朗朗上口的喜剧说唱。",
+    "description": "ScoopRYM 是一个把头条、娱乐和八卦变成 AI 说唱神曲的平台。瞬间将每天最离谱的故事改编成洗脑又好笑的 Rap。",
     "authorName": "ScoopRYM",
-    "authorBio": "搞怪说唱与鬼畜音乐工厂",
-    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们只生产梗图和神曲。把荒诞新闻变成洗脑 Rap，这就是我们的态度。因八卦而来，为病毒式热歌而分享。",
+    "authorBio": "搞怪说唱与鬼畜神曲工厂",
+    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们专门把离谱头条、娱乐大瓜和热门八卦做成洗脑 Rap。为吃瓜而来，为神曲而分享。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -481,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "将新闻、娱乐和八卦转化为病毒式音乐节拍。",
+      "tagline": "把头条、娱乐和八卦变成 AI 说唱神曲。",
       "product": {
         "title": "产品",
         "items": {
@@ -832,10 +832,10 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "ScoopRYM - 将新闻、娱乐与八卦变成节拍。",
+    "description": "ScoopRYM - 把头条、娱乐和八卦变成 AI 说唱神曲。",
     "hero": {
-      "title": "新闻的嘻哈之声",
-      "description": "把新闻、娱乐与八卦变成节拍。"
+      "title": "头条的嘻哈之声",
+      "description": "把头条、娱乐和八卦变成 AI 说唱神曲。"
     },
     "logocloud": {
       "title": "您最爱公司都是我们的合作伙伴"
@@ -875,14 +875,14 @@
     "generator": {
       "subtitle": "生成你的热门单曲",
       "description": "",
-      "headerInputPlaceholder": "在下方粘贴任意热门新闻或故事，AI 将把它变成一段嘻哈曲目",
+      "headerInputPlaceholder": "在下方粘贴任意头条、娱乐故事或八卦，AI 将把它变成一首说唱神曲",
       "left": {
-        "label": "输入新闻内容",
-        "placeholder": "粘贴新闻链接或直接输入内容...",
+        "label": "输入故事内容",
+        "placeholder": "粘贴头条链接或直接输入内容...",
         "supported": {
           "title": "支持的输入格式：",
-          "item1": "新闻文章链接",
-          "item2": "文本内容或标题",
+          "item1": "头条文章链接",
+          "item2": "标题或故事文本",
           "item3": "社交媒体帖子",
           "item4": "娱乐八卦",
           "item5": "体育资讯",
@@ -899,7 +899,7 @@
         "generate": "生成音乐"
       },
       "contentTypes": {
-        "newsFarce": "新闻整活",
+        "newsFarce": "头条整活",
         "hotGossip": "热门八卦",
         "wtfSociety": "迷惑社会"
       },
@@ -1150,7 +1150,7 @@
     "stats": {
       "title": "统计",
       "subtitle": "ScoopRYM 相关的数字",
-      "description": "立即开始将新闻、娱乐和八卦转化为病毒式节拍。",
+      "description": "立即开始把头条、娱乐和八卦变成 AI 说唱神曲。",
       "items": {
         "item-1": {
           "title": "GitHub 上的星星"
@@ -1165,7 +1165,7 @@
     },
     "calltoaction": {
       "title": "开始构建",
-      "description": "立即开始将新闻、娱乐和八卦转化为病毒式节拍。",
+      "description": "立即开始把头条、娱乐和八卦变成 AI 说唱神曲。",
       "primaryButton": "开始使用",
       "secondaryButton": "查看演示"
     }
@@ -1221,18 +1221,18 @@
   },
   "AIImagePage": {
     "title": "AI 图片",
-    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内把头条、娱乐和八卦变成 AI 说唱神曲。"
   },
   "AIChatPage": {
     "title": "AI 聊天",
-    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内把头条、娱乐和八卦变成 AI 说唱神曲。"
   },
   "AIVideoPage": {
     "title": "AI 视频",
-    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内把头条、娱乐和八卦变成 AI 说唱神曲。"
   },
   "AIAudioPage": {
     "title": "AI 音频",
-    "description": "ScoopRYM 让您在几秒钟内将八卦内容转化为神曲，简单且毫不费力"
+    "description": "ScoopRYM 让您在几秒钟内把头条、娱乐和八卦变成 AI 说唱神曲。"
   }
 }

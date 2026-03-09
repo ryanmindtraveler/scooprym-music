@@ -24,7 +24,7 @@ export function MusicGeneratorBlock() {
   const mounted = useMounted();
   const router = useRouter();
 
-  const contentTypes: string[] = ['News Farce', 'Hot Gossip', 'WTF Society'];
+  const contentTypes: string[] = ['Headline Farce', 'Hot Gossip', 'WTF Society'];
 
   const musicStyles: string[] = [
     'Trap',
@@ -151,7 +151,7 @@ export function MusicGeneratorBlock() {
               Create Your Music
             </h2>
             <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
-              Paste any trending news or story below, and watch AI transform it into a hip-hop track.
+              Paste any headline, entertainment story, or gossip below, and watch AI transform it into a hip-hop track.
             </p>
           </div>
 
@@ -172,7 +172,7 @@ export function MusicGeneratorBlock() {
                       >
                         1
                       </motion.span>
-                      Enter News Content
+                      Enter Story Content
                     </h3>
                     <div className="hidden md:flex gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
@@ -186,7 +186,7 @@ export function MusicGeneratorBlock() {
                     {/* Top: Textarea (Takes available space) */}
                     <div className="flex-1 relative">
                       <Textarea
-                        placeholder="Paste news link or enter content here..."
+                        placeholder="Paste a headline link or enter content here..."
                         className="w-full h-full bg-transparent border-none text-xl md:text-3xl font-bold text-slate-800 placeholder:text-slate-300 p-6 md:p-10 resize-none focus:ring-0 leading-tight selection:bg-indigo-100 overflow-y-auto"
                         value={newsContent}
                         style={{ fieldSizing: 'fixed' } as React.CSSProperties}
@@ -204,10 +204,10 @@ export function MusicGeneratorBlock() {
                       </p>
                       <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-0">
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🔗</span> News article URLs
+                          <span className="text-lg">🔗</span> Headline article URLs
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">📝</span> Text content / headlines
+                          <span className="text-lg">📝</span> Headlines / story text
                         </li>
                         <li className="flex items-center gap-2.5">
                           <span className="text-lg">📱</span> Social media posts
