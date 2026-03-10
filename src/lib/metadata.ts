@@ -46,46 +46,37 @@ export function constructMetadata({
         : undefined;
 
   const defaultKeywords = [
-    // Core positioning
-    'AI Rap Songs',
-    'AI Rap Generator',
-    'AI Rap Song Generator',
-    'Headline Rap Generator',
-    'AI Headline Rap Generator',
-    'Entertainment Rap Generator',
-    'AI Entertainment Rap Generator',
-    'Gossip Rap Generator',
-    'AI Gossip Rap Generator',
-    'Parody Rap Songs',
-    'AI Parody Rap Songs',
-    'Comedy Rap Songs',
-    'AI Comedy Rap Songs',
-    'Viral Rap Songs',
-    'AI Viral Rap Songs',
-    'Diss Track Generator',
-    'AI Diss Track Generator',
-    'Roast Song Generator',
-    'AI Roast Song Generator',
-
-    // Content angles
-    'Headlines to Rap',
-    'AI Headlines to Rap',
-    'News to Rap',
-    'AI News to Rap',
+    // Core content angles
+    'Absurd News Rap',
+    'Weird News Rap',
+    'Bizarre News Rap',
+    'Ridiculous News Rap',
+    'Funny News Rap',
+    'Gossip Rap',
     'Celebrity Gossip Rap',
-    'AI Celebrity Gossip Rap',
-    'Trending Topic Rap',
-    'AI Trending Topic Rap',
-    'Satirical Rap Songs',
-    'AI Satirical Rap Songs',
-    'Meme Rap',
-    'AI Meme Rap',
+    'Entertainment Gossip Rap',
+    'Celebrity Rumor Rap',
+    'Celebrity Scandal Rap',
+    'Social Chaos Rap',
+    'Absurd Social Phenomena Rap',
+    'Weird Social Behavior Rap',
+    'Social Commentary Rap',
 
-    // Style and brand
-    'Trap Rap',
-    'Drill Rap',
-    'Hip Hop Parody',
-    'AI Roast Songs',
+    // Emotional expression
+    'Roast Rap Songs',
+    'Parody Rap Songs',
+    'Funny Rap Songs',
+    'Satirical Rap Songs',
+    'Sarcastic Rap Songs',
+    'Gossip Roast Rap',
+
+    // Search-intent long tails
+    'Turn Absurd News into Rap',
+    'Turn Gossip into a Rap Song',
+    'Make a Rap about Weird Social Behavior',
+    'Parody Song about Celebrity Scandal',
+
+    // Brand
     'ScoopRYM',
   ];
 

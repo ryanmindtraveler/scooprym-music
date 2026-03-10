@@ -1,4 +1,5 @@
 import { websiteConfig } from '@/config/website';
+import { featuresContent } from '@/config/features';
 import { getDb } from '@/db';
 import { song as songTable } from '@/db/schema';
 import { getLocalePathname } from '@/i18n/navigation';
@@ -32,6 +33,8 @@ const staticRoutes = [
   ...(websiteConfig.docs.enable ? ['/docs'] : []),
 ];
 
+const featureRoutes = Object.keys(featuresContent).map((slug) => `/features/${slug}` as const);
+
 /**
  * Generate a sitemap for the website with hreflang support
  *
@@ -59,6 +62,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
       }));
     })
+  );
+
+  sitemapList.push(
+    ...featureRoutes.flatMap((route) =>
+      routing.locales.map((locale) => ({
+        url: getUrl(route, locale),
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: 0.75,
+        alternates: {
+          languages: generateHreflangUrls(route),
+        },
+      }))
+    )
   );
 
   // 2. Add dynamic song routes

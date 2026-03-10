@@ -6,7 +6,7 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'nodejs';
 
 // Image metadata
-export const alt = 'ScoopRYM - Turn headlines, entertainment, and gossip into AI rap songs';
+export const alt = 'ScoopRYM - Turn absurd news, gossip, and social chaos into AI rap songs';
 export const size = {
   width: 1200,
   height: 630,
@@ -110,7 +110,7 @@ export default async function Image() {
           textAlign: 'center',
         }}
       >
-        Turn headlines, entertainment, and gossip into AI rap songs
+        Turn absurd news, gossip, and social chaos into AI rap songs
       </p>
 
       {/* Decorative elements */}
@@ -144,7 +144,7 @@ export default async function Image() {
             fontSize: 16,
           }}
         >
-          Headline Parody
+          Absurd News
         </div>
         <div
           style={{
@@ -155,7 +155,7 @@ export default async function Image() {
             fontSize: 16,
           }}
         >
-          Gossip Roast
+          Social Chaos
         </div>
       </div>
     </div>,

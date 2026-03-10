@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     description: t('description'),
     keywords: t('keywords', {
       default:
-        'AI rap songs, AI rap generator, AI rap song generator, AI headline rap generator, headline rap generator, AI entertainment rap generator, entertainment rap generator, AI gossip rap generator, gossip rap generator, AI parody rap songs, parody rap songs, AI comedy rap songs, comedy rap songs, AI viral rap songs, viral rap songs, AI diss track generator, diss track generator, AI roast song generator, headlines to rap, AI headlines to rap, news to rap, AI news to rap, celebrity gossip rap, AI celebrity gossip rap, trending topic rap, AI trending topic rap, satirical rap songs, AI satirical rap songs, meme rap, AI meme rap',
+        'absurd news rap, weird news rap, bizarre news rap, ridiculous news rap, funny news rap, gossip rap, celebrity gossip rap, entertainment gossip rap, celebrity rumor rap, celebrity scandal rap, social chaos rap, absurd social phenomena rap, weird social behavior rap, social commentary rap, roast rap songs, parody rap songs, funny rap songs, satirical rap songs, sarcastic rap songs, gossip roast rap, turn absurd news into rap, turn gossip into a rap song, make a rap about weird social behavior, parody song about celebrity scandal',
     }),
     openGraph: {
       title: t('title'),

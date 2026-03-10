@@ -151,7 +151,7 @@ export function MusicGeneratorBlock() {
               Create Your Music
             </h2>
             <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
-              Paste any headline, entertainment story, or gossip below, and watch AI transform it into a hip-hop track.
+              Paste any absurd news, gossip, or chaotic social story below, and watch AI transform it into a rap song.
             </p>
           </div>
 
@@ -186,7 +186,7 @@ export function MusicGeneratorBlock() {
                     {/* Top: Textarea (Takes available space) */}
                     <div className="flex-1 relative">
                       <Textarea
-                        placeholder="Paste a headline link or enter content here..."
+                        placeholder="Paste an absurd news link or enter a chaotic story here..."
                         className="w-full h-full bg-transparent border-none text-xl md:text-3xl font-bold text-slate-800 placeholder:text-slate-300 p-6 md:p-10 resize-none focus:ring-0 leading-tight selection:bg-indigo-100 overflow-y-auto"
                         value={newsContent}
                         style={{ fieldSizing: 'fixed' } as React.CSSProperties}
@@ -204,10 +204,10 @@ export function MusicGeneratorBlock() {
                       </p>
                       <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-0">
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🔗</span> Headline article URLs
+                          <span className="text-lg">🔗</span> Absurd news article URLs
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">📝</span> Headlines / story text
+                          <span className="text-lg">📝</span> Weird news / story text
                         </li>
                         <li className="flex items-center gap-2.5">
                           <span className="text-lg">📱</span> Social media posts
@@ -216,10 +216,10 @@ export function MusicGeneratorBlock() {
                           <span className="text-lg">🎬</span> Entertainment gossip
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">⚽</span> Sports updates
+                          <span className="text-lg">⚽</span> Social chaos moments
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🔥</span> Trending topics
+                          <span className="text-lg">🔥</span> Viral social topics
                         </li>
                       </ul>
 

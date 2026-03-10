@@ -219,6 +219,17 @@ html {
       background-position: var(--bg-size, 300%) 0;
     }
   }
+
+  @keyframes scanline {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+
+  --animate-scanline: scanline 4s linear infinite;
 }
 
 :root {
