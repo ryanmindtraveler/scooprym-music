@@ -19,7 +19,7 @@ export default async function Image() {
   // Read the logo file
   let logoSrc: ArrayBuffer | null = null;
   try {
-    const logoPath = join(process.cwd(), 'src/assets/og_new.png');
+    const logoPath = join(process.cwd(), 'public/logo.png');
     const logoData = await readFile(logoPath);
     logoSrc = Uint8Array.from(logoData).buffer;
   } catch (e) {
