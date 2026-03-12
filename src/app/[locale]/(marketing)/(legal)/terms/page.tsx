@@ -1,4 +1,5 @@
 import { getMDXComponents } from '@/components/docs/mdx-components';
+import { constructMetadata } from '@/lib/metadata';
 import { pagesSource } from '@/lib/source';
 import type { NextPageProps } from '@/types/next-page-props';
 import type { Metadata } from 'next';
@@ -10,16 +11,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const page = pagesSource.getPage(['terms-of-service'], locale as string);
 
   if (!page) {
-    return {
+    return constructMetadata({
       title: 'Terms of Service',
       description: 'Terms of Service for Scooprym Music',
-    };
+      locale: locale as 'en' | 'zh',
+      pathname: '/terms',
+    });
   }
 
-  return {
+  return constructMetadata({
     title: page.data.title,
     description: page.data.description,
-  };
+    locale: locale as 'en' | 'zh',
+    pathname: '/terms',
+  });
 }
 
 export default async function TermsPage(props: NextPageProps) {

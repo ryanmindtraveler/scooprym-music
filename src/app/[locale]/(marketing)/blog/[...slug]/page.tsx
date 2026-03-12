@@ -1,4 +1,5 @@
 import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
+import { constructMetadata } from '@/lib/metadata';
 import { blogSource } from '@/lib/source';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { Metadata } from 'next';
@@ -25,6 +26,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const data = page.data as unknown as BlogPostData;
 
   return {
+    ...constructMetadata({
+      title: page.data.title,
+      description: page.data.description,
+      locale,
+      pathname: `/blog/${page.url}`,
+    }),
     title: page.data.title,
     description: page.data.description,
     openGraph: {

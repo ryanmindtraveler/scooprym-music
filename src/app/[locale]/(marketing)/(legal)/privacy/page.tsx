@@ -1,4 +1,5 @@
 import { getMDXComponents } from '@/components/docs/mdx-components';
+import { constructMetadata } from '@/lib/metadata';
 import { pagesSource } from '@/lib/source';
 import type { NextPageProps } from '@/types/next-page-props';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
@@ -11,16 +12,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const page = pagesSource.getPage(['privacy-policy'], locale as string);
 
   if (!page) {
-    return {
+    return constructMetadata({
       title: 'Privacy Policy',
       description: 'Privacy Policy for Scooprym Music',
-    };
+      locale: locale as 'en' | 'zh',
+      pathname: '/privacy',
+    });
   }
 
-  return {
+  return constructMetadata({
     title: page.data.title,
     description: page.data.description,
-  };
+    locale: locale as 'en' | 'zh',
+    pathname: '/privacy',
+  });
 }
 
 export default async function PrivacyPolicyPage(props: NextPageProps) {

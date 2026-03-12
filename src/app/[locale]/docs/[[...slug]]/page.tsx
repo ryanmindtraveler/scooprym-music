@@ -1,3 +1,4 @@
+import { constructMetadata } from '@/lib/metadata';
 import type { Locale } from 'next-intl';
 import { notFound } from 'next/navigation';
 
@@ -15,10 +16,16 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: DocPageProps) {
-  return {
+  const { slug, locale } = await params;
+  const pathname = slug?.length ? `/docs/${slug.join('/')}` : '/docs';
+
+  return constructMetadata({
     title: 'Documentation',
     description: 'Documentation is temporarily unavailable.',
-  };
+    locale,
+    pathname,
+    noIndex: true,
+  });
 }
 
 export default async function DocPage({ params }: DocPageProps) {
