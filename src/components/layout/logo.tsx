@@ -28,6 +28,8 @@ export function Logo({ className }: { className?: string }) {
       title="ScoopRYM"
       width={96}
       height={96}
+      priority
+      loading="eager"
       className={cn('size-8 rounded-md', className)}
     />
   );

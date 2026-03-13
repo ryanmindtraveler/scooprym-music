@@ -54,17 +54,21 @@ export function ConstantVelocityMarquee({
   // If duration is 0 (first render), don't animate yet to avoid jumps
   const isReady = duration > 0;
 
+  // Determine container height based on screen size to prevent CLS
+  const containerHeight = "h-auto min-h-[1.5rem] md:min-h-[2.5rem]";
+
   return (
     <div
-        ref={containerRef}
-        className={cn("overflow-hidden flex w-full", className)}
+      ref={containerRef}
+      className={cn("overflow-hidden flex w-full relative", containerHeight, className)}
     >
       <motion.div
         ref={contentRef}
-        className="flex whitespace-nowrap min-w-max" // Ensure it doesn't wrap
+        className="flex whitespace-nowrap min-w-max h-full items-center" // Ensure items are vertically centered
+        initial={false}
         animate={isReady ? {
           x: direction === 'left' ? [0, -contentWidth / 2] : [-contentWidth / 2, 0],
-        } : undefined}
+        } : { x: 0 }}
         transition={{
           repeat: Infinity,
           ease: "linear",

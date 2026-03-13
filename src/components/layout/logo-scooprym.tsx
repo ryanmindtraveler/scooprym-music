@@ -9,6 +9,8 @@ export function ScoopRYMLogo({ className }: { className?: string }) {
       title="Logo of ScoopRYM"
       width={96}
       height={96}
+      priority
+      loading="eager"
       className={cn('size-8 rounded-md', className)}
     />
   );

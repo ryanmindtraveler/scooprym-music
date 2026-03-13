@@ -77,18 +77,19 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
                 onSelect(item);
               }
             }}
-            className="block w-full h-full cursor-pointer relative"
+            className="block w-full h-full cursor-pointer relative overflow-hidden"
           >
+            <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
             {item.coverImageUrl ? (
               <Image
                 src={item.coverImageUrl}
                 alt={item.title}
                 fill
                 sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-700 group-hover:scale-105 z-10"
               />
             ) : (
-              <div className="relative size-full bg-zinc-100 dark:bg-zinc-800">
+              <div className="relative size-full bg-zinc-100 dark:bg-zinc-800 z-10">
                 <Image
                   src="/images/funny-censored-fallback.png"
                   alt="Censored"

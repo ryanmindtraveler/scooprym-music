@@ -20,7 +20,7 @@ import { getTranslations } from 'next-intl/server';
 /**
  * https://next-intl.dev/docs/environments/actions-metadata-route-handlers#metadata-api
  */
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
