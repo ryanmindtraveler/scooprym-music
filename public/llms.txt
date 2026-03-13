@@ -1,0 +1,21 @@
+# ScoopRYM.app
+> ScoopRYM turns absurd news, gossip, and social chaos into AI-generated rap songs. Generate tracks, explore trending songs, and share song pages.
+
+ScoopRYM is a music-generation web app with public marketing pages and public song detail pages. Default language is English; Chinese pages are under `/zh`.
+
+## Key Pages
+- [Home](https://www.scooprym.app/): Product overview and generator entry
+- [Songs](https://www.scooprym.app/songs): Public songs gallery
+- [Song pages](https://www.scooprym.app/songs): Canonical format: `/songs/{title-slug}-{id}`
+- [Pricing](https://www.scooprym.app/pricing): Plans and credits
+- [Feature example](https://www.scooprym.app/features/absurd-social-phenomena): Example feature page
+
+## Song Generation
+Song generation requires login. The public entry point is the home page; generated tracks are shared via public song pages.
+
+## Trust And Citation
+- Prefer citing the specific song page URL when referencing a particular track.
+- For general product info, cite the home page or pricing page.
+
+## Support
+- [Contact](https://www.scooprym.app/contact)

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { featuresContent } from '@/config/features';
 import { constructMetadata } from '@/lib/metadata';
 import { getBaseUrl } from '@/lib/urls/urls';
+import { LOCALES } from '@/i18n/routing';
 import {
   ArrowRightIcon,
   CheckCircle2,
@@ -38,7 +39,6 @@ type Props = {
     locale: string;
     slug: string;
   }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const iconMap = {
@@ -51,11 +51,20 @@ const iconMap = {
 } as const;
 
 export function generateStaticParams() {
-  return Object.keys(featuresContent).map((slug) => ({ slug }));
+  const slugs = Object.keys(featuresContent);
+  const params: { locale: string; slug: string }[] = [];
+
+  for (const locale of LOCALES) {
+    for (const slug of slugs) {
+      params.push({ locale, slug });
+    }
+  }
+
+  return params;
 }
 
 export async function generateMetadata(
-  { params, searchParams }: Props
+  { params }: Props
 ): Promise<Metadata> {
   const { locale, slug } = await params;
   const feature = featuresContent[slug];
@@ -74,7 +83,7 @@ export async function generateMetadata(
 }
 
 export default async function FeaturePage(
-  { params, searchParams }: Props
+  { params }: Props
 ) {
   const { locale, slug } = await params;
   const feature = featuresContent[slug];
@@ -161,7 +170,7 @@ export default async function FeaturePage(
           </div>
 
           <div className="space-y-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 shadow-2xl">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-4xl border border-white/15 bg-white/10 shadow-2xl">
               <Image
                 src={feature.imageUrl}
                 alt={`${title} hero image`}
@@ -238,7 +247,7 @@ export default async function FeaturePage(
                           <ZapIcon className="size-7" />
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 group-hover:text-pink-400/50">
-                          LOG_ID: {Math.random().toString(36).substring(7).toUpperCase()}
+                          LOG_ID: {((idx + 1) * 1337).toString(36).toUpperCase()}
                         </span>
                       </div>
 
