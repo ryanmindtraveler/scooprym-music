@@ -127,7 +127,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 border border-gray-200 shadow-sm text-sm font-bold tracking-widest text-gray-500 mb-2"
           >
             <TrendingUp className="w-4 h-4 text-pink-500" />
-            <span>Community Heat</span>
+            <span>Hot Off the Press</span>
           </motion.div>
 
           <motion.h2
@@ -137,8 +137,8 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             transition={{ delay: 0.1 }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-linear-to-r from-gray-900 via-gray-700 to-gray-900 drop-shadow-sm pb-2"
           >
-            Trending{' '}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-500">Tracks</span>
+            The Daily{' '}
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-500">Roast</span>
           </motion.h2>
 
           <motion.p

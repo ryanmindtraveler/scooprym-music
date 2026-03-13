@@ -142,8 +142,8 @@ export default async function HomePage(props: HomePageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'Trending AI Comedy Raps',
-    description: 'Top rated AI generated parody songs and roast tracks created by ScoopRYM community.',
+    name: 'Global Roast Billboard',
+    description: 'The hottest AI generated comedy roasts and parody tracks currently scorching the net.',
     numberOfItems: serializedSongs.length,
     itemListElement: serializedSongs.map((song, index) => ({
       '@type': 'ListItem',

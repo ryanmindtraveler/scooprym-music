@@ -143,9 +143,23 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-1 flex-col px-5 pt-7 pb-5 relative">
+        <div className="flex flex-1 flex-col px-5 pt-4 pb-5 relative">
+          {/* News Snippet - Editorial Quote Style */}
+          <LocaleLink
+            href={songUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-left w-full focus:outline-none mb-4 group/snippet"
+          >
+            <div className="relative bg-rose-50/50 dark:bg-rose-950/20 p-3.5 rounded-xl hover:bg-rose-100/50 dark:hover:bg-rose-900/30 transition-all group/report shadow-sm">
+              <p className="text-sm font-medium text-rose-950 dark:text-rose-50 leading-relaxed line-clamp-3 group-hover/snippet:text-rose-700 dark:group-hover/snippet:text-rose-300 transition-colors">
+                {description}
+              </p>
+            </div>
+          </LocaleLink>
+
           {/* Title - Clean Editorial Style */}
-          <div className="mb-2">
+          <div className="mb-1">
             <LocaleLink
               href={songUrl}
               scroll={false}
@@ -157,14 +171,14 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
               }}
               className="block text-left w-full focus:outline-none group/title"
             >
-              <h3 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
+              <h3 className="line-clamp-2 text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
                 {item.title}
               </h3>
             </LocaleLink>
           </div>
 
           {/* Music Meta (Genre / Stats) */}
-          <div className="flex items-center gap-3 text-xs text-gray-400 font-medium mb-3">
+          <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
             {/* ... existing stats ... */}
             <div className="flex items-center gap-1">
               <div className="flex gap-0.5 h-3 items-end">
@@ -181,21 +195,6 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
             <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
             <span>{formattedDate}</span>
           </div>
-
-          {/* News Snippet - Editorial Quote Style */}
-          {/* News Snippet - Editorial Quote Style */}
-          <LocaleLink
-            href={songUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-left w-full focus:outline-none mt-auto group/snippet"
-          >
-            <div className="relative pl-3 border-l-2 border-pink-500 hover:border-pink-600 transition-colors">
-              <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 group-hover/snippet:text-slate-900 dark:group-hover/snippet:text-slate-200 transition-colors">
-                {description}
-              </p>
-            </div>
-          </LocaleLink>
         </div>
       </div>
     </motion.div>

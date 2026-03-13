@@ -113,11 +113,11 @@ export function MusicGeneratorBlock() {
       <div className="absolute top-0 left-0 right-0 z-30 border-y-4 border-black bg-[#ecec3a] py-3 overflow-hidden shadow-xl">
         <ConstantVelocityMarquee velocity={150}>
           {Array(6)
-            .fill('CREATE YOUR TRACK • NO SKILLS NEEDED • VIRAL HITS INSTANTLY • ')
+            .fill('THE DISS TRACK FACTORY • NO SKILLS NEEDED • VIRAL HITS INSTANTLY • ')
             .map((text, i) => (
               <span
                 key={i}
-                className="text-xl md:text-3xl font-black italic uppercase text-black mx-4 tracking-tighter"
+                className="text-xl md:text-3xl font-black uppercase text-black mx-4 tracking-tighter"
               >
                 {text}
               </span>
@@ -147,8 +147,8 @@ export function MusicGeneratorBlock() {
           className="relative"
         >
           <div className="mb-12 text-center">
-            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter italic mb-4 drop-shadow-md">
-              Create Your Music
+            <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 drop-shadow-md">
+              The Diss Track Factory
             </h2>
             <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
               Paste any absurd news, gossip, or chaotic social story below, and watch AI transform it into a rap song.
@@ -416,7 +416,7 @@ export function MusicGeneratorBlock() {
 
                         <div className="relative z-10 flex items-center justify-between w-full px-8">
                           <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
-                            <span className="text-3xl font-black italic tracking-tighter drop-shadow-sm flex items-center gap-2">
+                            <span className="text-3xl font-black tracking-tighter drop-shadow-sm flex items-center gap-2">
                               Generate Music <span className="animate-bounce">🎵</span>
                             </span>
                             <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
@@ -477,7 +477,7 @@ export function MusicGeneratorBlock() {
 
                           <div className="relative z-10 flex items-center justify-between w-full px-8">
                             <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
-                              <span className="text-3xl font-black italic tracking-tighter drop-shadow-sm flex items-center gap-2">
+                              <span className="text-3xl font-black tracking-tighter drop-shadow-sm flex items-center gap-2">
                                 Generate Music <span className="animate-bounce">🎵</span>
                               </span>
                               <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
