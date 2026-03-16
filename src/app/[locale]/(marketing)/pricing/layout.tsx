@@ -27,7 +27,7 @@ export default async function PricingPageLayout({
   const t = await getTranslations('PricingPage');
   return (
     <div className="mb-16">
-      <div className="mt-8 w-full flex flex-col items-center justify-center gap-8"></div>
+      <div className="mt-8 w-full flex flex-col items-center justify-center gap-8" />
 
       {children}
     </div>

@@ -71,12 +71,12 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const description = rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
 
   return constructMetadata({
-    title: `${song.title} | ScoopRYM Comedy Rap`,
+    title: `${song.title} | ScoopRYM AI Parody Song`,
     description: description,
     image: song.coverImageUrl || undefined,
     locale,
     pathname: `/songs/${canonicalSlug}`, // Enforce strict canonical URL
-    keywords: [song.title, 'AI Rap Song', 'Comedy Rap', 'Viral Rap Song', 'Diss Track'],
+    keywords: [song.title, 'AI Song', 'Parody Song', 'Funny Song', 'Viral Song', 'Diss Track', 'Battle Song'],
   });
 }
 

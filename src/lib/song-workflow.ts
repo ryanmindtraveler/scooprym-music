@@ -44,14 +44,15 @@ function generateCoverFilename(
 
   // Extract event/topic from title
   // Remove common words and extract key topic
-  const stopWords = /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|need|dare|ought|used|to|of|in|for|on|with|at|by|from|as|into|through|during|before|after|above|below|between|under|again|further|then|once|here|there|when|where|why|how|all|each|few|more|most|other|some|such|no|nor|not|only|own|same|so|than|too|very|just|now)\b/gi;
+  const stopWords =
+    /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|need|dare|ought|used|to|of|in|for|on|with|at|by|from|as|into|through|during|before|after|above|below|between|under|again|further|then|once|here|there|when|where|why|how|all|each|few|more|most|other|some|such|no|nor|not|only|own|same|so|than|too|very|just|now)\b/gi;
 
   let event = title
     .replace(stopWords, ' ')
-    .replace(/[^\w\s-]/g, ' ')  // Remove special chars
+    .replace(/[^\w\s-]/g, ' ') // Remove special chars
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, '-');       // Convert spaces to hyphens
+    .replace(/\s+/g, '-'); // Convert spaces to hyphens
 
   // Limit event length
   event = event.slice(0, 50).replace(/-+$/, '');
@@ -67,7 +68,7 @@ function generateCoverFilename(
   // Build filename: person-event-shortId.extension
   const filename = `${person}-${event}-${shortId}.${extension}`;
 
-  return filename.replace(/-{2,}/g, '-').toLowerCase();  // Remove duplicate hyphens
+  return filename.replace(/-{2,}/g, '-').toLowerCase(); // Remove duplicate hyphens
 }
 
 export interface ProcessMusicOptions {
@@ -266,12 +267,7 @@ export async function processMusicBackground(
             // B2. Convert & Upload
             const { buffer, mime, extension } = dataUrlToImageBuffer(imageDataUrl);
             // Generate SEO-friendly filename: person-event-uuid.ext
-            const coverFilename = generateCoverFilename(
-              options.title || 'song',
-              options.sourceText,
-              songId,
-              extension
-            );
+            const coverFilename = generateCoverFilename(options.title || 'song', options.sourceText, songId, extension);
             const coverUpload = await uploadFile(buffer, coverFilename, mime, `song-covers/${userId}`);
 
             // B3. Update DB

@@ -17,8 +17,20 @@ export async function generateMetadata({
   return constructMetadata({
     title: t('title'),
     description: t('description'),
+    keywords: [
+      'headline songs',
+      'news songs',
+      'drama songs',
+      'gossip songs',
+      'parody songs',
+      'funny songs',
+      'AI song generator',
+      'text to song',
+      'diss track generator',
+      'parody song generator',
+    ],
     locale,
-    pathname: '',
+    pathname: '/',
   });
 }
 

@@ -1,245 +1,259 @@
-﻿# ScoopRYM SEO 关键词方案
+# ScoopRYM SEO 关键词方案
 
 ## 1. 项目定位
 
-ScoopRYM 不适合和通用型产品去竞争这些大词：
+ScoopRYM 的 SEO 不适合去跟通用型产品竞争这些大词：
 
-- `AI rap songs`
 - `AI rap generator`
 - `AI music generator`
+- `AI song maker`
 
-我们现在的 SEO 定位，应该建立在两条主轴上：
+ScoopRYM 现在的核心定位是：
 
-- 情绪表达：`roast`、`parody`、`funny`、`satirical`、`sarcastic`
-- 内容类型：`absurd news`、`gossip`、`celebrity rumors`、`social chaos`
+- 内容主轴：把 `headlines / news / drama / gossip / social commentary / internet drama` 做成歌曲
+- 情绪主轴：把这些内容做成 `parody / comedy / funny / roast / viral / diss / battle` 风格
+- 产品主轴：用户不是单纯想“生成一首歌”，而是想把热点、八卦、抓马和社会吐槽做成可传播的 AI 歌曲
 
-当前品牌文案是：
+当前品牌主标语是：
 
 - Title  
-  `ScoopRYM: Turn Absurd News, Gossip, and Social Chaos into AI Rap Songs`
+  `ScoopRYM: Turn Headlines, Drama, and Gossip into AI Parody Songs`
 - Description  
   `Built for roast, parody, and funny takes on the wildest stories, messiest gossip, and most chaotic moments online.`
 
-这意味着 ScoopRYM 的 SEO 不是去强调“通用 AI 生成能力”，而是强调：
+这意味着 ScoopRYM 的 SEO 重点不是泛 “AI 音乐生成”，而是：
 
 - 什么内容适合做
 - 想表达什么情绪
-- 用户为什么会搜索这类内容
+- 用户会用什么自然语言来搜索这类工具
 
 ## 2. SEO 总策略
 
-关键词结构建议固定为：
+当前关键词结构固定为三层：
 
-- `content term + rap/song`
-- `emotion term + rap/song`
-- `content term + emotion term + rap/song`
+1. 内容关键词
+2. 情绪关键词
+3. 长尾关键词
 
-例如：
+三层分别解决三个问题：
+
+- 内容关键词：用户想把什么内容做成歌
+- 情绪关键词：用户想把歌做成什么风格
+- 长尾关键词：用户真实会怎么搜这个工具
+
+SEO 的核心原则是：
+
+- 不追求只“有量”但和业务弱相关的泛词
+- 不使用太像内部造词的生硬表达
+- 优先保留英语世界更自然、更接近真实搜索习惯的表达
+
+## 3. 当前三层关键词方案
+
+### 3.1 内容关键词
+
+这层描述的是 ScoopRYM 擅长处理什么内容。
+
+- `headline songs`
+- `news songs`
+- `drama songs`
+- `gossip songs`
+- `social commentary songs`
+- `internet drama songs`
+
+这组词对应项目当前三大内容定位：
+
+- 新闻荒诞剧
+- 娱乐大瓜秀
+- 社会迷惑行为
+
+### 3.2 情绪关键词
+
+这层描述的是 ScoopRYM 生成结果的气质和风格。
+
+- `parody songs`
+- `comedy songs`
+- `funny songs`
+- `roast songs`
+- `viral songs`
+- `diss track`
+- `battle songs`
+- `rap battle`
+
+这组词覆盖了项目当前的主要表达方向：
+
+- 恶搞
+- 搞笑
+- 吐槽
+- 嘲讽
+- 对战感
+- 传播感
+
+### 3.3 长尾关键词
+
+这层优先使用用户更常见的工具型表达，而不是完整句式。
+
+- `AI song generator`
+- `text to song`
+- `song generator`
+- `diss track generator`
+- `AI diss track generator`
+- `parody song generator`
+- `song parody generator`
+- `funny song generator`
+- `rap battle generator`
+- `headline songs generator`
+- `drama songs generator`
+- `parody songs generator`
+- `comedy songs generator`
+- `funny songs generator`
+- `roast songs generator`
+- `battle songs generator`
+
+这组词里：
+
+- `AI song generator`
+- `text to song`
+- `song generator`
+- `diss track generator`
+
+属于主入口长尾。
+
+- `parody song generator`
+- `song parody generator`
+- `funny song generator`
+- `rap battle generator`
+
+属于细分风格长尾。
+
+- `headline songs generator`
+- `drama songs generator`
+- `parody songs generator`
+- `comedy songs generator`
+- `funny songs generator`
+- `roast songs generator`
+- `battle songs generator`
+
+属于业务语义长尾。
+
+## 4. 为什么这样调整
+
+这次 SEO 方案不再沿用旧的：
 
 - `absurd news rap`
-- `gossip rap`
 - `social chaos rap`
-- `roast rap songs`
-- `parody rap songs`
-
-这比去抢泛词更符合项目定位，也更容易拿到真正有意图的搜索流量。
-
-## 3. 核心关键词池
-
-### 3.1 内容类型关键词
-
-这部分对应用户在搜索“什么题材适合被做成 rap / song”。
-
-- `absurd news rap`
-- `weird news rap`
-- `bizarre news rap`
-- `ridiculous news rap`
-- `funny news rap`
-- `gossip rap`
-- `celebrity gossip rap`
-- `entertainment gossip rap`
-- `celebrity rumor rap`
-- `celebrity scandal rap`
-- `social chaos rap`
-- `chaotic story rap`
 - `weird social behavior rap`
-- `social commentary rap`
-- `absurd social phenomena rap`
 
-### 3.2 情绪表达关键词
+原因不是这些词完全没意义，而是它们更像内部定义，不够像英语世界用户真实会输入的搜索表达。
 
-这部分对应用户想表达“吐槽、讽刺、恶搞、搞笑”的意图。
+这次方案也不再过度追求泛词，例如：
 
-- `roast rap songs`
-- `parody rap songs`
-- `funny rap songs`
-- `satirical rap songs`
-- `sarcastic rap songs`
-- `comedy rap songs`
-- `gossip roast rap`
+- `trending news`
+- `entertainment news`
+- `pop culture`
 
-### 3.3 高意图长尾关键词
+原因是这些词虽然常见，但和 ScoopRYM 的工具属性绑定不够强，容易带来不精准流量。
 
-这部分最适合后续做 SEO 页面、FAQ、专题页和博客内容。
+现在的方案是在三者之间找平衡：
 
-- `turn absurd news into rap`
-- `turn weird news into a song`
-- `make a rap song from news`
-- `parody rap for absurd news`
-- `funny rap about weird news`
-- `satirical rap about bizarre news`
-- `turn gossip into a rap song`
-- `make a rap song from celebrity gossip`
-- `funny rap about celebrity rumors`
-- `roast rap for celebrity gossip`
-- `parody song about celebrity scandal`
-- `turn social chaos into rap`
-- `make a rap about weird social behavior`
-- `funny rap about public absurdity`
-- `satirical song about social chaos`
+- 业务相关
+- 英语自然
+- 有搜索表达基础
 
-## 4. 当前最值得优先做的关键词
-
-如果只保留一组当前最值得重点推进的词，建议优先做这 24 个：
-
-- `absurd news rap`
-- `weird news rap`
-- `bizarre news rap`
-- `ridiculous news rap`
-- `funny news rap`
-- `gossip rap`
-- `celebrity gossip rap`
-- `entertainment gossip rap`
-- `celebrity rumor rap`
-- `celebrity scandal rap`
-- `social chaos rap`
-- `absurd social phenomena rap`
-- `weird social behavior rap`
-- `social commentary rap`
-- `roast rap songs`
-- `parody rap songs`
-- `funny rap songs`
-- `satirical rap songs`
-- `sarcastic rap songs`
-- `gossip roast rap`
-- `turn absurd news into rap`
-- `turn gossip into a rap song`
-- `make a rap about weird social behavior`
-- `parody song about celebrity scandal`
-
-## 5. 页面级关键词分配
+## 5. 页面级关键词分配建议
 
 ### 5.1 首页
 
-首页主词：
+首页主打：
 
-- `absurd news rap`
-- `gossip rap`
-- `social chaos rap`
+- 内容词：`headline songs`、`news songs`、`drama songs`
+- 情绪词：`parody songs`、`comedy songs`、`funny songs`
+- 长尾词：`AI song generator`、`text to song`、`song generator`
 
-首页辅助词：
+首页建议继续围绕当前品牌句：
 
-- `roast rap songs`
-- `parody rap songs`
-- `funny rap songs`
-- `satirical rap songs`
+`Turn Headlines, Drama, and Gossip into AI Parody Songs`
 
-建议 H1：
+### 5.2 News Parody 方向页
 
-`Turn absurd news, gossip, and social chaos into AI rap songs.`
+主词建议：
 
-### 5.2 荒诞新闻方向页
+- `headline songs`
+- `news songs`
+- `parody songs`
+- `parody song generator`
+- `headline songs generator`
 
-主词：
+### 5.3 Gossip Roast 方向页
 
-- `absurd news rap`
-- `weird news rap`
-- `bizarre news rap`
+主词建议：
 
-辅助词：
+- `gossip songs`
+- `roast songs`
+- `diss track`
+- `diss track generator`
+- `AI diss track generator`
 
-- `ridiculous news rap`
-- `funny news rap`
-- `turn absurd news into rap`
+### 5.4 Comedy Drill / Battle 方向页
 
-### 5.3 娱乐八卦方向页
+主词建议：
 
-主词：
+- `comedy songs`
+- `funny songs`
+- `battle songs`
+- `rap battle`
+- `rap battle generator`
 
-- `celebrity gossip rap`
-- `entertainment gossip rap`
-- `celebrity rumor rap`
+### 5.5 Social Commentary / Internet Drama 方向页
 
-辅助词：
+主词建议：
 
-- `celebrity scandal rap`
-- `gossip roast rap`
-- `turn gossip into a rap song`
-
-### 5.4 社会迷惑行为方向页
-
-主词：
-
-- `social chaos rap`
-- `weird social behavior rap`
-- `absurd social phenomena rap`
-
-辅助词：
-
-- `social commentary rap`
-- `chaotic story rap`
-- `make a rap about weird social behavior`
+- `social commentary songs`
+- `internet drama songs`
+- `drama songs`
+- `viral songs`
+- `funny songs`
 
 ## 6. 中文理解映射
 
-虽然代码里的关键词仍然以英文为主，但内部理解可以这样对应：
+内部理解可以这样对应：
 
-- `absurd news rap`：荒诞新闻说唱
-- `gossip rap`：八卦说唱
-- `celebrity gossip rap`：明星八卦说唱
-- `celebrity rumor rap`：名人绯闻说唱
-- `social chaos rap`：社会乱象说唱
-- `weird social behavior rap`：社会迷惑行为说唱
-- `roast rap songs`：吐槽说唱
-- `satirical rap songs`：讽刺说唱
-- `parody rap songs`：恶搞说唱
-- `funny rap songs`：搞笑说唱
+- `headline songs`：头条歌曲 / 热点头条歌曲
+- `news songs`：新闻歌曲
+- `drama songs`：抓马歌曲 / 戏剧化热点歌曲
+- `gossip songs`：八卦歌曲
+- `social commentary songs`：社会评论歌曲 / 社会吐槽歌曲
+- `internet drama songs`：网络抓马歌曲
+- `parody songs`：恶搞歌曲
+- `comedy songs`：喜剧歌曲
+- `funny songs`：搞笑歌曲
+- `roast songs`：吐槽歌曲
+- `diss track`：diss 歌 / 攻击型吐槽歌
+- `battle songs`：对战型歌曲
+- `rap battle`：说唱对战
 
-## 7. 当前代码已同步的范围
+## 7. 当前代码已同步范围
 
-目前这套关键词方向已经同步到了：
+目前这套方案已经同步到：
 
 - 英文 metadata keywords
 - 中文 metadata keywords
 - 全站默认 metadata keywords
-- 首页品牌定位文案
+- 各专题页关键词
+- 首页主定位语
 
-也就是说，项目当前已经从旧的：
-
-- `AI rap generator`
-- `AI headline rap generator`
-- `headline rap`
-
-切换到现在这套：
-
-- `absurd news rap`
-- `gossip rap`
-- `social chaos rap`
-- `roast rap songs`
-- `parody rap songs`
-- `funny rap songs`
+也就是说，代码层已经从旧的 rap 导向 SEO，切换到了现在这套 song / parody / diss / battle 导向 SEO。
 
 ## 8. 后续执行建议
 
-接下来最值得做的不是继续堆 metadata，而是：
+接下来最值得继续做的不是再堆关键词，而是：
 
-1. 给首页和 3 个核心方向页分配独立关键词
-2. 每个页面写独立的 `title`、`description`、`h1`
-3. 用 FAQ、专题内容、内容示例继续承接长尾词
-4. 后续新增页面时，避免再回到泛 `AI rap generator` 路线
+1. 让首页、专题页、歌曲详情页使用更明确的页面级关键词分配
+2. 为每个核心专题页写独立 `title`、`description`、`h1`
+3. 用 FAQ、示例内容、专题案例去承接长尾词
+4. 后续新增页面时，继续遵守三层结构，不再回到泛词路线
 
 ## 9. 一句话总结
 
-ScoopRYM 的 SEO 重点不是“通用 AI 音乐生成”，而是：
+ScoopRYM 当前的 SEO 核心不是“通用 AI 音乐生成”，而是：
 
-**把荒诞新闻、八卦绯闻和社会迷惑行为，做成吐槽、讽刺、恶搞、搞笑风格的 rap/song 内容。**
+**把 headlines、news、drama、gossip 和 social commentary，做成 parody、comedy、funny、roast、diss、battle 风格的 AI songs。**

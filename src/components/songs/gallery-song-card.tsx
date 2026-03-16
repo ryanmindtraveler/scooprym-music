@@ -15,9 +15,10 @@ import type { Song } from '@/types/song';
 interface GallerySongCardProps {
   item: Song;
   onSelect?: (song: Song) => void;
+  priority?: boolean;
 }
 
-export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
+export function GallerySongCard({ item, onSelect, priority = false }: GallerySongCardProps) {
   const { isPlaying: globalIsPlaying, currentSong, play, pause } = usePlayerStore();
   const isThisSongPlaying = globalIsPlaying && currentSong?.id === item.id;
   const isThisLoading = false;
@@ -85,6 +86,7 @@ export function GallerySongCard({ item, onSelect }: GallerySongCardProps) {
                 src={item.coverImageUrl}
                 alt={item.title}
                 fill
+                priority={priority}
                 sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105 z-10"
               />

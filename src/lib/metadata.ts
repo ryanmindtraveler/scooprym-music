@@ -46,37 +46,22 @@ export function constructMetadata({
         : undefined;
 
   const defaultKeywords = [
-    // Core content angles
-    'Absurd News Rap',
-    'Weird News Rap',
-    'Bizarre News Rap',
-    'Ridiculous News Rap',
-    'Funny News Rap',
-    'Gossip Rap',
-    'Celebrity Gossip Rap',
-    'Entertainment Gossip Rap',
-    'Celebrity Rumor Rap',
-    'Celebrity Scandal Rap',
-    'Social Chaos Rap',
-    'Absurd Social Phenomena Rap',
-    'Weird Social Behavior Rap',
-    'Social Commentary Rap',
-
-    // Emotional expression
-    'Roast Rap Songs',
-    'Parody Rap Songs',
-    'Funny Rap Songs',
-    'Satirical Rap Songs',
-    'Sarcastic Rap Songs',
-    'Gossip Roast Rap',
-
-    // Search-intent long tails
-    'Turn Absurd News into Rap',
-    'Turn Gossip into a Rap Song',
-    'Make a Rap about Weird Social Behavior',
-    'Parody Song about Celebrity Scandal',
-
-    // Brand
+    'Headline Songs',
+    'News Songs',
+    'Drama Songs',
+    'Gossip Songs',
+    'Parody Songs',
+    'Comedy Songs',
+    'Funny Songs',
+    'Roast Songs',
+    'Diss Track',
+    'Battle Songs',
+    'Rap Battle',
+    'AI Song Generator',
+    'Text to Song',
+    'Song Generator',
+    'Diss Track Generator',
+    'Parody Song Generator',
     'ScoopRYM',
   ];
 

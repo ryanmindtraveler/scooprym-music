@@ -1,9 +1,9 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM: Turn Absurd News, Gossip, and Social Chaos into AI Rap Songs",
+    "title": "ScoopRYM: Turn Headlines, Drama, and Gossip into AI Parody Songs",
     "description": "Built for roast, parody, and funny takes on the wildest stories, messiest gossip, and most chaotic moments online.",
-    "keywords": "absurd news rap, weird news rap, bizarre news rap, ridiculous news rap, funny news rap, gossip rap, celebrity gossip rap, entertainment gossip rap, celebrity rumor rap, celebrity scandal rap, social chaos rap, absurd social phenomena rap, weird social behavior rap, social commentary rap, roast rap songs, parody rap songs, funny rap songs, satirical rap songs, sarcastic rap songs, gossip roast rap, turn absurd news into rap, turn gossip into a rap song, make a rap about weird social behavior, parody song about celebrity scandal"
+    "keywords": "headline songs, news songs, drama songs, gossip songs, parody songs, comedy songs, funny songs, roast songs, diss track, battle songs, rap battle, AI song generator, text to song, song generator, diss track generator, parody song generator"
   },
   "Common": {
     "premium": "Premium",
@@ -163,9 +163,9 @@
   },
   "AboutPage": {
     "title": "About",
-    "description": "ScoopRYM turns absurd news, gossip, and social chaos into AI rap songs. Built for roast, parody, and funny takes on the wildest stories, messiest gossip, and most chaotic moments online.",
+    "description": "ScoopRYM turns headlines, drama, and gossip into AI parody songs. Built for roast, parody, and funny takes on the stories people cannot stop talking about.",
     "authorName": "ScoopRYM",
-    "authorBio": "Comedy & Parody Rap Factory",
+    "authorBio": "Comedy & Parody Song Factory",
     "introduction": "👋 Yo! This is ScoopRYM. We don't do serious music. We turn wild headlines and memes into bangers. Stay for the gossip, share for the viral hits.",
     "talkWithMe": "Talk with me",
     "followMe": "Follow me on X"
@@ -481,7 +481,7 @@
       }
     },
     "footer": {
-      "tagline": "Turn absurd news, gossip, and social chaos into AI rap songs.",
+      "tagline": "Turn headlines, drama, and gossip into AI parody songs.",
       "product": {
         "title": "Product",
         "items": {
@@ -832,10 +832,10 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "Turn absurd news, gossip, and social chaos into AI rap songs",
+    "description": "Turn headlines, drama, and gossip into AI parody songs",
     "hero": {
       "title": "The Hip-Hop Voice of the Headlines",
-      "description": "Turn absurd news, gossip, and social chaos into AI rap songs."
+      "description": "Turn headlines, drama, and gossip into AI parody songs."
     },
     "logocloud": {
       "title": "Your favorite companies are our partners"
@@ -873,45 +873,47 @@
       }
     },
     "generator": {
-      "subtitle": "Create Your Hit",
-      "description": "",
-      "headerInputPlaceholder": "Paste any absurd news, gossip, or chaotic social story below, and watch AI transform it into a rap song",
+      "marquee": "THE PARODY SONG FACTORY | NO SKILLS NEEDED | VIRAL SONGS INSTANTLY | ",
+      "subtitle": "The Parody Song Factory",
+      "description": "Paste any headline, drama, or gossip story below, and watch AI turn it into a parody song.",
+      "headerInputPlaceholder": "Paste any headline, drama, or gossip story below, and watch AI turn it into a parody song",
       "left": {
         "label": "Enter Story Content",
-        "placeholder": "Paste an absurd news link or enter a chaotic story here...",
+        "placeholder": "Paste a headline, drama story, or gossip link here...",
         "supported": {
           "title": "Supported input formats:",
-          "item1": "Absurd news article URLs",
-          "item2": "Weird news or story text",
+          "item1": "Headline links and article URLs",
+          "item2": "News and drama story text",
           "item3": "Social media posts",
-          "item4": "Entertainment gossip",
-          "item5": "Social chaos moments",
-          "item6": "Viral social topics"
+          "item4": "Gossip and celebrity buzz",
+          "item5": "Social commentary topics",
+          "item6": "Internet drama and viral topics"
         }
       },
       "right": {
         "types": {
-          "title": "Supported Content Types"
+          "title": "Content Types"
         },
         "styles": {
-          "title": "Music Styles"
+          "title": "Song Styles"
         },
-        "generate": "Generate Music"
+        "generate": "Generate Song",
+        "waitingForGenerate": "Waiting for Generate",
+        "waitingForInput": "Waiting for Input..."
       },
       "contentTypes": {
-        "newsFarce": "Headline Farce",
-        "hotGossip": "Hot Gossip",
-        "wtfSociety": "WTF Society"
+        "headlines": "Headlines",
+        "gossip": "Gossip",
+        "drama": "Drama"
       },
       "styles": {
-        "trap": "#Trap",
+        "parody": "#Parody",
+        "funny": "#Funny",
+        "roast": "#Roast",
+        "viral": "#Viral",
         "satirical": "#Satirical",
-        "parodyRap": "#ParodyRap",
-        "memeEnergy": "#MemeEnergy",
-        "banger": "#Banger",
-        "catchy": "#Catchy",
-        "boldAttitude": "#BoldAttitude",
-        "absurd": "#Absurd"
+        "battle": "#Battle",
+        "catchy": "#Catchy"
       }
     },
     "gallery": {
@@ -1150,7 +1152,7 @@
     "stats": {
       "title": "Stats",
       "subtitle": "ScoopRYM in numbers",
-      "description": "Start turning absurd news, gossip, and social chaos into AI rap songs today.",
+      "description": "Start turning headlines, drama, and gossip into AI parody songs today.",
       "items": {
         "item-1": {
           "title": "Stars on GitHub"
@@ -1165,7 +1167,7 @@
     },
     "calltoaction": {
       "title": "Start Building",
-      "description": "Start turning absurd news, gossip, and social chaos into AI rap songs today.",
+      "description": "Start turning headlines, drama, and gossip into AI parody songs today.",
       "primaryButton": "Get Started",
       "secondaryButton": "See Demo"
     }
@@ -1221,18 +1223,18 @@
   },
   "AIImagePage": {
     "title": "AI Image",
-    "description": "ScoopRYM turns absurd news, gossip, and social chaos into AI rap songs."
+    "description": "ScoopRYM turns headlines, drama, and gossip into AI parody songs."
   },
   "AIChatPage": {
     "title": "AI Chat",
-    "description": "ScoopRYM turns absurd news, gossip, and social chaos into AI rap songs."
+    "description": "ScoopRYM turns headlines, drama, and gossip into AI parody songs."
   },
   "AIVideoPage": {
     "title": "AI Video",
-    "description": "ScoopRYM turns absurd news, gossip, and social chaos into AI rap songs."
+    "description": "ScoopRYM turns headlines, drama, and gossip into AI parody songs."
   },
   "AIAudioPage": {
     "title": "AI Audio",
-    "description": "ScoopRYM turns absurd news, gossip, and social chaos into AI rap songs."
+    "description": "ScoopRYM turns headlines, drama, and gossip into AI parody songs."
   }
 }

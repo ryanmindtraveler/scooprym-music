@@ -24,11 +24,7 @@ export default function PromotekitScript() {
 
   return (
     <>
-      <Script
-        src="https://cdn.promotekit.com/promotekit.js"
-        data-promotekit={promotekitKey}
-        strategy="lazyOnload"
-      />
+      <Script src="https://cdn.promotekit.com/promotekit.js" data-promotekit={promotekitKey} strategy="lazyOnload" />
     </>
   );
 }

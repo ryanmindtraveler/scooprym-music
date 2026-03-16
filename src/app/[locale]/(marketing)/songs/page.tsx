@@ -15,11 +15,22 @@ interface SongsPageProps {
 
 export async function generateMetadata({ params }: SongsPageProps): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  await getTranslations({ locale, namespace: 'Metadata' });
 
   return constructMetadata({
-    title: `Runway | ScoopRYM Music - ${t('title')}`,
-    description: 'Explore the latest AI-generated songs created by the ScoopRYM community.',
+    title: 'Latest AI Parody Songs, Diss Tracks, and Viral Songs',
+    description:
+      'Explore the latest AI parody songs, diss tracks, battle songs, and viral songs created with ScoopRYM.',
+    keywords: [
+      'parody songs',
+      'funny songs',
+      'viral songs',
+      'diss track',
+      'battle songs',
+      'AI song generator',
+      'diss track generator',
+      'rap battle',
+    ],
     locale,
     pathname: '/songs',
   });

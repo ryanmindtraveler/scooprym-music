@@ -32,20 +32,20 @@ export default function Features3Section() {
         <span className="bg-linear-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent"> comedy</span>
       </>
     ),
-    description: 'Headlines, gossip, and memes all turn into AI-generated viral rap songs.',
+    description: 'Headlines, gossip, and memes all turn into AI-generated viral parody songs.',
   };
 
   const features: FeatureCard[] = [
     {
       title: 'Absurd Social Phenomena',
-      desc: 'Bizarre public behavior and weird social stories turned into sharper rap commentary.',
+      desc: 'Bizarre public behavior and weird social stories turned into sharper song commentary.',
       icon: PencilIcon,
       color: 'text-purple-300',
       slug: 'absurd-social-phenomena',
     },
     {
       title: 'Entertainment Topics',
-      desc: 'Celebrity news, entertainment stories, and pop culture moments remixed into rap songs.',
+      desc: 'Celebrity news, entertainment stories, and pop culture moments remixed into parody songs.',
       icon: Settings2Icon,
       color: 'text-orange-300',
       slug: 'entertainment-topics',
@@ -73,7 +73,7 @@ export default function Features3Section() {
     },
     {
       title: 'Comedy Drill',
-      desc: 'Hard beats, funny lyrics. Trap, Drill, and Glitch Rap tailored for laughs.',
+      desc: 'Hard beats, funny lyrics. Trap, Drill, and battle-style songs tailored for laughs.',
       icon: CpuIcon,
       color: 'text-green-300',
       slug: 'comedy-drill',

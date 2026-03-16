@@ -1,5 +1,5 @@
-import { websiteConfig } from '@/config/website';
 import { featuresContent } from '@/config/features';
+import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
 import { song as songTable } from '@/db/schema';
 import { getLocalePathname } from '@/i18n/navigation';

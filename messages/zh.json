@@ -2,8 +2,8 @@
   "Metadata": {
     "name": "ScoopRYM",
     "title": "ScoopRYM - 把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲",
-    "description": "把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲。专为吐槽、恶搞和搞笑演绎而生，把全网最离谱的故事、最炸裂的八卦和最混乱的热点唱成 Rap。",
-    "keywords": "荒诞新闻说唱, 离谱新闻说唱, 怪新闻说唱, 搞笑新闻说唱, 新闻荒诞剧说唱, 八卦说唱, 明星八卦说唱, 娱乐八卦说唱, 名人绯闻说唱, 明星丑闻说唱, 社会迷惑行为说唱, 社会乱象说唱, 社会现象吐槽说唱, 荒诞社会现象说唱, 吐槽说唱, 讽刺说唱, 恶搞说唱, 搞笑说唱, 吐槽神曲, 八卦吐槽说唱, 把荒诞新闻变成说唱, 把八卦变成说唱, 把社会迷惑行为做成说唱, 名人绯闻恶搞歌曲"
+    "description": "把头条、抓马和八卦变成 AI 恶搞神曲。专为吐槽、恶搞和搞笑演绎而生，把全网最离谱的故事、最炸裂的八卦和最混乱的热点做成可传播的歌曲。",
+    "keywords": "headline songs, news songs, drama songs, gossip songs, parody songs, comedy songs, funny songs, roast songs, diss track, battle songs, rap battle, AI song generator, text to song, song generator, diss track generator, parody song generator"
   },
   "Common": {
     "premium": "付费文章",
@@ -166,7 +166,7 @@
     "description": "ScoopRYM 是一个把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲的平台。专为吐槽、恶搞和搞笑演绎而生。",
     "authorName": "ScoopRYM",
     "authorBio": "搞怪说唱与鬼畜神曲工厂",
-    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们专门把荒诞新闻、娱乐大瓜和社会迷惑行为做成洗脑 Rap。为吐槽而来，为神曲而分享。",
+    "introduction": "👋 嘿！这里是 ScoopRYM。我们不做正经音乐。我们专门把头条、娱乐大瓜和社会迷惑行为做成洗脑神曲。为吐槽而来，为分享而生。",
     "talkWithMe": "联系我",
     "followMe": "关注我"
   },
@@ -873,45 +873,47 @@
       }
     },
     "generator": {
-      "subtitle": "生成你的热门单曲",
-      "description": "",
-      "headerInputPlaceholder": "在下方粘贴任意荒诞新闻、八卦或社会迷惑故事，AI 将把它变成一首说唱神曲",
+      "marquee": "恶搞歌曲工厂 | 零门槛创作 | 立刻生成 viral 歌曲 | ",
+      "subtitle": "恶搞歌曲工厂",
+      "description": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲。",
+      "headerInputPlaceholder": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲",
       "left": {
         "label": "输入故事内容",
-        "placeholder": "粘贴荒诞新闻链接或直接输入离谱故事...",
+        "placeholder": "粘贴头条链接，或直接输入抓马故事、八卦内容...",
         "supported": {
           "title": "支持的输入格式：",
-          "item1": "荒诞新闻文章链接",
-          "item2": "怪新闻或故事文本",
+          "item1": "头条链接和新闻文章 URL",
+          "item2": "新闻和抓马故事文本",
           "item3": "社交媒体帖子",
-          "item4": "娱乐八卦",
-          "item5": "社会迷惑行为",
-          "item6": "混乱热点话题"
+          "item4": "八卦和明星热聊",
+          "item5": "社会评论类话题",
+          "item6": "网络抓马和 viral 热点"
         }
       },
       "right": {
         "types": {
-          "title": "支持的内容类型"
+          "title": "内容类型"
         },
         "styles": {
-          "title": "音乐风格"
+          "title": "歌曲风格"
         },
-        "generate": "生成音乐"
+        "generate": "生成歌曲",
+        "waitingForGenerate": "等待生成",
+        "waitingForInput": "等待输入..."
       },
       "contentTypes": {
-        "newsFarce": "头条整活",
-        "hotGossip": "热门八卦",
-        "wtfSociety": "迷惑社会"
+        "headlines": "头条",
+        "gossip": "八卦",
+        "drama": "抓马"
       },
       "styles": {
-        "trap": "#Trap",
+        "parody": "#Parody",
+        "funny": "#Funny",
+        "roast": "#Roast",
+        "viral": "#Viral",
         "satirical": "#Satirical",
-        "parodyRap": "#ParodyRap",
-        "memeEnergy": "#MemeEnergy",
-        "banger": "#Banger",
-        "catchy": "#Catchy",
-        "boldAttitude": "#BoldAttitude",
-        "absurd": "#Absurd"
+        "battle": "#Battle",
+        "catchy": "#Catchy"
       }
     },
     "gallery": {

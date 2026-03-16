@@ -14,28 +14,32 @@ import { Routes } from '@/routes';
 import { useCreateStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, Check, Mic, Sparkles, Wand2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export function MusicGeneratorBlock() {
+  const t = useTranslations('HomePage.generator');
   const [newsContent, setNewsContent] = useState('');
-  const [selectedContentType, setSelectedContentType] = useState<string>('Hot Gossip');
-  const [selectedStyles, setSelectedStyles] = useState<string[]>(['Banger', 'MemeEnergy', 'Viral']);
+  const [selectedContentType, setSelectedContentType] = useState<string>('Gossip');
+  const [selectedStyles, setSelectedStyles] = useState<string[]>(['Parody', 'Funny', 'Viral']);
   const currentUser = useCurrentUser();
   const mounted = useMounted();
   const router = useRouter();
 
-  const contentTypes: string[] = ['Headline Farce', 'Hot Gossip', 'WTF Society'];
+  const contentTypes = [
+    { value: 'Headlines', label: t('contentTypes.headlines') },
+    { value: 'Gossip', label: t('contentTypes.gossip') },
+    { value: 'Drama', label: t('contentTypes.drama') },
+  ];
 
-  const musicStyles: string[] = [
-    'Trap',
-    'Satirical',
-    'ParodyRap',
-    'MemeEnergy',
-    'Banger',
-    'Catchy',
-    'BoldAttitude',
-    'Absurd',
-    'Viral',
+  const musicStyles = [
+    { value: 'Parody', label: t('styles.parody') },
+    { value: 'Funny', label: t('styles.funny') },
+    { value: 'Roast', label: t('styles.roast') },
+    { value: 'Viral', label: t('styles.viral') },
+    { value: 'Satirical', label: t('styles.satirical') },
+    { value: 'Battle', label: t('styles.battle') },
+    { value: 'Catchy', label: t('styles.catchy') },
   ];
 
   // Validation Logic
@@ -113,12 +117,9 @@ export function MusicGeneratorBlock() {
       <div className="absolute top-0 left-0 right-0 z-30 border-y-4 border-black bg-[#ecec3a] py-3 overflow-hidden shadow-xl">
         <ConstantVelocityMarquee velocity={150}>
           {Array(6)
-            .fill('THE DISS TRACK FACTORY • NO SKILLS NEEDED • VIRAL HITS INSTANTLY • ')
+            .fill(t('marquee'))
             .map((text, i) => (
-              <span
-                key={i}
-                className="text-xl md:text-3xl font-black uppercase text-black mx-4 tracking-tighter"
-              >
+              <span key={i} className="text-xl md:text-3xl font-black uppercase text-black mx-4 tracking-tighter">
                 {text}
               </span>
             ))}
@@ -148,10 +149,10 @@ export function MusicGeneratorBlock() {
         >
           <div className="mb-12 text-center">
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 drop-shadow-md">
-              The Diss Track Factory
+              {t('subtitle')}
             </h2>
             <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
-              Paste any absurd news, gossip, or chaotic social story below, and watch AI transform it into a rap song.
+              {t('description')}
             </p>
           </div>
 
@@ -172,7 +173,7 @@ export function MusicGeneratorBlock() {
                       >
                         1
                       </motion.span>
-                      Enter Story Content
+                      {t('left.label')}
                     </h3>
                     <div className="hidden md:flex gap-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
@@ -186,7 +187,7 @@ export function MusicGeneratorBlock() {
                     {/* Top: Textarea (Takes available space) */}
                     <div className="flex-1 relative">
                       <Textarea
-                        placeholder="Paste an absurd news link or enter a chaotic story here..."
+                        placeholder={t('left.placeholder')}
                         className="w-full h-full bg-transparent border-none text-xl md:text-3xl font-bold text-slate-800 placeholder:text-slate-300 p-6 md:p-10 resize-none focus:ring-0 leading-tight selection:bg-indigo-100 overflow-y-auto"
                         value={newsContent}
                         style={{ fieldSizing: 'fixed' } as React.CSSProperties}
@@ -200,26 +201,26 @@ export function MusicGeneratorBlock() {
                     {/* Bottom: Supported Formats (Footer) */}
                     <div className="px-8 py-8 bg-slate-50 text-slate-600 font-bold space-y-3 relative z-10 flex flex-col justify-end">
                       <p className="text-xs uppercase tracking-widest font-black text-slate-400 mb-1">
-                        Supported input formats:
+                        {t('left.supported.title')}
                       </p>
                       <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm pl-0">
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🔗</span> Absurd news article URLs
+                          <span className="text-lg">🔗</span> {t('left.supported.item1')}
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">📝</span> Weird news / story text
+                          <span className="text-lg">📝</span> {t('left.supported.item2')}
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">📱</span> Social media posts
+                          <span className="text-lg">📱</span> {t('left.supported.item3')}
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🎬</span> Entertainment gossip
+                          <span className="text-lg">🎬</span> {t('left.supported.item4')}
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">⚽</span> Social chaos moments
+                          <span className="text-lg">💬</span> {t('left.supported.item5')}
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <span className="text-lg">🔥</span> Viral social topics
+                          <span className="text-lg">🔥</span> {t('left.supported.item6')}
                         </li>
                       </ul>
 
@@ -233,7 +234,7 @@ export function MusicGeneratorBlock() {
                               : 'bg-slate-200 text-slate-400 border-slate-300'
                           )}
                         >
-                          {newsContent.length > 0 ? 'Waiting for Generate' : 'Waiting for Input...'}
+                          {newsContent.length > 0 ? t('right.waitingForGenerate') : t('right.waitingForInput')}
                         </div>
                       </div>
                     </div>
@@ -242,7 +243,7 @@ export function MusicGeneratorBlock() {
 
                 {/* Right: Control Deck */}
                 <div className="lg:col-span-5 flex flex-col h-full gap-8">
-                  {/* Section 2: Supported Content Types - PASTEL YELLOW SOLID */}
+                  {/* Section 2: Content Types - PASTEL YELLOW SOLID */}
                   <div className="space-y-4 bg-[#FFF9C4] p-6 rounded-3xl border border-white/50 shadow-sm relative overflow-hidden group">
                     <h3 className="text-lg font-black tracking-widest text-[#B45309] mb-3 pl-2 flex items-center gap-3">
                       {/* Bold Sticker Number */}
@@ -253,15 +254,15 @@ export function MusicGeneratorBlock() {
                       >
                         2
                       </motion.span>
-                      Supported Content Types
+                      {t('right.types.title')}
                     </h3>
                     <div className="flex flex-col gap-3">
-                      {contentTypes.map((type, i) => {
-                        const isActive = selectedContentType === type;
+                      {contentTypes.map((type) => {
+                        const isActive = selectedContentType === type.value;
                         return (
                           <motion.div
-                            key={type}
-                            onClick={() => setSelectedContentType(type)}
+                            key={type.value}
+                            onClick={() => setSelectedContentType(type.value)}
                             whileTap={{ scale: 0.98 }}
                             className={cn(
                               'group flex items-center justify-between w-full p-5 rounded-2xl transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md border border-transparent',
@@ -270,7 +271,7 @@ export function MusicGeneratorBlock() {
                                 : 'bg-white text-slate-800 hover:bg-white/80 hover:border-black/5'
                             )}
                           >
-                            <span className="text-lg font-bold">{type}</span>
+                            <span className="text-lg font-bold">{type.label}</span>
                             <div
                               className={cn(
                                 'size-4 rounded-full transition-all duration-300 flex items-center justify-center',
@@ -287,7 +288,7 @@ export function MusicGeneratorBlock() {
                     </div>
                   </div>
 
-                  {/* Section 3: Music Styles - PASTEL PINK SOLID */}
+                  {/* Section 3: Song Styles - PASTEL PINK SOLID */}
                   <div className="space-y-4 bg-[#FCE4EC] p-6 rounded-3xl border border-white/50 shadow-sm relative overflow-hidden group">
                     <h3 className="text-lg font-black tracking-widest text-[#831843] mb-3 flex items-center gap-3">
                       {/* Bold Sticker Number */}
@@ -298,7 +299,7 @@ export function MusicGeneratorBlock() {
                       >
                         3
                       </motion.span>
-                      Music Styles
+                      {t('right.styles.title')}
                     </h3>
                     <motion.div
                       className="flex flex-wrap gap-2.5"
@@ -308,7 +309,7 @@ export function MusicGeneratorBlock() {
                       viewport={{ once: true }}
                     >
                       {musicStyles.map((style, i) => {
-                        const isSelected = selectedStyles.includes(style);
+                        const isSelected = selectedStyles.includes(style.value);
 
                         // Define Color Pairs: Pastel (Unselected) vs Vibrant (Selected)
                         const styleConfig = [
@@ -342,13 +343,13 @@ export function MusicGeneratorBlock() {
 
                         return (
                           <motion.button
-                            key={style}
+                            key={style.value}
                             type="button"
                             onClick={() => {
                               if (isSelected) {
-                                setSelectedStyles((prev) => prev.filter((s) => s !== style));
+                                setSelectedStyles((prev) => prev.filter((s) => s !== style.value));
                               } else {
-                                setSelectedStyles((prev) => [...prev, style]);
+                                setSelectedStyles((prev) => [...prev, style.value]);
                               }
                             }}
                             variants={tagItemVariant}
@@ -359,7 +360,7 @@ export function MusicGeneratorBlock() {
                               isSelected ? config.vibrant : config.pastel
                             )}
                           >
-                            <span>#{style}</span>
+                            <span>{style.label}</span>
 
                             {/* Absolute Status Indicator - Zero Layout Shift */}
                             <motion.div
@@ -417,7 +418,7 @@ export function MusicGeneratorBlock() {
                         <div className="relative z-10 flex items-center justify-between w-full px-8">
                           <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
                             <span className="text-3xl font-black tracking-tighter drop-shadow-sm flex items-center gap-2">
-                              Generate Music <span className="animate-bounce">🎵</span>
+                              {t('right.generate')} <span className="animate-bounce">🎵</span>
                             </span>
                             <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
                               {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}
@@ -478,7 +479,7 @@ export function MusicGeneratorBlock() {
                           <div className="relative z-10 flex items-center justify-between w-full px-8">
                             <div className="flex flex-col items-start transition-transform duration-300 group-hover:translate-x-2">
                               <span className="text-3xl font-black tracking-tighter drop-shadow-sm flex items-center gap-2">
-                                Generate Music <span className="animate-bounce">🎵</span>
+                                {t('right.generate')} <span className="animate-bounce">🎵</span>
                               </span>
                               <span className="text-xs font-bold text-white/80 uppercase tracking-[0.2em]">
                                 {canGenerate ? 'AI-Powered Instant Hit' : 'Complete All Steps'}

@@ -159,7 +159,12 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {displayItems.map((item, index) => (
-              <GallerySongCard key={item.id} item={item} onSelect={(song) => setSelectedSong(song)} />
+              <GallerySongCard
+                key={item.id}
+                item={item}
+                onSelect={(song) => setSelectedSong(song)}
+                priority={index < 4}
+              />
             ))}
           </div>
         )}
