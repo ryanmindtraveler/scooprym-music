@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { featuresContent } from '@/config/features';
 import { LOCALES } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/metadata';
-import { getBaseUrl } from '@/lib/urls/urls';
+import { getBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -148,9 +148,9 @@ export default async function FeaturePage({ params }: Props) {
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       <BreadcrumbJsonLd
         items={[
-          { name: isZh ? 'Home' : 'Home', item: `${baseUrl}/${locale}` },
-          { name: 'Features', item: `${baseUrl}/${locale}/#features` },
-          { name: title, item: `${baseUrl}/${locale}/features/${slug}` },
+          { name: isZh ? 'Home' : 'Home', item: getUrlWithLocale('/', locale as Locale) },
+          { name: 'Features', item: `${getUrlWithLocale('/', locale as Locale)}#features` },
+          { name: title, item: getUrlWithLocale(`/features/${slug}`, locale as Locale) },
         ]}
       />
       <FaqJsonLd items={faqs} />

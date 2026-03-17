@@ -14,6 +14,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
+import { getBaseUrl } from '@/lib/urls/urls';
 
 import '@/styles/globals.css';
 import { JsonLd, websiteJsonLd } from '@/components/seo/json-ld';
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
   const t = await getTranslations({ locale, namespace: 'Metadata' });
 
   return {
-    metadataBase: new URL('https://www.scooprym.app'),
+    metadataBase: new URL(getBaseUrl()),
     title: {
       default: t('title'),
       template: `%s | ${t('name')}`,

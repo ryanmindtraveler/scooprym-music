@@ -11,6 +11,7 @@ import { SongDetailClient } from './song-detail-client';
 
 import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import { getIdFromSlug, slugify } from '@/lib/utils';
+import { getUrlWithLocale } from '@/lib/urls/urls';
 import type { MusicRecording, WithContext } from 'schema-dts';
 
 interface SongDetailPageProps {
@@ -139,9 +140,9 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
-    name: song.title,
-    url: `https://www.scooprym.app/songs/${slugify(song.title || 'song')}-${song.id}`,
-    datePublished: song.createdAt ? new Date(song.createdAt).toISOString() : undefined,
+    name: serializableSong.title,
+    url: `https://www.scooprym.app/${resolvedParams.locale}/songs/${canonicalSlug}`,
+    datePublished: serializableSong.createdAt ? new Date(serializableSong.createdAt).toISOString() : undefined,
     duration: song.durationSec ? `PT${song.durationSec}S` : undefined,
     image: song.coverImageUrl || undefined,
     byArtist: {
@@ -156,9 +157,9 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   };
 
   const breadcrumbs = [
-    { name: 'Home', item: 'https://www.scooprym.app' },
-    { name: 'Gallery', item: 'https://www.scooprym.app/#gallery' },
-    { name: song.title, item: `https://www.scooprym.app/songs/${canonicalSlug}` },
+    { name: 'Home', item: getUrlWithLocale('/', resolvedParams.locale) },
+    { name: 'Gallery', item: `${getUrlWithLocale('/', resolvedParams.locale)}#gallery` },
+    { name: serializableSong.title, item: getUrlWithLocale(`/songs/${canonicalSlug}`, resolvedParams.locale) },
   ];
 
   return (

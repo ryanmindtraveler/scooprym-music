@@ -151,9 +151,18 @@ export function MusicGeneratorBlock() {
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 drop-shadow-md">
               {t('subtitle')}
             </h2>
-            <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm">
+            <p className="text-white text-lg md:text-xl font-medium max-w-2xl mx-auto drop-shadow-sm mb-6">
               {t('description')}
             </p>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-yellow-400 text-black font-black text-sm md:text-base shadow-[0_0_30px_rgba(250,204,21,0.4)] border-2 border-black rotate-1"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t('descriptionExtra')}
+            </motion.div>
           </div>
 
           {/* Card Container - White Glass */}

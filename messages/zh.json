@@ -1,4 +1,4 @@
-﻿{
+{
   "Metadata": {
     "name": "ScoopRYM",
     "title": "ScoopRYM - 把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲",
@@ -876,6 +876,7 @@
       "marquee": "恶搞歌曲工厂 | 零门槛创作 | 立刻生成 viral 歌曲 | ",
       "subtitle": "恶搞歌曲工厂",
       "description": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲。",
+      "descriptionExtra": "无需复杂提示词，选个风格直接开唱！✨",
       "headerInputPlaceholder": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲",
       "left": {
         "label": "输入故事内容",
