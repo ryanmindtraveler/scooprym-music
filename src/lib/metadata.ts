@@ -28,8 +28,8 @@ export function constructMetadata({
 } = {}): Metadata {
   title = title || defaultMessages.Metadata.title;
   description = description || defaultMessages.Metadata.description;
-  image = image || websiteConfig.metadata.images?.ogImage;
-  const ogImageUrl = getImageUrl(image || '');
+  image = image || websiteConfig.metadata.images?.ogImage || '/logo.png';
+  const ogImageUrl = getImageUrl(image);
 
   // Generate canonical URL from pathname and locale
   const activePathname = pathname || '/';
@@ -85,7 +85,7 @@ export function constructMetadata({
       title,
       description,
       images: [ogImageUrl.toString()],
-      site: getBaseUrl(),
+      // site: '@ScoopRYM', // Recommended to use a handle, not a URL
     },
     icons: {
       icon: '/logo.png',
