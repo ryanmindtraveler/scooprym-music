@@ -34,6 +34,14 @@ export function getBaseUrl(): string {
 }
 
 /**
+ * Get the canonical site URL that should be used in SEO-sensitive contexts
+ * such as metadata, sitemap entries and share links.
+ */
+export function getCanonicalBaseUrl(): string {
+  return baseUrl;
+}
+
+/**
  * Check if the locale should be appended to the URL
  */
 export function shouldAppendLocale(locale?: Locale | null): boolean {

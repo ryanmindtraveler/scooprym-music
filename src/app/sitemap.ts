@@ -10,7 +10,7 @@ import { and, desc, isNotNull, ne } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';
 import type { Locale } from 'next-intl';
-import { getBaseUrl } from '../lib/urls/urls';
+import { getCanonicalBaseUrl } from '../lib/urls/urls';
 
 type Href = Parameters<typeof getLocalePathname>[0]['href'];
 
@@ -117,5 +117,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 function getUrl(href: Href, locale: Locale) {
   const pathname = getLocalePathname({ locale, href });
-  return getBaseUrl() + pathname;
+  return getCanonicalBaseUrl() + pathname;
 }

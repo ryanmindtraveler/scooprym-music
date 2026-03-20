@@ -4,7 +4,7 @@ import { routing } from '@/i18n/routing';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { generateAlternates, getCurrentHreflang } from './hreflang';
-import { getBaseUrl, getImageUrl, getUrlWithLocale } from './urls/urls';
+import { getCanonicalBaseUrl, getImageUrl, getUrlWithLocale } from './urls/urls';
 
 /**
  * Construct the metadata object for the current page (in docs/guides)
@@ -92,8 +92,8 @@ export function constructMetadata({
       shortcut: '/logo.png',
       apple: '/logo.png',
     },
-    metadataBase: new URL(getBaseUrl()),
-    manifest: `${getBaseUrl()}/manifest.webmanifest`,
+    metadataBase: new URL(getCanonicalBaseUrl()),
+    manifest: `${getCanonicalBaseUrl()}/manifest.webmanifest`,
     ...(noIndex && {
       robots: {
         index: false,

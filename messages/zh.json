@@ -1,8 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - 把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲",
-    "description": "把头条、抓马和八卦变成 AI 恶搞神曲。专为吐槽、恶搞和搞笑演绎而生，把全网最离谱的故事、最炸裂的八卦和最混乱的热点做成可传播的歌曲。",
+    "title": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
+    "description": "把每天最离谱的头条、最混乱的闹剧和最劲爆的八卦，变成机智又上头的 AI 恶搞歌曲。我们把每一场闹剧都做成洗脑神吐槽，纯属娱乐！",
     "keywords": "headline songs, news songs, drama songs, gossip songs, parody songs, comedy songs, funny songs, roast songs, diss track, battle songs, rap battle, AI song generator, text to song, song generator, diss track generator, parody song generator"
   },
   "Common": {
@@ -51,6 +51,11 @@
     "title": "价格",
     "description": "选择最适合您的付费计划",
     "subtitle": "选择最适合您的付费计划",
+    "heroTitleLeading": "方案与",
+    "heroTitleHighlight": "定价",
+    "heroDescription": "定价清晰透明，没有隐藏费用，随时可取消。",
+    "bonusCredits": "每月可领取 10 个免费积分。",
+    "faqTitle": "常见问题",
     "monthly": "月付",
     "yearly": "年付",
     "PricingCard": {
@@ -306,7 +311,16 @@
     "all": "全部",
     "noPostsFound": "没有找到文章",
     "allPosts": "全部文章",
-    "morePosts": "更多文章"
+    "morePosts": "更多文章",
+    "categoryTitle": "分类归档",
+    "categoryUnavailable": "分类归档暂时不可用。"
+  },
+  "SongsPage": {
+    "title": "最新 AI 恶搞歌曲、Diss Track 与 Viral 热门歌曲",
+    "description": "探索 ScoopRYM 社区最新创作的 AI 恶搞歌曲、Diss Track、Battle 歌曲和 viral 热门单曲。",
+    "heroTitleLeading": "社区",
+    "heroTitleHighlight": "秀场",
+    "heroDescription": "发现 ScoopRYM AI 生成的最新热门歌曲。"
   },
   "DocsPage": {
     "toc": "目录",
@@ -317,7 +331,8 @@
     "nextPage": "下一页",
     "chooseLanguage": "选择语言",
     "title": "ScoopRYM文档",
-    "homepage": "首页"
+    "homepage": "首页",
+    "unavailable": "文档内容正在系统升级中，暂时不可用，请稍后再查看。"
   },
   "PremiumContent": {
     "title": "解锁付费内容",
@@ -832,10 +847,12 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "ScoopRYM - 把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲。",
+    "description": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
     "hero": {
       "title": "头条的嘻哈之声",
-      "description": "把荒诞新闻、八卦和社会迷惑行为变成 AI 说唱神曲。"
+      "description": "把头条、闹剧和八卦变成 AI 恶搞歌曲。",
+      "semanticTitle": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
+      "subtitle": "把<headlines>头条</headlines>、<drama>闹剧</drama>和<gossip>八卦</gossip>变成<songs>AI 恶搞歌曲</songs>。"
     },
     "logocloud": {
       "title": "您最爱公司都是我们的合作伙伴"
@@ -875,20 +892,20 @@
     "generator": {
       "marquee": "恶搞歌曲工厂 | 零门槛创作 | 立刻生成 viral 歌曲 | ",
       "subtitle": "恶搞歌曲工厂",
-      "description": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲。",
+      "description": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首恶搞歌曲。",
       "descriptionExtra": "无需复杂提示词，选个风格直接开唱！✨",
-      "headerInputPlaceholder": "在下方粘贴任意头条、抓马或八卦故事，AI 会把它变成一首恶搞歌曲",
+      "headerInputPlaceholder": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首恶搞歌曲",
       "left": {
         "label": "输入故事内容",
-        "placeholder": "粘贴头条链接，或直接输入抓马故事、八卦内容...",
+        "placeholder": "粘贴头条链接，或直接输入闹剧故事、八卦内容...",
         "supported": {
           "title": "支持的输入格式：",
           "item1": "头条链接和新闻文章 URL",
-          "item2": "新闻和抓马故事文本",
+          "item2": "新闻和闹剧故事文本",
           "item3": "社交媒体帖子",
           "item4": "八卦和明星热聊",
           "item5": "社会评论类话题",
-          "item6": "网络抓马和 viral 热点"
+          "item6": "网络闹剧和 viral 热点"
         }
       },
       "right": {
@@ -905,7 +922,7 @@
       "contentTypes": {
         "headlines": "头条",
         "gossip": "八卦",
-        "drama": "抓马"
+        "drama": "闹剧"
       },
       "styles": {
         "parody": "#Parody",
@@ -918,6 +935,13 @@
       }
     },
     "gallery": {
+      "eyebrow": "热榜新鲜出炉",
+      "title": "热门八卦与头条歌曲",
+      "titleLeading": "热门八卦与",
+      "titleHighlight": "头条歌曲",
+      "descriptionLong": "看看社区正在把今天最热的话题做成什么样的歌。",
+      "empty": "还没有热门歌曲，来做第一首吧！",
+      "cta": "查看更多",
       "subtitle": "正在流行",
       "description": "发现最火的 AI 生成曲目",
       "categories": {
@@ -1011,40 +1035,44 @@
       "feature-4": "特色功能特点四"
     },
     "features3": {
-      "title": "功能3",
-      "subtitle": "您的 SaaS 产品功能",
-      "description": "请在这里介绍您的 SaaS 产品的特色功能的信息",
+      "title": "把混乱变成恶搞歌曲",
+      "titleLeading": "把混乱变成",
+      "titleHighlight": "恶搞歌曲",
+      "description": "头条、八卦和梗图，都能变成 AI 生成的病毒式恶搞歌曲。",
+      "cta": "查看详情",
       "items": {
         "item-1": {
-          "title": "产品特色功能一",
-          "description": "请在这里详细描述您的产品特色功能一，尽可能详细，使其更吸引用户"
+          "title": "离谱社会现象",
+          "description": "把荒唐公众行为和奇怪社会新闻，变成更犀利的歌曲吐槽。"
         },
         "item-2": {
-          "title": "产品特色功能二",
-          "description": "请在这里详细描述您的产品特色功能二，尽可能详细，使其更吸引用户"
+          "title": "娱乐热点",
+          "description": "把明星新闻、娱乐话题和流行文化时刻，重混成恶搞歌曲。"
         },
         "item-3": {
-          "title": "产品特色功能三",
-          "description": "请在这里详细描述您的产品特色功能三，尽可能详细，使其更吸引用户"
+          "title": "八卦吐槽",
+          "description": "最新热茶刚出炉，明星翻车现场也能秒变洗脑单曲。"
         },
         "item-4": {
-          "title": "产品特色功能四",
-          "description": "请在这里详细描述您的产品特色功能四，尽可能详细，使其更吸引用户"
+          "title": "新闻恶搞",
+          "description": "政治讽刺和社会新闻，只要他们敢说，你就能把它写成 diss。"
         },
         "item-5": {
-          "title": "产品特色功能五",
-          "description": "请在这里详细描述您的产品特色功能五，尽可能详细，使其更吸引用户"
+          "title": "梗图文化",
+          "description": "奇怪潮流和病毒翻车现场，趁热开 roast，别让梗凉掉。"
         },
         "item-6": {
-          "title": "产品特色功能六",
-          "description": "请在这里详细描述您的产品特色功能六，尽可能详细，使其更吸引用户"
+          "title": "喜剧 Drill",
+          "description": "硬核鼓点配上搞笑歌词，Trap、Drill 和 battle 风格都能拿来整活。"
         }
       }
     },
     "pricing": {
-      "title": "价格",
-      "subtitle": "价格",
-      "description": "选择最适合您的付费计划"
+      "eyebrow": "解锁完整火力",
+      "title": "AI 恶搞歌曲生成定价",
+      "titleLeading": "AI 恶搞歌曲生成",
+      "titleHighlight": "定价",
+      "description": "选择适合你节奏的方案。先免费开玩，再升级放大火力。"
     },
     "faqs": {
       "title": "常见问题",

@@ -53,6 +53,21 @@ export default async function middleware(req: NextRequest) {
     return response;
   }
 
+  // Force a single canonical origin in production to avoid duplicate URLs
+  if (process.env.NODE_ENV === 'production') {
+    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '';
+    const proto = req.headers.get('x-forwarded-proto') ?? nextUrl.protocol.replace(':', '');
+    const canonicalHost = 'www.scooprym.app';
+
+    if (host && (host !== canonicalHost || proto !== 'https')) {
+      const redirectUrl = new URL(req.url);
+      redirectUrl.protocol = 'https:';
+      redirectUrl.host = canonicalHost;
+      console.log('<< middleware end, redirecting to canonical origin:', redirectUrl.toString());
+      return NextResponse.redirect(redirectUrl, 308);
+    }
+  }
+
   // Handle internal docs link redirection for internationalization
   // Check if this is a docs page without locale prefix
   if (nextUrl.pathname.startsWith('/docs/') || nextUrl.pathname === '/docs') {

@@ -6,12 +6,13 @@ import type { Song } from '@/types/song';
 import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { SongDetailClient } from './song-detail-client';
 
 import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
+import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug, slugify } from '@/lib/utils';
-import { getUrlWithLocale } from '@/lib/urls/urls';
 import type { MusicRecording, WithContext } from 'schema-dts';
 
 interface SongDetailPageProps {
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const resolvedParams = await params;
   const { slug, locale } = resolvedParams;
   const id = getIdFromSlug(slug);
+  const t = await getTranslations({ locale, namespace: 'NotFoundPage' });
 
   const db = await getDb();
 
@@ -49,7 +51,8 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 
   if (!song) {
     return constructMetadata({
-      title: 'Song Not Found',
+      title: t('title'),
+      description: t('message'),
       locale,
     });
   }
@@ -83,7 +86,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
+  const { slug, locale } = resolvedParams;
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -136,19 +139,23 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const titleSlug = slugify(song.title || 'song');
   const canonicalSlug = `${titleSlug}-${song.id}`;
 
+  if (slug !== canonicalSlug) {
+    permanentRedirect(getUrlWithLocale(`/songs/${canonicalSlug}`, locale));
+  }
+
   // Structured Data (Schema.org) for MusicRecording
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
     name: serializableSong.title,
-    url: `https://www.scooprym.app/${resolvedParams.locale}/songs/${canonicalSlug}`,
+    url: getUrlWithLocale(`/songs/${canonicalSlug}`, resolvedParams.locale),
     datePublished: serializableSong.createdAt ? new Date(serializableSong.createdAt).toISOString() : undefined,
     duration: song.durationSec ? `PT${song.durationSec}S` : undefined,
     image: song.coverImageUrl || undefined,
     byArtist: {
       '@type': 'MusicGroup',
-      name: 'ScoopRYM Music',
-      url: 'https://www.scooprym.app',
+      name: 'ScoopRYM',
+      url: getCanonicalBaseUrl(),
     },
     inAlbum: {
       '@type': 'MusicAlbum',
@@ -157,8 +164,8 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   };
 
   const breadcrumbs = [
-    { name: 'Home', item: getUrlWithLocale('/', resolvedParams.locale) },
-    { name: 'Gallery', item: `${getUrlWithLocale('/', resolvedParams.locale)}#gallery` },
+    { name: locale === 'zh' ? '首页' : 'Home', item: getUrlWithLocale('/', resolvedParams.locale) },
+    { name: locale === 'zh' ? '画廊' : 'Gallery', item: `${getUrlWithLocale('/', resolvedParams.locale)}#gallery` },
     { name: serializableSong.title, item: getUrlWithLocale(`/songs/${canonicalSlug}`, resolvedParams.locale) },
   ];
 

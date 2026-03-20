@@ -1,13 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn, slugify } from '@/lib/utils';
 import { Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShareButtonProps {
   songId: string;
-  songTitle?: string; // New prop for SEO slug
+  songTitle: string;
   className?: string;
   variant?: 'ghost' | 'secondary' | 'outline' | 'default';
   size?: 'default' | 'sm' | 'lg' | 'icon';
@@ -27,7 +28,7 @@ export function ShareButton({ songId, songTitle, className, variant = 'ghost', s
     // User requested "SEO friendly", standard is usually /songs/slug.
     // Let's grab origin + /songs/...
 
-    const url = `${window.location.origin}/songs/${slug}-${songId}`;
+    const url = `${getCanonicalBaseUrl()}/songs/${slug}-${songId}`;
     navigator.clipboard.writeText(url);
     toast.success('Link copied to clipboard');
   };

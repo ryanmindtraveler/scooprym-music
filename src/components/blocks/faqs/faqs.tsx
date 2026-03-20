@@ -14,7 +14,7 @@ type FAQItem = {
   answer: string;
 };
 
-export default function FaqSection() {
+export function FaqSection() {
   const locale = useLocale();
   const faqItems: FAQItem[] = [
     {
@@ -133,3 +133,5 @@ export default function FaqSection() {
     </section>
   );
 }
+
+export default FaqSection;

@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { LoadingTicker } from '@/components/ui/loading-ticker';
 import { Slider } from '@/components/ui/slider';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn, slugify } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -144,7 +145,7 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
 
   const activeShareUrl =
     propShareUrl ||
-    (currentSong ? `${window.location.origin}/songs/${slugify(currentSong.title || 'song')}-${currentSong.id}` : '');
+    (currentSong ? `${getCanonicalBaseUrl()}/songs/${slugify(currentSong.title || 'song')}-${currentSong.id}` : '');
 
   const handleDownload = async () => {
     if (!currentSong?.audioUrl || isDownloading) return;

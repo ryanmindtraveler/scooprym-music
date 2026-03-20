@@ -5,28 +5,18 @@ import { song as songTable, user } from '@/db/schema';
 import { songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
 import { getSession } from '@/lib/server';
+import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { slugify } from '@/lib/utils'; // Re-importing utils
 import type { Song } from '@/types/song';
 import { and, desc, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import dynamic from 'next/dynamic';
-
-const MusicGeneratorSection = dynamic(
-  () => import('@/components/blocks/generator/music-generator').then((mod) => mod.MusicGeneratorBlock),
-  {
-    loading: () => <div className="min-h-[400px] animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-3xl m-4" />,
-  }
-);
-
-const GallerySection = dynamic(() => import('@/components/blocks/gallery/gallery'), {
-  loading: () => <div className="min-h-[600px] animate-pulse bg-zinc-50 dark:bg-zinc-900" />,
-});
-
-const Features3Section = dynamic(() => import('@/components/blocks/features/features3'));
-const PricingSection = dynamic(() => import('@/components/blocks/pricing/pricing'));
-const FaqSection = dynamic(() => import('@/components/blocks/faqs/no-ssr-faqs'));
+import { FaqSection } from '@/components/blocks/faqs/faqs';
+import Features3Section from '@/components/blocks/features/features3';
+import GallerySection from '@/components/blocks/gallery/gallery';
+import { MusicGeneratorBlock } from '@/components/blocks/generator/music-generator';
+import PricingSection from '@/components/blocks/pricing/pricing';
 
 /**
  * https://next-intl.dev/docs/environments/actions-metadata-route-handlers#metadata-api
@@ -56,7 +46,8 @@ interface HomePageProps {
 
 export default async function HomePage(props: HomePageProps) {
   const params = await props.params;
-  await params;
+  const { locale } = params;
+  const tHome = await getTranslations({ locale, namespace: 'HomePage' });
 
   const db = await getDb();
 
@@ -153,8 +144,8 @@ export default async function HomePage(props: HomePageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'ScoopRYM Song Spotlight',
-    description: 'The latest AI parody songs, funny songs, and viral tracks created from headlines, drama, and gossip.',
+    name: `${tHome('title')} ${tHome('gallery.title')}`,
+    description: tHome('gallery.descriptionLong'),
     numberOfItems: serializedSongs.length,
     itemListElement: serializedSongs.map((song, index) => ({
       '@type': 'ListItem',
@@ -164,11 +155,11 @@ export default async function HomePage(props: HomePageProps) {
         name: song.title,
         image: song.coverImageUrl || undefined,
         datePublished: song.createdAt,
-        url: `https://www.scooprym.app/songs/${slugify(song.title || 'song')}-${song.id}`,
+        url: getUrlWithLocale(`/songs/${slugify(song.title || 'song')}-${song.id}`, locale),
         byArtist: {
           '@type': 'MusicGroup',
           name: 'ScoopRYM',
-          url: 'https://www.scooprym.app',
+          url: getCanonicalBaseUrl(),
         },
       },
     })),
@@ -181,7 +172,7 @@ export default async function HomePage(props: HomePageProps) {
         <HeroSection />
 
         {/* Music Generator Section */}
-        <MusicGeneratorSection />
+        <MusicGeneratorBlock />
 
         {/* Gallery Section with potential initial modal */}
         <GallerySection songs={serializedSongs} initialSelectedSong={sharedSong} />

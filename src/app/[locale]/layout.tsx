@@ -14,10 +14,10 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
-import { getBaseUrl } from '@/lib/urls/urls';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 
 import '@/styles/globals.css';
-import { JsonLd, websiteJsonLd } from '@/components/seo/json-ld';
+import { getWebsiteJsonLd, JsonLd } from '@/components/seo/json-ld';
 
 interface LocaleLayoutProps {
   children: ReactNode;
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
   const t = await getTranslations({ locale, namespace: 'Metadata' });
 
   return {
-    metadataBase: new URL(getBaseUrl()),
+    metadataBase: new URL(getCanonicalBaseUrl()),
     title: {
       default: t('title'),
       template: `%s | ${t('name')}`,
@@ -97,6 +97,12 @@ export default async function LocaleLayout({ children, modal, params }: LocaleLa
   }
 
   const messages = await getMessages();
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const websiteJsonLd = getWebsiteJsonLd({
+    name: t('title'),
+    description: t('description'),
+    url: getCanonicalBaseUrl(),
+  });
 
   return (
     <html suppressHydrationWarning lang={locale}>

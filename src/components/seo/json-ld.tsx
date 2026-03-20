@@ -10,14 +10,24 @@ export function JsonLd<T extends WithContext<any>>({ data }: { data: T }) {
   );
 }
 
-export const websiteJsonLd: WithContext<WebSite> = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'ScoopRYM',
-  alternateName: 'ScoopRYM Music',
-  url: 'https://www.scooprym.app',
-  description: 'Turn headlines, drama, and gossip into AI parody songs, diss tracks, battle songs, and viral songs.',
-};
+export function getWebsiteJsonLd({
+  name,
+  description,
+  url,
+}: {
+  name: string;
+  description: string;
+  url: string;
+}): WithContext<WebSite> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name,
+    alternateName: 'ScoopRYM',
+    url,
+    description,
+  };
+}
 
 export function BreadcrumbJsonLd({ items }: { items: { name: string; item: string }[] }) {
   const breadcrumbList: WithContext<BreadcrumbList> = {

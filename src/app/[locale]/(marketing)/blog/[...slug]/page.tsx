@@ -1,5 +1,6 @@
 import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 import { constructMetadata } from '@/lib/metadata';
+import { getUrlWithLocale } from '@/lib/urls/urls';
 import { blogSource } from '@/lib/source';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { Metadata } from 'next';
@@ -76,9 +77,9 @@ export default async function BlogPostPage({ params }: PageProps) {
     <>
       <BreadcrumbJsonLd
         items={[
-          { name: 'Home', item: 'https://www.scooprym.app' },
-          { name: 'Blog', item: 'https://www.scooprym.app/blog' },
-          { name: data.title, item: `https://www.scooprym.app/blog/${page.url}` },
+          { name: locale === 'zh' ? '首页' : 'Home', item: getUrlWithLocale('/', locale) },
+          { name: t('title'), item: getUrlWithLocale('/blog', locale) },
+          { name: data.title, item: getUrlWithLocale(`/blog/${page.url}`, locale) },
         ]}
       />
 
