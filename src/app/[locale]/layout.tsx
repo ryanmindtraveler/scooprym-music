@@ -28,7 +28,7 @@ interface LocaleLayoutProps {
 /**
  * GENERATE METADATA (SEO)
  */
-export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
+export async function generateMetadata({ params }: LocaleLayoutProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
 

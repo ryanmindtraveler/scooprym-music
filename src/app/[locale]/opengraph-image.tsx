@@ -1,11 +1,8 @@
 import { headers } from 'next/headers';
 import { ImageResponse } from 'next/og';
-import { getTranslations } from 'next-intl/server';
 
-// Route segment config
 export const runtime = 'nodejs';
 
-// Image metadata
 export const size = {
   width: 1200,
   height: 630,
@@ -13,29 +10,38 @@ export const size = {
 
 export const contentType = 'image/png';
 
-// Generate the image
+function getOgCopy(locale: string) {
+  const isZh = locale.startsWith('zh');
+
+  return {
+    isZh,
+    subtitle: isZh ? '把头条、闹剧和八卦变成' : 'Turn headlines, drama, and gossip into',
+    highlight: isZh ? 'AI 恶搞歌曲' : 'AI parody songs',
+    badge: isZh ? '音乐整活协议' : 'Music Identity Protocol',
+    alt: isZh
+      ? 'ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。'
+      : 'ScoopRYM - Turn Headlines, Drama, and Gossip into AI Parody Songs.',
+  };
+}
+
 export default async function Image({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const isZh = locale.startsWith('zh');
-  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const copy = getOgCopy(locale);
   const headerStore = await headers();
   const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host');
   const proto = headerStore.get('x-forwarded-proto') ?? 'https';
   const siteUrl = host ? `${proto}://${host}` : process.env.NEXT_PUBLIC_WEB_URL || 'https://www.scooprym.app';
   const logoSrc = `${siteUrl}/logo.png`;
 
-  // Load a custom font (Inter) for better typography
-  // Accessing Google Fonts directly is standard for Next.js OG
   const interSemiBold = await fetch(
     'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff'
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
-    // ImageResponse JSX element
     <div
       style={{
         background: '#0F172A',
@@ -50,7 +56,6 @@ export default async function Image({
         overflow: 'hidden',
       }}
     >
-      {/* Dynamic Background Blobs */}
       <div
         style={{
           position: 'absolute',
@@ -85,7 +90,6 @@ export default async function Image({
         }}
       />
 
-      {/* Main Content Container */}
       <div
         style={{
           display: 'flex',
@@ -152,11 +156,10 @@ export default async function Image({
             letterSpacing: '-0.01em',
           }}
         >
-          {isZh ? '把头条、闹剧和八卦变成' : 'Turn headlines, drama, and gossip into'}{' '}
-          <span style={{ color: '#818CF8', fontWeight: 600 }}>{isZh ? 'AI 恶搞歌曲' : 'AI parody songs'}</span>
+          {copy.subtitle}{' '}
+          <span style={{ color: '#818CF8', fontWeight: 600 }}>{copy.highlight}</span>
         </p>
 
-        {/* Decorative Soundwave Elements */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 40, opacity: 0.4 }}>
           {[20, 40, 25, 35, 15, 30, 45, 25, 35, 20, 40, 30, 15].map((h, i) => (
             <div
@@ -172,7 +175,6 @@ export default async function Image({
         </div>
       </div>
 
-      {/* Footer / Badge */}
       <div
         style={{
           position: 'absolute',
@@ -195,11 +197,10 @@ export default async function Image({
             letterSpacing: '0.1em',
           }}
         >
-          {isZh ? '音乐整活协议' : 'Music Identity Protocol'}
+          {copy.badge}
         </div>
       </div>
     </div>,
-    // ImageResponse options
     {
       ...size,
       fonts: [
@@ -220,12 +221,12 @@ export async function generateImageMetadata({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const copy = getOgCopy(locale);
 
   return [
     {
       id: 'default',
-      alt: t('title'),
+      alt: copy.alt,
       size,
       contentType,
     },

@@ -237,7 +237,7 @@ export function Navbar({ scroll }: NavBarProps) {
         </nav>
 
         {/* mobile navbar */}
-        <NavbarMobile className="lg:hidden" />
+        <NavbarMobile className="lg:hidden" currentUser={currentUser} isPending={isPending} />
       </Container>
     </section>
   );

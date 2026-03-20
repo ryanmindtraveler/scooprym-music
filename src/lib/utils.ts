@@ -8,7 +8,17 @@ export function cn(...inputs: ClassValue[]) {
 export function slugify(text: string): string {
   if (!text) return 'song';
 
-  let slug = text.toString().trim().toLowerCase();
+  let slug = text
+    .toString()
+    .normalize('NFKD')
+    .trim()
+    .toLowerCase();
+
+  // Strip combining marks after normalization so accented characters become stable ASCII-friendly slugs.
+  slug = slug.replace(/[\u0300-\u036f]/g, '');
+
+  // Normalize common unicode quotes/apostrophes that otherwise cause self-redirect loops in canonical slugs.
+  slug = slug.replace(/[\u2018\u2019\u201B\u0060\u00B4\u2032\u2035\u0022\u201C\u201D\u201E\u201F\u2033]/g, '');
 
   // Replace common punctuation with empty string (keeping alphanumeric + unicode chars)
   // We use a blacklist approach to be safe with CJK/Unicode names.

@@ -7,25 +7,28 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useNavbarLinks } from '@/config/navbar-config';
 import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { Portal } from '@radix-ui/react-portal';
 import { ArrowUpRightIcon, ChevronDownIcon, ChevronRightIcon, MenuIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import type { User } from 'better-auth';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { RemoveScroll } from 'react-remove-scroll';
 import { Skeleton } from '../ui/skeleton';
 import { UserButtonMobile } from './user-button-mobile';
 
-export function NavbarMobile({ className, ...other }: React.HTMLAttributes<HTMLDivElement>) {
+interface NavbarMobileProps extends React.HTMLAttributes<HTMLDivElement> {
+  currentUser?: User;
+  isPending?: boolean;
+}
+
+export function NavbarMobile({ className, currentUser, isPending = false, ...other }: NavbarMobileProps) {
   const t = useTranslations();
   const [open, setOpen] = React.useState<boolean>(false);
   const localePathname = useLocalePathname();
   const [mounted, setMounted] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
-  const currentUser = session?.user;
 
   useEffect(() => {
     setMounted(true);

@@ -31,9 +31,11 @@ export function GoogleOneTap() {
 
   // Routes where One Tap should NOT appear
   const isAuthRoute = pathname?.includes(Routes.Login) || pathname?.includes(Routes.Register);
+  const isHomepage = pathname === '/' || /^\/[a-z]{2}$/.test(pathname || '');
+  const shouldEnableOneTap = process.env.NODE_ENV === 'production' && isHomepage && !isAuthRoute;
 
   useEffect(() => {
-    if (isPending || session || isAuthRoute || !scriptLoaded) {
+    if (isPending || session || !shouldEnableOneTap || !scriptLoaded) {
       return;
     }
 
@@ -90,7 +92,11 @@ export function GoogleOneTap() {
         notification.isNotDisplayed() ? 'Not Displayed' : 'Displayed'
       );
     });
-  }, [session, isPending, scriptLoaded, isAuthRoute, router, refetch, pathname]);
+  }, [session, isPending, scriptLoaded, shouldEnableOneTap, router, refetch, pathname]);
+
+  if (!shouldEnableOneTap) {
+    return null;
+  }
 
   return (
     <Script

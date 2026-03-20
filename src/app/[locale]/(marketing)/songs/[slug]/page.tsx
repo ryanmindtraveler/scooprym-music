@@ -1,19 +1,18 @@
+import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import { getDb } from '@/db';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
+import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getSession } from '@/lib/server';
+import { getIdFromSlug, slugify } from '@/lib/utils';
 import type { Song } from '@/types/song';
 import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { notFound, permanentRedirect } from 'next/navigation';
-import { SongDetailClient } from './song-detail-client';
-
-import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
-import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
-import { getIdFromSlug, slugify } from '@/lib/utils';
 import type { MusicRecording, WithContext } from 'schema-dts';
+import { SongDetailClient } from './song-detail-client';
 
 interface SongDetailPageProps {
   params: Promise<{
@@ -57,11 +56,9 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     });
   }
 
-  // Generate strict canonical slug
   const titleSlug = slugify(song.title || 'song');
   const canonicalSlug = `${titleSlug}-${song.id}`;
 
-  // SEO: Build a neutral description from the song context without forcing a genre/story angle.
   const backgroundContent = song.newsSummary || song.sourceText || song.lyrics || '';
   const cleanContent = backgroundContent
     .replace(/\[.*?\]/g, '')
@@ -76,10 +73,10 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 
   return constructMetadata({
     title: `${song.title} | ScoopRYM AI Parody Song`,
-    description: description,
+    description,
     image: song.coverImageUrl || undefined,
     locale,
-    pathname: `/songs/${canonicalSlug}`, // Enforce strict canonical URL
+    pathname: `/songs/${canonicalSlug}`,
     keywords: [song.title, 'AI Song', 'Parody Song', 'Funny Song', 'Viral Song', 'Diss Track', 'Battle Song'],
   });
 }
@@ -116,7 +113,6 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     notFound();
   }
 
-  // Check favorite status
   let isFavorite = false;
   if (userId) {
     const [fav] = await db
@@ -126,8 +122,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     isFavorite = !!fav;
   }
 
-  // Prepare serializable song object
-  const serializableSong = {
+  const serializableSong: Song = {
     ...song,
     createdAt: song.createdAt ? new Date(song.createdAt) : new Date(),
     updatedAt: song.updatedAt ? new Date(song.updatedAt) : new Date(),
@@ -135,7 +130,6 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     plays: song.plays || 0,
   };
 
-  // Generate strict canonical slug
   const titleSlug = slugify(song.title || 'song');
   const canonicalSlug = `${titleSlug}-${song.id}`;
 
@@ -143,7 +137,6 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     permanentRedirect(getUrlWithLocale(`/songs/${canonicalSlug}`, locale));
   }
 
-  // Structured Data (Schema.org) for MusicRecording
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
@@ -170,11 +163,9 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   ];
 
   return (
-    // Immersive Full-Page Layout: "Ambient Soft Focus" with Split View
     <div className="min-h-screen w-full bg-slate-50 dark:bg-black">
       <JsonLd data={musicRecordingSchema} />
       <BreadcrumbJsonLd items={breadcrumbs} />
-
       <SongDetailClient song={serializableSong} initialIsFavorite={isFavorite} autoPlay={true} />
     </div>
   );
