@@ -25,6 +25,8 @@ export async function generateMetadata({
 }
 
 export default async function PricingPage() {
+  const t = await getTranslations('PricingPage');
+
   return (
     <div className="min-h-screen bg-background pt-20">
       <section className="relative py-20">
@@ -33,12 +35,12 @@ export default async function PricingPage() {
         <Container className="relative z-10 max-w-6xl px-4 flex flex-col gap-16">
           <div className="text-center space-y-6">
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter">
-              PLANS & <span className="text-primary">PRICING</span>
+              {t('heroTitleLeading')} <span className="text-primary">{t('heroTitleHighlight')}</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Simple pricing. No hidden fees. Cancel anytime.
+              {t('heroDescription')}
               <br />
-              <span className="text-accent font-bold">Get 10 free credits every month.</span>
+              <span className="text-accent font-bold">{t('bonusCredits')}</span>
             </p>
           </div>
 
@@ -47,7 +49,7 @@ export default async function PricingPage() {
           <div className="mt-16">
             <div className="flex items-center justify-center gap-2 mb-8">
               <Zap className="w-6 h-6 text-primary" />
-              <h2 className="text-3xl font-bold uppercase tracking-wide">FAQ</h2>
+              <h2 className="text-3xl font-bold uppercase tracking-wide">{t('faqTitle')}</h2>
             </div>
             <FaqSection />
           </div>

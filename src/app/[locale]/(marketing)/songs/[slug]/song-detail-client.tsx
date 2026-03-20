@@ -14,6 +14,8 @@ import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2 } from 'lucide-react';
 import Image from 'next/image';
+import { useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -33,6 +35,9 @@ const formatTime = (seconds: number | null | undefined) => {
 };
 
 export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: SongDetailClientProps) {
+  const locale = useLocale();
+  const tNavbar = useTranslations('Marketing.navbar');
+
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
   const currentTime = usePlayerStore((state) => state.currentTime);
@@ -111,13 +116,13 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
               <ol className="flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <li>
                   <LocaleLink href="/" className="hover:text-indigo-500 transition-colors">
-                    Home
+                    {tNavbar('home.title')}
                   </LocaleLink>
                 </li>
                 <li className="mx-2">/</li>
                 <li>
                   <LocaleLink href="/#gallery" className="hover:text-indigo-500 transition-colors">
-                    Gallery
+                    {tNavbar('gallery.title')}
                   </LocaleLink>
                 </li>
                 <li className="mx-2">/</li>
@@ -166,7 +171,7 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                 <div className="flex items-center gap-2 mb-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" />
                   <h3 className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none">
-                    Background
+                    {locale.startsWith('zh') ? '背景' : 'Background'}
                   </h3>
                 </div>
                 {song.sourceUrl && (
@@ -175,8 +180,8 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="absolute top-3 right-3 flex items-center justify-center size-7 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-indigo-50 dark:hover:bg-white/20 transition-all hover:scale-110 active:scale-95 shadow-sm group/link z-10"
-                    title="Read Full Story"
-                    aria-label="Read Full Story"
+                    title={locale.startsWith('zh') ? '查看完整故事' : 'Read Full Story'}
+                    aria-label={locale.startsWith('zh') ? '查看完整故事' : 'Read Full Story'}
                   >
                     <span
                       role="img"
@@ -374,6 +379,7 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                 )}
                 <ShareButton
                   songId={song.id}
+                  songTitle={song.title}
                   className="size-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-110 active:scale-95 transition-all duration-300"
                 />
               </div>
@@ -422,6 +428,7 @@ function FormattedLyricsView({
   songId: string;
   className?: string;
 }) {
+  const locale = useLocale();
   const { currentTime, isPlaying, currentSong } = usePlayerStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -430,7 +437,7 @@ function FormattedLyricsView({
   if (!lyrics) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 italic">
-        <span>No lyrics available for this track.</span>
+        <span>{locale.startsWith('zh') ? '这首歌暂时没有可显示的歌词。' : 'No lyrics available for this track.'}</span>
       </div>
     );
   }

@@ -38,7 +38,7 @@ export default async function ChangelogPage(props: NextPageProps) {
           <p className="text-center text-lg text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="mt-8 text-center text-muted-foreground">
-          <p>Changelog content is temporarily unavailable due to system updates.</p>
+          <p>{t('subtitle')}</p>
         </div>
       </div>
     </div>

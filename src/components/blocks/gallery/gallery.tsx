@@ -12,6 +12,7 @@ import { ArrowUpRight, Clock, Eye, Loader2, Pause, Play, TrendingUp } from 'luci
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
@@ -24,6 +25,7 @@ interface GallerySectionProps {
 }
 
 export default function GallerySection({ songs = [], initialSelectedSong = null }: GallerySectionProps) {
+  const t = useTranslations('HomePage.gallery');
   const router = useRouter();
   const [selectedSong, setSelectedSong] = useState<Song | null>(initialSelectedSong);
 
@@ -127,7 +129,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 border border-gray-200 shadow-sm text-sm font-bold tracking-widest text-gray-500 mb-2"
           >
             <TrendingUp className="w-4 h-4 text-pink-500" />
-            <span>Hot Off the Press</span>
+            <span>{t('eyebrow')}</span>
           </motion.div>
 
           <motion.h2
@@ -137,8 +139,10 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             transition={{ delay: 0.1 }}
             className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-linear-to-r from-gray-900 via-gray-700 to-gray-900 drop-shadow-sm pb-2"
           >
-            The Daily{' '}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-500">Roast</span>
+            {t('titleLeading')}{' '}
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-500">
+              {t('titleHighlight')}
+            </span>
           </motion.h2>
 
           <motion.p
@@ -148,13 +152,13 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             transition={{ delay: 0.2 }}
             className="text-xl font-medium text-gray-600 max-w-2xl mx-auto"
           >
-            Check out what our community is creating from today's hottest topics.
+            {t('descriptionLong')}
           </motion.p>
         </div>
 
         {displayItems.length === 0 ? (
           <div className="text-center py-20 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-3xl">
-            <p className="text-2xl font-bold text-gray-400">No trending music yet. Be the first to create!</p>
+            <p className="text-2xl font-bold text-gray-400">{t('empty')}</p>
           </div>
         ) : (
           <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -175,7 +179,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             onClick={handleShowMoreClick}
             className="inline-flex items-center justify-center px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
           >
-            Show Me More
+            {t('cta')}
           </button>
         </div>
       </div>

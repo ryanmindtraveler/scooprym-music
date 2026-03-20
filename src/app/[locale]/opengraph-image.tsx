@@ -1,11 +1,11 @@
 import { headers } from 'next/headers';
 import { ImageResponse } from 'next/og';
+import { getTranslations } from 'next-intl/server';
 
 // Route segment config
 export const runtime = 'nodejs';
 
 // Image metadata
-export const alt = 'ScoopRYM - Turn headlines, drama, and gossip into AI parody songs';
 export const size = {
   width: 1200,
   height: 630,
@@ -14,7 +14,14 @@ export const size = {
 export const contentType = 'image/png';
 
 // Generate the image
-export default async function Image() {
+export default async function Image({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const isZh = locale.startsWith('zh');
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
   const headerStore = await headers();
   const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host');
   const proto = headerStore.get('x-forwarded-proto') ?? 'https';
@@ -145,8 +152,8 @@ export default async function Image() {
             letterSpacing: '-0.01em',
           }}
         >
-          Turn headlines, drama, and gossip into{' '}
-          <span style={{ color: '#818CF8', fontWeight: 600 }}>AI parody songs</span>
+          {isZh ? '把头条、闹剧和八卦变成' : 'Turn headlines, drama, and gossip into'}{' '}
+          <span style={{ color: '#818CF8', fontWeight: 600 }}>{isZh ? 'AI 恶搞歌曲' : 'AI parody songs'}</span>
         </p>
 
         {/* Decorative Soundwave Elements */}
@@ -188,7 +195,7 @@ export default async function Image() {
             letterSpacing: '0.1em',
           }}
         >
-          Music Identity Protocol
+          {isZh ? '音乐整活协议' : 'Music Identity Protocol'}
         </div>
       </div>
     </div>,
@@ -205,4 +212,22 @@ export default async function Image() {
       ],
     }
   );
+}
+
+export async function generateImageMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+
+  return [
+    {
+      id: 'default',
+      alt: t('title'),
+      size,
+      contentType,
+    },
+  ];
 }

@@ -11,15 +11,18 @@ export async function generateMetadata({
   params: Promise<{ locale: Locale }>;
 }): Promise<Metadata | undefined> {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'ContactPage' });
   return constructMetadata({
-    title: 'Contact Us | Scooprym Music',
-    description: 'Get in touch with the team.',
+    title: t('title'),
+    description: t('description'),
     locale,
     pathname: '/contact',
   });
 }
 
 export default async function ContactPage() {
+  const t = await getTranslations('ContactPage');
+
   return (
     <div className="min-h-screen bg-background pt-20">
       <section className="relative py-20">
@@ -30,10 +33,10 @@ export default async function ContactPage() {
             {/* Header */}
             <div className="text-center space-y-6">
               <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
-                HIT US <span className="text-primary">UP</span>
+                {t('title')}
               </h1>
               <p className="text-xl text-muted-foreground max-w-xl mx-auto">
-                Got questions? Collab ideas? Or just want to say hi? Drop us a line.
+                {t('description')}
               </p>
             </div>
 

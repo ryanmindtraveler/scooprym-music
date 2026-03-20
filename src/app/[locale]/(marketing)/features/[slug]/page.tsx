@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { featuresContent } from '@/config/features';
 import { LOCALES } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/metadata';
-import { getBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
+import { getUrlWithLocale } from '@/lib/urls/urls';
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -100,7 +100,6 @@ export default async function FeaturePage({ params }: Props) {
   const faqs = feature.faqs[langKey];
   const relatedPages = feature.relatedSlugs.map((relatedSlug) => featuresContent[relatedSlug]).filter(Boolean);
   const icon = iconMap[slug as keyof typeof iconMap];
-  const baseUrl = getBaseUrl();
 
   // Theme configuration for each topic (using homepage-inspired light palettes)
   const themeMap: Record<string, { blob1: string; blob2: string; textGradient: string; accent: string }> = {
@@ -148,8 +147,8 @@ export default async function FeaturePage({ params }: Props) {
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       <BreadcrumbJsonLd
         items={[
-          { name: isZh ? 'Home' : 'Home', item: getUrlWithLocale('/', locale as Locale) },
-          { name: 'Features', item: `${getUrlWithLocale('/', locale as Locale)}#features` },
+          { name: isZh ? '首页' : 'Home', item: getUrlWithLocale('/', locale as Locale) },
+          { name: isZh ? '功能' : 'Features', item: `${getUrlWithLocale('/', locale as Locale)}#features` },
           { name: title, item: getUrlWithLocale(`/features/${slug}`, locale as Locale) },
         ]}
       />
@@ -179,10 +178,10 @@ export default async function FeaturePage({ params }: Props) {
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mb-10">
-          <Link
-            href={`/${locale}/#features`}
-            className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-slate-900"
-          >
+            <Link
+              href={`${getUrlWithLocale('/', locale as Locale)}#features`}
+              className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-slate-900"
+            >
             <span className="transition-transform group-hover:-translate-x-1">{'<-'}</span>
             {isZh ? '返回特性卡片' : 'Back to feature cards'}
           </Link>
@@ -229,7 +228,9 @@ export default async function FeaturePage({ params }: Props) {
                 className="h-14 rounded-full bg-slate-900 px-8 text-base font-bold text-white shadow-2xl shadow-indigo-200 transition-all hover:scale-105 hover:bg-slate-800 sm:h-16 sm:px-10 sm:text-lg"
                 asChild
               >
-                <Link href={`/${locale}/#generator`}>{isZh ? 'Start generating' : 'Start generating'}</Link>
+                <Link href={`${getUrlWithLocale('/', locale as Locale)}#generator`}>
+                  {isZh ? '开始生成' : 'Start generating'}
+                </Link>
               </Button>
             </div>
           </div>
@@ -249,7 +250,7 @@ export default async function FeaturePage({ params }: Props) {
 
             <div className="rounded-[2.5rem] border border-white/60 bg-white/40 p-8 backdrop-blur-2xl shadow-xl shadow-slate-200/40">
               <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                {isZh ? 'Target keyword angles' : 'Target keyword angles'}
+                {isZh ? '目标关键词角度' : 'Target keyword angles'}
               </h2>
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                 {feature.keywords.en.map((keyword) => (
@@ -269,7 +270,7 @@ export default async function FeaturePage({ params }: Props) {
           {feature.layoutType !== 'case-archive' && (
             <section className="rounded-[3rem] border border-white/60 bg-white/40 p-10 backdrop-blur-3xl shadow-2xl shadow-slate-200/50 sm:p-14">
               <h2 className="text-4xl font-black tracking-tight sm:text-5xl text-slate-900">
-                {isZh ? 'The core narrative behind this' : 'The core narrative behind this'}
+                {isZh ? '这个主题背后的核心叙事' : 'The core narrative behind this'}
               </h2>
               <div className="mt-8 space-y-6 text-lg leading-relaxed text-slate-600 font-medium sm:text-xl">
                 {intro.map((paragraph) => (
@@ -334,9 +335,11 @@ export default async function FeaturePage({ params }: Props) {
                       <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-8">
                         <div className="flex flex-col gap-1">
                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            Detection Date
+                            {isZh ? '收录日期' : 'Detection Date'}
                           </span>
-                          <span className="text-sm font-black text-pink-500">2025/26 ANALYSIS</span>
+                          <span className="text-sm font-black text-pink-500">
+                            {isZh ? '2025/26 档案分析' : '2025/26 ANALYSIS'}
+                          </span>
                         </div>
                         <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200">
                           <ArrowRightIcon className="size-5" />
@@ -362,7 +365,7 @@ export default async function FeaturePage({ params }: Props) {
                 </h2>
                 <p className="max-w-2xl text-xl text-slate-500 leading-relaxed font-bold">
                   {isZh
-                    ? '收录全球娱乐圈最炸裂的狗血抓马和史诗级冥场面，一键打造成下一首血洗短视频的洗脑神曲。'
+                    ? '收录全球娱乐圈最炸裂的狗血闹剧和史诗级名场面，一键打造成下一首血洗短视频的洗脑神曲。'
                     : 'The most explosive celebrity drama and pop culture chaos, curated and ready to be remixed into your next viral hit.'}
                 </p>
               </div>
@@ -400,7 +403,7 @@ export default async function FeaturePage({ params }: Props) {
                     <div className="flex flex-row md:flex-col items-center gap-6 md:min-w-[140px] justify-between w-full md:w-auto mt-6 md:mt-0 pt-6 md:pt-0 border-t border-slate-100 md:border-t-0">
                       <div className="flex flex-col items-start md:items-end gap-1">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          Peak Trend
+                          {isZh ? '热度峰值' : 'Peak Trend'}
                         </span>
                         <div className="flex items-center gap-1 text-orange-500">
                           <ZapIcon className="size-4 animate-pulse" />
@@ -444,9 +447,11 @@ export default async function FeaturePage({ params }: Props) {
                       <UserCircle2Icon className="size-9 text-white/50" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xl font-black text-slate-900 tracking-tight">Anonymous Leaker</span>
+                      <span className="text-xl font-black text-slate-900 tracking-tight">
+                        {isZh ? '匿名爆料人' : 'Anonymous Leaker'}
+                      </span>
                       <span className="text-xs text-green-600 font-black animate-pulse uppercase tracking-widest">
-                        ● Live Feed
+                        {isZh ? '直播线报' : 'Live Feed'}
                       </span>
                     </div>
                   </div>
@@ -601,10 +606,10 @@ export default async function FeaturePage({ params }: Props) {
               <div className="flex flex-col items-center gap-6 text-center">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-6 py-2 text-sm font-black tracking-widest uppercase text-cyan-600 backdrop-blur-md">
                   <ActivityIcon className="size-4 animate-pulse" />
-                  {isZh ? '赛博精神档案展' : 'The Cyber Gallery'}
+                  {isZh ? '?????' : 'The Cyber Gallery'}
                 </div>
                 <h2 className="text-6xl font-black tracking-tighter sm:text-7xl lg:text-9xl bg-linear-to-b from-cyan-400 to-blue-800 bg-clip-text text-transparent drop-shadow-sm">
-                  {isZh ? '全网顶级迷因' : 'Peak Brainrot'}
+                  {isZh ? '??????' : 'Peak Brainrot'}
                 </h2>
                 <p className="max-w-2xl text-xl text-slate-500 leading-relaxed font-bold">
                   {isZh
@@ -672,10 +677,10 @@ export default async function FeaturePage({ params }: Props) {
               <div className="flex flex-col items-center gap-6 text-center">
                 <div className="inline-flex items-center gap-2 rounded-lg border-2 border-green-500/30 bg-green-50/50 px-6 py-2 text-sm font-black tracking-widest text-green-600 uppercase">
                   <TerminalIcon className="size-4" />
-                  {isZh ? '初始化序列...' : 'INIT_SEQUENCE...'}
+                  {isZh ? '?????...' : 'INIT_SEQUENCE...'}
                 </div>
                 <h2 className="text-6xl font-black tracking-tighter sm:text-7xl lg:text-9xl bg-linear-to-b from-green-500 to-emerald-900 bg-clip-text text-transparent drop-shadow-sm uppercase">
-                  {isZh ? '系统故障说唱' : 'System Error'}
+                  {isZh ? '??????' : 'System Error'}
                 </h2>
                 <p className="max-w-2xl text-xl text-slate-500 leading-relaxed font-bold">
                   {isZh
@@ -743,7 +748,9 @@ export default async function FeaturePage({ params }: Props) {
                           <div className={`size-2 rounded-full ${item.dot} animate-pulse`} />
                           [TRK_{String(idx + 1).padStart(2, '0')}] {item.type}
                         </span>
-                        <span className="font-mono text-[10px] text-slate-300 uppercase">Buffer Overload</span>
+                        <span className="font-mono text-[10px] text-slate-300 uppercase">
+                          {isZh ? '缓冲过载' : 'Buffer Overload'}
+                        </span>
                       </div>
                       <h3 className="text-3xl font-black text-slate-900 tracking-tight group-hover:text-green-600 transition-colors">
                         <span className="text-slate-200 select-none mr-2 font-mono">{'>'}</span>
@@ -861,7 +868,7 @@ export default async function FeaturePage({ params }: Props) {
               {relatedPages.map((related) => (
                 <Link
                   key={related.slug}
-                  href={`/${locale}/features/${related.slug}`}
+                  href={getUrlWithLocale(`/features/${related.slug}`, locale as Locale)}
                   className="group rounded-3xl border border-white/60 bg-white/40 p-6 backdrop-blur-xl shadow-lg shadow-slate-200/40 transition-all hover:bg-white/80 hover:scale-[1.02]"
                 >
                   <div className="flex items-center justify-between gap-4">
@@ -893,7 +900,9 @@ export default async function FeaturePage({ params }: Props) {
                 className="h-14 rounded-full bg-slate-900 px-10 text-base font-bold text-white shadow-2xl shadow-indigo-200 transition-all hover:scale-105 hover:bg-slate-800 sm:h-16 sm:text-lg"
                 asChild
               >
-                <Link href={`/${locale}/#generator`}>{isZh ? '立即开始创作' : 'Start creating'}</Link>
+                <Link href={`${getUrlWithLocale('/', locale as Locale)}#generator`}>
+                  {isZh ? '立即开始创作' : 'Start creating'}
+                </Link>
               </Button>
             </div>
           </section>

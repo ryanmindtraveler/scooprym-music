@@ -11,15 +11,20 @@ export async function generateMetadata({
   params: Promise<{ locale: Locale }>;
 }): Promise<Metadata | undefined> {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const pt = await getTranslations({ locale, namespace: 'RoadmapPage' });
+
   return constructMetadata({
-    title: 'Roadmap | Scooprym Music',
-    description: 'See what we are building next.',
+    title: pt('title') + ' | ' + t('title'),
+    description: pt('description'),
     locale,
     pathname: '/roadmap',
   });
 }
 
 export default async function RoadmapPage() {
+  const t = await getTranslations('RoadmapPage');
+
   return (
     <div className="min-h-screen bg-background pt-20">
       <section className="relative py-20">
@@ -30,10 +35,10 @@ export default async function RoadmapPage() {
             {/* Header */}
             <div className="text-center space-y-6">
               <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
-                THE <span className="text-primary">BLUEPRINT</span>
+                {t('title')}
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                We're just getting started. Check out what's cooking in the studio.
+                {t('subtitle')}
               </p>
             </div>
 

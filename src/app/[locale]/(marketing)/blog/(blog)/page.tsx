@@ -12,10 +12,11 @@ export async function generateMetadata({
 }): Promise<Metadata | undefined> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const pt = await getTranslations({ locale, namespace: 'BlogPage' });
 
   return constructMetadata({
     title: 'Blog | ' + t('title'),
-    description: 'Latest updates and stories from Scooprym Music.',
+    description: pt('description'),
     locale,
     pathname: '/blog',
   });
@@ -27,10 +28,12 @@ export default async function BlogIndexPage(props: NextPageProps) {
     notFound();
   }
 
+  const t = await getTranslations('BlogPage');
+
   return (
     <div className="container mx-auto py-32 px-4 text-center">
-      <h1 className="text-4xl font-bold mb-4">Blog</h1>
-      <p className="text-xl text-muted-foreground">Temporarily unavailable. Check back soon!</p>
+      <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
+      <p className="text-xl text-muted-foreground">{t('subtitle')}</p>
     </div>
   );
 }

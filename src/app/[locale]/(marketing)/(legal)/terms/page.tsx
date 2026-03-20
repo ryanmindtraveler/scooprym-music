@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!page) {
     return constructMetadata({
       title: 'Terms of Service',
-      description: 'Terms of Service for Scooprym Music',
+      description: 'Terms of Service for ScoopRYM',
       locale: locale as 'en' | 'zh',
       pathname: '/terms',
     });

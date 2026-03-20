@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!page) {
     return constructMetadata({
       title: 'Cookie Policy',
-      description: 'Cookie Policy for Scooprym Music',
+      description: 'Cookie Policy for ScoopRYM',
       locale: locale as 'en' | 'zh',
       pathname: '/cookie',
     });

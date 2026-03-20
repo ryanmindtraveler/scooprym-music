@@ -11,7 +11,7 @@ import {
   SparklesIcon,
   ZapIcon,
 } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 
 type FeatureCard = {
   title: string;
@@ -22,58 +22,60 @@ type FeatureCard = {
 };
 
 export default function Features3Section() {
-  const locale = useLocale();
-  const isZh = locale.startsWith('zh');
+  const t = useTranslations('HomePage.features3');
 
   const heroCopy = {
     title: (
       <>
-        Turn Chaos into
-        <span className="bg-linear-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent"> comedy</span>
+        {t('titleLeading')}
+        <span className="bg-linear-to-r from-yellow-300 to-pink-300 bg-clip-text text-transparent">
+          {' '}
+          {t('titleHighlight')}
+        </span>
       </>
     ),
-    description: 'Headlines, gossip, and memes all turn into AI-generated viral parody songs.',
+    description: t('description'),
   };
 
   const features: FeatureCard[] = [
     {
-      title: 'Absurd Social Phenomena',
-      desc: 'Bizarre public behavior and weird social stories turned into sharper song commentary.',
+      title: t('items.item-1.title'),
+      desc: t('items.item-1.description'),
       icon: PencilIcon,
       color: 'text-purple-300',
       slug: 'absurd-social-phenomena',
     },
     {
-      title: 'Entertainment Topics',
-      desc: 'Celebrity news, entertainment stories, and pop culture moments remixed into parody songs.',
+      title: t('items.item-2.title'),
+      desc: t('items.item-2.description'),
       icon: Settings2Icon,
       color: 'text-orange-300',
       slug: 'entertainment-topics',
     },
     {
-      title: 'Gossip Roast',
-      desc: 'The latest tea, served hot. Turn celebrity meltdowns into hit singles.',
+      title: t('items.item-3.title'),
+      desc: t('items.item-3.description'),
       icon: SparklesIcon,
       color: 'text-pink-300',
       slug: 'gossip-roast',
     },
     {
-      title: 'News Parody',
-      desc: 'Political satires and social news. If they say it, you can diss it.',
+      title: t('items.item-4.title'),
+      desc: t('items.item-4.description'),
       icon: ZapIcon,
       color: 'text-yellow-300',
       slug: 'news-parody',
     },
     {
-      title: 'Meme Culture',
-      desc: 'Weird trends and viral fails. Roast them before they go cold.',
+      title: t('items.item-5.title'),
+      desc: t('items.item-5.description'),
       icon: FingerprintIcon,
       color: 'text-cyan-300',
       slug: 'meme-culture',
     },
     {
-      title: 'Comedy Drill',
-      desc: 'Hard beats, funny lyrics. Trap, Drill, and battle-style songs tailored for laughs.',
+      title: t('items.item-6.title'),
+      desc: t('items.item-6.description'),
       icon: CpuIcon,
       color: 'text-green-300',
       slug: 'comedy-drill',
@@ -153,7 +155,7 @@ export default function Features3Section() {
                   rel="noopener noreferrer"
                   className={`group/link inline-flex items-center gap-2 text-sm font-bold transition-all hover:gap-3 ${feature.color}`}
                 >
-                  {isZh ? 'View details' : 'Explore feature'}
+                  {t('cta')}
                   <ArrowRightIcon className="size-4 transition-transform group-hover/link:translate-x-1" />
                 </LocaleLink>
               </div>

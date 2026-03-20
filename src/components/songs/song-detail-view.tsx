@@ -12,10 +12,12 @@ import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { format } from 'date-fns';
+import { useLocale } from 'next-intl';
 import {
   ChevronDown,
   Disc3, // Vinyl icon alternative
@@ -52,6 +54,7 @@ export function SongDetailView({
   variant = 'card', // 'card' | 'clean'
   // layoutMode = 'default',
 }: SongDetailViewProps) {
+  const locale = useLocale();
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
   const currentTime = usePlayerStore((state) => state.currentTime);
@@ -120,7 +123,7 @@ export function SongDetailView({
 
     // Generate strict canonical URL for sharing
     const titleSlug = slugify(song.title || 'song');
-    const url = `${window.location.origin}${localePrefix}/songs/${titleSlug}-${song.id}`;
+    const url = `${getCanonicalBaseUrl()}${localePrefix}/songs/${titleSlug}-${song.id}`;
 
     // Copy to clipboard
     navigator.clipboard.writeText(url);
@@ -237,6 +240,7 @@ export function SongDetailView({
             )}
             <ShareButton
               songId={song.id}
+              songTitle={song.title}
               className={cn(
                 'rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none',
                 isClean && 'bg-black/5 hover:bg-black/10 text-black/60 hover:text-black'
@@ -390,7 +394,9 @@ export function SongDetailView({
                       <div className="p-1.5 rounded-md bg-white/5">
                         <Newspaper className="size-3.5" />
                       </div>
-                      <span className="text-[10px] font-black tracking-[0.2em]">Background</span>
+                      <span className="text-[10px] font-black tracking-[0.2em]">
+                        {locale.startsWith('zh') ? '背景' : 'Background'}
+                      </span>
                     </div>
 
                     <Tooltip>
@@ -418,7 +424,7 @@ export function SongDetailView({
                         side="left"
                         className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white"
                       >
-                        <p>{song.sourceUrl ? 'Read Source' : 'Search Topic'}</p>
+                        <p>{song.sourceUrl ? (locale.startsWith('zh') ? '查看来源' : 'Read Source') : locale.startsWith('zh') ? '搜索话题' : 'Search Topic'}</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -457,7 +463,7 @@ export function SongDetailView({
                 isClean && 'text-slate-400'
               )}
             >
-              <Disc3 className="size-4" /> Lyrics
+              <Disc3 className="size-4" /> {locale.startsWith('zh') ? '歌词' : 'Lyrics'}
             </span>
             {song.category && (
               <span className="text-[10px] text-white/30 uppercase border border-white/10 px-2 py-0.5 rounded-full">
@@ -506,6 +512,7 @@ function FormattedLyricsView({
   children?: React.ReactNode;
   lineClassName?: string;
 }) {
+  const locale = useLocale();
   const { currentTime, isPlaying, currentSong } = usePlayerStore();
 
   // Refs for scroll control
@@ -521,7 +528,7 @@ function FormattedLyricsView({
           isClean && 'text-slate-400'
         )}
       >
-        <span>No lyrics available for this track.</span>
+        <span>{locale.startsWith('zh') ? '这首歌暂时没有可显示的歌词。' : 'No lyrics available for this track.'}</span>
       </div>
     );
   }

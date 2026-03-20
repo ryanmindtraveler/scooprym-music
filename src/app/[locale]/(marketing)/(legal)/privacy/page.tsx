@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!page) {
     return constructMetadata({
       title: 'Privacy Policy',
-      description: 'Privacy Policy for Scooprym Music',
+      description: 'Privacy Policy for ScoopRYM',
       locale: locale as 'en' | 'zh',
       pathname: '/privacy',
     });

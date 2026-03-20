@@ -9,6 +9,7 @@ import { GhostIcon } from './ghost-icon';
 interface HeroSectionProps extends Omit<HTMLMotionProps<'section'>, 'title'> {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
+  semanticTitle?: string;
   extraContent?: React.ReactNode;
   callToAction?: {
     text: string;
@@ -17,7 +18,7 @@ interface HeroSectionProps extends Omit<HTMLMotionProps<'section'>, 'title'> {
 }
 
 const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
-  ({ className, title, subtitle, extraContent, callToAction, ...props }, ref) => {
+  ({ className, title, subtitle, semanticTitle, extraContent, callToAction, ...props }, ref) => {
     const constraintsRef = React.useRef<HTMLElement>(null);
     React.useImperativeHandle(ref, () => constraintsRef.current!);
 
@@ -139,7 +140,8 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                className="mb-8 relative flex flex-col items-center"
             >
                <div className="relative inline-block z-10 px-12 py-4">
-                   <motion.h1
+                   <h1 className="sr-only">{semanticTitle ?? 'ScoopRYM'}</h1>
+                   <motion.div
                      className="text-5xl sm:text-8xl md:text-[11.5rem] font-black italic tracking-[-0.07em] font-sans leading-tight z-20 relative drop-shadow-[0_25px_60px_rgba(0,0,0,0.2)]"
                      style={{
                         backgroundImage: 'linear-gradient(to right, #22d3ee, #e879f9, #facc15, #22d3ee)',
@@ -160,7 +162,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                      }}
                    >
                      {title}
-                   </motion.h1>
+                   </motion.div>
                    {/* Decorative Bars */}
                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 h-24 flex items-end gap-2 opacity-50 z-10 pointer-events-none mix-blend-overlay">
                         {[...Array(18)].map((_, i) => (
