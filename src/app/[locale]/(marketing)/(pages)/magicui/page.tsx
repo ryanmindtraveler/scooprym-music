@@ -22,6 +22,14 @@ import { ShimmerButtonDemo } from '@/components/magicui/example/shimmer-button-e
 import { ShinyButtonDemo } from '@/components/magicui/example/shiny-button-example';
 import { TweetCardDemo } from '@/components/magicui/example/twitter-card-example';
 import { WordRotateDemo } from '@/components/magicui/example/word-rotate-example';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 /**
  * Magic UI Components Showcase Page

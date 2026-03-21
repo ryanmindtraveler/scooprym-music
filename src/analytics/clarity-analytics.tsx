@@ -2,6 +2,8 @@
 
 import Script from 'next/script';
 
+const CANONICAL_ANALYTICS_ORIGIN = 'https://www.scooprym.app';
+
 /**
  * Clarity Analytics
  *
@@ -15,6 +17,15 @@ export default function ClarityAnalytics() {
 
   const projectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
   if (!projectId) {
+    return null;
+  }
+
+  // Only enable the production Clarity project on the canonical production origin.
+  // This prevents preview/staging deployments from polluting the main Clarity reports.
+  const configuredBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || CANONICAL_ANALYTICS_ORIGIN;
+
+  if (configuredBaseUrl.replace(/\/$/, '') !== CANONICAL_ANALYTICS_ORIGIN) {
     return null;
   }
 
