@@ -246,15 +246,7 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                 <div className="absolute inset-[8px] md:inset-[12px] rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
                   <Image
                     src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                    alt={(() => {
-                      // Extract filename from cover image URL
-                      // Format: person-event-uuid.ext, remove uuid for cleaner alt
-                      const urlParts = song.coverImageUrl?.split('/');
-                      const filename = urlParts?.[urlParts.length - 1]?.split('.')[0] || 'cover';
-                      // Remove uuid (last segment after last dash)
-                      const cleanName = filename.split('-').slice(0, -1).join('-') || filename;
-                      return `${cleanName} - ScoopRYM`;
-                    })()}
+                    alt={`${slugify(song.title) || 'cover'} - ScoopRYM`}
                     fill
                     className="object-cover"
                   />
