@@ -170,9 +170,9 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
               <div className="relative w-full max-w-lg mt-6 text-left group/text border-l-4 border-indigo-500/50 pl-6 py-4 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-r-2xl shadow-sm dark:shadow-black/20 ring-1 ring-slate-200/50 dark:ring-white/10 transition-all duration-500 hover:shadow-lg dark:hover:shadow-black/40 hover:ring-indigo-500/20 hover:scale-[1.02] pr-12">
                 <div className="flex items-center gap-2 mb-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" />
-                  <h3 className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none">
+                  <span className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none">
                     {locale.startsWith('zh') ? '背景' : 'Background'}
-                  </h3>
+                  </span>
                 </div>
                 {song.sourceUrl && (
                   <a
@@ -192,9 +192,9 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                     </span>
                   </a>
                 )}
-                <p className="text-sm md:text-base leading-relaxed text-slate-700 dark:text-slate-300 font-serif italic text-pretty selection:bg-indigo-500/30">
+                <h2 className="text-sm md:text-base leading-relaxed text-slate-700 dark:text-slate-300 font-serif italic text-pretty selection:bg-indigo-500/30">
                   {song.newsSummary || song.sourceText}
-                </p>
+                </h2>
               </div>
             )}
           </div>
