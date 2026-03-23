@@ -1,9 +1,9 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
-    "description": "把每天最离谱的头条、最混乱的闹剧和最劲爆的八卦，变成机智又上头的 AI 恶搞歌曲。我们把每一场闹剧都做成洗脑神吐槽，纯属娱乐！",
-    "keywords": "headline songs, news songs, drama songs, gossip songs, parody songs, comedy songs, funny songs, roast songs, diss track, battle songs, rap battle, AI song generator, text to song, song generator, diss track generator, parody song generator"
+    "title": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
+    "description": "把每天最离谱的头条、最混乱的闹剧和最劲爆的八卦，变成机智又上头的 AI 梗歌。我们把每一场闹剧都做成洗脑神吐槽，纯属娱乐！",
+    "keywords": "headline song, news song, drama song, gossip song, meme song, comedy song, funny song, diss track, battle song, rap battle, AI song generator, text to song, song generator, diss track generator, meme song generator"
   },
   "Common": {
     "premium": "付费文章",
@@ -316,8 +316,8 @@
     "categoryUnavailable": "分类归档暂时不可用。"
   },
   "SongsPage": {
-    "title": "最新 AI 恶搞歌曲、Diss Track 与 Viral 热门歌曲",
-    "description": "探索 ScoopRYM 社区最新创作的 AI 恶搞歌曲、Diss Track、Battle 歌曲和 viral 热门单曲。",
+    "title": "最新 AI 梗歌、Diss Track 与 Viral 热门歌曲",
+    "description": "探索 ScoopRYM 社区最新创作的 AI 梗歌、Diss Track、Battle 歌曲和 viral 热门单曲。",
     "heroTitleLeading": "社区",
     "heroTitleHighlight": "秀场",
     "heroDescription": "发现 ScoopRYM AI 生成的最新热门歌曲。"
@@ -847,12 +847,12 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
+    "description": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
     "hero": {
       "title": "头条的嘻哈之声",
-      "description": "把头条、闹剧和八卦变成 AI 恶搞歌曲。",
-      "semanticTitle": "ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。",
-      "subtitle": "把<headlines>头条</headlines>、<drama>闹剧</drama>和<gossip>八卦</gossip>变成<songs>AI 恶搞歌曲</songs>。"
+      "description": "把头条、闹剧和八卦变成 AI 梗歌。",
+      "semanticTitle": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
+      "subtitle": "把<headlines>头条</headlines>、<drama>闹剧</drama>和<gossip>八卦</gossip>变成<songs>AI 梗歌</songs>。"
     },
     "logocloud": {
       "title": "您最爱公司都是我们的合作伙伴"
@@ -890,11 +890,11 @@
       }
     },
     "generator": {
-      "marquee": "恶搞歌曲工厂 | 零门槛创作 | 立刻生成 viral 歌曲 | ",
-      "subtitle": "恶搞歌曲工厂",
-      "description": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首恶搞歌曲。",
+      "marquee": "梗歌工厂 | 零门槛创作 | 立刻生成 viral 歌曲 | ",
+      "subtitle": "梗歌工厂",
+      "description": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首梗歌。",
       "descriptionExtra": "无需复杂提示词，选个风格直接开唱！✨",
-      "headerInputPlaceholder": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首恶搞歌曲",
+      "headerInputPlaceholder": "在下方粘贴任意头条、闹剧或八卦故事，AI 会把它变成一首梗歌",
       "left": {
         "label": "输入故事内容",
         "placeholder": "粘贴头条链接，或直接输入闹剧故事、八卦内容...",
@@ -925,9 +925,8 @@
         "drama": "闹剧"
       },
       "styles": {
-        "parody": "#Parody",
-        "funny": "#Funny",
         "roast": "#Roast",
+        "funny": "#Funny",
         "viral": "#Viral",
         "satirical": "#Satirical",
         "battle": "#Battle",
@@ -1035,10 +1034,10 @@
       "feature-4": "特色功能特点四"
     },
     "features3": {
-      "title": "把混乱变成恶搞歌曲",
+      "title": "把混乱变成梗歌",
       "titleLeading": "把混乱变成",
-      "titleHighlight": "恶搞歌曲",
-      "description": "头条、八卦和梗图，都能变成 AI 生成的病毒式恶搞歌曲。",
+      "titleHighlight": "梗歌",
+      "description": "头条、八卦和梗图，都能变成 AI 生成的病毒式梗歌。",
       "cta": "查看详情",
       "items": {
         "item-1": {
@@ -1047,14 +1046,14 @@
         },
         "item-2": {
           "title": "娱乐热点",
-          "description": "把明星新闻、娱乐话题和流行文化时刻，重混成恶搞歌曲。"
+          "description": "把明星新闻、娱乐话题和流行文化时刻，重混成梗歌。"
         },
         "item-3": {
           "title": "八卦吐槽",
           "description": "最新热茶刚出炉，明星翻车现场也能秒变洗脑单曲。"
         },
         "item-4": {
-          "title": "新闻恶搞",
+          "title": "新闻吐槽",
           "description": "政治讽刺和社会新闻，只要他们敢说，你就能把它写成 diss。"
         },
         "item-5": {
@@ -1069,8 +1068,8 @@
     },
     "pricing": {
       "eyebrow": "解锁完整火力",
-      "title": "AI 恶搞歌曲生成定价",
-      "titleLeading": "AI 恶搞歌曲生成",
+      "title": "AI 梗歌生成定价",
+      "titleLeading": "AI 梗歌生成",
       "titleHighlight": "定价",
       "description": "选择适合你节奏的方案。先免费开玩，再升级放大火力。"
     },

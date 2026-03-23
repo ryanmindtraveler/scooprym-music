@@ -47,22 +47,21 @@ export function constructMetadata({
         : undefined;
 
   const defaultKeywords = [
-    'Headline Songs',
-    'News Songs',
-    'Drama Songs',
-    'Gossip Songs',
-    'Parody Songs',
-    'Comedy Songs',
-    'Funny Songs',
-    'Roast Songs',
+    'Headline Song',
+    'News Song',
+    'Drama Song',
+    'Gossip Song',
+    'Meme Song',
+    'Comedy Song',
+    'Funny Song',
     'Diss Track',
-    'Battle Songs',
+    'Battle Song',
     'Rap Battle',
     'AI Song Generator',
     'Text to Song',
     'Song Generator',
     'Diss Track Generator',
-    'Parody Song Generator',
+    'Meme Song Generator',
     'ScoopRYM',
   ];
 

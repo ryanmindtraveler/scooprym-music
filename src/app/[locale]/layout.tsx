@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
     description: t('description'),
     keywords: t('keywords', {
       default:
-        'headline songs, news songs, drama songs, gossip songs, parody songs, comedy songs, funny songs, roast songs, diss track, battle songs, rap battle, AI song generator, text to song, song generator, diss track generator, parody song generator',
+        'headline song, news song, drama song, gossip song, meme song, comedy song, funny song, diss track, battle song, rap battle, AI song generator, text to song, song generator, diss track generator, meme song generator',
     }),
     openGraph: {
       title: t('title'),

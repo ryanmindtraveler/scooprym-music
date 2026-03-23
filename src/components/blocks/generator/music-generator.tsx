@@ -21,7 +21,7 @@ export function MusicGeneratorBlock() {
   const t = useTranslations('HomePage.generator');
   const [newsContent, setNewsContent] = useState('');
   const [selectedContentType, setSelectedContentType] = useState<string>('Gossip');
-  const [selectedStyles, setSelectedStyles] = useState<string[]>(['Parody', 'Funny', 'Viral']);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>(['Roast', 'Funny', 'Viral']);
   const currentUser = useCurrentUser();
   const mounted = useMounted();
   const router = useRouter();
@@ -33,9 +33,8 @@ export function MusicGeneratorBlock() {
   ];
 
   const musicStyles = [
-    { value: 'Parody', label: t('styles.parody') },
-    { value: 'Funny', label: t('styles.funny') },
     { value: 'Roast', label: t('styles.roast') },
+    { value: 'Funny', label: t('styles.funny') },
     { value: 'Viral', label: t('styles.viral') },
     { value: 'Satirical', label: t('styles.satirical') },
     { value: 'Battle', label: t('styles.battle') },

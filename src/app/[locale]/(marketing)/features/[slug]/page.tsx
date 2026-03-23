@@ -614,7 +614,7 @@ export default async function FeaturePage({ params }: Props) {
                 <p className="max-w-2xl text-xl text-slate-500 leading-relaxed font-bold">
                   {isZh
                     ? '解构 2025-26 最疯狂的网络烂梗、病毒切片与赛博恐慌，将它们铸造为无法罢听的合成器神曲。'
-                    : 'Deconstructing the most viral internet memes, copypastas, and cyber panic of 2025-26 into synth-heavy parody anthems.'}
+                    : 'Deconstructing the most viral internet memes, copypastas, and cyber panic of 2025-26 into synth-heavy roast anthems.'}
                 </p>
               </div>
 
@@ -886,13 +886,13 @@ export default async function FeaturePage({ params }: Props) {
           <section className="rounded-[2.5rem] border border-white/60 bg-white/40 p-10 text-center shadow-2xl shadow-slate-200/50 backdrop-blur-3xl sm:p-16">
             <h2 className="text-3xl font-black tracking-tight sm:text-5xl text-slate-900 leading-[1.1]">
               {isZh
-                ? '准备好将这个视角转化为 Diss Track 或恶搞歌曲了吗？'
-                : 'Ready to turn this angle into roast and parody songs?'}
+                ? '准备好将这个视角转化为 Diss Track 或梗歌了吗？'
+                : 'Ready to turn this angle into Meme Song?'}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600 font-bold sm:text-xl">
               {isZh
                 ? '将荒诞新闻、八卦和社交混乱转化为更犀利、更易传播的 Diss Track 与恶搞说唱。'
-                : 'Turn headlines, drama, and gossip into sharper, more shareable roast and parody songs.'}
+                : 'Turn headlines, drama, and gossip into a sharper, more shareable Meme Song.'}
             </p>
             <div className="mt-10">
               <Button

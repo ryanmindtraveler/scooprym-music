@@ -73,27 +73,27 @@ export const featuresContent: Record<string, FeatureContent> = {
     h1: dual('Absurd Social Phenomena Songs'),
     description: dual('Bizarre public behavior and weird social stories turned into sharper song commentary.'),
     imageUrl: '/images/features/absurd-social-phenomena.webp',
-    heroText: dual('Turn bizarre reality into sharp, shareable roast and parody songs.'),
+    heroText: dual('Turn bizarre reality into a sharp, shareable Meme Song.'),
     metaTitle: dual('Absurd Social Phenomena Songs | ScoopRYM'),
     metaDescription: dual(
       'Turn bizarre public behavior, weird social stories, and absurd real-world situations into satirical songs with stronger social commentary.'
     ),
     keywords: {
       en: [
-        'drama songs',
-        'internet drama songs',
-        'social commentary songs',
-        'parody songs',
-        'comedy songs',
-        'funny songs',
+        'drama song',
+        'internet drama song',
+        'social commentary song',
+        'meme song',
+        'comedy song',
+        'funny song',
       ],
       zh: [
-        'drama songs',
-        'internet drama songs',
-        'social commentary songs',
-        'parody songs',
-        'comedy songs',
-        'funny songs',
+        'drama song',
+        'internet drama song',
+        'social commentary song',
+        'meme song',
+        'comedy song',
+        'funny song',
       ],
     },
     intro: {
@@ -177,8 +177,8 @@ export const featuresContent: Record<string, FeatureContent> = {
           answer: 'Bizarre public behavior, strange social incidents, and real-world contradictions.',
         },
         {
-          question: 'How is this different from News Parody?',
-          answer: 'News Parody is headline-framed. This page is behavior-framed and commentary-first.',
+          question: 'How is this different from News Roast?',
+          answer: 'News Roast is headline-framed. This page is behavior-framed and commentary-first.',
         },
         { question: 'Is this satire or meme content?', answer: 'Primarily satire and social commentary.' },
       ],
@@ -188,8 +188,8 @@ export const featuresContent: Record<string, FeatureContent> = {
           answer: 'Bizarre public behavior, strange social incidents, and real-world contradictions.',
         },
         {
-          question: 'How is this different from News Parody?',
-          answer: 'News Parody is headline-framed. This page is behavior-framed and commentary-first.',
+          question: 'How is this different from News Roast?',
+          answer: 'News Roast is headline-framed. This page is behavior-framed and commentary-first.',
         },
         { question: 'Is this satire or meme content?', answer: 'Primarily satire and social commentary.' },
       ],
@@ -240,16 +240,16 @@ export const featuresContent: Record<string, FeatureContent> = {
     iconColor: 'text-orange-300',
     title: dual('Entertainment Topics'),
     h1: dual('Entertainment Topic Songs'),
-    description: dual('Celebrity stories and pop culture moments remixed into parody songs.'),
+    description: dual('Celebrity stories and pop culture moments remixed into Meme Song.'),
     imageUrl: '/images/features/entertainment-topics.webp',
-    heroText: dual('Remix celebrity moments and pop culture chaos into viral parody songs.'),
+    heroText: dual('Remix celebrity moments and pop culture chaos into a viral Meme Song.'),
     metaTitle: dual('Entertainment Topic Songs | ScoopRYM'),
     metaDescription: dual(
-      'Turn celebrity stories, entertainment gossip, interviews, and pop culture moments into parody songs and funny commentary tracks.'
+      'Turn celebrity stories, entertainment gossip, interviews, and pop culture moments into Meme Song and funny commentary tracks.'
     ),
     keywords: {
-      en: ['headline songs', 'gossip songs', 'drama songs', 'news songs', 'parody songs', 'viral songs'],
-      zh: ['headline songs', 'gossip songs', 'drama songs', 'news songs', 'parody songs', 'viral songs'],
+      en: ['headline song', 'gossip song', 'drama song', 'news song', 'meme song', 'viral song'],
+      zh: ['headline song', 'gossip song', 'drama song', 'news song', 'meme song', 'viral song'],
     },
     layoutType: 'hot-billboard',
     intro: {
@@ -376,27 +376,27 @@ export const featuresContent: Record<string, FeatureContent> = {
     slug: 'gossip-roast',
     iconColor: 'text-pink-300',
     title: dual('Gossip Roast'),
-    h1: dual('Gossip Roast Songs'),
-    description: dual('Gossip drama turned into roast-style parody songs.'),
+    h1: dual('Gossip Meme Songs'),
+    description: dual('Gossip drama turned into Meme Song.'),
     imageUrl: '/images/features/gossip-roast.webp',
     heroText: dual('Serve the tea with sharper bars and harder punchlines.'),
-    metaTitle: dual('Gossip Roast Songs | ScoopRYM'),
+    metaTitle: dual('Gossip Meme Songs | ScoopRYM'),
     metaDescription: dual(
-      'Turn celebrity gossip, influencer meltdowns, apology videos, and public feuds into roast songs with harder punchlines and diss-track energy.'
+      'Turn celebrity gossip, influencer meltdowns, apology videos, and public feuds into Meme Song with harder punchlines and diss-track energy.'
     ),
     keywords: {
       en: [
-        'gossip songs',
-        'drama songs',
-        'roast songs',
+        'gossip song',
+        'drama song',
+        'meme song',
         'diss track',
         'diss track generator',
         'AI diss track generator',
       ],
       zh: [
-        'gossip songs',
-        'drama songs',
-        'roast songs',
+        'gossip song',
+        'drama song',
+        'meme song',
         'diss track',
         'diss track generator',
         'AI diss track generator',
@@ -539,38 +539,38 @@ export const featuresContent: Record<string, FeatureContent> = {
   'news-parody': {
     slug: 'news-parody',
     iconColor: 'text-yellow-300',
-    title: dual('News Parody'),
-    h1: dual('News Parody Songs'),
-    description: dual('Headlines and media moments turned into parody songs.'),
+    title: dual('News Roast'),
+    h1: dual('News Meme Songs'),
+    description: dual('Headlines and media moments turned into Meme Song.'),
     imageUrl: '/images/features/news-parody.webp',
-    heroText: dual('Take the headline, flip the framing, and turn it into parody songs.'),
-    metaTitle: dual('News Parody Songs | ScoopRYM'),
+    heroText: dual('Take the headline, flip the framing, and turn it into Meme Song.'),
+    metaTitle: dual('News Meme Songs | ScoopRYM'),
     metaDescription: dual(
-      'Turn headlines, awkward interviews, local news clips, and corporate blunders into parody songs with strong replay value.'
+      'Turn headlines, awkward interviews, local news clips, and corporate blunders into Meme Song with strong replay value.'
     ),
     keywords: {
       en: [
-        'headline songs',
-        'news songs',
-        'drama songs',
-        'parody songs',
-        'parody song generator',
-        'headline songs generator',
+        'headline song',
+        'news song',
+        'drama song',
+        'meme song',
+        'meme song generator',
+        'headline song generator',
       ],
       zh: [
-        'headline songs',
-        'news songs',
-        'drama songs',
-        'parody songs',
-        'parody song generator',
-        'headline songs generator',
+        'headline song',
+        'news song',
+        'drama song',
+        'meme song',
+        'meme song generator',
+        'headline song generator',
       ],
     },
 
     intro: {
       en: [
         'Local broadcast mishaps, absurd political satire, and headlines that sound like a simulation glitch.',
-        'Turn these bizarre internet moments into a hard-hitting breaking news parody song.',
+        'Turn these bizarre internet moments into a hard-hitting breaking news meme song.',
       ],
       zh: [
         '地方新闻播报翻车、荒谬的政治讽刺，以及那些看起来像地球Online出Bug的离谱头条。',
@@ -706,7 +706,7 @@ export const featuresContent: Record<string, FeatureContent> = {
     iconColor: 'text-cyan-300',
     title: dual('Meme Culture'),
     h1: dual('Meme Culture Songs'),
-    description: dual('Internet-native jokes and trends turned into fast, shareable parody songs.'),
+    description: dual('Internet-native jokes and trends turned into a fast, shareable Meme Song.'),
     imageUrl: '/images/features/meme-culture.webp',
     heroText: dual('Soundtrack internet jokes before the trend goes cold.'),
     metaTitle: dual('Meme Culture Songs | ScoopRYM'),
@@ -714,13 +714,13 @@ export const featuresContent: Record<string, FeatureContent> = {
       'Turn memes, viral trends, copypasta, and chaotic internet culture into funny songs built for replay, remixing, and short-form sharing.'
     ),
     keywords: {
-      en: ['internet drama songs', 'drama songs', 'gossip songs', 'parody songs', 'comedy songs', 'viral songs'],
-      zh: ['internet drama songs', 'drama songs', 'gossip songs', 'parody songs', 'comedy songs', 'viral songs'],
+      en: ['internet drama song', 'drama song', 'gossip song', 'meme song', 'comedy song', 'viral song'],
+      zh: ['internet drama song', 'drama song', 'gossip song', 'meme song', 'comedy song', 'viral song'],
     },
     intro: {
       en: [
         'The internet moves fast, and its inside jokes move faster. From AI slop panics to existential animals.',
-        'Turn the brainrot and viral chaos of 2025-2026 into fast, replayable parody anthems.',
+        'Turn the brainrot and viral chaos of 2025-2026 into fast, replayable roast anthems.',
       ],
       zh: [
         '互联网的烂梗迭代速度永远超乎你的想象，从 AI 垃圾图恐慌到充满存在主义危机的企鹅。',
@@ -834,7 +834,7 @@ export const featuresContent: Record<string, FeatureContent> = {
       en: [
         { question: 'What belongs here?', answer: 'Memes, viral phrases, copypasta, and trend jokes.' },
         {
-          question: 'How is this different from News Parody?',
+          question: 'How is this different from News Roast?',
           answer: 'This page is platform-native, not headline-framed.',
         },
         { question: 'Best for speed over depth?', answer: 'Yes, speed and replayability are the priority.' },
@@ -842,7 +842,7 @@ export const featuresContent: Record<string, FeatureContent> = {
       zh: [
         { question: 'What belongs here?', answer: 'Memes, viral phrases, copypasta, and trend jokes.' },
         {
-          question: 'How is this different from News Parody?',
+          question: 'How is this different from News Roast?',
           answer: 'This page is platform-native, not headline-framed.',
         },
         { question: 'Best for speed over depth?', answer: 'Yes, speed and replayability are the priority.' },
@@ -863,8 +863,8 @@ export const featuresContent: Record<string, FeatureContent> = {
       'Create comedy drill songs from petty complaints, minor inconveniences, and exaggerated everyday annoyances.'
     ),
     keywords: {
-      en: ['comedy songs', 'parody songs', 'funny songs', 'battle songs', 'rap battle', 'rap battle generator'],
-      zh: ['comedy songs', 'parody songs', 'funny songs', 'battle songs', 'rap battle', 'rap battle generator'],
+      en: ['comedy song', 'meme song', 'funny song', 'battle song', 'rap battle', 'rap battle generator'],
+      zh: ['comedy song', 'meme song', 'funny song', 'battle song', 'rap battle', 'rap battle generator'],
     },
     intro: {
       en: [

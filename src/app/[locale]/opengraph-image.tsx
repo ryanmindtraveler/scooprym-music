@@ -16,11 +16,11 @@ function getOgCopy(locale: string) {
   return {
     isZh,
     subtitle: isZh ? '把头条、闹剧和八卦变成' : 'Turn headlines, drama, and gossip into',
-    highlight: isZh ? 'AI 恶搞歌曲' : 'AI parody songs',
+    highlight: isZh ? 'AI 梗歌' : 'AI Meme Song',
     badge: isZh ? '音乐整活协议' : 'Music Identity Protocol',
     alt: isZh
-      ? 'ScoopRYM - 把头条、闹剧和八卦变成 AI 恶搞歌曲。'
-      : 'ScoopRYM - Turn Headlines, Drama, and Gossip into AI Parody Songs.',
+      ? 'ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。'
+      : 'ScoopRYM - Turn Headlines, Drama, and Gossip into AI Meme Song.',
   };
 }
 

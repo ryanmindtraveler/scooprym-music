@@ -72,12 +72,12 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const description = rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
 
   return constructMetadata({
-    title: `${song.title} | ScoopRYM AI Parody Song`,
+    title: `${song.title} | ScoopRYM AI Meme Song`,
     description,
     image: song.coverImageUrl || undefined,
     locale,
     pathname: `/songs/${canonicalSlug}`,
-    keywords: [song.title, 'AI Song', 'Parody Song', 'Funny Song', 'Viral Song', 'Diss Track', 'Battle Song'],
+    keywords: [song.title, 'AI Song', 'Meme Song', 'Funny Song', 'Viral Song', 'Diss Track', 'Battle Song', 'Rap Battle'],
   });
 }
 

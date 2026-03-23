@@ -70,7 +70,7 @@ export const MUSIC_STYLE_CATEGORIES: StyleCategory[] = [
       { label: 'Soundcloud Rap', desc: 'Lo-fi, distorted, raw energy' },
       { label: 'Mumble Rap', desc: 'Slurred, triplet flow, vibe-focused' },
 
-      // Meme & Parody
+      // Meme & Roast
       { label: 'Goofy Ahh Beat', desc: 'Cartoonish, silly, viral sound' },
       { label: 'Circus Trap', desc: 'Trap beats with carnival melodies' },
       { label: 'Glitch Hop', desc: 'Digital distortion, stuttering beats' },
@@ -224,7 +224,7 @@ export const MUSIC_STYLE_CATEGORIES: StyleCategory[] = [
       { label: 'Chillwide', desc: 'Wide stereo, cinematic relaxation' },
 
       // Mood / Atmosphere
-      { label: 'Funny', desc: 'Comedic, lighthearted, parody' },
+      { label: 'Funny', desc: 'Comedic, lighthearted, roast' },
       { label: 'Cringe', desc: 'Awkward, satirical, embarrassing' },
       { label: 'Unhinged', desc: 'Completely crazy, mental breakdown' },
       { label: 'Based', desc: 'Confident, controversial, unapologetic' },
@@ -265,7 +265,7 @@ export const VIBE_PERSONAS: readonly VibePersona[] = [
     icon: '📰',
     tags: ['UK Drill', 'News Intro Theme', 'News Anchor', 'Police Sirens', 'Crowd Gasp', 'Dramatic Hits'],
     color: 'bg-orange-500/10 text-orange-700 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/50',
-    tooltip: 'Serious "News Parody" with UK Drill beats, cinematic sirens, and urgent strings.',
+    tooltip: 'Serious "News Roast" with UK Drill beats, cinematic sirens, and urgent strings.',
   },
   {
     id: 'karen',

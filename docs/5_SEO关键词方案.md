@@ -11,15 +11,15 @@ ScoopRYM 的 SEO 不适合去跟通用型产品竞争这些大词：
 ScoopRYM 现在的核心定位是：
 
 - 内容主轴：把 `headlines / news / drama / gossip / social commentary / internet drama` 做成歌曲
-- 情绪主轴：把这些内容做成 `parody / comedy / funny / roast / viral / diss / battle` 风格
+- 情绪主轴：把这些内容做成 `meme / comedy / funny / viral / diss / battle / rap battle` 风格
 - 产品主轴：用户不是单纯想“生成一首歌”，而是想把热点、八卦、抓马和社会吐槽做成可传播的 AI 歌曲
 
 当前品牌主标语是：
 
 - Title  
-  `ScoopRYM: Turn Headlines, Drama, and Gossip into AI Parody Songs`
+  `ScoopRYM - Turn Headlines, Drama, and Gossip into AI Meme Song.`
 - Description  
-  `Built for roast, parody, and funny takes on the wildest stories, messiest gossip, and most chaotic moments online.`
+  `Transform daily wildest headlines, messiest drama, and juiciest gossip into a witty AI-generated Meme Song. We turn every drama into a catchy musical roast-purely for fun!`
 
 这意味着 ScoopRYM 的 SEO 重点不是泛 “AI 音乐生成”，而是：
 
@@ -70,10 +70,10 @@ SEO 的核心原则是：
 
 这层描述的是 ScoopRYM 生成结果的气质和风格。
 
-- `parody songs`
+- `meme song`
 - `comedy songs`
 - `funny songs`
-- `roast songs`
+- `funny song`
 - `viral songs`
 - `diss track`
 - `battle songs`
@@ -97,16 +97,16 @@ SEO 的核心原则是：
 - `song generator`
 - `diss track generator`
 - `AI diss track generator`
-- `parody song generator`
-- `song parody generator`
+- `meme song generator`
+- `funny song generator`
 - `funny song generator`
 - `rap battle generator`
 - `headline songs generator`
 - `drama songs generator`
-- `parody songs generator`
+- `headline song generator`
 - `comedy songs generator`
 - `funny songs generator`
-- `roast songs generator`
+- `diss track generator`
 - `battle songs generator`
 
 这组词里：
@@ -118,8 +118,8 @@ SEO 的核心原则是：
 
 属于主入口长尾。
 
-- `parody song generator`
-- `song parody generator`
+- `meme song generator`
+- `funny song generator`
 - `funny song generator`
 - `rap battle generator`
 
@@ -127,10 +127,10 @@ SEO 的核心原则是：
 
 - `headline songs generator`
 - `drama songs generator`
-- `parody songs generator`
+- `rap battle generator`
 - `comedy songs generator`
 - `funny songs generator`
-- `roast songs generator`
+- `diss track generator`
 - `battle songs generator`
 
 属于业务语义长尾。
@@ -166,7 +166,7 @@ SEO 的核心原则是：
 首页主打：
 
 - 内容词：`headline songs`、`news songs`、`drama songs`
-- 情绪词：`parody songs`、`comedy songs`、`funny songs`
+- 情绪词：`meme song`、`funny song`、`diss track`
 - 长尾词：`AI song generator`、`text to song`、`song generator`
 
 首页建议继续围绕当前品牌句：
@@ -179,8 +179,8 @@ SEO 的核心原则是：
 
 - `headline songs`
 - `news songs`
-- `parody songs`
-- `parody song generator`
+- `meme song`
+- `meme song generator`
 - `headline songs generator`
 
 ### 5.3 Gossip Roast 方向页
@@ -188,7 +188,7 @@ SEO 的核心原则是：
 主词建议：
 
 - `gossip songs`
-- `roast songs`
+- `funny song`
 - `diss track`
 - `diss track generator`
 - `AI diss track generator`
@@ -223,10 +223,10 @@ SEO 的核心原则是：
 - `gossip songs`：八卦歌曲
 - `social commentary songs`：社会评论歌曲 / 社会吐槽歌曲
 - `internet drama songs`：网络抓马歌曲
-- `parody songs`：恶搞歌曲
+- `meme song`：梗歌
 - `comedy songs`：喜剧歌曲
 - `funny songs`：搞笑歌曲
-- `roast songs`：吐槽歌曲
+- `funny song`：搞笑歌曲
 - `diss track`：diss 歌 / 攻击型吐槽歌
 - `battle songs`：对战型歌曲
 - `rap battle`：说唱对战
@@ -241,7 +241,7 @@ SEO 的核心原则是：
 - 各专题页关键词
 - 首页主定位语
 
-也就是说，代码层已经从旧的 rap 导向 SEO，切换到了现在这套 song / parody / diss / battle 导向 SEO。
+也就是说，代码层已经从旧的 rap / parody 导向 SEO，切换到了现在这套 meme song / funny song / diss track / rap battle 导向 SEO。
 
 ## 8. 后续执行建议
 
@@ -256,4 +256,4 @@ SEO 的核心原则是：
 
 ScoopRYM 当前的 SEO 核心不是“通用 AI 音乐生成”，而是：
 
-**把 headlines、news、drama、gossip 和 social commentary，做成 parody、comedy、funny、roast、diss、battle 风格的 AI songs。**
+**把 headlines、news、drama、gossip 和 social commentary，做成 meme、funny、diss、battle、rap battle 风格的 AI songs。**
