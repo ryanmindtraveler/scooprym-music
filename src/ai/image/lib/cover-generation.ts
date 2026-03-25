@@ -83,25 +83,36 @@ export async function generateCoverImageDataUrl(options: {
   const replicate = new Replicate({ auth: apiKey });
 
   const { title, lyrics, sourceText } = options;
+  const creativeSource = (sourceText || lyrics || '').replace(/\[[^\]]+\]/g, ' ').replace(/\s+/g, ' ').trim();
 
   const descriptionParts: string[] = [];
-  descriptionParts.push(`Create a vibrant, modern album cover for a hip-hop / rap track titled "${title}".`);
+  descriptionParts.push(
+    `Design a striking square album cover for a contemporary meme song titled "${title}".`
+  );
+  descriptionParts.push(
+    'Visual direction: premium digital illustration, bold central subject, clean silhouette, cinematic lighting, rich color contrast, simple background, instantly readable thumbnail.'
+  );
 
   if (sourceText && sourceText.trim().length > 0) {
     descriptionParts.push(
-      'The song is inspired by the following news or story content (summarize visually, no text in image):'
+      'Story cues: turn this story into one strong visual metaphor. Focus on a single memorable scene instead of many small details.'
     );
-    descriptionParts.push(sourceText.slice(0, 500));
-  } else if (lyrics && lyrics.trim().length > 0) {
+    descriptionParts.push(sourceText.slice(0, 320));
+  } else if (creativeSource.length > 0) {
     descriptionParts.push(
-      'The song lyrics theme is roughly as follows (summarize visually, do not include text in the image itself):'
+      'Theme cues: use the mood and imagery from these lyrics, but compress them into one iconic scene.'
     );
-    descriptionParts.push(lyrics.slice(0, 500));
+    descriptionParts.push(creativeSource.slice(0, 320));
   }
 
-  descriptionParts.push('Style: bold colors, high contrast, clean composition, NO TEXT, square 1:1 album art.');
   descriptionParts.push(
-    'Quality: High resolution 8k, masterpiece, highly detailed, sharp focus. COMPOSITION RULE: The image MUST be full bleed and fill the entire square canvas from edge to edge. NO borders, NO frames, NO letterboxing, NO padding, NO white background. The subject should be prominent and fill the frame.'
+    'Composition rules: one main focal subject, centered or slightly off-center, large in frame, full-bleed cover art, edge-to-edge image, no borders, no frames, no collage, no split panels, no tiny objects.'
+  );
+  descriptionParts.push(
+    'Style rules: modern album artwork, polished, stylish, graphic, expressive, not photorealistic unless naturally fitting, no muddy details, no visual clutter.'
+  );
+  descriptionParts.push(
+    'Hard constraints: NO TEXT, NO LETTERS, NO LOGOS, NO WATERMARKS, NO WHITE MARGINS, NO MOCKUP, NO UI, NO DUPLICATED SUBJECTS.'
   );
 
   const prompt = descriptionParts.join('\n\n');

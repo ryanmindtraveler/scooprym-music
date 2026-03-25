@@ -16,7 +16,6 @@
     "db:studio": "drizzle-kit studio",
     "list-contacts": "tsx scripts/list-contacts.ts",
     "list-users": "tsx scripts/list-users.ts",
-    "test-minimax-network": "tsx scripts/test-minimax-network.ts",
     "fix-payments": "tsx scripts/fix-payments.ts",
     "fix-payments-scene": "tsx scripts/fix-payments-scene.ts",
     "content": "fumadocs-mdx",
