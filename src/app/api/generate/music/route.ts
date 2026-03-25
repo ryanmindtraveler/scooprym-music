@@ -235,6 +235,11 @@ export async function POST(req: Request) {
     // 4. Publish to QStash (The "Async" Part)
     // Instead of `waitUntil(processMusicBackground...)`, we send a message to QStash.
 
+    const currentSongId = songId;
+    if (!currentSongId) {
+      throw new Error('Song ID missing before background processing setup');
+    }
+
     // Construct the Options object needed by the worker (and fallback)
     const processOptions: ProcessMusicOptions = {
       lyrics: cleanedLyrics, // Pass CLEANED lyrics to worker
@@ -244,7 +249,7 @@ export async function POST(req: Request) {
       sourceUrl,
       outputFormat: 'url',
       audioFormat,
-      songId: songId!,
+      songId: currentSongId,
       userId,
     };
 
@@ -280,22 +285,22 @@ export async function POST(req: Request) {
             creditError: reason,
             creditsDeducted: false,
           })
-          .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+          .where(and(eq(songTable.id, currentSongId), eq(songTable.creditsDeducted, true)))
           .returning({ id: songTable.id });
 
         if (updatedRows.length > 0 && userId) {
-          console.log(`[generate-music] Inline fallback failure: atomic auto-refund triggered for ${songId}`);
+          console.log(`[generate-music] Inline fallback failure: atomic auto-refund triggered for ${currentSongId}`);
           const { refundCredits } = await import('@/credits/credits');
           await refundCredits({
             userId,
             amount: 2,
-            description: `Generation failed (${reason}) [ID:${songId}]`,
+            description: `Generation failed (${reason}) [ID:${currentSongId}]`,
           }).catch((e) => console.error('Auto-refund failed in inline fallback catch:', e));
         } else if (updatedRows.length === 0) {
           await dbInstance
             .update(songTable)
             .set({ processingStatus: 'processing_queue_failed', creditError: reason })
-            .where(eq(songTable.id, songId));
+            .where(eq(songTable.id, currentSongId));
         }
       } catch (dbErr) {
         console.error('Failed to update/refund in inline fallback catch:', dbErr);
@@ -303,7 +308,9 @@ export async function POST(req: Request) {
     };
 
     if (!shouldUseQStash) {
-      console.log(`[QStash] Disabled for local or non-public base URL. Using inline background execution for ${songId}.`);
+      console.log(
+        `[QStash] Disabled for local or non-public base URL. Using inline background execution for ${currentSongId}.`
+      );
 
       try {
         runInlineBackgroundWork();
@@ -326,12 +333,15 @@ export async function POST(req: Request) {
 
         console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
       } catch (queueError: any) {
-        console.error(`[QStash] Publish failed for ${songId}. Falling back to inline background execution.`, queueError);
+        console.error(
+          `[QStash] Publish failed for ${currentSongId}. Falling back to inline background execution.`,
+          queueError
+        );
 
         try {
           runInlineBackgroundWork();
         } catch (fallbackError) {
-          console.error(`[QStash] Inline fallback execution also failed for ${songId}:`, fallbackError);
+          console.error(`[QStash] Inline fallback execution also failed for ${currentSongId}:`, fallbackError);
           await handleInlineFallbackFailure('Queue publish and inline fallback failed');
         }
       }
