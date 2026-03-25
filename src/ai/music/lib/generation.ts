@@ -7,7 +7,7 @@ import { MUSIC_MODEL } from '@/ai/config/models';
 import { performance } from 'perf_hooks';
 
 interface MiniMaxRequestOptions {
-  apiKey: string;
+  apiKey?: string;
   prompt: string;
   lyrics: string;
   outputFormat?: 'url' | 'hex';
@@ -33,14 +33,23 @@ import type { GenerateMusicResult } from '@/ai/music/types';
  * Call MiniMax API to generate music
  */
 export async function generateMusic(opt: MiniMaxRequestOptions): Promise<GenerateMusicResult> {
-  const { apiKey, prompt, lyrics, outputFormat = 'url', audioFormat = 'mp3', stream = false } = opt;
+  const { prompt, lyrics, outputFormat = 'url', audioFormat = 'mp3', stream = false } = opt;
+  const resolvedApiKey = opt.apiKey || process.env.MINIMAX_API_KEY || process.env.MINIMAXI_API_KEY || '';
 
   const apiUrl = process.env.MINIMAX_API_HOST
     ? `${process.env.MINIMAX_API_HOST}/v1/music_generation`
-    : 'https://api.minimaxi.com/v1/music_generation';
+    : 'https://api.minimax.io/v1/music_generation';
 
   console.log(`[music-generation] Calling MiniMax API (Streaming: ${stream})...`);
   const apiStartTime = performance.now();
+
+  if (!resolvedApiKey) {
+    return {
+      success: false,
+      error: 'Missing MiniMax API key',
+      statusCode: 500,
+    };
+  }
 
   try {
     const controller = new AbortController();
@@ -50,7 +59,7 @@ export async function generateMusic(opt: MiniMaxRequestOptions): Promise<Generat
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedApiKey}`,
       },
       body: JSON.stringify({
         model: MUSIC_MODEL,

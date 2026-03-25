@@ -279,7 +279,7 @@ export function MusicGeneratorBlock() {
                                 : 'bg-white text-slate-800 hover:bg-white/80 hover:border-black/5'
                             )}
                           >
-                            <span className="text-lg font-bold">{type.label}</span>
+                            <span className="text-base md:text-lg font-bold leading-tight pr-3">{type.label}</span>
                             <div
                               className={cn(
                                 'size-4 rounded-full transition-all duration-300 flex items-center justify-center',
@@ -364,7 +364,7 @@ export function MusicGeneratorBlock() {
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className={cn(
-                              'relative px-4 py-2.5 font-bold rounded-xl text-sm transition-all duration-300 border flex items-center justify-center gap-2 select-none',
+                              'relative min-h-11 px-4 py-2.5 font-bold rounded-xl text-sm leading-tight text-center whitespace-normal transition-all duration-300 border flex items-center justify-center gap-2 select-none',
                               isSelected ? config.vibrant : config.pastel
                             )}
                           >

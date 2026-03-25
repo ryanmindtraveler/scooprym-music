@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Upload to Storage
-    const { buffer, mime, extension } = dataUrlToImageBuffer(coverImageUrl);
+    const { buffer, mime, extension } = await dataUrlToImageBuffer(coverImageUrl);
     const uploadResult = await uploadFile(
       buffer,
       `song-cover-retry-${Date.now()}.${extension}`,

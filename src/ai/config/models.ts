@@ -9,7 +9,7 @@
 export const TEXT_MODEL = 'google/gemini-3-flash-preview';
 
 /** 封面图片生成使用的模型 */
-export const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview';
+export const IMAGE_MODEL = 'black-forest-labs/flux-schnell';
 
 /** 音乐生成使用的模型 */
 export const MUSIC_MODEL = 'music-2.0';

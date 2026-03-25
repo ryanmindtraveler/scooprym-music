@@ -10,7 +10,7 @@ import { generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { generateMusic } from '@/ai/music/lib/generation';
 import { consumeCredits } from '@/credits/credits';
 import { mapGenerationError } from '@/lib/music/error-handler';
-import { getWorkerUrl, qstash } from '@/lib/queue';
+import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
 // Import processMusicBackground for fallback execution
 import { type ProcessMusicOptions, processMusicBackground } from '@/lib/song-workflow';
 import { and, eq, sql } from 'drizzle-orm';
@@ -248,92 +248,91 @@ export async function POST(req: Request) {
       userId,
     };
 
-    try {
-      // console.log(`[QStash] Publishing job for song ${songId}...`);
+    const shouldUseQStash = canUseQStash();
 
-      const workerUrl = getWorkerUrl('api/worker/generate-music');
+    const runInlineBackgroundWork = () => {
+      const fireBackgroundWork = () => {
+        const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, null);
+        backgroundWork.catch((err) => console.error('[Inline Background] Background work failed:', err));
+      };
 
-      const qstashResponse = await qstash.publishJSON({
-        url: workerUrl,
-        body: {
-          audioContent: tempAudioUrl,
-          options: processOptions,
-        },
-        // Retry logic: If worker fails (e.g. S3 down), retry up to 3 times
-        retries: 3,
-      });
+      // @ts-ignore
+      if (typeof waitUntil === 'function') {
+        // @ts-ignore
+        waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
+      }
+      // @ts-ignore
+      else if ((req as any).waitUntil) {
+        // @ts-ignore
+        (req as any).waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
+      } else {
+        setTimeout(fireBackgroundWork, 0);
+      }
+    };
 
-      console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
-    } catch (queueError: any) {
-      console.error(`[QStash] FAILED to publish job for ${songId}. Fallback to INLINE execution. Error:`, queueError);
-      // CRITICAL FALLBACK (Fail-Open): If Queue is down, run inline!
-      // This risks timeout on Vercel, but is better than 100% data loss.
+    const handleInlineFallbackFailure = async (reason: string) => {
+      try {
+        const dbInstance = await getDb();
+        const updatedRows = await dbInstance
+          .update(songTable)
+          .set({
+            processingStatus: 'processing_queue_failed',
+            creditError: reason,
+            creditsDeducted: false,
+          })
+          .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
+          .returning({ id: songTable.id });
+
+        if (updatedRows.length > 0 && userId) {
+          console.log(`[generate-music] Inline fallback failure: atomic auto-refund triggered for ${songId}`);
+          const { refundCredits } = await import('@/credits/credits');
+          await refundCredits({
+            userId,
+            amount: 2,
+            description: `Generation failed (${reason}) [ID:${songId}]`,
+          }).catch((e) => console.error('Auto-refund failed in inline fallback catch:', e));
+        } else if (updatedRows.length === 0) {
+          await dbInstance
+            .update(songTable)
+            .set({ processingStatus: 'processing_queue_failed', creditError: reason })
+            .where(eq(songTable.id, songId));
+        }
+      } catch (dbErr) {
+        console.error('Failed to update/refund in inline fallback catch:', dbErr);
+      }
+    };
+
+    if (!shouldUseQStash) {
+      console.log(`[QStash] Disabled for local or non-public base URL. Using inline background execution for ${songId}.`);
 
       try {
-        // Re-import locally if needed, or use the imported one.
-        // We need to pass the coverImagePromise we created earlier.
-        // Note: processMusicBackground is imported at top level.
-
-        // Create background work function
-        const fireBackgroundWork = () => {
-          // Note: processMusicBackground now supports internal generation if audio is empty.
-          // It also handles cover generation if the promise is null/missing.
-          // This makes the Inline Fallback fully functional even for generation tasks.
-
-          const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, null);
-
-          backgroundWork.catch((err) => console.error('[Inline Fallback] Background work failed:', err));
-        };
-
-        // Execution Check:
-        // 1. If Vercel/Cloudflare 'waitUntil' exists, use it.
-        // 2. Fallback: Use setImmediate/setTimeout to detach from main loop.
-        // @ts-ignore
-        if (typeof waitUntil === 'function') {
-          // @ts-ignore
-          waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
-        }
-        // @ts-ignore
-        else if ((req as any).waitUntil) {
-          // @ts-ignore
-          (req as any).waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
-        } else {
-          // Node.js Local Fallback: Fire on next tick to allow return
-          setTimeout(fireBackgroundWork, 0);
-        }
-
-        // We do NOT update status to 'failed'. We assume inline might succeed.
+        runInlineBackgroundWork();
       } catch (fallbackError) {
-        console.error(`[QStash] Fallback Inline execution also failed for ${songId}:`, fallbackError);
-        try {
-          const dbInstance = await getDb();
-          const updatedRows = await dbInstance
-            .update(songTable)
-            .set({
-              processingStatus: 'processing_queue_failed',
-              creditError: 'Queue & Inline failed',
-              creditsDeducted: false,
-            })
-            .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
-            .returning({ id: songTable.id });
+        console.error(`[Inline Background] Execution failed for ${songId}:`, fallbackError);
+        await handleInlineFallbackFailure('Inline background execution failed');
+      }
+    } else {
+      try {
+        const workerUrl = getWorkerUrl('api/worker/generate-music');
 
-          if (updatedRows.length > 0 && userId) {
-            console.log(`[generate-music] Fallback Failure: Atomic auto-refund triggered for ${songId}`);
-            const { refundCredits } = await import('@/credits/credits');
-            await refundCredits({
-              userId,
-              amount: 2,
-              description: `Generation failed (Queue & Inline) [ID:${songId}]`,
-            }).catch((e) => console.error('Auto-refund failed in fallback catch:', e));
-          } else if (updatedRows.length === 0) {
-            // Just update status if not deducted
-            await dbInstance
-              .update(songTable)
-              .set({ processingStatus: 'processing_queue_failed', creditError: 'Queue & Inline failed' })
-              .where(eq(songTable.id, songId));
-          }
-        } catch (dbErr) {
-          console.error('Failed to update/refund in fallback catch:', dbErr);
+        const qstashResponse = await qstash.publishJSON({
+          url: workerUrl,
+          body: {
+            audioContent: tempAudioUrl,
+            options: processOptions,
+          },
+          retries: 3,
+        });
+
+        console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
+      } catch (queueError: any) {
+        console.error(`[QStash] Publish failed for ${songId}. Falling back to inline background execution.`, queueError);
+
+        try {
+          runInlineBackgroundWork();
+        } catch (fallbackError) {
+          console.error(`[QStash] Inline fallback execution also failed for ${songId}:`, fallbackError);
+          await handleInlineFallbackFailure('Queue publish and inline fallback failed');
         }
       }
     }

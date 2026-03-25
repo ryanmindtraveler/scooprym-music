@@ -45,11 +45,13 @@ export function mapGenerationError(
 
   // 2. CREDITS (Insufficient Balance)
   if (code === 1010 || code === 402 || /credit|balance|insufficient|refuel/i.test(originalMessage)) {
+    const isTokenBudgetIssue = /max_tokens|token|afford/i.test(originalMessage);
     return {
       success: false,
       category: 'CREDITS',
-      error:
-        "Refuel Required: You've run out of credits for this generation. Please top up your account to keep the music flowing!",
+      error: isTokenBudgetIssue
+        ? 'Generation budget exceeded: the upstream model was asked for more output tokens than your current OpenRouter key can afford. Lower the output cap or raise the OpenRouter daily limit and try again.'
+        : "Refuel Required: You've run out of credits for this generation. Please top up your account to keep the music flowing!",
       code,
       details,
     };

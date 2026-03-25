@@ -1,63 +1,86 @@
 /**
  * @file image.service.ts
- * @description Encapsulates image generation logic, focusing on album covers.
+ * @description Encapsulates image generation logic, focusing on album covers via Replicate.
  */
 
 import { IMAGE_MODEL } from '@/ai/config/models';
+import Replicate from 'replicate';
 
-interface OpenRouterImageChoice {
-  image_url?: {
-    url?: string;
-  };
-}
-
-interface OpenRouterImageMessage {
-  images?: OpenRouterImageChoice[];
-}
-
-interface OpenRouterImageResponse {
-  choices?: {
-    message?: OpenRouterImageMessage;
-  }[];
-}
+type ImageSourceInput =
+  | string
+  | {
+      url?: string | (() => string | Promise<string>);
+      toString?: () => string;
+    };
 
 /**
- * 1. Convert Data URL to Buffer
+ * 1. Convert a data URL or remote URL to Buffer
  */
-export function dataUrlToImageBuffer(dataUrl: string): {
+export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promise<{
   buffer: Buffer;
   mime: string;
   extension: string;
-} {
-  const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
-  if (!match) {
-    throw new Error('Invalid image data URL format');
+}> {
+  const resolvedImageSource =
+    typeof imageSource === 'string'
+      ? imageSource
+      : typeof imageSource?.url === 'function'
+        ? await imageSource.url()
+        : typeof imageSource?.url === 'string'
+          ? imageSource.url
+          : typeof imageSource?.toString === 'function'
+            ? imageSource.toString()
+          : null;
+
+  if (!resolvedImageSource) {
+    throw new Error('Invalid image source input');
   }
 
-  const mime = match[1];
-  const base64 = match[2];
-  const buffer = Buffer.from(base64, 'base64');
+  const dataUrlMatch = resolvedImageSource.match(/^data:(.+);base64,(.+)$/);
+  if (dataUrlMatch) {
+    const mime = dataUrlMatch[1];
+    const base64 = dataUrlMatch[2];
+    const buffer = Buffer.from(base64, 'base64');
+
+    let extension = 'png';
+    if (mime === 'image/jpeg') extension = 'jpg';
+    else if (mime === 'image/webp') extension = 'webp';
+
+    return { buffer, mime, extension };
+  }
+
+  const response = await fetch(resolvedImageSource);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image source: ${response.status}`);
+  }
+
+  const mime = response.headers.get('content-type') || 'image/webp';
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
   let extension = 'png';
   if (mime === 'image/jpeg') extension = 'jpg';
   else if (mime === 'image/webp') extension = 'webp';
+  else if (mime === 'image/png') extension = 'png';
 
   return { buffer, mime, extension };
 }
 
 /**
- * 2. Generate Cover Image Data URL via OpenRouter
+ * 2. Generate Cover Image URL via Replicate
  */
 export async function generateCoverImageDataUrl(options: {
   title: string;
   lyrics?: string;
   sourceText?: string;
 }): Promise<string | null> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
-    console.warn('[image-service] Missing OPENROUTER_API_KEY, skipping cover generation.');
+    console.warn('[image-service] Missing REPLICATE_API_TOKEN, skipping cover generation.');
     return null;
   }
+
+  const replicate = new Replicate({ auth: apiKey });
 
   const { title, lyrics, sourceText } = options;
 
@@ -84,41 +107,44 @@ export async function generateCoverImageDataUrl(options: {
   const prompt = descriptionParts.join('\n\n');
 
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+    const output = await replicate.run(IMAGE_MODEL, {
+      input: {
+        prompt,
+        go_fast: true,
+        megapixels: '1',
+        num_outputs: 1,
+        aspect_ratio: '1:1',
+        output_format: 'webp',
+        output_quality: 80,
+        num_inference_steps: 4,
       },
-      body: JSON.stringify({
-        model: IMAGE_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        modalities: ['image', 'text'],
-        image_config: { aspect_ratio: '1:1', size: '1024x1024' },
-        stream: false,
-      }),
     });
 
-    if (!response.ok) {
-      console.error(
-        '[image-service] OpenRouter request failed:',
-        response.status,
-        await response.text().catch(() => '')
-      );
+    const firstOutput = Array.isArray(output) ? output[0] : null;
+    if (!firstOutput) {
+      console.warn('[image-service] Replicate returned no image output');
       return null;
     }
 
-    const result = (await response.json()) as OpenRouterImageResponse;
-    const imageUrl = result.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageUrl =
+      typeof firstOutput === 'string'
+        ? firstOutput
+        : typeof (firstOutput as { url?: unknown }).url === 'function'
+          ? await (firstOutput as { url: () => Promise<string> | string }).url()
+          : typeof (firstOutput as { url?: unknown }).url === 'string'
+            ? ((firstOutput as { url: string }).url as string)
+            : typeof (firstOutput as { toString?: unknown }).toString === 'function'
+              ? (firstOutput as { toString: () => string }).toString()
+            : null;
 
-    if (!imageUrl || typeof imageUrl !== 'string') {
-      console.warn('[image-service] OpenRouter returned no valid image URL');
+    if (!imageUrl) {
+      console.warn('[image-service] Replicate returned no valid image URL');
       return null;
     }
 
     return imageUrl;
   } catch (error) {
-    console.error('[image-service] OpenRouter API exception:', error);
+    console.error('[image-service] Replicate API exception:', error);
     return null;
   }
 }

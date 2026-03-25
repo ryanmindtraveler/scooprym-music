@@ -265,7 +265,7 @@ export async function processMusicBackground(
 
           if (imageDataUrl) {
             // B2. Convert & Upload
-            const { buffer, mime, extension } = dataUrlToImageBuffer(imageDataUrl);
+            const { buffer, mime, extension } = await dataUrlToImageBuffer(imageDataUrl);
             // Generate SEO-friendly filename: person-event-uuid.ext
             const coverFilename = generateCoverFilename(options.title || 'song', options.sourceText, songId, extension);
             const coverUpload = await uploadFile(buffer, coverFilename, mime, `song-covers/${userId}`);

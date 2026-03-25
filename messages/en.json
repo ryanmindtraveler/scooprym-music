@@ -910,27 +910,27 @@
       },
       "right": {
         "types": {
-          "title": "Content Types"
+          "title": "Pick your chaos"
         },
         "styles": {
-          "title": "Song Styles"
+          "title": "Choose the energy"
         },
         "generate": "Generate Song",
         "waitingForGenerate": "Waiting for Generate",
         "waitingForInput": "Waiting for Input..."
       },
       "contentTypes": {
-        "headlines": "Headlines",
-        "gossip": "Gossip",
-        "drama": "Drama"
+        "headlines": "Breaking News",
+        "gossip": "Messy Gossip",
+        "drama": "Internet Drama"
       },
       "styles": {
-        "roast": "#Roast",
-        "funny": "#Funny",
-        "viral": "#Viral",
-        "satirical": "#Satirical",
-        "battle": "#Battle",
-        "catchy": "#Catchy"
+        "roast": "Savage Roast",
+        "funny": "Pure Comedy",
+        "viral": "Viral Hook",
+        "satirical": "Witty Satire",
+        "battle": "Battle Mode",
+        "catchy": "Catchy Chorus"
       }
     },
     "gallery": {

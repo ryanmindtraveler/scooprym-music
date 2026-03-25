@@ -28,3 +28,21 @@ export const getWorkerUrl = (path: string) => {
 
   return `${base}${normalizedPath}`;
 };
+
+export const canUseQStash = () => {
+  const base = getBaseUrl();
+
+  try {
+    const url = new URL(base);
+    const hostname = url.hostname.toLowerCase();
+    const isLoopback =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.endsWith('.localhost');
+
+    return !isLoopback && !!process.env.QSTASH_TOKEN && process.env.QSTASH_TOKEN !== 'mock_token';
+  } catch {
+    return false;
+  }
+};
