@@ -100,6 +100,20 @@ export default async function FeaturePage({ params }: Props) {
   const faqs = feature.faqs[langKey];
   const relatedPages = feature.relatedSlugs.map((relatedSlug) => featuresContent[relatedSlug]).filter(Boolean);
   const icon = iconMap[slug as keyof typeof iconMap];
+  const archiveSongUrls =
+    slug === 'absurd-social-phenomena'
+      ? [
+          'https://www.scooprym.app/songs/the-bardstown-bender-f8a8e177-6f18-4cbd-9f70-1f479128954a',
+          'https://www.scooprym.app/songs/al-dente-felony-4f0de696-b9d1-451a-abed-b96044514491',
+          'https://www.scooprym.app/songs/the-gavel-and-the-gas-91658fb9-b0f0-4cdd-b586-fcebb7b2d0c7',
+          'https://www.scooprym.app/songs/the-sunshine-state-silhouette-6523bb10-c6d0-41d6-b0a8-f04b4fd63cd1',
+          'https://www.scooprym.app/songs/the-golden-waterfall-63ce09c5-b702-4ec9-8bd4-14b5624d9e1a',
+          'https://www.scooprym.app/songs/lights-sirens-and-lagers-3523b8c0-3fde-4fa9-be52-64ebf3683894',
+          'https://www.scooprym.app/songs/the-flannel-felony-316d278c-993c-47b6-973d-0e90d19a5301',
+          'https://www.scooprym.app/songs/pasta-engine-paralysis-f358b6af-c0a9-4ca1-85ed-d450a4e2cb37',
+          'https://www.scooprym.app/songs/chrome-claw-oklahoma-e64e85ac-19ff-4ca2-bc06-8429c9a569e4',
+        ]
+      : [];
 
   // Theme configuration for each topic (using homepage-inspired light palettes)
   const themeMap: Record<string, { blob1: string; blob2: string; textGradient: string; accent: string }> = {
@@ -302,7 +316,10 @@ export default async function FeaturePage({ params }: Props) {
                   ...benefits.map((b) => ({ ...b, description: b.desc })),
                   ...useCases.map((u) => ({ ...u, description: u.desc })),
                   ...(feature.trendingExamples?.[langKey] || []),
-                ].map((item, idx) => (
+                ].map((item, idx) => {
+                  const songUrl = archiveSongUrls[idx];
+
+                  return (
                   <article
                     key={item.title}
                     className="group relative flex h-full flex-col overflow-hidden rounded-[3rem] border border-white/80 bg-white/60 p-10 shadow-xl shadow-slate-200/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-pink-200/50 backdrop-blur-xl"
@@ -341,13 +358,24 @@ export default async function FeaturePage({ params }: Props) {
                             {isZh ? '2025/26 档案分析' : '2025/26 ANALYSIS'}
                           </span>
                         </div>
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200">
-                          <ArrowRightIcon className="size-5" />
-                        </div>
+                        {songUrl ? (
+                          <Link
+                            href={songUrl}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200"
+                            aria-label={`Open song for ${item.title}`}
+                          >
+                            <ArrowRightIcon className="size-5" />
+                          </Link>
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200">
+                            <ArrowRightIcon className="size-5" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             </section>
           ) : feature.layoutType === 'hot-billboard' ? (
