@@ -57,7 +57,7 @@ export default async function middleware(req: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '';
     const proto = req.headers.get('x-forwarded-proto') ?? nextUrl.protocol.replace(':', '');
-    const canonicalHost = 'www.scooprym.app';
+    const canonicalHost = 'scooprym.app';
 
     if (host && (host !== canonicalHost || proto !== 'https')) {
       const redirectUrl = new URL(req.url);

@@ -103,15 +103,15 @@ export default async function FeaturePage({ params }: Props) {
   const archiveSongUrls =
     slug === 'absurd-social-phenomena'
       ? [
-          'https://www.scooprym.app/songs/the-bardstown-bender-f8a8e177-6f18-4cbd-9f70-1f479128954a',
-          'https://www.scooprym.app/songs/al-dente-felony-4f0de696-b9d1-451a-abed-b96044514491',
-          'https://www.scooprym.app/songs/the-gavel-and-the-gas-91658fb9-b0f0-4cdd-b586-fcebb7b2d0c7',
-          'https://www.scooprym.app/songs/the-sunshine-state-silhouette-6523bb10-c6d0-41d6-b0a8-f04b4fd63cd1',
-          'https://www.scooprym.app/songs/the-golden-waterfall-63ce09c5-b702-4ec9-8bd4-14b5624d9e1a',
-          'https://www.scooprym.app/songs/lights-sirens-and-lagers-3523b8c0-3fde-4fa9-be52-64ebf3683894',
-          'https://www.scooprym.app/songs/the-flannel-felony-316d278c-993c-47b6-973d-0e90d19a5301',
-          'https://www.scooprym.app/songs/pasta-engine-paralysis-f358b6af-c0a9-4ca1-85ed-d450a4e2cb37',
-          'https://www.scooprym.app/songs/chrome-claw-oklahoma-e64e85ac-19ff-4ca2-bc06-8429c9a569e4',
+          'https://scooprym.app/songs/the-bardstown-bender-f8a8e177-6f18-4cbd-9f70-1f479128954a',
+          'https://scooprym.app/songs/al-dente-felony-4f0de696-b9d1-451a-abed-b96044514491',
+          'https://scooprym.app/songs/the-gavel-and-the-gas-91658fb9-b0f0-4cdd-b586-fcebb7b2d0c7',
+          'https://scooprym.app/songs/the-sunshine-state-silhouette-6523bb10-c6d0-41d6-b0a8-f04b4fd63cd1',
+          'https://scooprym.app/songs/the-golden-waterfall-63ce09c5-b702-4ec9-8bd4-14b5624d9e1a',
+          'https://scooprym.app/songs/lights-sirens-and-lagers-3523b8c0-3fde-4fa9-be52-64ebf3683894',
+          'https://scooprym.app/songs/the-flannel-felony-316d278c-993c-47b6-973d-0e90d19a5301',
+          'https://scooprym.app/songs/pasta-engine-paralysis-f358b6af-c0a9-4ca1-85ed-d450a4e2cb37',
+          'https://scooprym.app/songs/chrome-claw-oklahoma-e64e85ac-19ff-4ca2-bc06-8429c9a569e4',
         ]
       : [];
 

@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
     openGraph: {
       title: t('title'),
       description: t('description'),
-      url: 'https://www.scooprym.app',
+      url: 'https://scooprym.app',
       siteName: t('name'),
       locale: locale,
       type: 'website',

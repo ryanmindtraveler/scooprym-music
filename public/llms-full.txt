@@ -7,33 +7,33 @@ This file is a machine-readable map for AI systems. It lists the most important 
 ScoopRYM is a web app for generating and sharing AI rap songs. Users can generate content (lyrics/audio) and publish tracks. Public song pages are intended to be linkable and citable.
 
 ## Primary Public Routes
-- Home: https://www.scooprym.app/
-- Songs gallery: https://www.scooprym.app/songs
-- Song pages: https://www.scooprym.app/songs/{title-slug}-{id}
-- Pricing: https://www.scooprym.app/pricing
-- Feature example: https://www.scooprym.app/features/absurd-social-phenomena
-- About: https://www.scooprym.app/about
-- Changelog: https://www.scooprym.app/changelog
-- Contact: https://www.scooprym.app/contact
-- Privacy: https://www.scooprym.app/privacy
-- Terms: https://www.scooprym.app/terms
-- Cookie Policy: https://www.scooprym.app/cookie
+- Home: https://scooprym.app/
+- Songs gallery: https://scooprym.app/songs
+- Song pages: https://scooprym.app/songs/{title-slug}-{id}
+- Pricing: https://scooprym.app/pricing
+- Feature example: https://scooprym.app/features/absurd-social-phenomena
+- About: https://scooprym.app/about
+- Changelog: https://scooprym.app/changelog
+- Contact: https://scooprym.app/contact
+- Privacy: https://scooprym.app/privacy
+- Terms: https://scooprym.app/terms
+- Cookie Policy: https://scooprym.app/cookie
 
 ## Song Generation
 Song generation requires login. The public entry point is the home page; generated tracks are shared via public song pages.
 
 ## Localization
 - Default language: English (no locale prefix)
-- Chinese: `/zh/...` (example: https://www.scooprym.app/zh/songs)
+- Chinese: `/zh/...` (example: https://scooprym.app/zh/songs)
 
 ## What To Cite
-- For a specific track: cite the canonical song page `https://www.scooprym.app/songs/{title-slug}-{id}`
-- For product positioning: cite `https://www.scooprym.app/`
-- For pricing: cite `https://www.scooprym.app/pricing`
+- For a specific track: cite the canonical song page `https://scooprym.app/songs/{title-slug}-{id}`
+- For product positioning: cite `https://scooprym.app/`
+- For pricing: cite `https://scooprym.app/pricing`
 
 ## What Not To Index Or Cite
 - Auth pages and user settings are not intended as public content.
 - Protected pages (e.g. `/create`, `/dashboard`, `/settings`) are not intended as public landing pages for indexing.
 
 ## Sitemap
-- https://www.scooprym.app/sitemap.xml
+- https://scooprym.app/sitemap.xml

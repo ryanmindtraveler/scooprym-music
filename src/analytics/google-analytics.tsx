@@ -2,7 +2,7 @@
 
 import { GoogleAnalytics as NextGoogleAnalytics } from '@next/third-parties/google';
 
-const CANONICAL_ANALYTICS_ORIGIN = 'https://www.scooprym.app';
+const CANONICAL_ANALYTICS_ORIGIN = 'https://scooprym.app';
 
 /**
  * Google Analytics

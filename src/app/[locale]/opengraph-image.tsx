@@ -34,7 +34,7 @@ export default async function Image({
   const headerStore = await headers();
   const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host');
   const proto = headerStore.get('x-forwarded-proto') ?? 'https';
-  const siteUrl = host ? `${proto}://${host}` : process.env.NEXT_PUBLIC_WEB_URL || 'https://www.scooprym.app';
+  const siteUrl = host ? `${proto}://${host}` : process.env.NEXT_PUBLIC_WEB_URL || 'https://scooprym.app';
   const logoSrc = `${siteUrl}/logo.png`;
 
   const interSemiBold = await fetch(

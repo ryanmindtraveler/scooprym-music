@@ -4,7 +4,7 @@ import type { Locale } from 'next-intl';
 const getRawBaseUrl = () => {
   // Always prioritize the production domain in production to avoid .vercel.app leaks in SEO
   if (process.env.NODE_ENV === 'production') {
-    return 'https://www.scooprym.app';
+    return 'https://scooprym.app';
   }
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     return process.env.NEXT_PUBLIC_BASE_URL;

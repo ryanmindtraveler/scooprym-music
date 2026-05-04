@@ -2,7 +2,7 @@
 
 import Script from 'next/script';
 
-const CANONICAL_ANALYTICS_ORIGIN = 'https://www.scooprym.app';
+const CANONICAL_ANALYTICS_ORIGIN = 'https://scooprym.app';
 
 /**
  * Clarity Analytics
