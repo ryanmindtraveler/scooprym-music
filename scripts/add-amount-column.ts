@@ -11,7 +11,7 @@ async function main() {
 
   try {
     await db.execute(sql`
-      ALTER TABLE payment
+      ALTER TABLE scooprym.payment
       ADD COLUMN IF NOT EXISTS amount INTEGER NOT NULL DEFAULT 0;
     `);
     console.log('Successfully added "amount" column!');

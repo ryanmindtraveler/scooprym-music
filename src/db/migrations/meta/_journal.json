@@ -85,6 +85,13 @@
       "when": 1782131106425,
       "tag": "0011_public_tables_rls_lockdown",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1782135200000,
+      "tag": "0012_move_tables_to_scooprym_schema",
+      "breakpoints": true
     }
   ]
 }
