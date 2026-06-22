@@ -13,6 +13,42 @@ type ImageSourceInput =
       toString?: () => string;
     };
 
+async function fetchRemoteImageWithRetry(imageUrl: string, retries = 3) {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45_000);
+
+    try {
+      const response = await fetch(imageUrl, {
+        signal: controller.signal,
+        headers: {
+          Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+          'User-Agent': 'ScoopRYM-CoverFetcher/1.0',
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image source: ${response.status}`);
+      }
+
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error;
+      console.warn(`[image-service] Cover fetch attempt ${attempt}/${retries} failed for ${imageUrl}`, error);
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Failed to fetch remote image');
+}
+
 /**
  * 1. Convert a data URL or remote URL to Buffer
  */
@@ -49,10 +85,7 @@ export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promi
     return { buffer, mime, extension };
   }
 
-  const response = await fetch(resolvedImageSource);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image source: ${response.status}`);
-  }
+  const response = await fetchRemoteImageWithRetry(resolvedImageSource);
 
   const mime = response.headers.get('content-type') || 'image/webp';
   const arrayBuffer = await response.arrayBuffer();
@@ -73,6 +106,7 @@ export async function generateCoverImageDataUrl(options: {
   title: string;
   lyrics?: string;
   sourceText?: string;
+  artPrompt?: string;
 }): Promise<string | null> {
   const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
@@ -82,40 +116,27 @@ export async function generateCoverImageDataUrl(options: {
 
   const replicate = new Replicate({ auth: apiKey });
 
-  const { title, lyrics, sourceText } = options;
+  const { title, lyrics, sourceText, artPrompt } = options;
   const creativeSource = (sourceText || lyrics || '').replace(/\[[^\]]+\]/g, ' ').replace(/\s+/g, ' ').trim();
 
-  const descriptionParts: string[] = [];
-  descriptionParts.push(
-    `Design a striking square album cover for a contemporary meme song titled "${title}".`
-  );
-  descriptionParts.push(
-    'Visual direction: premium digital illustration, bold central subject, clean silhouette, cinematic lighting, rich color contrast, simple background, instantly readable thumbnail.'
-  );
-
-  if (sourceText && sourceText.trim().length > 0) {
-    descriptionParts.push(
-      'Story cues: turn this story into one strong visual metaphor. Focus on a single memorable scene instead of many small details.'
-    );
-    descriptionParts.push(sourceText.slice(0, 320));
-  } else if (creativeSource.length > 0) {
-    descriptionParts.push(
-      'Theme cues: use the mood and imagery from these lyrics, but compress them into one iconic scene.'
-    );
-    descriptionParts.push(creativeSource.slice(0, 320));
-  }
-
-  descriptionParts.push(
-    'Composition rules: one main focal subject, centered or slightly off-center, large in frame, full-bleed cover art, edge-to-edge image, no borders, no frames, no collage, no split panels, no tiny objects.'
-  );
-  descriptionParts.push(
-    'Style rules: modern album artwork, polished, stylish, graphic, expressive, not photorealistic unless naturally fitting, no muddy details, no visual clutter.'
-  );
-  descriptionParts.push(
-    'Hard constraints: NO TEXT, NO LETTERS, NO LOGOS, NO WATERMARKS, NO WHITE MARGINS, NO MOCKUP, NO UI, NO DUPLICATED SUBJECTS.'
-  );
-
-  const prompt = descriptionParts.join('\n\n');
+  const prompt =
+    artPrompt && artPrompt.trim().length > 0
+      ? artPrompt.trim()
+      : [
+          `Album cover for "${title}".`,
+          'Create one iconic focal subject or scene with immediate thumbnail readability.',
+          'Visual style: premium contemporary album art, cinematic lighting, bold silhouette, controlled color palette, rich emotional atmosphere.',
+          sourceText && sourceText.trim().length > 0
+            ? `Story cue: ${sourceText.slice(0, 320)}`
+            : creativeSource.length > 0
+              ? `Mood cue: ${creativeSource.slice(0, 320)}`
+              : '',
+          'Composition: square cover, single dominant subject, centered or slightly off-center, uncluttered background, strong negative space, no tiny competing objects.',
+          'Finish: polished, stylish, expressive, graphic, premium, not muddy, not chaotic, not collage-heavy.',
+          'Hard constraints: no text, no letters, no logos, no watermark, no UI, no mockup, no border, no duplicated subjects.',
+        ]
+          .filter(Boolean)
+          .join('\n');
 
   try {
     const output = await replicate.run(IMAGE_MODEL, {
@@ -168,6 +189,7 @@ export async function generateCoverWithRetry(
     title: string;
     lyrics?: string;
     sourceText?: string;
+    artPrompt?: string;
   },
   retries = 3
 ): Promise<string | null> {
@@ -182,6 +204,8 @@ export async function generateCoverWithRetry(
             sourceText:
               'Abstract digital art, colorful music visualization, geometric shapes, high quality, 4k wallpaper',
             lyrics: '', // Remove lyrics to avoid text triggers
+            artPrompt:
+              'Abstract album cover, luminous geometric forms, bold silhouette, saturated color contrast, cinematic lighting, premium digital art, no text, no logo, no watermark.',
           }
         : options;
 

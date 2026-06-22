@@ -1,11 +1,12 @@
 import { getDb } from '@/db/index';
 import { song } from '@/db/schema';
+import { buildStoryBrief } from '@/features/full-songs/services/full-songs-helpers';
 import { getSession } from '@/lib/server';
+import { getSongSourceCompatFields, getSongSourceSummary } from '@/lib/song-source';
 import { deleteFile } from '@/storage';
 import { and, eq } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
-// GET: Fetch song details
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
@@ -17,23 +18,32 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
     const { id } = params;
     const db = await getDb();
-    const [row] = await db
-      .select()
-      .from(song)
-      .where(and(eq(song.id, id), eq(song.userId, userId)));
+    const [row] = await db.select().from(song).where(and(eq(song.id, id), eq(song.userId, userId)));
 
     if (!row) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: row });
+    const sourceSummary = getSongSourceSummary({ sourceSummary: row.newsSummary }) || '';
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...row,
+        ...getSongSourceCompatFields({
+          sourceSummary: row.newsSummary,
+          sourceText: row.sourceText,
+          sourceUrl: row.sourceUrl,
+        }),
+        storyBrief: buildStoryBrief(sourceSummary, ''),
+      },
+    });
   } catch (error: any) {
     console.error('get song error:', error);
     return NextResponse.json({ success: false, error: error?.message || 'Failed to fetch song' }, { status: 500 });
   }
 }
 
-// DELETE: Remove song
 export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
@@ -45,10 +55,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
 
     const { id } = params;
     const db = await getDb();
-    const [row] = await db
-      .select()
-      .from(song)
-      .where(and(eq(song.id, id), eq(song.userId, userId)));
+    const [row] = await db.select().from(song).where(and(eq(song.id, id), eq(song.userId, userId)));
     if (!row) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     }
@@ -57,7 +64,6 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
       try {
         await deleteFile(row.audioKey);
       } catch (e) {
-        // log but continue to delete db row
         console.error('delete audio error', e);
       }
     }

@@ -78,6 +78,13 @@
       "when": 1765791114046,
       "tag": "0010_bouncy_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782131106425,
+      "tag": "0011_public_tables_rls_lockdown",
+      "breakpoints": true
     }
   ]
 }

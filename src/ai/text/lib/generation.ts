@@ -1,11 +1,8 @@
 /**
  * @file generation.ts
  * @description 统一的文本 AI 生成库，支持 OpenAI, Gemini, DeepSeek 和 OpenRouter。
- *
- * 本模块封装了常用的歌词生成和重写功能，利用 Vercel AI SDK (AI Core) 实现结构化输出。
  */
 
-import { webContentAnalyzerConfig } from '@/ai/text/utils/web-content-analyzer-config';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
@@ -14,8 +11,8 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 import { ANALYZER_MODEL, TEXT_MODEL } from '@/ai/config/models';
-
-// 支持的 AI 供应商类型
+import type { FullSongsBrief, FullSongsSourceMode } from '@/features/full-songs/types/full-songs';
+import { analyzeSourceMaterial, buildSourceMaterialPrompt } from './source-analysis';
 import type { TextProvider } from './provider-config';
 export type { TextProvider };
 
@@ -24,28 +21,20 @@ export type { TextProvider };
  * 强制 AI 返回符合此格式的 JSON，包含标题、歌词和摘要
  */
 export const lyricsSchema = z.object({
-  isValid: z
-    .boolean()
-    .describe(
-      'Set to false if the input content is invalid, meaningless, broken URL, or insufficient to generate a song.'
-    ),
-  validationError: z
-    .string()
-    .nullable()
-    .describe(
-      'A helpful error message explaining why the input was rejected (e.g. "The provided URL is not accessible or content is too short"). Required if isValid is false.'
-    ),
   title: z.string().describe('A catchy, short title for the song (max 50 chars).'),
-  summary: z
-    .string()
-    .describe(
-      'A very short, punchy, 2-sentences summary of the news story (max 100 chars). Like a "breaking news" ticker.'
-    ),
+  summary: z.string().describe('A very short, punchy, 2-sentence summary of the source story (max 100 chars).'),
+  angle: z.string().describe('A short creative angle describing the emotional or narrative framing.'),
   lyrics: z
     .string()
     .describe(
       'The generated song lyrics. Must include [Intro], [Verse], [Chorus], [Bridge], [Outro] tags. Total length ~50 seconds.'
     ),
+});
+
+const lyricsDraftSchema = z.object({
+  lyrics: z
+    .string()
+    .describe('The generated song lyrics. Must include [Intro], [Verse], [Chorus], [Bridge], [Outro] tags.'),
 });
 
 /**
@@ -73,6 +62,87 @@ const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY ?? '',
 });
 
+const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['openrouter', 'google', 'deepseek', 'openai'];
+
+function providerHasApiKey(provider: TextProvider) {
+  switch (provider) {
+    case 'openrouter':
+      return !!process.env.OPENROUTER_API_KEY;
+    case 'google':
+      return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    case 'deepseek':
+      return !!process.env.DEEPSEEK_API_KEY;
+    case 'openai':
+      return !!process.env.OPENAI_API_KEY;
+    default:
+      return false;
+  }
+}
+
+function getProviderFallbackOrder(preferred?: TextProvider) {
+  const ordered = [preferred, ...FALLBACK_PROVIDER_ORDER].filter(Boolean) as TextProvider[];
+  return Array.from(new Set(ordered)).filter(providerHasApiKey);
+}
+
+function shouldFallbackToNextProvider(error: unknown) {
+  const candidate = error as {
+    statusCode?: number;
+    message?: string;
+    cause?: { statusCode?: number; message?: string };
+    responseBody?: string;
+  };
+
+  const statusCode = candidate?.statusCode || candidate?.cause?.statusCode;
+  const message = `${candidate?.message || ''} ${candidate?.cause?.message || ''} ${candidate?.responseBody || ''}`.toLowerCase();
+
+  if (statusCode === 401 || statusCode === 402 || statusCode === 403 || statusCode === 429) {
+    return true;
+  }
+
+  return (
+    message.includes('incorrect api key') ||
+    message.includes('invalid_api_key') ||
+    message.includes('rate limit') ||
+    message.includes('quota') ||
+    message.includes('insufficient_quota') ||
+    message.includes('authentication') ||
+    message.includes('unauthorized')
+  );
+}
+
+async function generateObjectWithProviderFallback<T>({
+  provider,
+  execute,
+}: {
+  provider?: TextProvider;
+  execute: (activeProvider: TextProvider) => Promise<T>;
+}) {
+  const providerOrder = getProviderFallbackOrder(provider);
+  const attemptedProviders: string[] = [];
+  let lastError: unknown;
+
+  if (providerOrder.length === 0) {
+    throw new Error('No configured text model provider is available');
+  }
+
+  for (const activeProvider of providerOrder) {
+    attemptedProviders.push(activeProvider);
+    try {
+      return await execute(activeProvider);
+    } catch (error) {
+      lastError = error;
+      if (!shouldFallbackToNextProvider(error)) {
+        throw error;
+      }
+      console.warn(`[text-generation] Provider ${activeProvider} failed, trying next fallback provider.`, error);
+    }
+  }
+
+  const finalMessage =
+    lastError instanceof Error ? lastError.message : `All providers failed: ${attemptedProviders.join(', ')}`;
+  throw new Error(finalMessage);
+}
+
 // --- Helper Functions ---
 
 const getModel = (provider: TextProvider = 'openrouter') => {
@@ -91,6 +161,11 @@ const getModel = (provider: TextProvider = 'openrouter') => {
 interface GenerateLyricsParams {
   newsUrl?: string;
   prompt?: string;
+  directionPrompt?: string;
+  lyricsWritingPrompt?: string;
+  sourceMode?: FullSongsSourceMode;
+  title?: string;
+  storyBrief?: FullSongsBrief;
   provider?: TextProvider;
 }
 
@@ -99,101 +174,107 @@ interface GenerateLyricsParams {
  * 根据新闻链接或用户提示词生成歌词
  */
 export async function generateLyrics({ newsUrl, prompt, provider }: GenerateLyricsParams) {
-  const model = getModel(provider);
+  const {
+    directionPrompt,
+    lyricsWritingPrompt,
+    sourceMode,
+    title,
+    storyBrief,
+  } = arguments[0] as GenerateLyricsParams;
+  const modeHint =
+    sourceMode === 'mixed'
+      ? 'The user supplied both a link and freeform story context. Blend them into one coherent source of truth.'
+      : sourceMode === 'link'
+        ? 'Treat the source primarily as link-driven reporting or referenced material.'
+        : sourceMode === 'topic'
+          ? 'Treat the source as a compact topic or prompt and expand it with strong creative framing.'
+          : 'Treat the source as story-driven freeform text and preserve its narrative arc.';
+  const sourceContent = buildSourceMaterialPrompt({ newsUrl, prompt });
+  const analysis =
+    title && storyBrief
+      ? { title, storyBrief }
+      : await analyzeSourceMaterial({ newsUrl, prompt, sourceMode, provider });
 
-  // 构造系统提示词
-  const systemPrompt = `You are a world-class songwriter and lyrical storyteller. Your goal is to transform news stories or user-provided topics into catchy, meaningful, and narratively rich song lyrics.
+  const systemPrompt = `You are a world-class songwriter and lyrical storyteller. Turn the prepared story brief into lyrics that feel emotionally true, musically performable, and artistically memorable.
 
-  Guidelines (Liberated Creativity):
-  - **Tone**: ${prompt ? 'Strictly follow the user prompt tone' : 'Humorous, witty, and culturally spicy'}.
-  - **The Golden Rule**: **DO NOT BE BORING.** Mediocrity is failure.
-    - Avoid plain storytelling. Don't just narrate facts—perform them.
+Core Creative Standard:
+- Tone Direction: ${directionPrompt || prompt ? 'Follow the supplied music direction closely.' : 'Default to contemporary, witty, emotionally vivid writing.'}
+- Source Handling: ${modeHint}
+- Write from the brief, not as a reporter. Transform facts into scenes, tension, imagery, symbols, and emotional movement.
+- The song must feel written by a human songwriter, not assembled from generic mood words.
 
-  - **The 3 Rhetorical Toolkits (Use Mix & Match)**:
-    1.  **Sonic Engineering (For Flow & Rhythm)**:
-        - *Best for Verses & Raps.*
-        - **Multi-syllabic Rhymes**: Don't just rhyme one syllable (Cat/Bat). Rhyme the whole vowel structure (e.g., "In-for-ma-tion" / "Sip-ping po-tions").
-        - **Internal Rhymes**: Hide rhymes in the middle of lines (e.g., "I'm on the **block**, tick-**tock**, non-**stop**").
-        - **Chopping**: Use short, staccato words to create a machine-gun rhythm.
-        - **Assonance**: Focus on matching vowel sounds (e.g., "Low", "Slow", "Ghost", "Whole").
+Writing Priorities:
+- Literary quality: vivid images, sharp phrasing, metaphor, contrast, and texture.
+- Emotional quality: clear feeling, believable stakes, and movement from setup to release.
+- Musical quality: natural rhythm, singable lines, memorable hook language, and strong internal cadence.
+- Narrative quality: each section should advance the emotional story, not restate the same point.
 
-    2.  **Punchline Factory (For Wit & Impact)**:
-        - *Best for Disses & Verse Endings.*
-        - **Setup & Payoff**: Use 2-3 lines to set up a normal context, then use the last line to twist it into an insult or joke.
-        - **Double Entendre**: Words with two meanings (e.g., "You're a star" -> "Space debris").
-        - **Savage Similes**: "You're useful as a screen door on a submarine."
-        - **Hyperbole**: Scale everything up to 1000% for comedic effect.
+Chorus Rules:
+- The chorus must be the clearest emotional payoff.
+- Make it sticky, easy to remember, and strong enough to survive outside the full-length song.
+- Favor a few memorable words or images over dense exposition.
 
-    3.  **Earworm Loop (For Hooks & Choruses)**:
-        - *Best for making it sticky.*
-        - **Repetition**: Repeat the main keyword 3x (e.g., "Gucci Gang, Gucci Gang, Gucci Gang").
-        - **Call & Response**: Line 1: Question. Line 2: Answer.
-        - **Simple Vocabulary**: Use simple, open-vowel words that are easy to sing along to.
-        - **Phonetic Catchiness**: Use clicking sounds (K, T, P) or buzzing sounds (Z, V) for rhythmic hooks.
+Verse Rules:
+- Verses should carry scene details, turns, and perspective.
+- Use concrete images and actions rather than abstract summary.
+- Keep line lengths varied and musical.
 
-  - **Stylistic Adaptation**:
-    - For high-energy styles (e.g., Rap): Use dense flows, triplets, and slang.
-    - For melodic styles: Use poetic imagery and emotional metaphors.
-    - For punchy styles: Use short, aggressive statements.
-  - **Anti-Cliché Protocol (STRICT ENFORCEMENT)**:
-    - **FORBIDDEN START**: Do **NOT** start the song with "Yeah", "Yo", "Listen", "Check it", "Uh", "Let's go", or any generic ad-libs.
-    - **Direct Start**: Start immediately with the first line of the Verse or Chorus. Dive straight into the story or theme.
-    - **No Meta-Commentary**: Do not write lines like "This is a story about..." or "I'm gonna tell you...". Just tell it.
+Anti-Cliche Rules:
+- Do not open with "Yeah", "Yo", "Listen", "Uh", "Let's go", or filler ad-libs.
+- Do not write meta lines like "this is a story about" or "let me tell you".
+- Avoid slogan-like repetition, generic heartbreak filler, or article-style narration.
+- Avoid sounding like a news recap, social post, or AI explanation.
 
-  - **Section Meta-Tagging (THE CONDUCTOR'S PROTOCOL)**:
-    - **Do NOT** use paretheses like '(fast flow)' anymore.
-    - **Instead**, embed style instructions directly in the **Section Tags**.
-    - **Format**: '[SectionType: Mood, Tempo, VocalStyle]'
-    - **Examples**:
-      - '[Verse 1: Fast Rap, Aggressive Flow, Staccato]'
-      - '[Chorus: Melodic, Anthemic, High Notes, Open]'
-      - '[Bridge: Whisper, Dark, Minimalist]'
-      - '[Outro: Fade out, Spoken Word]'
-    - **Why?** This tells the Music Producer AI how to structure the song dynamically.
+Structure Rules:
+- Mandatory tags: [Intro], [Verse 1], [Chorus], [Verse 2], [Bridge], [Outro].
+- Keep sections concise, but the song must still feel complete.
+- [Bridge] should introduce a turn, lift, rupture, or emotional reframing.
+- Strict duration target: 50-60 seconds. Keep verses compact and hooks efficient.
 
-  - **Structure (Full Narrative Arc)**:
-    - Use as many lines as needed to tell a compelling story.
-    - Mandatory Segments: [Intro], [Verse], [Chorus], [Bridge], [Outro].
-    - [Bridge] is critical for a "switch up" or "drop".
-  - **Length Constraint**: **STRICTLY target 50-60 seconds.**
-    - Do NOT write a 3-minute song.
-    - Keep verses punchy and concise (4-6 lines max).
-    - Speed is key for viral content.
-  - **Formatting Rules**:
-    - **Logical Breaks**: Only break lines at natural pauses (commas, end of thoughts).
-    - **Visual Variety**: Let lines have different lengths. Uniformity is the enemy of great music.
-    - **Clear Stanzas**: Keep sections clearly separated by tags.
-  - **Tags**: Use [Verse 1], [Chorus], [Bridge], etc.
-  - **Title**: A professional, clickbait-worthy title that summarizes the "hook."
+Formatting Rules:
+- Use section tags on separate lines.
+- Break lines only at natural lyrical pauses.
+- Keep the output clean, with no commentary before or after the lyrics.
 
   Safety:
   - Avoid hate speech, explicit violence, or illegal content.
-  - If the content is sensitive, handle it with artistic care or reject it if it violates core safety policies.
-  `;
+  - Handle sensitive material with artistic restraint.`;
 
-  let userContent = '';
-  if (newsUrl) {
-    userContent = `Base the song on this news URL: ${newsUrl}. Extract the key story and vibe.`;
-    // Note: In a real app, we would fetch the URL content here or passing it in.
-    // For now assuming the model can access it or we rely on the prompt context if URL fetching isn't implemented here.
-    // Ideally we should use a web scraper tool here if available.
-  } else if (prompt) {
-    userContent = `Topic/Prompt: ${prompt}`;
-  }
+  const defaultLyricsPrompt = `Source Summary:
+${analysis.storyBrief.summary}
 
-  const { object } = await generateObject({
-    model,
-    schema: lyricsSchema,
-    system: systemPrompt,
-    prompt: userContent,
-    temperature: 0.8,
+Creative Angle:
+${analysis.storyBrief.angle}
+
+Working Title:
+${analysis.title}
+
+Original Source:
+${sourceContent}
+
+Execution Notes:
+- Respect the music direction and narrative angle.
+- Aim for literary imagery, emotional tension, and a chorus that lands immediately.
+- Do not merely summarize the source. Convert it into a vivid, singable scene.`;
+
+  const { object: lyricsDraft } = await generateObjectWithProviderFallback({
+    provider,
+    execute: async (activeProvider) =>
+      generateObject({
+        model: getModel(activeProvider),
+        schema: lyricsDraftSchema,
+        system: systemPrompt,
+        prompt: lyricsWritingPrompt || defaultLyricsPrompt,
+        temperature: 0.8,
+      }),
   });
 
-  if (!object.isValid) {
-    throw new Error(object.validationError || 'Invalid input content');
-  }
-
-  return object; // { title, summary, lyrics }
+  return {
+    title: analysis.title,
+    summary: analysis.storyBrief.summary,
+    angle: analysis.storyBrief.angle,
+    lyrics: lyricsDraft.lyrics,
+  };
 }
 
 interface RewriteLyricsParams {
@@ -207,8 +288,6 @@ interface RewriteLyricsParams {
  * 核心功能：重写歌词
  */
 export async function rewriteLyrics({ selectedText, context, style, provider }: RewriteLyricsParams) {
-  const model = getModel(provider);
-
   const systemPrompt = `You are a lyrics editor. Rewrite the selected lyrics to improve flow, rhyme, or match a specific style.
 
   Target Style: ${style || 'Better flow and catchiness'}
@@ -217,12 +296,16 @@ export async function rewriteLyrics({ selectedText, context, style, provider }: 
   Output only the rewritten text, maintaining the same length/structure roughly.
   `;
 
-  const { object } = await generateObject({
-    model,
-    schema: rewriteLyricsSchema,
-    system: systemPrompt,
-    prompt: `Original Text: "${selectedText}"`,
-    temperature: 0.7,
+  const { object } = await generateObjectWithProviderFallback({
+    provider,
+    execute: async (activeProvider) =>
+      generateObject({
+        model: getModel(activeProvider),
+        schema: rewriteLyricsSchema,
+        system: systemPrompt,
+        prompt: `Original Text: "${selectedText}"`,
+        temperature: 0.7,
+      }),
   });
 
   return object.rewrittenText;
@@ -250,44 +333,49 @@ interface EnhanceMusicPromptParams {
  * 利用 AI 将简单的标签 + 歌词转化为 MiniMax 更喜欢的高保真提示词
  */
 export async function enhanceMusicPrompt({ tags, lyrics, provider }: EnhanceMusicPromptParams) {
-  const model = getModel(provider);
+  const systemPrompt = `You are a specialized prompt engineer for MiniMax music generation.
+Transform a high-level music direction plus lyrics into one compact production instruction prompt.
 
-  const systemPrompt = `You are a specialized Prompt Engineer for **MiniMax Music 2.0**.
-  Your goal is to transform user tags and lyrics into a **pro-level music generation prompt**.
+Output Objective:
+- Describe how the song should be produced, not what story happened.
+- Prioritize genre, mood, tempo feel, vocal identity, instrumentation, arrangement arc, and mix character.
+- Keep the result concrete, model-friendly, and commercially usable.
 
-  ### Strategy: "Structural Decoding"
-  The lyrics utilize **Meta-Tags** like '[Verse: Fast Rap]' or '[Chorus: Melodic]'.
-  1.  **Analyze the Structure**: Read these tags to understand the song's progression.
-  2.  **Build a Structural Prompt**: Describe how the music changes over time.
-      -   *Example*: "Structure: Fast Rap Verse -> Melodic Anthemic Chorus -> Whisper Outro."
-  3.  **Combine**: Merge this structural roadmap with the base tags (Genre/Vibe).
+Required Components:
+- genre or subgenre
+- emotional tone
+- tempo or BPM feel
+- vocal style
+- core instruments or groove
+- arrangement arc based on lyric sections
+- mix or sonic finish
+- short-form duration cue for a 50-60 second radio edit
 
-  ### MiniMax Music 2.0 Capabilities & Keywords (USE THESE):
-  - **Vocals**: Dynamic, Breath, Whisper, Falsetto, Belting, Rap Flow, Spoken Word.
-  - **Production**: High Fidelity, Wide Stereo, Studio Quality, 48kHz, Deep Bass, Crisp Highs.
-  - **Structure**: Intro, Build-up, Drop, Bridge, Outro.
+Style Rules:
+- Return a single comma-separated line only.
+- Max 350 characters.
+- Use production language, not literary language.
+- Prefer specifics over vague adjectives.
+- If the lyrics suggest an emotional shift, reflect it as an arrangement shift.
+- Keep the chorus payoff obvious in the arrangement description.
+- Do not explain your reasoning.
 
-  ### Guidelines:
-  1.  **Duration Target**: The song MUST be **50-60 seconds**. Add "Radio Edit", "Short & Punchy".
-  2.  **Enhance the Vibe**:
-      -   If lyrics are sad, add "Melancholic, Reverb".
-      -   If lyrics are hype, add "Aggressive, Distorted 808s".
-  3.  **Format**: Return a single **COMMA-SEPARATED** string. Max 350 characters.
-  4.  **Conciseness**: Use arrow notation (->) for structure. Avoid filler words like "transitions to".
+Good pattern:
+"alt-pop, melancholic but urgent, 92 BPM, intimate female vocal, pulsing synth bass, tight drums, airy piano textures, Verse restrained -> Chorus soaring -> Bridge stripped, wide stereo, polished radio edit"
 
-  ### Example Output:
-  "Jersey Club, Fast Tempo, **Structure: Aggressive Rap Verse -> Anthemic Chorus**, 140 BPM, Dynamic Vocals, Radio Edit, Punchy Kick"
+Input Direction: ${tags}
+Input Lyrics (Excerpt): ${lyrics.slice(0, 500)}...`;
 
-  Input Tags: ${tags}
-  Input Lyrics (Excerpt): ${lyrics.slice(0, 500)}...
-  `;
-
-  const { object } = await generateObject({
-    model,
-    schema: musicPromptSchema,
-    system: systemPrompt,
-    prompt: 'Generate optimized music prompt.',
-    temperature: 0.7,
+  const { object } = await generateObjectWithProviderFallback({
+    provider,
+    execute: async (activeProvider) =>
+      generateObject({
+        model: getModel(activeProvider),
+        schema: musicPromptSchema,
+        system: systemPrompt,
+        prompt: 'Generate one optimized production prompt.',
+        temperature: 0.7,
+      }),
   });
 
   return object.stylePrompt;

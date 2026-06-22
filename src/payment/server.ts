@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { websiteConfig } from '@/config/website';
 import { StripeProvider } from './provider/stripe';
 import type {
@@ -19,6 +17,10 @@ export * from './types';
  * Global payment provider instance
  */
 let paymentProvider: PaymentProvider | null = null;
+
+if (typeof window !== 'undefined') {
+  throw new Error('src/payment/server.ts must not be imported from the client');
+}
 
 /**
  * Get the payment provider

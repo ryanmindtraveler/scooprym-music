@@ -1,4 +1,5 @@
 import { type TextProvider, generateLyrics } from '@/ai/text/lib/generation';
+import type { FullSongsBrief, FullSongsSourceMode } from '@/features/full-songs/types/full-songs';
 import { mapGenerationError } from '@/lib/music/error-handler';
 import { NextResponse } from 'next/server';
 
@@ -10,10 +11,20 @@ export async function POST(req: Request) {
     const {
       newsUrl,
       prompt,
+      sourceMode,
+      title,
+      storyBrief,
+      directionPrompt,
+      lyricsWritingPrompt,
       modelProvider,
     }: {
       newsUrl?: string;
       prompt?: string;
+      sourceMode?: FullSongsSourceMode;
+      title?: string;
+      storyBrief?: FullSongsBrief;
+      directionPrompt?: string;
+      lyricsWritingPrompt?: string;
       modelProvider?: TextProvider;
     } = await req.json();
 
@@ -45,6 +56,11 @@ export async function POST(req: Request) {
     const lyricsData = await generateLyrics({
       newsUrl,
       prompt,
+      sourceMode,
+      title,
+      storyBrief,
+      directionPrompt,
+      lyricsWritingPrompt,
       provider: modelProvider,
     });
 
