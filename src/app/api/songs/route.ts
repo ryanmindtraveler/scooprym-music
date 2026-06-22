@@ -1,6 +1,8 @@
 import { getDb } from '@/db/index';
 import { song } from '@/db/schema';
 import { getSession } from '@/lib/server';
+import { getSongSourceCompatFields } from '@/lib/song-source';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
 import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -19,23 +21,13 @@ export async function GET(request: NextRequest) {
 
     const db = await getDb();
 
-    // Get total count
     const [totalRes] = await db
       .select({ count: sql<number>`count(*)` })
       .from(song)
       .where(
         and(
           eq(song.userId, userId),
-          or(
-            isNull(song.processingStatus),
-            notInArray(song.processingStatus, [
-              'failed_generation',
-              'processing_queue_failed',
-              'failed_audio_upload',
-              'failed_internal_error',
-              'failed_credit_deduction',
-            ])
-          )
+          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
         )
       );
     const total = Number(totalRes?.count || 0);
@@ -46,16 +38,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(song.userId, userId),
-          or(
-            isNull(song.processingStatus),
-            notInArray(song.processingStatus, [
-              'failed_generation',
-              'processing_queue_failed',
-              'failed_audio_upload',
-              'failed_internal_error',
-              'failed_credit_deduction',
-            ])
-          )
+          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
         )
       )
       .orderBy(desc(song.createdAt))
@@ -64,7 +47,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: rows.map((r) => ({ ...r, category: 'News' })),
+      data: rows.map((r) => ({
+        ...r,
+        category: 'News',
+        ...getSongSourceCompatFields({
+          sourceSummary: r.newsSummary,
+          sourceText: r.sourceText,
+          sourceUrl: r.sourceUrl,
+        }),
+      })),
       pagination: {
         total,
         page,

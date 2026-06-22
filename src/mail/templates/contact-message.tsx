@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { defaultMessages } from '@/i18n/messages';
 import { routing } from '@/i18n/routing';
 import EmailLayout from '@/mail/components/email-layout';

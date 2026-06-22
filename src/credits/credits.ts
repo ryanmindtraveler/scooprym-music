@@ -4,7 +4,7 @@ import { getDb } from '@/db';
 import { creditTransaction, userCredit } from '@/db/schema';
 import { findPlanByPlanId, findPlanByPriceId, getAllPricePlans } from '@/payment';
 import { addDays, isAfter } from 'date-fns';
-import { and, asc, eq, gt, isNull, not, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, not, or, sql } from 'drizzle-orm';
 import { CREDIT_TRANSACTION_TYPE } from './types';
 
 /**
@@ -197,16 +197,21 @@ export async function consumeCredits({
     console.error('consumeCredits, invalid amount', userId, amount);
     throw new Error('Invalid amount');
   }
-  // Check balance
-  if (!(await hasEnoughCredits({ userId, requiredCredits: amount }))) {
-    console.error(`consumeCredits, insufficient credits for user ${userId}, required: ${amount}`);
-    throw new Error('Insufficient credits');
-  }
-  // FIFO consumption: consume from the earliest unexpired credits first
   const db = await getDb();
 
   await db.transaction(async (tx) => {
     const now = new Date();
+    const balanceRows = await tx
+      .select({ currentCredits: userCredit.currentCredits })
+      .from(userCredit)
+      .where(eq(userCredit.userId, userId))
+      .limit(1);
+    const currentBalance = balanceRows[0]?.currentCredits || 0;
+
+    if (currentBalance < amount) {
+      console.error(`consumeCredits, insufficient credits for user ${userId}, required: ${amount}`);
+      throw new Error('Insufficient credits');
+    }
     const transactions = await tx
       .select()
       .from(creditTransaction)
@@ -224,14 +229,13 @@ export async function consumeCredits({
       )
       .orderBy(asc(creditTransaction.expirationDate), asc(creditTransaction.createdAt));
 
-    // Check total available in transaction before proceeding (double check inside transaction)
     const available = transactions.reduce((sum, t) => sum + (t.remainingAmount || 0), 0);
-    // Note: This relies on transactions sum being consistent with userCredit. Not strictly enforcing userCredit balance here,
-    // but relying on detailed transaction history is safer.
-
-    // Validate again inside transaction to be safe against race conditions
-    // Actually, simply processing the deduction is enough. If we run out of transaction credits, we stop.
-    // The balance check at the start of function is a "fast fail".
+    if (available < amount) {
+      console.error(
+        `consumeCredits, insufficient transaction credits for user ${userId}, required: ${amount}, available: ${available}`
+      );
+      throw new Error('Insufficient credits');
+    }
 
     // Consume credits
     let remainingToDeduct = amount;
@@ -251,15 +255,26 @@ export async function consumeCredits({
       remainingToDeduct -= deductFromThis;
     }
 
-    // Update balance
-    // We fetch the current record inside the transaction to ensure we have the locked/latest value if isolation level permits
-    const current = await tx.select().from(userCredit).where(eq(userCredit.userId, userId)).limit(1);
-    const newBalance = (current[0]?.currentCredits || 0) - amount;
+    if (remainingToDeduct > 0) {
+      console.error(
+        `consumeCredits, failed to fully deduct credits for user ${userId}, remaining: ${remainingToDeduct}`
+      );
+      throw new Error('Insufficient credits');
+    }
 
-    await tx
+    const updatedBalanceRows = await tx
       .update(userCredit)
-      .set({ currentCredits: newBalance, updatedAt: new Date() })
-      .where(eq(userCredit.userId, userId));
+      .set({
+        currentCredits: sql`${userCredit.currentCredits} - ${amount}`,
+        updatedAt: now,
+      })
+      .where(and(eq(userCredit.userId, userId), gte(userCredit.currentCredits, amount)))
+      .returning({ currentCredits: userCredit.currentCredits });
+
+    if (updatedBalanceRows.length === 0) {
+      console.error(`consumeCredits, atomic balance update failed for user ${userId}, required: ${amount}`);
+      throw new Error('Insufficient credits');
+    }
 
     // Write usage record
     await tx.insert(creditTransaction).values({
@@ -269,8 +284,8 @@ export async function consumeCredits({
       amount: -amount,
       remainingAmount: null, // Usage has no remaining
       description,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     });
   });
 }

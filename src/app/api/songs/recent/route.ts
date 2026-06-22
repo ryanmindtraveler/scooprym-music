@@ -1,6 +1,8 @@
 import { getDb } from '@/db/index';
 import { song, songPlay } from '@/db/schema';
 import { getSession } from '@/lib/server';
+import { getSongSourceCompatFields } from '@/lib/song-source';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
 import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
@@ -18,8 +20,8 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     const db = await getDb();
+    const lastPlayedAtExpr = sql<string>`max(${songPlay.createdAt})`;
 
-    // Get total count of unique recently played songs for this user
     const [totalRes] = await db
       .select({ count: sql<number>`count(distinct ${songPlay.songId})` })
       .from(songPlay)
@@ -27,21 +29,11 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(songPlay.userId, userId),
-          or(
-            isNull(song.processingStatus),
-            notInArray(song.processingStatus, [
-              'failed_generation',
-              'processing_queue_failed',
-              'failed_audio_upload',
-              'failed_internal_error',
-              'failed_credit_deduction',
-            ])
-          )
+          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
         )
       );
     const total = Number(totalRes?.count || 0);
 
-    // Get the most recent play for each song, ordered by the latest play
     const recentSongs = await db
       .select({
         id: song.id,
@@ -56,34 +48,29 @@ export async function GET(request: NextRequest) {
         prompt: song.prompt,
         sourceText: song.sourceText,
         sourceUrl: song.sourceUrl,
+        sourceSummary: sql<string | null>`${song.newsSummary}`,
         newsSummary: song.newsSummary,
-        lastPlayedAt: sql<string>`max(${songPlay.createdAt})`,
+        lastPlayedAt: lastPlayedAtExpr,
       })
       .from(songPlay)
       .innerJoin(song, eq(songPlay.songId, song.id))
       .where(
         and(
           eq(songPlay.userId, userId),
-          or(
-            isNull(song.processingStatus),
-            notInArray(song.processingStatus, [
-              'failed_generation',
-              'processing_queue_failed',
-              'failed_audio_upload',
-              'failed_internal_error',
-              'failed_credit_deduction',
-            ])
-          )
+          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
         )
       )
       .groupBy(song.id)
-      .orderBy(desc(sql`lastPlayedAt`))
+      .orderBy(desc(lastPlayedAtExpr))
       .limit(limit)
       .offset(offset);
 
     return NextResponse.json({
       success: true,
-      data: recentSongs,
+      data: recentSongs.map((item) => ({
+        ...item,
+        ...getSongSourceCompatFields(item),
+      })),
       pagination: {
         total,
         page,

@@ -28,6 +28,20 @@ export class ResendNewsletterProvider implements NewsletterProvider {
     this.audienceId = process.env.RESEND_AUDIENCE_ID;
   }
 
+  private isAudienceMissingError(error: unknown) {
+    const candidate = error as {
+      name?: string;
+      message?: string;
+      statusCode?: number;
+    };
+
+    return (
+      candidate?.name === 'not_found' ||
+      candidate?.statusCode === 404 ||
+      candidate?.message?.toLowerCase().includes('audience not found')
+    );
+  }
+
   /**
    * Get the provider name
    * @returns Provider name
@@ -59,6 +73,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
         });
 
         if (createResult.error) {
+          if (this.isAudienceMissingError(createResult.error)) {
+            console.warn('[newsletter] Resend audience not found, skipping auto subscribe.');
+            return true;
+          }
           console.error('Error creating contact', createResult.error);
           return false;
         }
@@ -74,6 +92,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
       });
 
       if (updateResult.error) {
+        if (this.isAudienceMissingError(updateResult.error)) {
+          console.warn('[newsletter] Resend audience not found, skipping auto subscribe update.');
+          return true;
+        }
         console.error('Error updating contact', updateResult.error);
         return false;
       }
@@ -81,6 +103,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
       console.log('Subscribed newsletter', email);
       return true;
     } catch (error) {
+      if (this.isAudienceMissingError(error)) {
+        console.warn('[newsletter] Resend audience not found, skipping auto subscribe.');
+        return true;
+      }
       console.error('Error subscribing newsletter', error);
       return false;
     }
@@ -102,6 +128,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
 
       // console.log('Unsubscribe result:', result);
       if (result.error) {
+        if (this.isAudienceMissingError(result.error)) {
+          console.warn('[newsletter] Resend audience not found, skipping unsubscribe.');
+          return true;
+        }
         console.error('Error unsubscribing newsletter', result.error);
         return false;
       }
@@ -109,6 +139,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
       console.log('Unsubscribed newsletter', email);
       return true;
     } catch (error) {
+      if (this.isAudienceMissingError(error)) {
+        console.warn('[newsletter] Resend audience not found, skipping unsubscribe.');
+        return true;
+      }
       console.error('Error unsubscribing newsletter', error);
       return false;
     }
@@ -127,6 +161,10 @@ export class ResendNewsletterProvider implements NewsletterProvider {
       });
 
       if (result.error) {
+        if (this.isAudienceMissingError(result.error)) {
+          console.warn('[newsletter] Resend audience not found, treating as unsubscribed.');
+          return false;
+        }
         console.error('Error getting contact:', result.error);
         return false;
       }

@@ -4,7 +4,6 @@
  */
 
 import { dataUrlToImageBuffer } from '@/ai/image/lib/cover-generation';
-import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
 import { getDb } from '@/db/index';
 import { creditTransaction, song as songTable } from '@/db/schema';
 import { uploadFile } from '@/storage';
@@ -74,6 +73,8 @@ function generateCoverFilename(
 export interface ProcessMusicOptions {
   lyrics: string;
   prompt?: string;
+  musicDirectionPrompt?: string;
+  coverArtPrompt?: string;
   title?: string;
   sourceText?: string;
   sourceUrl?: string;
@@ -152,22 +153,14 @@ export async function processMusicBackground(
     } catch (genError: any) {
       console.error(`[song-workflow] Async Generation Failed for ${songId}:`, genError);
 
-      // Handle Failure: Update DB & Refund
+      // No credits have been charged yet, so we only need to mark the task failed.
       await db
         .update(songTable)
         .set({
           processingStatus: 'failed_generation',
           creditError: genError.message,
-          creditsDeducted: false,
         })
         .where(eq(songTable.id, songId));
-
-      const { refundCredits } = await import('@/credits/credits');
-      await refundCredits({
-        userId,
-        amount: 2,
-        description: `Generation failed (Async Workflow) [ID:${songId}]`,
-      }).catch((e) => console.error('[song-workflow] Refund Failed:', e));
 
       return { success: false, error: genError.message };
     }
@@ -249,13 +242,19 @@ export async function processMusicBackground(
           if (!imageDataUrl) {
             try {
               const { generateCoverWithRetry } = await import('@/ai/image/lib/cover-generation');
-              // Use a fallback source text if prompt is missing
-              const coverSource = options.prompt || options.lyrics?.slice(0, 100) || options.title || 'Music Cover';
+              const coverSource =
+                options.coverArtPrompt ||
+                options.musicDirectionPrompt ||
+                options.prompt ||
+                options.lyrics?.slice(0, 100) ||
+                options.title ||
+                'Music Cover';
 
               imageDataUrl = await generateCoverWithRetry({
                 title: options.title || 'Untitled',
                 lyrics: options.lyrics || '',
                 sourceText: coverSource,
+                artPrompt: options.coverArtPrompt,
               });
             } catch (coverGenErr) {
               console.error('[song-workflow] Background Cover Generation failed (non-fatal):', coverGenErr);
@@ -296,14 +295,9 @@ export async function processMusicBackground(
       try {
         console.log(`[song-workflow] Audio upload valid. Proceeding to deduct credits for song ${songId}...`);
 
-        // Dynamic import to avoid circular dependency issues if any, or just for cleanliness
         const { consumeCredits } = await import('@/credits/credits');
-
-        // Idempotency Check: Verify if we already deducted for this song
-        // We check BOTH the song status AND the net credit balance for this specific song ID
         const idSuffix = `[ID:${songId}]`;
 
-        // Parallel check
         const [existingRecordRows, netCreditRows] = await Promise.all([
           db
             .select({ creditsDeducted: songTable.creditsDeducted })
@@ -312,7 +306,6 @@ export async function processMusicBackground(
             .limit(1),
           db
             .select({
-              // Calculate net credits for this song (Usage -2 + Refund +2 = 0)
               netAmount: sql<number>`COALESCE(SUM(${creditTransaction.amount}), 0)`,
             })
             .from(creditTransaction)
@@ -322,8 +315,6 @@ export async function processMusicBackground(
         const existingRecord = existingRecordRows[0];
         const netAmount = Number(netCreditRows[0]?.netAmount || 0);
 
-        // If netAmount is negative (e.g., -2), it means the user is already "charged" for this ID.
-        // If netAmount is 0 (or positive), it means they either weren't charged or were refunded.
         if (existingRecord?.creditsDeducted || netAmount < 0) {
           console.log(
             `[song-workflow] Credits already deducted for ${songId} (Status=${existingRecord?.creditsDeducted}, Net=${netAmount}). Skipping charge.`
@@ -337,11 +328,8 @@ export async function processMusicBackground(
           });
         }
 
-        // Determine final status
         const coverSuccess = coverGenerateResult.status === 'fulfilled' && !!coverGenerateResult.value;
-        const finalStatus = 'completed'; // Always complete, even if we use fallback
-
-        // Use generated cover OR static fallback
+        const finalStatus = 'completed';
         const coverUpload = coverGenerateResult.status === 'fulfilled' ? coverGenerateResult.value : null;
 
         const finalCoverUrl = coverUpload?.url || '/images/funny-censored-fallback.png';
@@ -379,9 +367,8 @@ export async function processMusicBackground(
           })
           .where(eq(songTable.id, songId));
 
-        // Even if credit deduction failed, we still have the audio
         return {
-          success: true,
+          success: false,
           audioUrl: audioUploadResult.value.url,
           error: 'Credit deduction failed',
         };
@@ -390,31 +377,7 @@ export async function processMusicBackground(
       // Audio failed
       console.error(`[song-workflow] Audio upload failed for ${songId}:`, audioUploadResult.reason);
 
-      // Refund credits if they were already deducted (Atomic Lock)
-      try {
-        const updatedRows = await db
-          .update(songTable)
-          .set({
-            creditsDeducted: false,
-            processingStatus: 'failed_audio_upload',
-          })
-          .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
-          .returning({ id: songTable.id });
-
-        if (updatedRows.length > 0) {
-          const { refundCredits } = await import('@/credits/credits');
-          await refundCredits({
-            userId,
-            amount: 2,
-            description: `Generation failed (Storage Upload) [ID:${songId}]`,
-          }).catch((e) => console.error(`[song-workflow] Refund failed for ${songId}:`, e));
-        } else {
-          // If no row was updated, it means it's either not deducted or already refunded
-          await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
-        }
-      } catch (refundError) {
-        console.error(`[song-workflow] Failed to process refund for ${songId}:`, refundError);
-      }
+      await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
 
       return {
         success: false,
@@ -424,35 +387,16 @@ export async function processMusicBackground(
   } catch (globalError: any) {
     console.error(`[song-workflow] Fatal background error for ${songId}:`, globalError);
 
-    // Attempt to update DB to prevent zombie state
+    // Keep fatal cleanup idempotent. Credits are only charged after audio upload succeeds,
+    // so this branch should not perform automatic refunds or force-reset credit flags.
     try {
-      // Refund credits if they were already deducted (Atomic Lock)
-      const updatedRows = await db
+      await db
         .update(songTable)
         .set({
-          creditsDeducted: false,
           processingStatus: 'failed_internal_error',
           creditError: globalError.message || 'Fatal workflow error',
         })
-        .where(and(eq(songTable.id, songId), eq(songTable.creditsDeducted, true)))
-        .returning({ id: songTable.id });
-
-      if (updatedRows.length > 0) {
-        const { refundCredits } = await import('@/credits/credits');
-        await refundCredits({
-          userId,
-          amount: 2,
-          description: `Generation failed (Fatal Error) [ID:${songId}]`,
-        }).catch((e) => console.error(`[song-workflow] Fatal refund error for ${songId}:`, e));
-      } else {
-        await db
-          .update(songTable)
-          .set({
-            processingStatus: 'failed_internal_error',
-            creditError: globalError.message || 'Fatal workflow error',
-          })
-          .where(eq(songTable.id, songId));
-      }
+        .where(eq(songTable.id, songId));
     } catch (dbError) {
       // If DB connection is also dead, just log it.
       console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);
