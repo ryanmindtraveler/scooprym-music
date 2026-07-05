@@ -92,6 +92,13 @@
       "when": 1782135200000,
       "tag": "0012_move_tables_to_scooprym_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1783224300000,
+      "tag": "0013_add_song_publish_flag",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { getDb } from '@/db';
 import { song as songTable, user } from '@/db/schema';
 import { songFavorite } from '@/db/schema';
 import { constructMetadata } from '@/lib/metadata';
+import { isMissingPublishFlagError } from '@/lib/song-publish';
 import { getSession } from '@/lib/server';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { slugify } from '@/lib/utils'; // Re-importing utils
@@ -50,32 +51,46 @@ export default async function HomePage(props: HomePageProps) {
   const tHome = await getTranslations({ locale, namespace: 'HomePage' });
 
   const db = await getDb();
+  const failedStatuses: string[] = [
+    'failed_generation',
+    'processing_queue_failed',
+    'failed_audio_upload',
+    'failed_internal_error',
+    'failed_credit_deduction',
+  ];
 
   // Find songs where userId is in the list of admin users
   // "The gallery must show admin role user's songs automatically"
-  const adminSongs = await db
-    .select()
-    .from(songTable)
-    .innerJoin(user, eq(songTable.userId, user.id))
-    .where(
-      and(
-        eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
-        or(
-          isNull(songTable.processingStatus),
-          notInArray(songTable.processingStatus, [
-            'failed_generation',
-            'processing_queue_failed',
-            'failed_audio_upload',
-            'failed_internal_error',
-            'failed_credit_deduction',
-          ])
+  let adminSongRows: Array<{ song: typeof songTable.$inferSelect }> = [];
+  try {
+    adminSongRows = await db
+      .select()
+      .from(songTable)
+      .innerJoin(user, eq(songTable.userId, user.id))
+      .where(
+        and(
+          eq(user.role, 'admin'),
+          eq(songTable.isPublished, true),
+          or(isNull(songTable.processingStatus), notInArray(songTable.processingStatus, failedStatuses))
         )
       )
-    )
-    .orderBy(desc(songTable.createdAt))
-    .limit(15)
-    .then((res) => res.map((row) => row.song)); // Extract song part from join result
+      .orderBy(desc(songTable.createdAt))
+      .limit(15);
+  } catch (error) {
+    if (!isMissingPublishFlagError(error)) {
+      throw error;
+    }
+
+    console.warn('[marketing/home] is_published column missing, fallback query enabled');
+    adminSongRows = await db
+      .select()
+      .from(songTable)
+      .innerJoin(user, eq(songTable.userId, user.id))
+      .where(and(eq(user.role, 'admin'), or(isNull(songTable.processingStatus), notInArray(songTable.processingStatus, failedStatuses))))
+      .orderBy(desc(songTable.createdAt))
+      .limit(15);
+  }
+  const adminSongs = adminSongRows.map((row) => row.song);
 
   // Fetch current user session to check for likes
   const session = await getSession();
@@ -111,13 +126,7 @@ export default async function HomePage(props: HomePageProps) {
           eq(songTable.id, sharedSongId),
           or(
             isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, [
-              'failed_generation',
-              'processing_queue_failed',
-              'failed_audio_upload',
-              'failed_internal_error',
-              'failed_credit_deduction',
-            ])
+            notInArray(songTable.processingStatus, failedStatuses)
           )
         )
       )
