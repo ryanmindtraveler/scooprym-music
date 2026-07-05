@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { imageHelpers } from '../lib/image-helpers';
 import type { ProviderTiming } from '../lib/image-types';
-import { FireworksIcon, OpenAIIcon, ReplicateIcon, falAILogo } from '../lib/logos';
+import { FireworksIcon, GoogleIcon, OpenAIIcon, ReplicateIcon, falAILogo } from '../lib/logos';
 import type { ProviderKey } from '../lib/provider-config';
 import { ImageDisplay } from './ImageDisplay';
 
@@ -25,6 +25,7 @@ interface ModelSelectProps {
 }
 
 const PROVIDER_ICONS = {
+  google: GoogleIcon,
   openai: OpenAIIcon,
   replicate: ReplicateIcon,
   fireworks: FireworksIcon,
@@ -32,6 +33,7 @@ const PROVIDER_ICONS = {
 } as const;
 
 const PROVIDER_LINKS = {
+  google: 'google-generative-ai',
   openai: 'openai',
   replicate: 'replicate',
   fireworks: 'fireworks',

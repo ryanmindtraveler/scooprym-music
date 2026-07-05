@@ -25,7 +25,13 @@ export function ImagePlayground({
 
   const [showProviders, setShowProviders] = useState(true);
   const [selectedModels, setSelectedModels] = useState<Record<ProviderKey, string>>(MODEL_CONFIGS.performance);
-  const [enabledProviders, setEnabledProviders] = useState(initializeProviderRecord(true));
+  const [enabledProviders, setEnabledProviders] = useState<Record<ProviderKey, boolean>>({
+    google: true,
+    replicate: true,
+    openai: false,
+    fireworks: false,
+    fal: false,
+  });
   const [mode, setMode] = useState<ModelMode>('performance');
   const toggleView = () => {
     setShowProviders((prev) => !prev);
@@ -49,6 +55,7 @@ export function ImagePlayground({
   };
 
   const providerToModel = {
+    google: selectedModels.google,
     replicate: selectedModels.replicate,
     openai: selectedModels.openai,
     fireworks: selectedModels.fireworks,

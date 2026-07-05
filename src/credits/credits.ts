@@ -7,6 +7,29 @@ import { addDays, isAfter } from 'date-fns';
 import { and, asc, eq, gt, gte, isNull, not, or, sql } from 'drizzle-orm';
 import { CREDIT_TRANSACTION_TYPE } from './types';
 
+async function getSpendableCreditsSnapshot(
+  db: {
+    select: Awaited<ReturnType<typeof getDb>>['select'];
+  },
+  userId: string,
+  now = new Date()
+) {
+  const transactions = await db
+    .select({ remainingAmount: creditTransaction.remainingAmount })
+    .from(creditTransaction)
+    .where(
+      and(
+        eq(creditTransaction.userId, userId),
+        not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.USAGE)),
+        not(eq(creditTransaction.type, CREDIT_TRANSACTION_TYPE.EXPIRE)),
+        gt(creditTransaction.remainingAmount, 0),
+        or(isNull(creditTransaction.expirationDate), gt(creditTransaction.expirationDate, now))
+      )
+    );
+
+  return transactions.reduce((sum, transaction) => sum + (transaction.remainingAmount || 0), 0);
+}
+
 /**
  * 获取用户当前的积分余额
  * @param userId - 用户ID
@@ -15,19 +38,43 @@ import { CREDIT_TRANSACTION_TYPE } from './types';
 export async function getUserCredits(userId: string): Promise<number> {
   try {
     const db = await getDb();
-
-    // Optimized query: only select the needed field
-    // This can benefit from covering index if we add one later
     const record = await db
       .select({ currentCredits: userCredit.currentCredits })
       .from(userCredit)
       .where(eq(userCredit.userId, userId))
       .limit(1);
+    const persistedBalance = record[0]?.currentCredits || 0;
+    const spendableBalance = await getSpendableCreditsSnapshot(db, userId);
 
-    return record[0]?.currentCredits || 0;
+    if (persistedBalance !== spendableBalance) {
+      await db
+        .update(userCredit)
+        .set({
+          currentCredits: spendableBalance,
+          updatedAt: new Date(),
+        })
+        .where(eq(userCredit.userId, userId));
+    }
+
+    return spendableBalance;
   } catch (error) {
     console.error('getUserCredits, error:', error);
     // Return 0 on error to prevent UI from breaking
+    return 0;
+  }
+}
+
+/**
+ * 获取用户当前可消费的积分余额（基于 transaction remainingAmount）
+ * @param userId - 用户ID
+ * @returns 当前真正可消费的积分
+ */
+export async function getSpendableCredits(userId: string): Promise<number> {
+  try {
+    const db = await getDb();
+    return await getSpendableCreditsSnapshot(db, userId);
+  } catch (error) {
+    console.error('getSpendableCredits, error:', error);
     return 0;
   }
 }
@@ -172,7 +219,7 @@ export async function hasEnoughCredits({
   userId: string;
   requiredCredits: number;
 }) {
-  const balance = await getUserCredits(userId);
+  const balance = await getSpendableCredits(userId);
   return balance >= requiredCredits;
 }
 
@@ -201,6 +248,7 @@ export async function consumeCredits({
 
   await db.transaction(async (tx) => {
     const now = new Date();
+    const available = await getSpendableCreditsSnapshot(tx, userId, now);
     const balanceRows = await tx
       .select({ currentCredits: userCredit.currentCredits })
       .from(userCredit)
@@ -208,7 +256,17 @@ export async function consumeCredits({
       .limit(1);
     const currentBalance = balanceRows[0]?.currentCredits || 0;
 
-    if (currentBalance < amount) {
+    if (currentBalance !== available) {
+      await tx
+        .update(userCredit)
+        .set({
+          currentCredits: available,
+          updatedAt: now,
+        })
+        .where(eq(userCredit.userId, userId));
+    }
+
+    if (available < amount) {
       console.error(`consumeCredits, insufficient credits for user ${userId}, required: ${amount}`);
       throw new Error('Insufficient credits');
     }
@@ -228,14 +286,6 @@ export async function consumeCredits({
         )
       )
       .orderBy(asc(creditTransaction.expirationDate), asc(creditTransaction.createdAt));
-
-    const available = transactions.reduce((sum, t) => sum + (t.remainingAmount || 0), 0);
-    if (available < amount) {
-      console.error(
-        `consumeCredits, insufficient transaction credits for user ${userId}, required: ${amount}, available: ${available}`
-      );
-      throw new Error('Insufficient credits');
-    }
 
     // Consume credits
     let remainingToDeduct = amount;

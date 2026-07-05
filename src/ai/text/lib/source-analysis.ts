@@ -6,7 +6,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-import { ANALYZER_MODEL, TEXT_MODEL } from '@/ai/config/models';
+import { ANALYZER_MODEL, ANALYZER_OPENROUTER_MODEL } from '@/ai/config/models';
 import type { TextProvider } from './provider-config';
 
 const sourceAnalysisSchema = z.object({
@@ -47,7 +47,7 @@ const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY ?? '',
 });
 
-const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['openrouter', 'google', 'deepseek', 'openai'];
+const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['deepseek', 'openrouter', 'google'];
 
 function providerHasApiKey(provider: TextProvider) {
   switch (provider) {
@@ -127,11 +127,11 @@ async function generateObjectWithProviderFallback<T>({
 const getModel = (provider: TextProvider = 'openrouter') => {
   switch (provider) {
     case 'openrouter':
-      return openrouter(TEXT_MODEL);
+      return openrouter(ANALYZER_OPENROUTER_MODEL);
     case 'google':
-      return google(TEXT_MODEL);
+      return google('gemini-3.1-flash-lite');
     case 'deepseek':
-      return deepseek('deepseek-chat');
+      return deepseek(ANALYZER_MODEL);
     default:
       return openai(ANALYZER_MODEL);
   }
@@ -195,6 +195,7 @@ Safety:
         system: analysisSystemPrompt,
         prompt: sourceContent,
         temperature: 0.4,
+        maxOutputTokens: 300,
       }),
   });
 

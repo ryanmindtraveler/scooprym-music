@@ -10,7 +10,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-import { ANALYZER_MODEL, TEXT_MODEL } from '@/ai/config/models';
+import { ANALYZER_MODEL, OPENROUTER_TEXT_MODEL, TEXT_MODEL } from '@/ai/config/models';
 import type { FullSongsBrief, FullSongsSourceMode } from '@/features/full-songs/types/full-songs';
 import { analyzeSourceMaterial, buildSourceMaterialPrompt } from './source-analysis';
 import type { TextProvider } from './provider-config';
@@ -62,7 +62,7 @@ const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY ?? '',
 });
 
-const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['openrouter', 'google', 'deepseek', 'openai'];
+const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['deepseek', 'openrouter', 'google'];
 
 function providerHasApiKey(provider: TextProvider) {
   switch (provider) {
@@ -148,11 +148,11 @@ async function generateObjectWithProviderFallback<T>({
 const getModel = (provider: TextProvider = 'openrouter') => {
   switch (provider) {
     case 'openrouter':
-      return openrouter(TEXT_MODEL);
+      return openrouter(OPENROUTER_TEXT_MODEL);
     case 'google':
-      return google(TEXT_MODEL);
+      return google('gemini-3-flash');
     case 'deepseek':
-      return deepseek('deepseek-chat');
+      return deepseek(TEXT_MODEL);
     default:
       return openai(ANALYZER_MODEL);
   }
@@ -266,6 +266,7 @@ Execution Notes:
         system: systemPrompt,
         prompt: lyricsWritingPrompt || defaultLyricsPrompt,
         temperature: 0.8,
+        maxOutputTokens: 700,
       }),
   });
 
@@ -305,6 +306,7 @@ export async function rewriteLyrics({ selectedText, context, style, provider }: 
         system: systemPrompt,
         prompt: `Original Text: "${selectedText}"`,
         temperature: 0.7,
+        maxOutputTokens: 220,
       }),
   });
 
@@ -375,6 +377,7 @@ Input Lyrics (Excerpt): ${lyrics.slice(0, 500)}...`;
         system: systemPrompt,
         prompt: 'Generate one optimized production prompt.',
         temperature: 0.7,
+        maxOutputTokens: 140,
       }),
   });
 

@@ -46,11 +46,10 @@ export default function CreateMusicPage() {
     setMusicCoverUrl,
     musicId,
     setMusicId,
-    processingTaskId, // Legacy / Current poller
-    setProcessingTaskId,
     tasks, // New Queue
     addTask,
     updateTask,
+    removeTask,
     shouldAutoGenerate,
     setShouldAutoGenerate,
     reset,
@@ -60,8 +59,13 @@ export default function CreateMusicPage() {
   const stopPlayer = usePlayerStore((state) => state.stop);
   const setGlobalIsGenerating = usePlayerStore((state) => state.setIsGenerating);
   const setPlayerCoverImage = usePlayerStore((state) => state.setCoverImage);
-  const { data: balance, isLoading: isBalanceLoading } = useCreditBalance();
+  const {
+    data: balance,
+    isLoading: isBalanceLoading,
+    error: balanceError,
+  } = useCreditBalance();
   const queryClient = useQueryClient();
+  const currentBalance = balance ?? 0;
 
   // --- Local UI State ---
   const [isGenerating, setIsGenerating] = useState(false); // For Lyrics Gen only now
@@ -71,9 +75,13 @@ export default function CreateMusicPage() {
   const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string | null>(null); // For current stage
   const [error, setError] = useState<string | null>(null);
+  const [musicError, setMusicError] = useState<string | null>(null);
   const [hasJustQueued, setHasJustQueued] = useState(false);
 
   const MUSIC_CREDIT_COST = 2;
+  const hasGenerationInput = !!(newsContent.trim() || newsLink.trim());
+  const hasEnoughCredits = isBalanceLoading || !!balanceError || currentBalance >= MUSIC_CREDIT_COST;
+  const canGenerate = hasGenerationInput && !isGenerating && !musicLoading && hasEnoughCredits;
 
   // --- Effect: Reset Player on Mount (Decoupling) ---
   useEffect(() => {
@@ -185,6 +193,13 @@ export default function CreateMusicPage() {
               if (newStatus !== task.status || updates.coverUrl || updates.audioUrl) {
                 updateTask(task.id, updates);
 
+                if (
+                  newStatus !== task.status &&
+                  (newStatus === 'completed' || newStatus === 'completed_without_cover' || newStatus === 'failed')
+                ) {
+                  queryClient.invalidateQueries({ queryKey: creditsKeys.balance() });
+                }
+
                 // If *this* task is currently loaded on Stage, sync stage state
                 if (musicId === task.id) {
                   if (newStatus === 'completed' || newStatus === 'completed_without_cover') {
@@ -230,19 +245,38 @@ export default function CreateMusicPage() {
     return () => {
       isCancelled = true;
     };
-  }, [tasks, updateTask, musicId, playSong, setMusicUrl, setMusicCoverUrl, /* setPlayerCoverImage, */ setMusicLoading]);
+  }, [
+    tasks,
+    updateTask,
+    musicId,
+    playSong,
+    queryClient,
+    setMusicUrl,
+    setMusicCoverUrl,
+    /* setPlayerCoverImage, */ setMusicLoading,
+  ]);
 
   /**
    * Phase 2: Generate Music (Queue Based)
    */
   const handleGenerateMusic = async (inputLyrics?: string, inputTitle?: string) => {
-    // if (musicLoading) return; // Non-blocking now!
+    if (musicLoading) return;
+
     const targetLyrics = inputLyrics || lyrics;
     const targetTitle = inputTitle || musicTitle;
 
     if (!targetLyrics) return;
+    setMusicError(null);
 
-    // 1. Create Task Object (Optimistic)
+    if (!isBalanceLoading && !balanceError && currentBalance < MUSIC_CREDIT_COST) {
+      const insufficientCreditsMessage = 'Insufficient credits (Code: 1010)';
+      setMusicError(insufficientCreditsMessage);
+      toast.error('Insufficient credits. You need more juice to drop this track.');
+      return;
+    }
+
+    setMusicLoading(true);
+
     const clientSongId =
       typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(); // simple fallback
 
@@ -265,61 +299,58 @@ export default function CreateMusicPage() {
       createdAt: Date.now(),
     };
 
-    // 2. Add to Queue immediately
-    addTask(newTask);
-    setMusicId(clientSongId); // Link Stage to this Task
-    setMusicCoverUrl(null); // Reset cover to show loading state for new song
-    setHasJustQueued(true); // Enable "Create Another" button mode
-    toast.success('Added to Queue!', {
-      description: 'Your song is cooking in the background.',
-      duration: 5000,
-    });
-
-    // 3. Clear Input (Unlock UI) - REMOVED to allow multiple generations
-    // setNewsContent('');
-    // setNewsLink('');
-    // The user stays on the current stage, or we could auto-minimize lyrics?
-    // "Scheme A" preserves immersion.
-
-    // 4. Fire Async Request (Do not block UI)
-    // We execute the fetch detached.
-    fetch('/api/generate/music', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        songId: clientSongId, // Pass to API
-        lyrics: targetLyrics,
-        prompt: musicPrompt || DEFAULT_CUSTOM_VIBE_PROMPT, // Fallback to Viral Default
-        title: targetTitle,
-        sourceText: newsContent,
-        sourceUrl: newsLink,
-        newsSummary: useCreateStore.getState().newsSummary, // Use fresh state (avoid stale closure)
-        useStream: false, // Poll mode for stability
-      }),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          updateTask(clientSongId, { status: 'failed' });
-          toast.error(data.error || 'Generation failed');
-        } else {
-          // Success (Optimistic / Pre-computation)
-          // The API returns audioUrl immediately in some cases, or just starts job.
-          // If it returns audioUrl, great.
-          if (data.audio) {
-            updateTask(clientSongId, { status: 'completed', audioUrl: data.audio });
-            // We don't auto-switch Stage to this task to avoid interrupting.
-          }
-        }
-      })
-      .catch((e: any) => {
-        console.error('Generation Request Failed', e);
-        updateTask(clientSongId, { status: 'failed' });
-        toast.error(e.message || 'Network failed on request.');
+    try {
+      const res = await fetch('/api/generate/music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          songId: clientSongId,
+          lyrics: targetLyrics,
+          prompt: musicPrompt || DEFAULT_CUSTOM_VIBE_PROMPT,
+          title: targetTitle,
+          sourceText: newsContent,
+          sourceUrl: newsLink,
+          newsSummary: useCreateStore.getState().newsSummary,
+          useStream: false,
+        }),
       });
 
-    // Invalidate credits
-    queryClient.invalidateQueries({ queryKey: creditsKeys.balance() });
+      const data = await res.json().catch(() => ({ success: false, error: 'Generation failed' }));
+      if (!res.ok || !data.success) {
+        const requestError = data.error || 'Generation failed';
+        setMusicError(requestError);
+        toast.error(requestError);
+        queryClient.invalidateQueries({ queryKey: creditsKeys.balance() });
+        return;
+      }
+
+      addTask(newTask);
+      setMusicId(clientSongId);
+      setMusicUrl(null);
+      setMusicCoverUrl(null);
+      setProcessingStatus('processing');
+      setHasJustQueued(true);
+
+      if (data.song?.title) {
+        setMusicTitle(data.song.title);
+      }
+
+      if (data.audio) {
+        updateTask(clientSongId, { status: 'completed', audioUrl: data.audio });
+      }
+
+      toast.success('Added to Queue!', {
+        description: 'Your song is cooking in the background.',
+        duration: 5000,
+      });
+    } catch (e: any) {
+      console.error('Generation Request Failed', e);
+      setMusicError(e.message || 'Network failed on request.');
+      toast.error(e.message || 'Network failed on request.');
+      removeTask(clientSongId);
+    } finally {
+      setMusicLoading(false);
+    }
   };
 
   /**
@@ -329,6 +360,12 @@ export default function CreateMusicPage() {
     if (isGenerating) return;
     if (!newsContent && !newsLink) {
       toast.error('Give us some tea to spill first!');
+      return;
+    }
+    if (!isBalanceLoading && !balanceError && currentBalance < MUSIC_CREDIT_COST) {
+      const insufficientCreditsMessage = 'Insufficient credits (Code: 1010)';
+      setMusicError(insufficientCreditsMessage);
+      toast.error('Insufficient credits. You need more juice to drop this track.');
       return;
     }
 
@@ -344,6 +381,7 @@ export default function CreateMusicPage() {
 
     setIsGenerating(true);
     setError(null);
+    setMusicError(null);
 
     try {
       // 2. Generate Lyrics (Blocking UI - Fast)
@@ -436,11 +474,15 @@ export default function CreateMusicPage() {
             musicPrompt={musicPrompt}
             setMusicPrompt={setMusicPrompt}
             handleGenerate={handleGenerate}
-            canGenerate={!!(newsContent || newsLink)}
-            isGenerating={isGenerating} // Only blocks for Lyric Gen
+            canGenerate={canGenerate}
+            isGenerating={isGenerating || musicLoading}
             musicCreditCost={MUSIC_CREDIT_COST}
             error={error}
-            onClearError={() => setError(null)}
+            musicError={musicError}
+            onClearError={() => {
+              setError(null);
+              setMusicError(null);
+            }}
             hasJustQueued={hasJustQueued}
             onReset={() => {
               setNewsLink('');

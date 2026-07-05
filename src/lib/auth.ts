@@ -21,9 +21,9 @@ import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from './urls/urls';
  * https://www.better-auth.com/docs/reference/options
  */
 export const auth = betterAuth({
-  baseURL: getBaseUrl(),
   appName: defaultMessages.Metadata.name,
   trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  trustedProxyHeaders: true,
   database: drizzleAdapter(getDb(), {
     provider: 'pg', // or "mysql", "sqlite"
   }),

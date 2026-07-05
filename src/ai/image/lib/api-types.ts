@@ -11,4 +11,7 @@ export interface GenerateImageRequest {
 export interface GenerateImageResponse {
   image?: string;
   error?: string;
+  provider?: ProviderKey;
+  modelId?: string;
+  fallbackApplied?: boolean;
 }

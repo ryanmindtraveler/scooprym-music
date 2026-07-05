@@ -103,7 +103,9 @@ export function useImageGeneration(): UseImageGenerationReturn {
           // Update image in state
           setImages((prevImages) =>
             prevImages.map((item) =>
-              item.provider === provider ? { ...item, image: data.image ?? null, modelId } : item
+              item.provider === provider
+                ? { ...item, image: data.image ?? null, modelId: data.modelId ?? modelId }
+                : item
             )
           );
         } catch (err) {

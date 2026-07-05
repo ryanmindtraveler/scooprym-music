@@ -19,6 +19,27 @@ export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
   console.log('>> middleware start, pathname', nextUrl.pathname);
 
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.NEXT_PUBLIC_BASE_URL &&
+    !nextUrl.pathname.startsWith('/api/')
+  ) {
+    const canonicalDevUrl = new URL(process.env.NEXT_PUBLIC_BASE_URL);
+    const requestHost = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '';
+    const requestProto = req.headers.get('x-forwarded-proto') ?? nextUrl.protocol.replace(':', '');
+
+    if (
+      requestHost &&
+      (requestHost !== canonicalDevUrl.host || requestProto !== canonicalDevUrl.protocol.replace(':', ''))
+    ) {
+      const redirectUrl = new URL(req.url);
+      redirectUrl.protocol = canonicalDevUrl.protocol;
+      redirectUrl.host = canonicalDevUrl.host;
+      console.log('<< middleware end, redirecting to canonical dev origin:', redirectUrl.toString());
+      return NextResponse.redirect(redirectUrl, 307);
+    }
+  }
+
   // 0. CORS handling for /api/auth routes (Google One Tap / FedCM)
   // This logic must come before intlMiddleware and other checks to intercept API calls correctly.
   if (nextUrl.pathname.startsWith('/api/auth')) {

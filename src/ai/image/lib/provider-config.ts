@@ -1,4 +1,4 @@
-export type ProviderKey = 'replicate' | 'openai' | 'fireworks' | 'fal';
+export type ProviderKey = 'google' | 'replicate' | 'openai' | 'fireworks' | 'fal';
 export type ModelMode = 'performance' | 'quality';
 
 export const PROVIDERS: Record<
@@ -10,6 +10,12 @@ export const PROVIDERS: Record<
     models: string[];
   }
 > = {
+  google: {
+    displayName: 'Google',
+    iconPath: '/provider-icons/google.svg',
+    color: 'from-blue-500 to-emerald-500',
+    models: ['gemini-3.1-flash-lite-image'],
+  },
   // https://ai-sdk.dev/providers/ai-sdk-providers/replicate#image-models
   replicate: {
     displayName: 'Replicate',
@@ -80,20 +86,22 @@ export const PROVIDERS: Record<
 
 export const MODEL_CONFIGS: Record<ModelMode, Record<ProviderKey, string>> = {
   performance: {
-    replicate: 'black-forest-labs/flux-1.1-pro',
+    google: 'gemini-3.1-flash-lite-image',
+    replicate: 'black-forest-labs/flux-schnell',
     openai: 'dall-e-3',
     fireworks: 'accounts/fireworks/models/flux-1-schnell-fp8',
     fal: 'fal-ai/flux/dev',
   },
   quality: {
-    replicate: 'stability-ai/stable-diffusion-3.5-large',
+    google: 'gemini-3.1-flash-lite-image',
+    replicate: 'black-forest-labs/flux-schnell',
     openai: 'dall-e-3',
     fireworks: 'accounts/fireworks/models/flux-1-dev-fp8',
     fal: 'fal-ai/flux-pro/v1.1-ultra',
   },
 };
 
-export const PROVIDER_ORDER: ProviderKey[] = ['replicate', 'openai', 'fireworks', 'fal'];
+export const PROVIDER_ORDER: ProviderKey[] = ['google', 'replicate', 'openai', 'fireworks', 'fal'];
 
 export const initializeProviderRecord = <T>(defaultValue?: T) =>
   Object.fromEntries(PROVIDER_ORDER.map((key) => [key, defaultValue])) as Record<ProviderKey, T>;
