@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-04 17:58_
+_Last updated: 2026-09-04 20:47_
 
 ## Pinned
 - 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
@@ -192,11 +192,42 @@ _Last updated: 2026-09-04 17:58_
 - [P1][DONE][#11] The Hot Sheet 每日归档最终 `pnpm exec tsc --noEmit` 与 `git diff --check` 均以 exit 0 通过。（2026-09-04 14:34）
 - [P1][OPEN][#12] The Hot Sheet 每日归档上线前应用 0033 迁移，确认 production 部署与 `CRON_SECRET` 配置，并完成管理员浏览器、真实抓取和每日归档验证；本轮均未执行。（2026-09-04 14:32）
 - [P1][DONE][#13] Story Radar 后台逐条创作最终 `pnpm exec tsc --noEmit` 退出 0，`git diff --check` 通过，37 项测试再次通过。（2026-09-04 15:02）
-- [P1][OPEN][#14] Story Radar 的 0034 表已定点创建，QStash 发布令牌与两把签名密钥已确认存在；仍需用户选择公网隧道本地测试或部署分支并配置公网 worker，随后完成浏览器及付费端到端验证。当前 loopback 地址阻止入队，未擅自更改地址或部署；Drizzle 迁移游标未推进。（2026-09-04 17:58）
+- [P1][OPEN][#14] Story Radar 的 0034 表已定点创建，开发环境已使用官方本地 QStash 通过签名探针验证；仍待整首歌曲付费端到端验证及生产公网 worker 部署验证。Drizzle 迁移游标未推进，本地探针成功不代表歌曲全流程通过。（2026-09-04 20:47）
 - [P1][DONE][#15] 真实生成进度 UI 的最终 TypeScript 检查已通过。（2026-09-04 16:48）
 - [P1][DONE][#16] 合并歌词定稿调用后的最终 TypeScript 检查已通过。（2026-09-04 17:28）
+- [P1][DONE][#17] 歌曲详情页隐藏悬浮播放器的 TypeScript 检查已通过。（2026-09-04 18:55）
+- [P1][DONE][#18] 热点雷达已生成歌曲入口最终 `pnpm exec tsc --noEmit` 以 exit 0 通过，`git diff --check` 通过。（2026-09-04 18:56）
+- [P1][DONE][#19] 主分支旧风格合并后的 `tsc --noEmit` 以 exit 0 通过，`git diff --check` 通过。（2026-09-04 19:38）
+- [P1][DONE][#20] 新版音乐风格及制作配方增强的最终 `tsc --noEmit` 以 exit 0 通过。（2026-09-04 19:54）
+- [P1][DONE][#21] 共享 Meme 创作标准及新版歌词风格调整最终测试 31/31 通过，`tsc --noEmit` exit 0，`git diff --check` 通过。（2026-09-04 20:05）
+- [P1][DONE][#22] 逐项风格审查修复的最终 `tsc --noEmit` 以 exit 0 通过。（2026-09-04 20:17）
+- [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-04 20:47：修复热点雷达入队超时：用户运行于 localhost，原 `canUseQStash` 拒绝 loopback，数据库 `radar_creation_job` 无记录；generate 路由静态导入完整歌词/音乐模块且前端 15 秒中断。新增 `radar-creation-enqueue.ts` 拆分轻量入队，失败落库为 `failed`；UI 超时调整为 45 秒，超时后先查询明确结果，查询自身上限 10 秒。（evidence: `radar-creation-enqueue.ts`、generate 路由及入队 UI）
+- 2026-09-04 20:47：`queue.ts` 仅在 development 且使用本地 `QSTASH_URL` 时允许 loopback，仍验证签名。官方 QStash CLI 2.37.18 安装于 `F:/CodexHome/runtimes/qstash`，已忽略的 `.env.development.local` 仅使用本地测试凭据；`scripts/dev-with-queue.cjs` 随 `pnpm dev` 检测或启动官方本地队列，`docs/本地热点队列.md` 说明内存队列重启限制。（evidence: `queue.ts`、`scripts/dev-with-queue.cjs`、`docs/本地热点队列.md`）
+- 2026-09-04 20:47：相关 16 项测试、首轮 TypeScript 及 `git diff --check` 通过；真实 Chrome 热点页与状态 GET 均返回 200，真实签名 QStash 探针携带不存在 ID 进入 worker 并返回预期 `missing`。（evidence: 主流程测试、浏览器状态与签名探针结果）
+- 2026-09-04 20:15：完成 22 套预设与自定义风格逐项审查，`docs/音乐风格逐项审查.md` 记录全部 23 项定位、问题、处理及试听清单。发现旧版配方直接读取 `tags[0/1/2]`，把 `Goofy Ahh Beat` 当作类型、`Sturdy Dance` 等当作音色；新增 `legacy-production.ts` 显式定义 11 套 foundation / colors / vocal / guard，旧版原标签未改。（evidence: `docs/音乐风格逐项审查.md`、`legacy-production.ts`）
+- 2026-09-04 20:15：明确 `What The Hell` 仅指语气、不擅加唱词，Mumble 保持关键句清晰，警笛与碎玻璃等音效不持续堆叠；共享 `ADAPTIVE_ARRANGEMENT_RULE` 用于简报及音乐配方格式化，结构仅作可选示例，不添加未写明的循环、不提前泄露结尾。（evidence: 原版制作配方与 `ADAPTIVE_ARRANGEMENT_RULE`）
+- 2026-09-04 20:17：[#22] 新版 `velvet_rope_whisper` 删除 `Chillwide`，剩余 7 个标签仍通过五层测试；`main_character` 去掉 8-bar reset，自定义移除 `restrained ear candy`。新增 `style-audit.test` 3 项，相关共 30 项测试及 `git diff --check` 通过，最终 `tsc --noEmit` 以 exit 0 通过。（evidence: 风格定义、`style-audit.test` 与主流程检查输出）
+- 2026-09-04 20:03：新增 `src/lib/music/meme-creative-standard.ts` 共享标准，注入 `generation.ts` 的新闻策划、单稿写作与音乐提示词增强；审校使用同一 system，并按选定特点检查。新版 11 个 `lyricCraft` 分别明确侧重点，旧 11 种定义未改。（evidence: `src/lib/music/meme-creative-standard.ts`、`generation.ts`、新版 `lyricCraft`）
+- 2026-09-04 20:03：依用户最新澄清，每首只突出适合事件的小部分特点，通常 2–3 个仅为指导而非校验门槛；不要求每首同时快、炸、押韵与鬼畜，密集押韵仅适用于选择该特点的歌曲，保留 `one-shot` / `none` 和显式慢速风格。删除 rhyme 仅作 texture、泛化禁口号、`restrained backing vocals` 与克制 alt-pop 示例，保留事实、安全、歌词长度及单稿加一次审校结构，不增加模型调用。（evidence: 共享创作标准及对应提示词）
+- 2026-09-04 20:05：[#21] 新增共享创作标准测试，相关最终测试 31/31 通过，`tsc --noEmit` exit 0，`git diff --check` 通过。（evidence: 共享标准测试文件、主流程最终测试与类型及差异检查输出）
+- 2026-09-04 19:52：完成新版 11 种风格与 22 套制作配方的逐项增强：调整 `productionSignature` / vocal / arc / avoid 及 foundation / groove / colors 等，强化鼓点、低音、节奏停顿和声音反差，去除稀疏柔和弱伴奏及晚入鼓要求；旧 `LEGACY_VIBE_PERSONAS` 11 种风格与全部标签集合均未改动。（evidence: 新版风格与制作配方定义）
+- 2026-09-04 19:52：情绪与悬疑类仍保留 slow / low-tempo，以深低音、半拍和记忆性旋律增强律动，不统一提速；新闻两个变体保持 drill，不自动转为弱 trip-hop。继续保留音效避免堆叠、歌词清晰与事实边界。（evidence: 对应风格及制作配方）
+- 2026-09-04 19:54：[#20] 新增 `production-energy.test` 的 3 项测试，覆盖 22 个变体有效性、foundation / groove 不含弱化词、slow 风格保留及 22 个 groove 的差异；相关共 37 项测试通过，`git diff --check` 通过，最终 `tsc --noEmit` 以 exit 0 通过。（evidence: `production-energy.test`、主流程测试及类型与差异检查输出）
+- 2026-09-04 19:52：补记前轮中文翻译：11 种旧风格的 label / description 与 11 个原版配方名已补齐，legacy 测试包含中文覆盖。（evidence: 旧风格国际化消息、legacy 测试）
+- 2026-09-04 19:37：按用户要求恢复并合并主分支风格：`git fetch origin master` 后，从 `origin/master:src/components/create/form/create-music-data.ts` 原样提取 11 种非自定义预设至 `src/lib/music/legacy-vibes.ts`；程序 JSON 比较确认名称、说明与标签完全一致。`VIBE_PERSONAS` 现为自定义 + 旧 11 + 现有 11，共 23 个选项，`EDITORIAL_STYLE_PROFILES` 共 22 项，现有 11 种风格保持不变。（evidence: `origin/master` 源文件、`src/lib/music/legacy-vibes.ts`、主流程一致性校验）
+- 2026-09-04 19:37：旧预设接入编辑简报与 `*_original` 制作配方，完整传递原标签，避免被当前克制配方改写；`recommendSourceStyle` catalog 动态覆盖 22 种风格，支持手动与雷达推荐。旧名称及配方 label 无翻译时回退原英文，仅单个配方时禁用“换一个”。（evidence: 编辑风格、制作配方及 `recommendSourceStyle`）
+- 2026-09-04 19:38：[#19] 新增 `legacy-vibes.test`，旧五层测试调整为仅验证现有风格，保留旧标签原样；15 项风格配方测试与 12 项推荐及雷达测试共 27 项通过，主分支一致性校验通过，最终 `tsc --noEmit` 以 exit 0 通过，`git diff --check` 通过。（evidence: `legacy-vibes.test` 与主流程测试、一致性及最终类型检查输出）
+- 2026-09-04 18:56：[#18] 热点雷达已生成歌曲入口最终 `pnpm exec tsc --noEmit` 以 exit 0 通过，`git diff --check` 通过。（evidence: 主流程最终类型与差异检查输出）
+- 2026-09-04 18:55：完成热点雷达已生成歌曲关联：新增 `getRadarGeneratedSongs`，通过 `candidate.storyId` 或相同 `sourceUrl` 关联 story / song，要求最新 `generationAttempt=completed` 且有效音频，兼容已发布且无 attempt 的历史歌曲；SSR 加载初始数据，jobs 每 10 秒轮询更新。（evidence: `getRadarGeneratedSongs`、Story Radar SSR 与 jobs 轮询）
+- 2026-09-04 18:55：完成已生成内容浏览入口：`Generated` 筛选始终可见、默认 `All`，完成新闻从 `adopted` 筛选中排除；卡片支持音频试听、已发布歌曲详情、未发布歌曲 studio 预览及多版本展开，完成卡片不再展示生成按钮。（evidence: Story Radar 已生成歌曲卡片与筛选）
+- 2026-09-04 18:55：创作页 `create?songId` 使用精确 GET 恢复并取消旧请求防串歌；GET `/api/songs/[id]` 允许管理员读取其他所有者歌曲，DELETE 权限不变。`story-radar.test.tsx` 3/3 通过，第一轮 TypeScript 通过；真实数据库只读计数为 `generated_news=1`、`completed_songs=1`。（evidence: 创作页恢复、歌曲 GET 路由、主流程测试与只读查询）
+- 2026-09-04 18:55：[#17] 上轮 `persistent-player` 调整的最终 TypeScript 检查已通过。（evidence: 主流程类型检查结果）
+- 2026-09-04 18:18：`persistent-player.tsx` 使用 `useLocalePathname` 在 `/songs/:slug` 详情路径隐藏悬浮 `Now playing` 栏，保留 `GlobalPlayer` 音频组件及左侧唱片控件，不修改播放状态，其他页面正常显示；组件 3 项测试与 `git diff --check` 通过。（evidence: `persistent-player.tsx`、主流程组件测试与差异检查）
+- 2026-09-04 18:18：已直接在数据库清空 Haywire 歌曲 `9daf2bb1-5d24-408e-810f-f5cf85fe7e6a` 对应 story `950eccce-a527-4d2e-97b9-8040921ab828` 的 `source_text`（原 12000 字符），确认该 story 仅关联 1 首歌曲；摘要、原文链接、音频及歌词保留。（evidence: 主流程数据库验证、`scripts/clean-haywire-source.cjs`；该脚本尚未提交）
+- 2026-09-04 18:18：此前提交 `b403acf` 已成功推送至 `origin/dev`，相关 31 项测试通过；自动部署结果尚未确认。（evidence: commit `b403acf`、主流程推送及测试输出）
 - 2026-09-04 17:58：确认当前 `.env` 连接 Supabase 远程数据库且 `scooprym.radar_creation_job` 缺失；用户继续授权修复后，使用 `scripts/check-radar-database.cjs --apply` 事务执行 0034，仅创建该表，验证 15 列齐全、记录数为 0。（evidence: `scripts/check-radar-database.cjs --apply` 与主流程数据库验证输出）
 - 2026-09-04 17:58：0034 建表语句改为 `CREATE TABLE IF NOT EXISTS`，便于后续正式迁移幂等执行；未推进 Drizzle 迁移游标、未运行其他迁移，`hot_sheet_edition` 仍缺失。诊断脚本仅输出配置存在性，不输出凭据。（evidence: 0034 migration、`scripts/check-radar-database.cjs`）
 - 2026-09-04 17:28：热点雷达新后台任务增加自动选型阶段：`processRadarCreation` 在歌词策划前抓取本条新闻，复用 `recommendSourceStyle` 选择 custom 或 11 套 preset，再由 `buildDynamicProductionRecipe` 匹配 variant；`source_ready` 步骤 metadata 保存 version 1、direction、styleId、reason、variantId、source 与 recipe，完成后独立重新投递。（evidence: `processRadarCreation`、`source_ready` metadata）
@@ -486,6 +517,14 @@ _Last updated: 2026-09-04 17:58_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-04 20:47：本地签名队列路径解决此前 localhost 无法由云端回调的开发阻塞，仅限本地 development，不放宽生产回调边界。本轮无付费生成，不能称整首歌曲端到端通过；第二轮 TypeScript 尚在收尾，未 push。
+- 2026-09-04 20:47：记录时本地开发服务 session 19591、队列 session 26912 运行；这些 session 为当前运行信息，不保证后续仍存活。本次仅更新 `progress.md`，不改动其他文件或运行服务。
+- 2026-09-04 20:17：本轮风格审查未进行试听，未提交或推送；最终 TypeScript 检查已通过，无待完成类型检查项，文档试听清单不代表已完成实测。本次仅更新 `progress.md`，不修改其他文件。
+- 2026-09-04 20:05：本轮创作标准强调事件适配与特点取舍，不把“通常 2–3 个”变为数量门禁，也不统一提速；最终测试、TypeScript 与差异检查均通过，未执行付费生成或试听，未推送。本次仅更新 `progress.md`，未修改其他文件。
+- 2026-09-04 19:54：本轮新版风格增强未执行付费生成或试听，未提交或推送；文本配方与测试通过不代表已验证实际听感，最终 TypeScript 检查已通过。本次仅更新 `progress.md`，不修改其他文件。
+- 2026-09-04 19:38：本轮为原样提取主分支风格数据并合并到现有目录，不代表合并整个 `master` 分支；未提交或推送，无付费音乐生成或浏览器听感验证，最终 TypeScript 与差异检查均通过。本次仅更新 `progress.md`，未修改其他文件。
+- 2026-09-04 18:56：热点雷达已生成歌曲入口最终 TypeScript 与差异检查已通过；尚未真实浏览器验收，本轮未提交、未推送，无付费生成。本次仅更新 `progress.md`，未修改其他文件。
+- 2026-09-04 18:55：详情页悬浮播放器调整 TypeScript 检查已通过，未真实浏览器验证，未提交或推送；此前 `b403acf` 推送成功不代表本轮播放器修改已推送或自动部署已成功。旧 TODO #8/#9 与具体已推送提交的对应范围未在本次增量中明确，暂保留原状态供核对。本次仅更新 `progress.md`。
 - 2026-09-04 17:58：当前 `NEXT_PUBLIC_BASE_URL=http://localhost:3000`；QStash token 与两把签名 key 虽已存在，`canUseQStash` 仍因 loopback 地址拒绝入队，云端无法回调本机。需用户选择公网隧道本地测试或部署分支后配置公网 worker；本轮未擅自改变地址或部署，未提交歌曲或调用付费模型。
 - 2026-09-04 17:58：本轮定点建表推进了此前“radar_creation_job 缺失”状态，但不代表完整迁移或端到端验收完成；TODO #14 保留公网回调与验收事项，TODO #12 的 Hot Sheet 迁移仍未完成。本次记录仅修改 `progress.md`。
 - 2026-09-04 17:28：新雷达任务在原歌词 3 个逻辑阶段之外增加一次风格推荐调用，已向用户说明，重试复用保存的快照；本轮未进行付费端到端验证、未提交或部署，既有 `radarCreationJob` 数据库迁移缺失问题未操作，TODO #14 保持待办。本次仅更新 `progress.md`。

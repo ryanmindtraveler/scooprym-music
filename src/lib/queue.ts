@@ -12,6 +12,7 @@ import { getBaseUrl } from './urls/urls';
 // For robust local dev without QStash, we might want to mock this or use a conditional check.
 export const qstash = new Client({
   token: process.env.QSTASH_TOKEN || 'mock_token',
+  baseUrl: process.env.QSTASH_URL,
 });
 
 /**
@@ -42,7 +43,12 @@ export const canUseQStash = () => {
     const hasSigningKeys = !!process.env.QSTASH_CURRENT_SIGNING_KEY && !!process.env.QSTASH_NEXT_SIGNING_KEY;
 
     // 没有签名密钥时 Worker 无法验证投递，不能把任务伪装成“已成功排队”。
-    return !isLoopback && hasPublishToken && hasSigningKeys;
+    let localQueue = false;
+    if (process.env.NODE_ENV === 'development' && process.env.QSTASH_URL) {
+      const queueHost = new URL(process.env.QSTASH_URL).hostname;
+      localQueue = ['localhost', '127.0.0.1', '[::1]'].includes(queueHost);
+    }
+    return (!isLoopback || localQueue) && hasPublishToken && hasSigningKeys;
   } catch {
     return false;
   }

@@ -11,6 +11,7 @@ export interface StyleCategory {
 }
 
 import { getEditorialStyleProfileById } from '@/lib/music/editorial-styles';
+import { LEGACY_VIBE_PERSONAS } from '@/lib/music/legacy-vibes';
 
 export interface VibePersona {
   id: string;
@@ -270,6 +271,7 @@ export const VIBE_PERSONAS: readonly VibePersona[] = [
     color: 'bg-slate-50 dark:bg-white/5 border-dashed border-slate-200 dark:border-white/10',
     tags: DEFAULT_CUSTOM_VIBE_TAGS,
   },
+  ...LEGACY_VIBE_PERSONAS,
   {
     id: 'newsroom_noir',
     label: 'Newsroom Noir',

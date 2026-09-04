@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { generateLyrics, type LyricsCheckpointStage } from '@/ai/text/lib/generation';
 import { prepareSourceMaterial, recommendSourceStyle } from '@/ai/text/lib/source-analysis';
 import { getDb } from '@/db';
-import { radarCreationJob, songCreationRun, storyCandidate, user } from '@/db/schema';
-import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
+import { radarCreationJob, songCreationRun, user } from '@/db/schema';
+import { dispatchRadarCreation } from './radar-creation-enqueue';
 import {
   startLyricsWorkflow,
   getWorkflowRun,
@@ -14,9 +14,8 @@ import {
   completeWorkflowStage,
 } from '@/lib/song-creation-workflow';
 import { submitMusicGeneration } from '@/lib/submit-music-generation';
-import { recommendEditorialStyleId, buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
+import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { z } from 'zod';
-import { getEditorialStyleProfileById } from '@/lib/music/editorial-styles';
 import { and, eq, isNull, lt, ne, or } from 'drizzle-orm';
 
 class CheckpointSaved extends Error {}
@@ -30,63 +29,7 @@ const autoProductionSchema = z.object({
   source: z.object({ text: z.string().min(1), url: z.string().optional(), title: z.string().optional() }),
 });
 
-/** 后台队列必须可达；禁止以浏览器生命周期或after长请求伪装可靠队列。 */
-export async function dispatchRadarCreation(candidateId: string, sequence: number) {
-  if (!canUseQStash())
-    throw new Error('Background queue is not configured. Configure QStash and a public worker URL first.');
-  await qstash.publishJSON({
-    url: getWorkerUrl('/api/worker/radar-creation'),
-    body: { candidateId },
-    deduplicationId: `radar-${candidateId}-${sequence}`,
-    flowControl: { key: 'scooprym-radar-lyrics', parallelism: 2 },
-    retries: 8,
-    retryDelay: '60000',
-  });
-}
-
-export async function enqueueRadarCreation(candidateId: string, userId: string) {
-  if (!canUseQStash())
-    throw new Error('Background queue is not configured. Configure QStash and a public worker URL first.');
-  const db = await getDb();
-  const [candidate] = await db.select().from(storyCandidate).where(eq(storyCandidate.id, candidateId)).limit(1);
-  if (!candidate) throw new Error('Story candidate not found');
-  if (candidate.status === 'dismissed') throw new Error('Restore this story before creating a song');
-  const direction = getEditorialStyleProfileById(recommendEditorialStyleId(candidate.sourceTitle)).tags.join(', ');
-  await db
-    .insert(radarCreationJob)
-    .values({
-      candidateId,
-      userId,
-      runId: randomUUID(),
-      songId: randomUUID(),
-      sourceUrl: candidate.sourceUrl,
-      sourceTitle: candidate.sourceTitle,
-      direction,
-    })
-    .onConflictDoNothing();
-  let [job] = await db.select().from(radarCreationJob).where(eq(radarCreationJob.candidateId, candidateId)).limit(1);
-  if (!job) throw new Error('Unable to persist creation job');
-  if (job.status === 'failed') {
-    const [retry] = await db
-      .update(radarCreationJob)
-      .set({ status: 'queued', sequence: job.sequence + 1, error: null, updatedAt: new Date() })
-      .where(
-        and(
-          eq(radarCreationJob.candidateId, candidateId),
-          eq(radarCreationJob.status, 'failed'),
-          isNull(radarCreationJob.leaseId)
-        )
-      )
-      .returning();
-    if (retry) job = retry;
-  }
-  if (job.status === 'queued') await dispatchRadarCreation(candidateId, job.sequence);
-  await db
-    .update(storyCandidate)
-    .set({ status: 'adopted', adoptedAt: candidate.adoptedAt ?? new Date(), updatedAt: new Date() })
-    .where(eq(storyCandidate.id, candidateId));
-  return { candidateId, runId: job.runId, songId: job.songId, status: job.status };
-}
+export { enqueueRadarCreation, dispatchRadarCreation } from './radar-creation-enqueue';
 
 /** 每次投递最多完成一个新的歌词检查点，再投递下一阶段，不更换原有歌词提示词。 */
 export async function processRadarCreation(candidateId: string) {

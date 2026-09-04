@@ -31,8 +31,8 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
       })
       .from(song)
       .innerJoin(story, eq(story.id, song.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(song.id, id), eq(song.userId, userId)));
+      .leftJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(and(eq(song.id, id), session.user.role === 'admin' ? undefined : eq(song.userId, userId)));
 
     if (!row) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });

@@ -88,10 +88,16 @@ export function ProductionRecipePreview({
             </div>
             <div className="flex min-w-0 items-baseline gap-2">
               <h4 className="truncate text-sm font-black tracking-tight text-slate-950 dark:text-white 2xl:text-[15px]">
-                {t(`productionVariants.${recipe.variantId}` as never)}
+                {t.has(`productionVariants.${recipe.variantId}` as never)
+                  ? t(`productionVariants.${recipe.variantId}` as never)
+                  : recipe.variantLabel}
               </h4>
               <span className="truncate text-[10px] font-semibold text-slate-400">
-                {t('viaDirection', { direction: t(`directions.${directionTranslationId}.label` as never) })}
+                {t('viaDirection', {
+                  direction: t.has(`directions.${directionTranslationId}.label` as never)
+                    ? t(`directions.${directionTranslationId}.label` as never)
+                    : recipe.editorialStyleLabel,
+                })}
               </span>
             </div>
             <p className="mt-0.5 truncate text-[9px] font-medium text-slate-500 dark:text-slate-400">
@@ -109,6 +115,7 @@ export function ProductionRecipePreview({
               variant="ghost"
               size="sm"
               onClick={cycleVariant}
+              disabled={variants.length < 2}
               className="h-7 rounded-full border border-slate-200 bg-white px-2.5 text-[9px] font-black text-slate-700 shadow-sm hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
               aria-label={t('nextRecipe')}
             >

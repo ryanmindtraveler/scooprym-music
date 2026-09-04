@@ -2,6 +2,7 @@
 
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Slider } from '@/components/ui/slider';
+import { useLocalePathname } from '@/i18n/navigation';
 import { usePlayerStore } from '@/store';
 import { Pause, Play, SkipBack, SkipForward, X } from 'lucide-react';
 import Image from 'next/image';
@@ -14,6 +15,7 @@ function formatTime(seconds: number) {
 }
 
 export function PersistentPlayer() {
+  const pathname = useLocalePathname();
   const currentSong = usePlayerStore((state) => state.currentSong);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const currentTime = usePlayerStore((state) => state.currentTime);
@@ -25,7 +27,8 @@ export function PersistentPlayer() {
   const playPrevious = usePlayerStore((state) => state.playPrevious);
   const stop = usePlayerStore((state) => state.stop);
 
-  if (!currentSong) return null;
+  // 详情页已有唱片播放控件；只隐藏重复界面，保留全局音频播放与状态。
+  if (!currentSong || /^\/songs\/[^/]+\/?$/.test(pathname || '')) return null;
 
   return (
     <aside

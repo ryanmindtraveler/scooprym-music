@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button';
 import { LocaleLink, useLocaleRouter } from '@/i18n/navigation';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { cn } from '@/lib/utils';
+import { groupRadarSongs, type RadarGeneratedSong } from '@/lib/story-radar/generated-song-view';
 import { Check, ExternalLink, Loader2, Newspaper, RefreshCw, RotateCcw, SearchX, Sparkles, X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export interface StoryRadarCandidateView {
+  generatedSongs?: RadarGeneratedSong[];
   id: string;
   sourceUrl: string;
   sourceTitle: string;
@@ -43,11 +45,12 @@ const categoryDetails: Record<
   },
 };
 
-const statusFilters: Array<{ id: 'all' | StoryCandidateStatus }> = [
+const statusFilters: Array<{ id: 'all' | 'generated' | StoryCandidateStatus }> = [
   { id: 'all' },
   { id: 'new' },
   { id: 'shortlisted' },
   { id: 'adopted' },
+  { id: 'generated' },
   { id: 'dismissed' },
 ];
 
@@ -58,14 +61,24 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
   const submitting = useRef(new Set<string>());
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
   const [jobs, setJobs] = useState<Record<string, { status: string; workflowStatus?: string; stage?: string }>>({});
+  const [generated, setGenerated] = useState<Record<string, RadarGeneratedSong[]> | null>(null);
+  const songsByCandidate =
+    generated ?? Object.fromEntries(candidates.map((candidate) => [candidate.id, candidate.generatedSongs ?? []]));
+  const effectiveStatus = (candidate: StoryRadarCandidateView) =>
+    songsByCandidate[candidate.id]?.length ? 'generated' : candidate.status;
   const refreshJobs = async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/admin/story-radar/jobs', { signal, cache: 'no-store' });
+      const timeout = AbortSignal.timeout(10_000);
+      const response = await fetch('/api/admin/story-radar/jobs', {
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout, cache: 'no-store',
+      });
       if (!response.ok) return;
       const data = await response.json();
       if (signal?.aborted) return;
+      if (Array.isArray(data.generatedSongs)) setGenerated(groupRadarSongs(data.generatedSongs));
       if (Array.isArray(data.jobs))
         setJobs(Object.fromEntries(data.jobs.map((job: { candidateId: string }) => [job.candidateId, job])));
+      return data.jobs as Array<{ candidateId: string; status: string }> | undefined;
     } catch {
       /* 临时网络中断保留当前队列状态。 */
     }
@@ -83,7 +96,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
       clearTimeout(timer);
     };
   }, []);
-  const [activeStatus, setActiveStatus] = useState<'all' | StoryCandidateStatus>('new');
+  const [activeStatus, setActiveStatus] = useState<'all' | 'generated' | StoryCandidateStatus>('all');
   const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>('all');
   const [isScanning, setIsScanning] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -92,21 +105,22 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
     () =>
       candidates.filter(
         (candidate) =>
-          (activeStatus === 'all' || candidate.status === activeStatus) &&
+          (activeStatus === 'all' || effectiveStatus(candidate) === activeStatus) &&
           (activeCategory === 'all' || candidate.category === activeCategory)
       ),
-    [activeCategory, activeStatus, candidates]
+    [activeCategory, activeStatus, candidates, generated]
   );
 
   const counts = useMemo(
     () => ({
       all: candidates.length,
-      new: candidates.filter((candidate) => candidate.status === 'new').length,
-      shortlisted: candidates.filter((candidate) => candidate.status === 'shortlisted').length,
-      adopted: candidates.filter((candidate) => candidate.status === 'adopted').length,
-      dismissed: candidates.filter((candidate) => candidate.status === 'dismissed').length,
+      new: candidates.filter((candidate) => effectiveStatus(candidate) === 'new').length,
+      shortlisted: candidates.filter((candidate) => effectiveStatus(candidate) === 'shortlisted').length,
+      adopted: candidates.filter((candidate) => effectiveStatus(candidate) === 'adopted').length,
+      dismissed: candidates.filter((candidate) => effectiveStatus(candidate) === 'dismissed').length,
+      generated: candidates.filter((candidate) => effectiveStatus(candidate) === 'generated').length,
     }),
-    [candidates]
+    [candidates, generated]
   );
 
   async function scanLatestStories() {
@@ -164,7 +178,8 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
     submitting.current.add(id);
     setSubmittingIds(new Set(submitting.current));
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
+    // 开发模式首次编译可能超过 15 秒；接口只负责入队，不等待歌词生成。
+    const timeoutId = window.setTimeout(() => controller.abort(), 45_000);
     try {
       const response = await fetch(`/api/admin/story-radar/${id}/generate`, {
         method: 'POST',
@@ -180,12 +195,19 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
         zh ? '已加入后台队列，可以继续选择其他新闻。' : 'Added to the background queue. You can select more stories.'
       );
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        const recovered = (await refreshJobs())?.find((job) => job.candidateId === id);
+        if (recovered && recovered.status !== 'failed') {
+          toast.success(zh ? '已确认任务已保存，后台将继续执行。' : 'Task confirmed. Background processing will continue.');
+        } else {
+          toast.error(recovered
+            ? (zh ? '任务投递失败，请重试这条新闻。' : 'Queue delivery failed. Please retry this story.')
+            : (zh ? '尚未确认任务入队，请重试；相同新闻会复用同一个任务。' : 'Queue acceptance is not confirmed. Retry will reuse the same story task.'));
+        }
+        return;
+      }
       toast.error(
-        error instanceof DOMException && error.name === 'AbortError'
-          ? zh
-            ? '请求超时，正在查询任务状态；再次点击不会重复创建。'
-            : 'Request timed out. Checking job status; clicking again will not create a duplicate.'
-          : error instanceof Error
+        error instanceof Error
             ? error.message
             : t('openStudioError')
       );
@@ -227,7 +249,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
               onClick={() => setActiveStatus(filter.id)}
               className="rounded-lg"
             >
-              {t(`statuses.${filter.id}`)}
+              {filter.id === 'generated' ? (zh ? '已生成' : 'Generated') : t(`statuses.${filter.id}`)}
               <span className="text-xs tabular-nums text-muted-foreground">{counts[filter.id]}</span>
             </Button>
           ))}
@@ -270,13 +292,18 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
             const category = categoryDetails[candidate.category];
             const isPending = pendingId === candidate.id || submittingIds.has(candidate.id);
             const job = jobs[candidate.id];
+            const completedSongs = songsByCandidate[candidate.id] ?? [];
+            const latestSong = completedSongs[0];
+            const studioHref = latestSong
+              ? `/admin/create?songId=${encodeURIComponent(latestSong.id)}`
+              : `/admin/create?${new URLSearchParams({ content: candidate.sourceUrl, sourceTitle: candidate.sourceTitle, autoGenerate: 'false' })}`;
 
             return (
               <article
                 key={candidate.id}
                 className={cn(
                   'grid gap-4 rounded-2xl border bg-card p-4 transition-colors hover:border-foreground/20 md:grid-cols-[112px_minmax(0,1fr)_auto] md:items-center',
-                  candidate.status === 'dismissed' && 'opacity-60'
+                  candidate.status === 'dismissed' && !latestSong && 'opacity-60'
                 )}
               >
                 <div
@@ -293,6 +320,12 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
 
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
+                    {latestSong && (
+                      <Badge className="bg-emerald-50 text-emerald-800 border-emerald-200" variant="outline">
+                        <Check className="mr-1 size-3" />
+                        {zh ? '已生成' : 'Generated'}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className={category.className}>
                       {t(`categories.${category.labelKey}`)}
                     </Badge>
@@ -301,6 +334,53 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                       <span className="text-xs text-muted-foreground">{candidate.publishedAgo}</span>
                     )}
                   </div>
+                  {latestSong && (
+                    <div className="space-y-2 rounded-lg border border-emerald-100 bg-emerald-50/40 p-3">
+                      <p className="text-sm font-medium">
+                        ♫ {latestSong.title}{' '}
+                        <span className="text-xs text-muted-foreground">
+                          · {latestSong.isPublished ? (zh ? '已发布' : 'Published') : zh ? '未发布' : 'Unpublished'}
+                        </span>
+                      </p>
+                      <audio
+                        controls
+                        preload="none"
+                        src={latestSong.audioUrl}
+                        aria-label={`${zh ? '试听' : 'Preview'} ${latestSong.title}`}
+                        className="h-8 w-full max-w-sm"
+                      />
+                      {completedSongs.length > 1 && (
+                        <details>
+                          <summary className="cursor-pointer text-xs text-muted-foreground">
+                            {zh
+                              ? `查看全部 ${completedSongs.length} 个版本`
+                              : `View all ${completedSongs.length} versions`}
+                          </summary>
+                          <ul className="mt-2 space-y-2 text-sm">
+                            {completedSongs.map((version) => (
+                              <li key={version.id}>
+                                <LocaleLink
+                                  className="underline underline-offset-4"
+                                  href={
+                                    version.isPublished ? `/songs/${version.id}` : `/admin/create?songId=${version.id}`
+                                  }
+                                >
+                                  {version.title} ·{' '}
+                                  {version.isPublished
+                                    ? zh
+                                      ? '查看歌曲'
+                                      : 'View song'
+                                    : zh
+                                      ? '工作台预览'
+                                      : 'Studio preview'}
+                                </LocaleLink>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                    </div>
+                  )}
                   <a
                     href={candidate.sourceUrl}
                     target="_blank"
@@ -323,20 +403,21 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                       <ExternalLink />
                     </a>
                   </Button>
-                  {candidate.status !== 'dismissed' && (
+                  {(candidate.status !== 'dismissed' || latestSong) && (
                     <Button asChild size="sm" variant="outline">
-                      <LocaleLink
-                        href={`/admin/create?${new URLSearchParams({
-                          content: candidate.sourceUrl,
-                          sourceTitle: candidate.sourceTitle,
-                          autoGenerate: 'false',
-                        }).toString()}`}
-                      >
+                      <LocaleLink href={studioHref}>
                         <ExternalLink /> {t('openStudio')}
                       </LocaleLink>
                     </Button>
                   )}
-                  {candidate.status === 'new' && (
+                  {latestSong && (
+                    <Button asChild size="sm">
+                      <LocaleLink href={latestSong.isPublished ? `/songs/${latestSong.id}` : studioHref}>
+                        {latestSong.isPublished ? (zh ? '查看歌曲' : 'View song') : zh ? '预览歌曲' : 'Preview song'}
+                      </LocaleLink>
+                    </Button>
+                  )}
+                  {!latestSong && candidate.status === 'new' && (
                     <>
                       <Button
                         size="sm"
@@ -351,7 +432,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                       </Button>
                     </>
                   )}
-                  {(candidate.status === 'shortlisted' || candidate.status === 'adopted') && (
+                  {!latestSong && (candidate.status === 'shortlisted' || candidate.status === 'adopted') && (
                     <Button
                       size="sm"
                       disabled={isPending || (!!job && job.status !== 'failed')}
@@ -385,7 +466,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                           : t('createSong')}
                     </Button>
                   )}
-                  {candidate.status !== 'new' && candidate.status !== 'adopted' && (
+                  {!latestSong && candidate.status !== 'new' && candidate.status !== 'adopted' && (
                     <Button
                       size="sm"
                       variant="outline"

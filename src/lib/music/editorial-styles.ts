@@ -4,6 +4,9 @@
  * 底层音乐标签负责告诉模型“怎么响”，编辑风格负责告诉模型
  * “用什么新闻镜头写、笑点落在哪里、Hook 应该如何记住”。
  */
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
+import { ADAPTIVE_ARRANGEMENT_RULE, LEGACY_PRODUCTION } from './legacy-production';
+
 export interface EditorialStyleProfile {
   id: string;
   label: string;
@@ -20,6 +23,26 @@ export interface EditorialStyleProfile {
 }
 
 export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
+  ...LEGACY_VIBE_PERSONAS.map(
+    (preset): EditorialStyleProfile => ({
+      id: preset.id,
+      label: preset.label,
+      deck: preset.desc,
+      icon: preset.icon,
+      tags: preset.tags,
+      bestFor: preset.tooltip,
+      editorialLens:
+        'Let the verified event supply the joke and point of view. Do not invent facts, quotes or motives.',
+      lyricCraft:
+        'Create an event-native meme song with memorable phrasing and rhythmic delivery. Choose repetition only when it serves the joke.',
+      productionSignature: `${preset.tooltip} Preserve the original sonic palette exactly: ${preset.tags.join(', ')}. Do not soften the selected drums, bass, tempo or vocal energy into a sparse, restrained reinterpretation.`,
+      vocalDirection: `${LEGACY_PRODUCTION[preset.id].vocal} ${LEGACY_PRODUCTION[preset.id].guard}`,
+      arrangementArc:
+        'Establish the selected groove immediately; develop the story over that groove, lift the hook, and finish with a deliberate ending.',
+      avoid:
+        'unrequested genre substitution, weakening the selected groove, invented allegations, and singing production instructions',
+    })
+  ),
   {
     id: 'newsroom_noir',
     label: 'Newsroom Noir',
@@ -30,14 +53,14 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Open on one verifiable detail like a cold news bulletin, then reveal the contradiction underneath it. The event is the target; identities are not.',
     lyricCraft:
-      'Use clipped, cinematic lines and a chorus built around the headline twist. Let the bridge briefly drop the jokes and expose the human consequence.',
+      'Foreground urgent cadence and deadpan news absurdity: clipped headline bars, sharp internal echoes and a concrete reversal. Do not force a sentimental bridge.',
     productionSignature:
-      'Tense drill pulse, restrained bulletin textures, urgent transitions, and a chorus that expands without becoming trailer music.',
+      'Hard-hitting syncopated drill drums, sliding sub-bass and urgent string stabs; a short bulletin sting sets up a punchline-led hook. Keep the beat forceful while spacing out sound effects.',
     vocalDirection:
-      'Dry, articulate mid-register lead with controlled urgency; use the anchor tone as framing, never as a comic impersonation.',
+      'Punchy, articulate news-anchor flow with percussive consonants and deadpan attitude; sharpen the delivery at the headline twist.',
     arrangementArc:
-      'Cold bulletin sting -> sparse investigative verse -> rising pre-chorus pressure -> widescreen hook -> stripped human bridge -> decisive final hook.',
-    avoid: 'constant sirens, movie-trailer bombast, shouted delivery, and stacked orchestral impacts',
+      'Bulletin sting over an immediate kick -> driving investigative verse -> brief tension cut -> bass-forward headline hook -> short contrasting bridge -> decisive final hit.',
+    avoid: 'constant sirens, stacked orchestral impacts, buried words, and a long beatless news introduction',
   },
   {
     id: 'public_receipts',
@@ -49,13 +72,13 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Build the song around the gap between the public claim and the visible receipt. Never invent a receipt, quote, or motive.',
     lyricCraft:
-      'Use escalating evidence-shaped images, terse setups, and one devastatingly simple hook. Keep the wit precise rather than merely loud.',
+      'Foreground petty confidence and stop-start punchlines: terse receipts, percussive consonants and a devastating verdict. Rhyme densely where it sharpens the cross-examination, not to fill space.',
     productionSignature:
-      'Mechanical percussion and controlled distortion, with impact effects used only at factual turn points and a sharply gated final stop.',
+      'Punchy industrial drums and distorted sub-bass drive the receipts forward; whisper delivery rides a hard beat, not a quiet backing track. Use a record-stop at the factual turn and slam back into the verdict.',
     vocalDirection:
       'Confidential close-mic delivery in the verses, turning into clipped, fully intelligible rhythmic lines at the hook.',
     arrangementArc:
-      'Whispered receipt reveal -> percussion accumulates with each contradiction -> one clean beat switch before the verdict hook -> abrupt stop.',
+      'Whispered receipt over a hard mechanical beat -> bass tension climbs with each contradiction -> record-stop -> forceful verdict beat switch -> abrupt stop.',
     avoid: 'screaming throughout, glass-breaking spam, novelty warning sounds, and distortion that hides the words',
   },
   {
@@ -68,13 +91,13 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Treat the timeline as a surreal public square where one tiny detail becomes enormous. Preserve the true event while exaggerating only the theatrical framing.',
     lyricCraft:
-      'Write visual punchlines, rule-of-three escalation, and a compact call-and-response hook. Avoid random meme-word soup.',
+      'Foreground absurd imagery and rubber-band mouth-feel. Choose a comic chant, escalating scene or sudden deadpan reversal according to the event; neither rule-of-three nor call-and-response is mandatory.',
     productionSignature:
-      'Tightly arranged circus-trap with playful negative space; one recurring comic motif should become part of the hook.',
+      'Spring-loaded circus-trap drums, bouncing tuba bass and elastic vocal chops; let a cartoon motif answer the actual punchline while the groove stays physical and propulsive.',
     vocalDirection:
       'Agile talk-singing with precise comic timing, crisp consonants, and short crowd answers only at the hook.',
     arrangementArc:
-      'Tiny carnival motif -> bouncy verse with open space -> motif mutates into the chorus -> brief fake ending -> bigger final replay.',
+      'Carnival motif with an immediate bouncing kick -> rubber-band verse -> bass-heavy comic hook -> brief fake ending -> bigger final replay.',
     avoid: 'random soundboard collage, nonstop kazoo, childish vocal caricature, and jokes that overpower the groove',
   },
   {
@@ -82,28 +105,20 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     label: 'Velvet-Rope Whisper',
     deck: 'Celebrity drama in close-up',
     icon: '🥂',
-    tags: [
-      'Sassy R&B',
-      'Gossip Tone',
-      'Pizzicato Strings',
-      'Snap Beat',
-      'Crowd Gasp',
-      'Vocal Chops',
-      'Petty',
-      'Chillwide',
-    ],
+    tags: ['Sassy R&B', 'Gossip Tone', 'Pizzicato Strings', 'Snap Beat', 'Crowd Gasp', 'Vocal Chops', 'Petty'],
     bestFor: 'celebrity feuds, red-carpet tension, relationship news, and polished shade',
     editorialLens:
       'Observe the public performance around the story: the pause, the pose, the statement, and the detail everyone noticed. Attribute claims and protect private uncertainty.',
     lyricCraft:
-      'Favor elegant double meanings, conversational phrasing, and a hook that sounds like the line the group chat repeats tomorrow.',
+      'Foreground petty attitude and quotable gossip phrasing: cheeky double meanings, syncopated conversational lines and an ear-catching phrase. Avoid solemn romance or explanatory narration.',
     productionSignature:
-      'Glossy but sparse R&B, poised lead vocal, pizzicato punctuation, dry snaps, and a chorus that opens like flashbulbs.',
+      'Bass-forward sassy R&B with crisp snaps, a syncopated kick and plucked-string jabs; rhythmic vocal chops turn the sharpest gossip phrase into a memorable refrain.',
     vocalDirection:
       'Intimate, poised talk-singing with controlled attitude, clean diction, and breathy doubles reserved for the sharpest phrase.',
     arrangementArc:
-      'Velvet-close intro -> minimal snap verse -> pizzicato tension -> flashbulb-wide chorus -> whispered bridge -> polished final chorus.',
-    avoid: 'melismatic over-singing, cartoon gossip voices, dense trap drums, and crowd effects outside the reveal',
+      'Close-up vocal over an immediate snap-and-bass groove -> bouncing gossip verse -> pizzicato tension -> bass-lifted chorus -> whispered beat-stop -> final rhythmic payoff.',
+    avoid:
+      'melismatic over-singing, buried consonants, constant crowd effects, and a background beat too weak to carry the attitude',
   },
   {
     id: 'receipts_on_wax',
@@ -124,14 +139,15 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Cross-examine the public narrative using only supported details. Roast the contradiction, decision, or performance—not immutable traits.',
     lyricCraft:
-      'Use internal rhyme, controlled setup-and-payoff bars, and a chorus with one repeatable verdict. Every punchline must advance the story.',
+      'Foreground dense internal and multisyllabic rhyme with swaggering setup-and-payoff bars. Build a sharp verdict or knockout final line; never sacrifice facts or the joke for rhyme.',
     productionSignature:
-      'Dusty boom-bap authority, crisp diction, selective scratches, and a final chorus that feels like the room reached a verdict.',
+      'Hard-hitting boom-bap kick and snare, chunky bass and chopped soul answers; scratches land between punchlines and a forceful verdict hook gives the room a line to repeat.',
     vocalDirection:
-      'Highly articulate rhythmic lead with measured confidence, internal-rhyme precision, and restrained sample responses.',
+      'Highly articulate, assertive rhythmic lead with internal-rhyme precision and sharply timed sample responses; punch through the drums without obscuring the story.',
     arrangementArc:
       'Dusty sample cold open -> evidence-heavy verse -> scratch punctuation -> compact verdict chorus -> half-time bridge -> final ruling.',
-    avoid: 'air-horn clutter, aggressive shouting, modern trap hi-hat overload, and punchlines without factual setup',
+    avoid:
+      'air-horn clutter, clipping that hides words, modern trap hi-hat overload, and punchlines without factual setup',
   },
   {
     id: 'apology_after_midnight',
@@ -152,13 +168,13 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Hold the polished apology beside the unresolved consequence. Leave room for ambiguity instead of declaring guilt or sincerity.',
     lyricCraft:
-      'Use intimate objects, unanswered questions, and a chorus whose repeated phrase changes emotional meaning on its return.',
+      'Foreground a melodic earworm and an event-specific emotional or ironic contrast. Use intimate objects and a phrase whose meaning turns; neither rapid-fire rap nor an explosive drop is required.',
     productionSignature:
-      'Close-mic melodic vocal, rain-soft guitar, telephone-colored intro, restrained trap drums, and a bruised final lift.',
+      'Close-mic melodic vocal and an ear-catching sad-guitar loop over a deep 808 heartbeat and crisp half-time snare. Preserve the slow tempo; create meme tension through a memorable melodic turn and the contrast between apology and consequence.',
     vocalDirection:
-      'Fragile but intelligible melodic lead, conversational in the verse and opening into a restrained emotional chorus.',
+      'Vulnerable but intelligible melodic lead, conversational in the verse and opening into a memorable emotional refrain without theatrical sobbing.',
     arrangementArc:
-      'Telephone-filtered confession -> dry guitar verse -> drums enter late -> aching chorus -> near-silent bridge -> unresolved final return.',
+      'Brief telephone-filtered confession -> guitar and half-time drums enter together -> aching melodic hook with a bass lift -> short exposed phrase -> unresolved final return.',
     avoid:
       'full-song rain ambience, theatrical sobbing, oversized power-ballad drums, and declaring whether the apology is sincere',
   },
@@ -180,13 +196,14 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     bestFor: 'viral entrances, stunts, fashion moments, celebrations, and attention-grabbing spectacle',
     editorialLens:
       'Frame the public moment as choreography: entrance, reaction, replay, and aftermath. Keep the tone exhilarating without manufacturing stakes.',
-    lyricCraft: 'Use short kinetic lines, physical verbs, and a hook that works as both caption and crowd chant.',
+    lyricCraft:
+      'Foreground dance momentum and an addictive vocal phrase: short kinetic lines and physical verbs. Keep the chant easy to imitate; dense exposition and intricate rhyme are not required.',
     productionSignature:
-      'Fast Jersey-club propulsion, clean vocal chops, a recognizable rhythmic hook, and a bass-drop payoff designed for replay.',
+      'Hard-kicking fast Jersey-club triplets, heavy sub-bass drops and tightly chopped vocal calls; make the dance groove recognizable immediately and keep the hook physically propulsive.',
     vocalDirection:
       'Bright rhythmic lead with compact phrases, confident diction, and group answers that reinforce rather than compete with the hook.',
     arrangementArc:
-      'Immediate movement cue -> footwork verse -> tension cut -> chant-ready drop chorus -> eight-bar reset -> larger final loop.',
+      'Immediate movement cue -> footwork verse -> tension cut -> chant-ready drop when present in the lyrics -> brief transition -> decisive final payoff.',
     avoid:
       'continuous bass drops, bed-squeak overuse, long sung lines, and festival-scale production that loses the meme-sized focus',
   },
@@ -209,11 +226,11 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Follow how the story mutates as people repost, remix, and overreact. Separate the original fact from the internet amplification.',
     lyricCraft:
-      'Use compressed imagery, recurring notification language, and a hook that feels contagious while remaining intelligible.',
+      'Foreground manic pace and digital mouth-feel: compressed images, crisp syllables and source-specific stutters or vocal fragments. Use notification language only if the event warrants it.',
     productionSignature:
-      'Bright glitch-pop velocity, precise digital ear candy, sudden dropouts, and a coherent melodic center beneath the chaos.',
+      'Fast hyperpop with hard digital kicks, elastic distorted bass and a pixel-bright melodic hook. Rhythmic stutters and brief dropouts punctuate the news escalation without weakening the dance pulse.',
     vocalDirection:
-      'Clean agile lead with restrained robotic doubles, rapid but understandable phrasing, and one human-sounding chorus center.',
+      'Agile lead with expressive robotic doubles, rapid but understandable phrasing, and a clear melodic hook above the digital chaos.',
     arrangementArc:
       'Notification spark -> accelerating verse -> one-bar digital dropout -> melodic hyperpop chorus -> corrupted bridge -> cleaner final hook.',
     avoid:
@@ -238,9 +255,9 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Tell only what is observed, reported, or unknown. Make uncertainty the atmosphere rather than filling the gaps with invented answers.',
     lyricCraft:
-      'Use recurring objects, sensory details, and an unresolved refrain that returns like a corrupted memory.',
+      'Foreground hypnotic memory and strange event-specific imagery: sensory details, uncanny phrasing or a deadpan unresolved payoff. Do not force speed, shouting or a comedic chorus into every mystery.',
     productionSignature:
-      'Tape-worn phonk, shadowed low end, sparse haunting synths, and suspense created through omission rather than constant effects.',
+      'Hypnotic dark phonk with a deep rolling sub-bass, weighty kick and a haunting motif that sticks after one listen. Keep the low-tempo tension physical; one gong or tape interruption marks the unknown.',
     vocalDirection:
       'Close, low-intensity whisper-melodic lead with calm diction; use distance and doubles only when uncertainty deepens.',
     arrangementArc:
@@ -257,9 +274,9 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Stage the verified public positions as overlapping voices, then let the chorus reveal what the argument is really about.',
     lyricCraft:
-      'Use distinct vocal attitudes, interruptions, and echo phrases while preserving one clear narrator and one memorable hook.',
+      'Foreground distinct comic attitudes and rhythmic conversation: concise replies, interruptions and a quotable exchange grounded in the public facts. Echo only when it improves the exchange.',
     productionSignature:
-      'Layered ad-libs around an intelligible lead, crunchy low end, selective call-and-response, and controlled conversational chaos.',
+      'Punchy syncopated glitch-hop drums and crunchy bass underpin distinct rhythmic replies; beat stops, stutters and a group response make the argument audible without masking the lead.',
     vocalDirection:
       'One clear anchor lead surrounded by distinct short backing reactions; interruptions must remain rhythmically placed and intelligible.',
     arrangementArc:
@@ -286,15 +303,15 @@ export const EDITORIAL_STYLE_PROFILES: readonly EditorialStyleProfile[] = [
     editorialLens:
       'Reconstruct the escalation beat by beat and let the loss of control become the dramatic arc. Satirize the public behavior, not the person’s identity.',
     lyricCraft:
-      'Start controlled, shorten the lines as pressure rises, and release into a blunt cathartic hook. Preserve clarity inside the noise.',
+      'Foreground explosive attitude and percussive phrasing from the first line. Shorten bars as the scene escalates into a blunt payoff; maintain intelligibility without smoothing away the anger.',
     productionSignature:
-      'Rage synth pressure with disciplined dynamics, a rising pre-chorus, one explosive hook, and a hard comedown after the final hit.',
+      'Hard-kicking rage drums, aggressive 808s and buzzing synth riffs establish energy immediately. Escalate into an explosive shouted hook; use a brief contrast for impact rather than withholding the beat until the chorus.',
     vocalDirection:
       'Controlled tense verse delivery that escalates into a short barked hook, with every key line remaining clearly understandable.',
     arrangementArc:
-      'Contained buzzing intro -> pressure-building verse -> sudden beat rupture -> explosive hook -> empty-space bridge -> final hit and comedown.',
+      'Buzzing riff and hard kick immediately -> pressure-building verse -> brief beat rupture -> explosive bass-heavy hook -> short exposed line -> final hit and comedown.',
     avoid:
-      'full-volume distortion from the first bar, nonstop screaming, repeated metal-pipe effects, and an ending with no dynamic release',
+      'clipping that buries the hook, nonstop screaming, repeated metal-pipe effects, and an ending with no dynamic release',
   },
 ] as const;
 
@@ -331,7 +348,7 @@ export function buildEditorialStyleBrief(direction: string) {
     `Lyric craft: ${profile.lyricCraft}`,
     `Production signature: ${profile.productionSignature}`,
     `Vocal direction: ${profile.vocalDirection}`,
-    `Arrangement arc: ${profile.arrangementArc}`,
+    `Arrangement arc: ${profile.arrangementArc} ${ADAPTIVE_ARRANGEMENT_RULE}`,
     `Avoid: ${profile.avoid}.`,
   ].join(' ');
 }
@@ -344,7 +361,7 @@ export function buildEditorialProductionBrief(direction: string) {
     `Editorial cut: ${profile.label}.`,
     profile.productionSignature,
     `Vocal: ${profile.vocalDirection}`,
-    `Arc: ${profile.arrangementArc}`,
+    `Arc: ${profile.arrangementArc} ${ADAPTIVE_ARRANGEMENT_RULE}`,
     `Avoid: ${profile.avoid}.`,
   ].join(' ');
 }

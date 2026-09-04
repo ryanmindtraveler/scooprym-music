@@ -1,4 +1,6 @@
 import { getDb } from '@/db/index';
+import { getRadarGeneratedSongs } from '@/lib/story-radar/generated-songs';
+import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import { storyCandidate, storyCandidateVote, storySubmission, user } from '@/db/schema';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { getRecentVoteDays } from '@/lib/story-voting';
@@ -112,7 +114,9 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
       .where(inArray(storyCandidateVote.voteDay, voteDays)),
   ]);
 
+  const generatedSongs = groupRadarSongs(await getRadarGeneratedSongs(candidates.map((candidate) => candidate.id)));
   const serializedCandidates: StoryRadarCandidateView[] = candidates.map((candidate) => ({
+    generatedSongs: generatedSongs[candidate.id] ?? [],
     id: candidate.id,
     sourceUrl: candidate.sourceUrl,
     sourceTitle: candidate.sourceTitle,

@@ -1,6 +1,7 @@
 import { getDb } from '@/db';
 import { radarCreationJob, songCreationRun } from '@/db/schema';
 import { getSession } from '@/lib/server';
+import { getRadarGeneratedSongs } from '@/lib/story-radar/generated-songs';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -22,5 +23,6 @@ export async function GET() {
     .leftJoin(songCreationRun, eq(songCreationRun.id, radarCreationJob.runId))
     .orderBy(desc(radarCreationJob.createdAt))
     .limit(300);
-  return NextResponse.json({ success: true, jobs }, { headers: { 'Cache-Control': 'no-store' } });
+  const generatedSongs = await getRadarGeneratedSongs();
+  return NextResponse.json({ success: true, jobs, generatedSongs }, { headers: { 'Cache-Control': 'no-store' } });
 }

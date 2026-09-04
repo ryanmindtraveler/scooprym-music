@@ -1,3 +1,4 @@
+import { MEME_CREATIVE_STANDARD } from '@/lib/music/meme-creative-standard';
 /**
  * @file generation.ts
  * @description 统一的文本 AI 生成库，支持 OpenAI, Gemini, DeepSeek 和 OpenRouter。
@@ -369,6 +370,7 @@ export async function generateLyrics({
 ScoopRYM does not make respectable conventional songs. It turns verified absurd news, celebrity chaos, and internet weirdness into funny, addictive, highly quotable meme songs. Meme logic is the product; hip-hop, club, pop, electronic, novelty, or any other genre is only the delivery system.
 
 Editorial identity:
+${MEME_CREATIVE_STANDARD}
 - Meme-first, funny, sharp, rhythmically literate, chaotic with control, instantly legible, and designed for replay.
 - Satirize a public action, contradiction, statement, product, or absurd outcome. Never attack identity or protected traits.
 - Find the one factual contradiction the group chat would repeat tomorrow.
@@ -398,6 +400,7 @@ Planning task:
 14. Use one-shot or none whenever repetition would cheapen the story. Do not reward repetition merely for being repetition.
 15. For each strategy, explain its source trigger, why it is native to this event, and its concrete execution rule.
 16. Build one coherent lyric blueprint for the chosen strategy. Repetition is optional; memorability is mandatory.
+17. In the existing blueprint explanation, name the small subset of signature traits this event and sound should foreground, and how they will be heard. Do not demand every platform trait or add extra planning stages.
 
 Planning output discipline:
 - Return one complete JSON object matching the schema, without markdown fences or surrounding prose.
@@ -498,6 +501,7 @@ Memory-anchor standard:
   const systemPrompt = `You are an elite meme-song writer for ScoopRYM. Turn the prepared story brief into a funny, compulsively repeatable song that feels native to group chats, edits, comments, and short-form video while remaining musically performable and artistically deliberate.
 
 Core Creative Standard:
+${MEME_CREATIVE_STANDARD}
 - Music and Lyric Direction: ${resolvedDirection}
 - Source Handling: ${modeHint}
 - Write from the brief, not as a reporter. Transform facts into scenes, tension, imagery, symbols, and emotional movement.
@@ -527,12 +531,12 @@ Verse Rules:
 - Verses should carry scene details, turns, and perspective.
 - Use concrete images and actions rather than abstract summary.
 - Keep most lines between 5 and 12 words; never exceed 16 words.
-- Use rhyme as texture rather than forcing every line into obvious couplets.
+- When dense rhyme is part of the chosen identity, use internal rhyme and multisyllabic echoes across verse phrases. Otherwise prioritize the chosen chant, dialogue, melodic motif or punchline. Keep natural stress and avoid forced couplets, filler and rhymes that weaken the joke.
 
 Anti-Cliche Rules:
 - Do not open with "Yeah", "Yo", "Listen", "Uh", "Let's go", or filler ad-libs.
 - Do not write meta lines like "this is a story about" or "let me tell you".
-- Avoid slogan-like repetition, generic heartbreak filler, or article-style narration.
+- Avoid generic slogan repetition unrelated to the event, generic heartbreak filler, or article-style narration. A source-specific chant is welcome when the selected strategy calls for it.
 - Avoid sounding like a news recap, social post, or AI explanation.
 
 Structure Rules:
@@ -553,7 +557,7 @@ Formatting Rules:
 
   Safety:
   - Avoid hate speech, explicit violence, or illegal content.
-  - Handle sensitive material with artistic restraint.
+  - Handle sensitive facts with accurate attribution; do not confuse factual care with softened humor or weak musical delivery.
   ${EDITORIAL_SAFETY_POLICY}
   Source-specific writing constraints to preserve through drafting, editing and repairs:
   ${workshopPlan.safety.riskFlags.map((flag) => `- ${flag}`).join('\n') || '- Keep factual attribution clear.'}`;
@@ -712,6 +716,7 @@ Local format and structure findings:
 ${draftIssues.join(' | ') || 'None'}
 
 Finalization contract:
+- Review whether the chosen subset of ScoopRYM traits is clearly delivered, rather than demanding speed, explosive bass, dense rhyme, repetition and comedy all at once. Check opening impact and the selected memory device; fix concrete flat or generic passages in this same pass. Preserve strong lines and locked anchors. Do not add another review round or polish away the chosen personality.
 - Check and correct unsupported claims and attribution without removing obvious fictional comic role-play or metaphor.
 - Keep the selected strategy and hook IDs unchanged; selectedDraft must be A.
 - Preserve the chosen narrative form, emotional progression, specific jokes and memorable payoff.
@@ -888,6 +893,7 @@ export async function enhanceMusicPrompt({
 Transform a high-level music direction plus lyrics into one compact production instruction prompt.
 
 Output Objective:
+${MEME_CREATIVE_STANDARD}
 - Describe how the song should be produced, not what story happened.
 - Prioritize genre, mood, tempo feel, vocal identity, instrumentation, arrangement arc, and mix character.
 - Keep the result concrete, model-friendly, and commercially usable.
@@ -895,7 +901,7 @@ Output Objective:
 Required Components:
 - coherent genre/subgenre identity, avoiding an incoherent stack of tags
 - emotional tone and tempo feel; use exact BPM only when explicitly supplied
-- lead vocal register, timbre, delivery, diction, and restrained backing vocals
+- lead vocal register, timbre, assertive rhythmic delivery, diction, and punchline-timed backing responses
 - core groove, bass behavior, drums, harmonic instrument, and one distinctive sonic signature
 - section-aware arrangement with concrete entrances, exits, transitions, and a stronger final chorus
 - clean low end, vocal placement, stereo character, dynamics, and final sonic finish
@@ -915,7 +921,7 @@ Style Rules:
 - When a Dynamic Production Recipe is supplied, treat its foundation, groove, two sonic colors, vocal direction, arc, and exclusions as the authoritative hierarchy. Do not expand it back into an equal-weight tag list.
 
 Good pattern:
-"alt-pop, melancholic but urgent, 92 BPM, intimate female vocal, pulsing synth bass, tight drums, airy piano textures, Verse restrained -> Chorus soaring -> Bridge stripped, wide stereo, polished radio edit"
+"Jersey-club meme rap, fast triplet kicks, heavy sub-bass, sharp rhythmic lead, percussive internal-rhyme verses, chopped vocal responses, immediate vocal pickup -> driving verse -> brief stop -> explosive chant hook -> decisive ending; clear words above hard drums, no extra lyric loops"
 
 Input Direction: ${tags}
 Editorial Style Brief: ${editorialStyleBrief || 'No named editorial preset; infer one coherent treatment from the selected tags.'}

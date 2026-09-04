@@ -259,8 +259,14 @@ export function CreateMusicForm({
     VIBE_PERSONAS.find((persona) => persona.id === activePersonaId) ??
     VIBE_PERSONAS.find((persona) => persona.id === recommendedPersonaId) ??
     VIBE_PERSONAS[0];
-  const directionLabel = (id: string) => t(`directions.${id}.label` as never);
-  const directionDescription = (id: string) => t(`directions.${id}.description` as never);
+  const directionLabel = (id: string) =>
+    t.has(`directions.${id}.label` as never)
+      ? t(`directions.${id}.label` as never)
+      : (VIBE_PERSONAS.find((item) => item.id === id)?.label ?? id);
+  const directionDescription = (id: string) =>
+    t.has(`directions.${id}.description` as never)
+      ? t(`directions.${id}.description` as never)
+      : (VIBE_PERSONAS.find((item) => item.id === id)?.tooltip ?? '');
 
   // Reset local state when parent clears musicPrompt (e.g. after generation)
   // Sync Local State with Prop (Robust Handling for Resets / External Changes)

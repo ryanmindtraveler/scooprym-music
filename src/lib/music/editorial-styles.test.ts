@@ -1,6 +1,7 @@
 import { DEFAULT_CUSTOM_VIBE_TAGS, MUSIC_STYLE_CATEGORIES } from '@/components/create/form/create-music-data';
 import { describe, expect, it } from 'vitest';
 import { EDITORIAL_STYLE_PROFILES, buildEditorialStyleBrief, resolveEditorialStyleProfile } from './editorial-styles';
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 
 describe('ScoopRYM 编辑风格', () => {
   it('能从底层标签识别对应的编辑风格', () => {
@@ -28,7 +29,12 @@ describe('ScoopRYM 编辑风格', () => {
   });
 
   it('每套预设都是覆盖五层架构的紧凑标签组合', () => {
-    const presets = [...EDITORIAL_STYLE_PROFILES.map((profile) => profile.tags), DEFAULT_CUSTOM_VIBE_TAGS];
+    // 旧主分支预设必须保持原样，不追加五层标签改变其声音。
+    const legacyIds = new Set<string>(LEGACY_VIBE_PERSONAS.map((profile) => profile.id));
+    const presets = [
+      ...EDITORIAL_STYLE_PROFILES.filter((profile) => !legacyIds.has(profile.id)).map((profile) => profile.tags),
+      DEFAULT_CUSTOM_VIBE_TAGS,
+    ];
     const allLockedTags = new Set(MUSIC_STYLE_CATEGORIES.flatMap((category) => category.tags.map((tag) => tag.label)));
 
     for (const tags of presets) {

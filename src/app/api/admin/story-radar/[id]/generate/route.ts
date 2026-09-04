@@ -1,6 +1,8 @@
-import { enqueueRadarCreation } from '@/lib/radar-creation-job';
+import { enqueueRadarCreation } from '@/lib/radar-creation-enqueue';
 import { getSession } from '@/lib/server';
 import { NextResponse } from 'next/server';
+
+export const maxDuration = 60;
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();

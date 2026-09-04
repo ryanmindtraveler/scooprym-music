@@ -286,8 +286,9 @@ export default function AdminCreateSongPage() {
   const workflowSubmissionRef = useRef(false);
   const musicSubmissionRef = useRef(false);
   const workflowRecoveryRef = useRef<string | null>(null);
-  const importedSourceRef = useRef(Boolean(searchParams.get('content')));
-  const pendingSource = Boolean(searchParams.get('content'));
+  const requestedSongId = searchParams.get('songId');
+  const importedSourceRef = useRef(Boolean(searchParams.get('content') || requestedSongId));
+  const pendingSource = Boolean(searchParams.get('content') || requestedSongId);
 
   // 在历史恢复 effect 之前建立导入屏障；清除 URL 参数后仍保留本次页面的屏障。
   useEffect(() => {
@@ -386,6 +387,32 @@ export default function AdminCreateSongPage() {
     stopPlayer();
     setGlobalIsGenerating(false);
   }, [isWorkspaceReady, stopPlayer, setGlobalIsGenerating]);
+
+  // 雷达入口按歌曲 ID 精确恢复，不依赖队列分页或上次选中的作品。
+  useEffect(() => {
+    if (!isWorkspaceReady || !requestedSongId) return;
+    importedSourceRef.current = true;
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch(`/api/songs/${encodeURIComponent(requestedSongId)}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        const payload = await response.json();
+        if (controller.signal.aborted) return;
+        if (!response.ok || !payload.success || payload.data?.id !== requestedSongId)
+          throw new Error('Could not load the selected song.');
+        const task = toCreationTask(payload.data);
+        mergeTasks([task]);
+        loadTaskIntoStage(task);
+      } catch (error) {
+        if (!controller.signal.aborted)
+          setError(error instanceof Error ? error.message : 'Could not load the selected song.');
+      }
+    })();
+    return () => controller.abort();
+  }, [isWorkspaceReady, requestedSongId, mergeTasks, loadTaskIntoStage]);
 
   // 刷新或换设备后，以服务端任务为准恢复队列；localStorage 只作为当前账号的即时缓存。
   useEffect(() => {

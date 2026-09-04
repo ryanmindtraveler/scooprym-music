@@ -707,6 +707,50 @@
         "analyzingDirectionDescription": "新闻素材准备完成后，系统会自动推荐合适的歌曲风格。",
         "recommendationExplanation": "系统已经根据新闻情绪、冲突类型和传播特点完成标签组合，可以直接使用，也可以更换一个容易理解的创作方向。",
         "directions": {
+          "news": {
+            "label": "突发新闻 Trap",
+            "description": "UK Drill 鼓点搭配新闻播报、警笛和紧张弦乐，打造急促有力的新闻吐槽。"
+          },
+          "karen": {
+            "label": "暴走警报",
+            "description": "工业 Trap、嘶吼人声与失真低音，配上碎玻璃音效，演绎失控名场面。"
+          },
+          "satire": {
+            "label": "小丑世界",
+            "description": "弹跳马戏 Trap 搭配卡祖笛、滑音哨和卡通音效，放大事件的荒诞笑点。"
+          },
+          "gossip": {
+            "label": "八卦爆料局",
+            "description": "傲娇 R&B 搭配拨弦、响指和人声切片，用阴阳怪气的语气抖出大瓜。"
+          },
+          "diss": {
+            "label": "嘴炮大师",
+            "description": "重击 Boom Bap 鼓点搭配唱盘刮擦和强势说唱，适合火力全开的吐槽互怼。"
+          },
+          "emo": {
+            "label": "伤感男孩",
+            "description": "情绪说唱搭配悲伤吉他、旋律 Trap 和厚重混响，演绎戏剧化的道歉与心碎。"
+          },
+          "club": {
+            "label": "夜店炸场",
+            "description": "快节奏 Jersey Club 搭配床吱声、重低音骤降和人声切片，打造洗脑舞蹈神曲。"
+          },
+          "crypto": {
+            "label": "币圈狂热",
+            "description": "Hyperpop 与故障电音搭配金币声、消息提示音和 NPC 人声，演绎上头的炒作狂热。"
+          },
+          "mystery": {
+            "label": "模拟恐怖",
+            "description": "暗黑 Phonk 搭配磁带底噪、诡异合成器和失真牛铃，营造都市传说氛围。"
+          },
+          "mumble": {
+            "label": "含糊说唱之神",
+            "description": "重度自动调音、三连音说唱与炸裂低音，配上密集即兴衬词，营造迷幻亢奋感。"
+          },
+          "rage": {
+            "label": "狂暴模式",
+            "description": "狂暴节拍、嗡鸣合成器与增强低音，搭配金属撞击音效，释放炸场能量。"
+          },
           "viral_pop": {
             "label": "自定义风格",
             "description": "已经明确想要的声音时，可以自行组合音乐要求。"
@@ -769,6 +813,17 @@
         "recipeTechnicalReady": "完整的英文制作配方已经准备好，生成时会自动发送给音乐模型，无需手动理解或填写。",
         "fineTuneRecipe": "调整创作方向",
         "productionVariants": {
+          "news_original": "突发新闻 Trap · 原版",
+          "karen_original": "暴走警报 · 原版",
+          "satire_original": "小丑世界 · 原版",
+          "gossip_original": "八卦爆料局 · 原版",
+          "diss_original": "嘴炮大师 · 原版",
+          "emo_original": "伤感男孩 · 原版",
+          "club_original": "夜店炸场 · 原版",
+          "crypto_original": "币圈狂热 · 原版",
+          "mystery_original": "模拟恐怖 · 原版",
+          "mumble_original": "含糊说唱之神 · 原版",
+          "rage_original": "狂暴模式 · 原版",
           "custom_tag_focus": "突出核心标签",
           "custom_hook_first": "副歌优先",
           "drill_bulletin": "紧张新闻播报",

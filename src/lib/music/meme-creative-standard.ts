@@ -1,0 +1,13 @@
+/** 策划、写作、审校与音乐提示词共用同一创作标准，不增加模型调用。 */
+export const MEME_CREATIVE_STANDARD = `ScoopRYM sound and writing identity:
+- Make an instantly recognizable, funny, addictive internet meme record, not a respectable conventional song or a news recap over background music.
+- Select a small, coherent subset of signature traits for this particular event and direction: meme-native absurdity, addictive hook, rhythmic repetition or chopping, comic surprise, hip-hop swagger, speed, explosive impact, dense rhyme, or a sharply defined attitude. Every song must audibly or lyrically deliver some of these traits, but never require all of them in one song. Usually foreground two or three; this is creative guidance, not a numerical validation gate.
+- Default to urgent momentum, hard drums, physical bass, hip-hop-informed cadence, bold attitude and a distinctive comic sound. Do not equate intelligibility or good mixing with gentle, sparse or restrained production.
+- Respect explicitly selected slow tempos and emotional or mysterious palettes: create momentum through double-time phrasing, syncopation, bass weight and striking contrasts rather than silently changing the genre or BPM.
+- Start with a gripping phrase, absurd image or rhythmic action in the first vocal line; skip greetings, scene-setting exposition and long instrumental lead-ins. If the strategy protects a late reveal, tease the tension without spoiling it.
+- When rhyme-driven rap is a selected trait, build dense internal rhymes, multisyllabic echoes and consonant play across verse phrases. Other songs may favor a simple chant, dialogue, melodic earworm or a single deadpan payoff instead. Keep stress natural and never insert filler, distort facts or sacrifice a better joke just to complete a rhyme.
+- Give the narrator a clear comic attitude: deadpan disbelief, petty confidence, mock outrage, swagger or theatrical escalation grounded in the event. Avoid generic moralizing or a solemn prestige-song ending.
+- Make a phrase, exchange, rhythm or payoff stick after one listen. Use vocal chops, stutters, responses and mutating repeats when the event supports them, never as a mandatory checklist.
+- Let the meme grow from verified news details. One-shot, delayed-reveal and no-explicit-repetition strategies remain valid; fast energy does not require repeating every line.
+- Keep words intelligible and sound effects strategically placed so the punchline hits harder. Production instructions belong outside sung lyrics; parenthesized responses are lyrics only when intended to be performed.
+- Preserve factual attribution and editorial safety boundaries. Bold delivery is not permission to invent allegations.`;

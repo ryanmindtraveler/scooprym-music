@@ -3,6 +3,8 @@ import {
   getEditorialStyleProfileById,
   resolveEditorialStyleProfile,
 } from './editorial-styles';
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
+import { ADAPTIVE_ARRANGEMENT_RULE, LEGACY_PRODUCTION } from './legacy-production';
 
 export type StorySignal =
   | 'absurd'
@@ -103,13 +105,29 @@ const CUSTOM_PRODUCTION_PROFILE: EditorialStyleProfile = {
 };
 
 const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
+  ...Object.fromEntries(
+    LEGACY_VIBE_PERSONAS.map((preset) => [
+      preset.id,
+      [
+        {
+          id: `${preset.id}_original`,
+          label: `${preset.label} · Original`,
+          foundation: LEGACY_PRODUCTION[preset.id].foundation,
+          groove: `Preserve the original rhythm, bass and energy: ${preset.tags.join(', ')}`,
+          colors: LEGACY_PRODUCTION[preset.id].colors,
+          vocalDirection: `${LEGACY_PRODUCTION[preset.id].vocal} ${LEGACY_PRODUCTION[preset.id].guard}`,
+          preferredSignals: [],
+        } satisfies ProductionVariant,
+      ],
+    ])
+  ),
   custom_vibe: [
     {
       id: 'custom_tag_focus',
       label: 'Tag-Led Focus',
       foundation: 'coherent hybrid led by the strongest selected genre tag',
       groove: 'one consistent pocket derived from the selected rhythm tags',
-      colors: ['one signature texture from the selected palette', 'restrained hook ear candy'],
+      colors: ['one signature texture from the selected palette', 'punchline-timed accent from the selected palette'],
       preferredSignals: ['intimate', 'melancholic', 'mysterious'],
     },
     {
@@ -127,40 +145,40 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'drill_bulletin',
       label: 'Drill Bulletin',
-      foundation: 'restrained cinematic UK drill',
-      groove: 'syncopated drill pulse with deliberate negative space',
+      foundation: 'hard-hitting cinematic UK drill',
+      groove: 'punchy syncopated drill kicks, cracking snares and sliding sub-bass with short punchline stops',
       colors: ['short bulletin sting', 'low cinematic string stabs'],
       preferredSignals: ['confrontational', 'high-energy'],
     },
     {
       id: 'noir_dispatch',
       label: 'Noir Dispatch',
-      foundation: 'nocturnal trip-hop noir',
-      groove: 'slow investigative breakbeat with a tense bass pulse',
-      colors: ['muted electric piano', 'restrained broadcast texture'],
+      foundation: 'bass-heavy nocturnal drill noir',
+      groove: 'weighty half-time drill drums with rolling sub-bass and suspenseful syncopation',
+      colors: ['dark electric-piano stab', 'short broadcast sting'],
       preferredSignals: ['mysterious', 'intimate'],
       arrangementArc:
-        'Muted bulletin opening -> investigative verse -> bass pressure builds -> headline hook widens -> near-silent human bridge -> final dispatch.',
+        'Short bulletin sting -> hard-kicking investigative verse -> sliding bass pressure -> headline hook hits -> brief exposed line -> final dispatch.',
     },
   ],
   public_receipts: [
     {
       id: 'industrial_evidence',
       label: 'Industrial Evidence',
-      foundation: 'minimal industrial trap',
-      groove: 'dry mechanical pulse with one decisive beat switch',
+      foundation: 'hard-hitting industrial trap',
+      groove: 'heavy mechanical kick, metallic snare and distorted bass with a decisive verdict beat switch',
       colors: ['gated metal percussion', 'single record-stop accent'],
       preferredSignals: ['confrontational', 'tech'],
     },
     {
       id: 'cross_exam_breaks',
       label: 'Cross-Exam Breaks',
-      foundation: 'stripped boom-bap noir',
-      groove: 'measured head-nod break with evidence-shaped pauses',
+      foundation: 'industrial breakbeat noir',
+      groove: 'hard head-nod drums and a grinding bass riff with evidence-shaped stop-start accents',
       colors: ['dusty piano stab', 'paper-dry snare'],
       preferredSignals: ['intimate', 'mysterious'],
       vocalDirection:
-        'Low, controlled spoken-rhythmic lead that becomes fully projected only for the factual verdict hook.',
+        'Close-mic, percussive spoken-rhythmic lead over hard drums; clipped delivery and projected verdict responses.',
     },
   ],
   algorithm_circus: [
@@ -168,15 +186,15 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
       id: 'circus_trap_loop',
       label: 'Circus Trap Loop',
       foundation: 'tightly arranged circus trap',
-      groove: 'bouncy half-time trap with comic rests',
-      colors: ['muted tuba bass', 'one recurring cartoon-boing motif'],
+      groove: 'spring-loaded half-time kicks, snapping snares and a bouncing bass pocket with comic rests',
+      colors: ['booming elastic tuba bass', 'one recurring cartoon-boing motif'],
       preferredSignals: ['absurd', 'high-energy'],
     },
     {
       id: 'electro_sideshow',
       label: 'Electro Sideshow',
       foundation: 'glitchy electro-swing pop',
-      groove: 'rubber-band swing with clipped electronic drums',
+      groove: 'rubber-band swing with hard electronic kicks and a rubbery bass bounce',
       colors: ['detuned calliope fragment', 'chopped crowd answer'],
       preferredSignals: ['tech', 'celebratory'],
       avoid: 'full-band swing pastiche, random soundboard collage, novelty voices, and continuous glitch fills',
@@ -186,20 +204,20 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'flashbulb_rnb',
       label: 'Flashbulb R&B',
-      foundation: 'sparse contemporary R&B',
-      groove: 'dry snap beat with controlled swing',
+      foundation: 'bass-forward rhythmic R&B',
+      groove: 'crisp snaps, syncopated kicks and a bouncy bassline that carries the vocal attitude',
       colors: ['pizzicato string punctuation', 'breathy vocal doubles'],
       preferredSignals: ['intimate', 'confrontational'],
     },
     {
       id: 'afterparty_garage',
       label: 'Afterparty Garage',
-      foundation: 'minimal late-night UK garage',
-      groove: 'soft two-step shuffle with a warm sub-bass pocket',
+      foundation: 'bass-driven late-night UK garage',
+      groove: 'punchy two-step shuffle with elastic sub-bass and sharp snare accents',
       colors: ['glassy electric piano', 'single flashbulb crowd inhale'],
       preferredSignals: ['celebratory', 'tech'],
       arrangementArc:
-        'Soft-focus doorway intro -> two-step close-up verse -> suspended pre-hook -> luminous garage chorus -> whispered breakdown -> sleek final pass.',
+        'Vocal pickup over two-step drums -> bass-bouncing close-up verse -> short suspense cut -> full garage hook -> whispered beat-stop -> final bass lift.',
     },
   ],
   receipts_on_wax: [
@@ -207,15 +225,15 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
       id: 'verdict_boom_bap',
       label: 'Verdict Boom Bap',
       foundation: 'dusty 90s boom-bap',
-      groove: 'hard but unhurried breakbeat with pocketed swing',
+      groove: 'hard-hitting kick and snare with chunky bass and swaggering pocketed swing',
       colors: ['chopped soul punctuation', 'selective vinyl scratch'],
       preferredSignals: ['confrontational', 'intimate'],
     },
     {
       id: 'press_room_funk',
       label: 'Press-Room Funk',
-      foundation: 'lean funk-rap breakbeat',
-      groove: 'syncopated live-drum pocket with clipped bass answers',
+      foundation: 'punchy funk-rap breakbeat',
+      groove: 'hard syncopated live drums with thick, clipped funk-bass answers',
       colors: ['muted wah-guitar', 'dry room-clap verdict'],
       preferredSignals: ['celebratory', 'absurd'],
       avoid: 'jam-band solos, slap-bass excess, novelty scratches, and punchlines without factual setup',
@@ -225,16 +243,16 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'rainlit_emo_rap',
       label: 'Rainlit Emo Rap',
-      foundation: 'restrained emo rap',
-      groove: 'slow melodic trap pulse entering after the first verse',
+      foundation: 'melodic half-time emo rap',
+      groove: 'slow half-time trap drums from the opening phrase, deep 808 heartbeat and crisp snare',
       colors: ['close sad-guitar figure', 'brief telephone-filtered opening'],
       preferredSignals: ['melancholic', 'intimate'],
     },
     {
       id: 'notes_app_alt_pop',
       label: 'Notes-App Alt-Pop',
-      foundation: 'minimal nocturnal alt-pop',
-      groove: 'subdued electronic heartbeat with a late chorus lift',
+      foundation: 'hook-led nocturnal alt-pop',
+      groove: 'slow but weighty electronic heartbeat, syncopated bass and an ear-catching melodic chorus lift',
       colors: ['felt piano motif', 'distant granular vocal haze'],
       preferredSignals: ['tech', 'mysterious'],
       avoid: 'power-ballad belting, cinematic rain beds, oversized drums, and declaring whether the apology is sincere',
@@ -244,8 +262,8 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'jersey_replay',
       label: 'Jersey Replay',
-      foundation: 'clean short-form Jersey club',
-      groove: 'fast kick pattern with a recognizable footwork pocket',
+      foundation: 'hard-kicking short-form Jersey club',
+      groove: 'fast triplet kick pattern, heavy sub-bass and a recognizable footwork pocket',
       colors: ['tight vocal chop', 'single crowd-response lift'],
       preferredSignals: ['high-energy', 'celebratory'],
     },
@@ -253,7 +271,7 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
       id: 'camera_ready_pop',
       label: 'Camera-Ready Pop',
       foundation: 'bright rhythmic dance-pop',
-      groove: 'stomping syncopated pop groove with a cut-to-silence setup',
+      groove: 'hard stomping syncopated dance drums and a thick bass hook with a brief cut-to-silence setup',
       colors: ['rubbery synth-bass hook', 'layered group answer'],
       preferredSignals: ['intimate', 'absurd'],
       avoid: 'festival EDM build-ups, constant bass drops, long sustained vocal lines, and generic motivational uplift',
@@ -263,16 +281,16 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'notification_hyperpop',
       label: 'Notification Hyperpop',
-      foundation: 'melodic controlled hyperpop',
-      groove: 'fast digital pulse with one-bar dropouts',
-      colors: ['restrained notification motif', 'clean robotic vocal double'],
+      foundation: 'high-impact melodic hyperpop',
+      groove: 'hard fast digital kicks, elastic distorted bass and short rhythmic dropouts',
+      colors: ['rhythmic notification motif', 'clean robotic vocal double'],
       preferredSignals: ['tech', 'high-energy'],
     },
     {
       id: 'scroll_glitch_garage',
       label: 'Scroll Glitch Garage',
       foundation: 'glitchy future garage pop',
-      groove: 'skipping two-step rhythm with elastic sub movement',
+      groove: 'punchy skipping two-step drums with heavy elastic sub movement',
       colors: ['pixelated synth pluck', 'micro-stutter transition'],
       preferredSignals: ['mysterious', 'intimate'],
       avoid:
@@ -283,16 +301,16 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'tape_worn_phonk',
       label: 'Tape-Worn Phonk',
-      foundation: 'sparse dark phonk',
-      groove: 'hypnotic low-tempo loop with restrained cowbell movement',
+      foundation: 'bass-heavy hypnotic dark phonk',
+      groove: 'hypnotic low-tempo loop with a weighty kick, rolling sub-bass and syncopated cowbell accents',
       colors: ['tape-worn synth shadow', 'single distant gong'],
       preferredSignals: ['mysterious', 'tech'],
     },
     {
       id: 'archive_trip_hop',
       label: 'Archive Trip-Hop',
-      foundation: 'hushed archival trip-hop',
-      groove: 'dragging breakbeat with unresolved bass suspension',
+      foundation: 'bass-driven archival trip-hop',
+      groove: 'slow head-nod breakbeat with a weighty kick and unresolved rolling bass tension',
       colors: ['warped cassette piano', 'distant room-tone swell'],
       preferredSignals: ['intimate', 'melancholic'],
       avoid: 'jump scares, horror narration, supernatural conclusions, and continuous lo-fi degradation',
@@ -302,16 +320,16 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'glitch_hop_thread',
       label: 'Glitch-Hop Thread',
-      foundation: 'controlled conversational glitch hop',
-      groove: 'syncopated broken beat with one revealing switch',
+      foundation: 'punchy conversational glitch hop',
+      groove: 'hard syncopated kicks, crunchy bass and reply-shaped beat stops with a revealing switch',
       colors: ['short layered reply vocals', 'muted notification cut'],
       preferredSignals: ['tech', 'confrontational'],
     },
     {
       id: 'cross_talk_breaks',
       label: 'Cross-Talk Breaks',
-      foundation: 'minimal alternative rap breaks',
-      groove: 'off-kilter drum pocket with carefully timed interruptions',
+      foundation: 'bass-heavy alternative rap breaks',
+      groove: 'hard off-kilter drums and thick bass with rhythmically timed spoken interruptions',
       colors: ['filtered backing-voice fragments', 'dry bass-stop punctuation'],
       preferredSignals: ['absurd', 'intimate'],
       avoid: 'equal-volume lead voices, constant ad-libs, muddy low end, and dialogue that obscures the central hook',
@@ -321,8 +339,8 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
     {
       id: 'controlled_rage',
       label: 'Controlled Rage',
-      foundation: 'disciplined rage rap',
-      groove: 'rising 808 pressure with one explosive rhythmic rupture',
+      foundation: 'high-impact rage rap',
+      groove: 'hard kicks and aggressive 808 pressure from the opening, with explosive hook accents',
       colors: ['buzzing synth tension', 'single metal-impact payoff'],
       preferredSignals: ['high-energy', 'confrontational'],
     },
@@ -330,13 +348,13 @@ const VARIANTS: Readonly<Record<string, readonly ProductionVariant[]>> = {
       id: 'industrial_comedown',
       label: 'Industrial Comedown',
       foundation: 'industrial punk-rap',
-      groove: 'stomping half-time drums that repeatedly pull back before impact',
+      groove: 'heavy stomping half-time drums and grinding bass, with brief stops that amplify the next impact',
       colors: ['distorted mono synth', 'empty-room final decay'],
       preferredSignals: ['absurd', 'melancholic'],
       vocalDirection:
-        'Tense, intelligible spoken-rhythmic lead that breaks into one short shouted refrain and then audibly regains control.',
+        'Tense, assertive rhythmic lead with shouted refrain accents over hard drums; keep the hook intelligible through the distortion.',
       avoid:
-        'full-volume distortion from bar one, nonstop shouting, repeated impact effects, and a final section with no comedown',
+        'clipping that buries words, nonstop shouting, repeated impact effects, and a final section with no comedown',
     },
   ],
 };
@@ -477,7 +495,7 @@ export function formatDynamicProductionRecipe(recipe: DynamicProductionRecipe) {
     `Groove: ${recipe.groove}.`,
     `Vocal: ${recipe.vocal}.`,
     `Sonic colors: ${recipe.colors.join(' + ')}.`,
-    `Arc: ${recipe.arrangementArc}`,
+    `Arc: ${recipe.arrangementArc} ${ADAPTIVE_ARRANGEMENT_RULE}`,
     `Avoid: ${recipe.avoid}.`,
   ].join(' ');
 }
