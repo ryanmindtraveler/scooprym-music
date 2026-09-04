@@ -35,7 +35,7 @@ export const websiteConfig: WebsiteConfig = {
     },
   },
   features: {
-    enableUpgradeCard: true,
+    enableUpgradeCard: false,
     enableUpdateAvatar: true,
     enableAffonsoAffiliate: false,
     enablePromotekitAffiliate: false,
@@ -44,7 +44,7 @@ export const websiteConfig: WebsiteConfig = {
     enableTurnstileCaptcha: process.env.NEXT_PUBLIC_DEMO_WEBSITE === 'true',
   },
   routes: {
-    defaultLoginRedirect: '/home',
+    defaultLoginRedirect: '/dashboard',
   },
   analytics: {
     enableVercelAnalytics: false,

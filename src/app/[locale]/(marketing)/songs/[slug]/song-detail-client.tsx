@@ -3,19 +3,20 @@
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { type SongCommentItem, SongComments } from '@/components/songs/song-comments';
 import { Slider } from '@/components/ui/slider';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { LocaleLink } from '@/i18n/navigation';
+import { formatBusinessDate } from '@/lib/business-time';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
-import { slugify } from '@/lib/utils';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
-import { format } from 'date-fns';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2 } from 'lucide-react';
-import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -25,6 +26,18 @@ interface SongDetailClientProps {
   song: Song;
   initialIsFavorite: boolean;
   autoPlay?: boolean;
+  searchHeadline: string;
+  storyContext: string;
+  initialComments: {
+    comments: SongCommentItem[];
+    total: number;
+    totalPages: number;
+  };
+  viewer: {
+    id: string;
+    name: string;
+    image: string | null;
+  } | null;
 }
 
 const formatTime = (seconds: number | null | undefined) => {
@@ -34,7 +47,15 @@ const formatTime = (seconds: number | null | undefined) => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: SongDetailClientProps) {
+export function SongDetailClient({
+  song,
+  initialIsFavorite,
+  autoPlay = false,
+  searchHeadline,
+  storyContext,
+  initialComments,
+  viewer,
+}: SongDetailClientProps) {
   const locale = useLocale();
   const tNavbar = useTranslations('Marketing.navbar');
 
@@ -43,6 +64,11 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
   const currentTime = usePlayerStore((state) => state.currentTime);
 
   const isThisSongPlaying = globalIsPlaying && currentSong?.id === song.id;
+
+  useEffect(() => {
+    const sessionId = createEngagementSessionId('detail');
+    void recordSongEngagement(song.id, 'detail_view', sessionId).catch(() => {});
+  }, [song.id]);
 
   // Dynamic color extraction from album art
   const { primary, secondary, muted, darkMuted, isLoading: colorsLoading } = useImageColors(song.coverImageUrl);
@@ -60,7 +86,6 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
         newsContent: song.sourceText || undefined,
         newsLink: song.sourceUrl || undefined,
       });
-      fetch(`/api/songs/${song.id}/play`, { method: 'POST' }).catch(() => {});
     }
   }, [song.id, autoPlay, song.audioUrl, song.title, song.coverImageUrl, play, currentSong?.id]);
 
@@ -91,7 +116,7 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
 
   const formattedDate = useMemo(() => {
     try {
-      return format(new Date(song.createdAt), 'MMM d, yyyy');
+      return formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
       return '';
     }
@@ -104,9 +129,9 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
       <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat mix-blend-overlay" />
 
       {/* === IMMERSIVE SPLIT LAYOUT === */}
-      <div className="relative z-10 flex flex-col md:flex-row w-full max-w-[1700px] mx-auto min-h-dvh pt-20 md:pt-24">
+      <div className="relative z-10 flex min-h-dvh w-full max-w-[2200px] flex-col mx-auto pt-20 md:flex-row md:pt-24">
         {/* LEFT: Sticky Vinyl Station (Fixed in place while scrolling page) */}
-        <div className="w-full md:w-[45%] lg:w-[40%] h-auto md:h-[calc(100vh-120px)] md:sticky md:top-24 flex flex-col justify-start p-6 md:p-8 relative overflow-visible">
+        <div className="relative flex h-auto w-full flex-col justify-start overflow-visible p-6 md:sticky md:top-24 md:h-[calc(100vh-120px)] md:w-[45%] md:self-start md:p-8 lg:w-[40%] xl:w-[35%]">
           {/* Decorative floating elements */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-linear-to-b from-white/0 via-white/50 to-white/0 dark:from-black/0 dark:via-white/5 dark:to-black/0 rotate-45 blur-3xl opacity-30 pointer-events-none" />
 
@@ -126,13 +151,26 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                   </LocaleLink>
                 </li>
                 <li className="mx-2">/</li>
-                <li className="text-slate-900 dark:text-slate-200 font-medium truncate max-w-[150px]">{song.title}</li>
+                <li className="max-w-[180px] truncate font-medium text-slate-900 dark:text-slate-200">
+                  {searchHeadline}
+                </li>
               </ol>
             </nav>
 
-            <h1 className="font-serif text-base md:text-xl lg:text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-[0.9] drop-shadow-sm mb-3 whitespace-nowrap overflow-visible">
-              {song.title}
-            </h1>
+            <div className="mb-5">
+              <p className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-pink-600 dark:text-pink-400">
+                <span aria-hidden="true">♪</span>
+                Original meme song
+              </p>
+              <p className="max-w-xl text-balance font-serif text-2xl font-black leading-[1.05] tracking-[-0.035em] text-slate-950 drop-shadow-sm dark:text-white md:text-3xl lg:text-[2.15rem]">
+                {song.title}
+              </p>
+              {formattedDate && (
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  Published {formattedDate}
+                </p>
+              )}
+            </div>
 
             {/* Style Tags - Enhanced Visibility */}
             {(() => {
@@ -165,37 +203,35 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
               );
             })()}
 
-            {/* 4. EDITORIAL INSIGHT (Refined Card) */}
+            {/* 新闻标题是页面唯一 H1，但视觉上从属于歌曲信息。 */}
             {(song.newsSummary || song.sourceText) && (
-              <div className="relative w-full max-w-lg mt-6 text-left group/text border-l-4 border-indigo-500/50 pl-6 py-4 bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-r-2xl shadow-sm dark:shadow-black/20 ring-1 ring-slate-200/50 dark:ring-white/10 transition-all duration-500 hover:shadow-lg dark:hover:shadow-black/40 hover:ring-indigo-500/20 hover:scale-[1.02] pr-12">
-                <div className="flex items-center gap-2 mb-2">
+              <article className="group/text relative mt-5 w-full max-w-lg rounded-r-2xl border-l-4 border-indigo-500/50 bg-white/40 py-4 pr-5 pl-5 text-left shadow-sm ring-1 ring-slate-200/50 backdrop-blur-2xl transition-all duration-500 hover:shadow-lg hover:ring-indigo-500/20 dark:bg-white/5 dark:shadow-black/20 dark:ring-white/10 dark:hover:shadow-black/40">
+                <div className="mb-2 flex items-center gap-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" />
                   <span className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none">
                     {locale.startsWith('zh') ? '背景' : 'Background'}
                   </span>
                 </div>
+                <h1 className="text-pretty font-serif text-lg font-black leading-[1.22] tracking-[-0.025em] text-slate-900 selection:bg-indigo-500/30 dark:text-white md:text-xl">
+                  {searchHeadline}
+                </h1>
+                {storyContext && (
+                  <p className="mt-2.5 text-pretty font-serif text-sm italic leading-relaxed text-slate-600 selection:bg-indigo-500/30 dark:text-slate-300">
+                    {storyContext}
+                  </p>
+                )}
                 {song.sourceUrl && (
                   <a
                     href={song.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="absolute top-3 right-3 flex items-center justify-center size-7 rounded-full bg-slate-100 dark:bg-white/10 hover:bg-indigo-50 dark:hover:bg-white/20 transition-all hover:scale-110 active:scale-95 shadow-sm group/link z-10"
-                    title={locale.startsWith('zh') ? '查看完整故事' : 'Read Full Story'}
-                    aria-label={locale.startsWith('zh') ? '查看完整故事' : 'Read Full Story'}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 underline decoration-indigo-300 underline-offset-4 transition hover:text-pink-600 dark:text-indigo-300"
                   >
-                    <span
-                      role="img"
-                      aria-label="popcorn"
-                      className="text-sm leading-none relative mb-0.5 inline-block origin-bottom animate-ring"
-                    >
-                      🍿
-                    </span>
+                    Read the original report
+                    <ExternalLink className="size-3" aria-hidden="true" />
                   </a>
                 )}
-                <h2 className="text-sm md:text-base leading-relaxed text-slate-700 dark:text-slate-300 font-serif italic text-pretty selection:bg-indigo-500/30">
-                  {song.newsSummary || song.sourceText}
-                </h2>
-              </div>
+              </article>
             )}
           </div>
 
@@ -246,7 +282,7 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
                 <div className="absolute inset-[8px] md:inset-[12px] rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
                   <Image
                     src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                    alt={`${slugify(song.title) || 'cover'} - ScoopRYM`}
+                    alt={`Cover art for ${song.title}, inspired by: ${searchHeadline}`}
                     fill
                     className="object-cover"
                   />
@@ -379,9 +415,12 @@ export function SongDetailClient({ song, initialIsFavorite, autoPlay = false }: 
           </div>
         </div>
 
-        {/* RIGHT: Pure Lyrics Stage (Completely Borderless & Immersive) */}
-        <div className="w-full md:w-[55%] lg:w-[60%] h-[70vh] md:h-[calc(100vh-120px)] relative flex items-center justify-center bg-transparent p-6 md:p-12 overflow-hidden">
-          <FormattedLyricsView lyrics={song.lyrics} duration={duration} songId={song.id} className="w-full h-full" />
+        {/* RIGHT: Lyrics and comments stay visible together on wide screens. */}
+        <div className="grid h-auto w-full min-h-0 grid-rows-[70vh_65vh] overflow-hidden bg-transparent md:sticky md:top-24 md:h-[calc(100vh-120px)] md:w-[55%] md:self-start md:grid-rows-[45%_55%] lg:w-[60%] xl:w-[65%] xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] xl:grid-rows-1 xl:overflow-visible">
+          <div className="relative flex min-h-0 items-center justify-center overflow-hidden p-6 md:p-8 xl:p-10">
+            <FormattedLyricsView lyrics={song.lyrics} duration={duration} songId={song.id} className="h-full w-full" />
+          </div>
+          <SongComments songId={song.id} viewer={viewer} initialData={initialComments} />
         </div>
       </div>
 
@@ -456,6 +495,27 @@ function FormattedLyricsView({
     return index;
   }, [currentTime, duration, isPlaying, displayLines.length, currentSong?.id, songId]);
 
+  // 始终高亮最多 7 句实际歌词，段落标题不占用高亮名额。
+  const focusLineIndices = useMemo(() => {
+    const lyricLineIndices = displayLines
+      .map((line, index) => ({ index, isSection: line.startsWith('[') && line.endsWith(']') }))
+      .filter((line) => !line.isSection)
+      .map((line) => line.index);
+
+    if (lyricLineIndices.length === 0) return new Set<number>();
+
+    const nearestPosition = lyricLineIndices.findIndex((index) => index >= Math.max(activeIndex, 0));
+    const centerPosition = nearestPosition === -1 ? lyricLineIndices.length - 1 : nearestPosition;
+    const windowSize = Math.min(7, lyricLineIndices.length);
+    let start = Math.max(0, centerPosition - 3);
+    let end = Math.min(lyricLineIndices.length, start + windowSize);
+
+    start = Math.max(0, end - windowSize);
+    end = Math.min(lyricLineIndices.length, start + windowSize);
+
+    return new Set(lyricLineIndices.slice(start, end));
+  }, [activeIndex, displayLines]);
+
   // --- 3. Smooth Auto-scroll ---
   useEffect(() => {
     const container = containerRef.current;
@@ -492,9 +552,7 @@ function FormattedLyricsView({
         <div className="flex flex-col gap-6 w-full max-w-4xl">
           {displayLines.map((line, index) => {
             const isSection = line.startsWith('[') && line.endsWith(']');
-            // Highlight a "Zone" of lines: Current line + 2 lines before/after (Total 5 lines)
-            // This creates a large tolerance window for approximate sync.
-            const isFocusZone = index >= activeIndex - 2 && index <= activeIndex + 2;
+            const isFocusZone = focusLineIndices.has(index);
 
             return (
               <div

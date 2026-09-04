@@ -2,6 +2,7 @@
 
 import { Card } from '@/components/ui/card';
 import { useCreateStore } from '@/store';
+import type { LyricWorkshop } from '@/types/lyric-workshop';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { LyricsStageView } from './lyrics-stage-view';
@@ -11,6 +12,8 @@ import { TaskQueueView } from './task-queue-view';
 // Props passed from Page (mostly for LyricsView)
 interface CreationStageProps {
   lyrics: string;
+  lyricWorkshop: LyricWorkshop | null;
+  onUseDraft: (lyrics: string) => void;
   setLyrics: (value: string) => void;
   isEditing: boolean;
   setIsEditing: (value: boolean) => void;

@@ -35,12 +35,8 @@ export default async function AboutPage() {
           <div className="max-w-5xl mx-auto space-y-16">
             {/* Header */}
             <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
-                {t('title')}
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {t('description')}
-              </p>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">{t('title')}</h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{t('description')}</p>
             </div>
 
             {/* Content */}
@@ -58,9 +54,7 @@ export default async function AboutPage() {
                       <p className="text-primary font-medium">{t('authorBio')}</p>
                     </div>
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {t('introduction')}
-                  </p>
+                  <p className="text-muted-foreground leading-relaxed">{t('introduction')}</p>
 
                   <div className="flex gap-4 pt-4">
                     {websiteConfig.metadata.social?.twitter && (
@@ -90,9 +84,7 @@ export default async function AboutPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold uppercase mb-2">{t('authorBio')}</h3>
-                    <p className="text-muted-foreground">
-                      {t('description')}
-                    </p>
+                    <p className="text-muted-foreground">{t('description')}</p>
                   </div>
                 </div>
 
@@ -101,12 +93,8 @@ export default async function AboutPage() {
                     <Music2 className="size-6 text-accent" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold uppercase mb-2">
-                      {t('authorName')} AI
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {t('introduction')}
-                    </p>
+                    <h3 className="text-xl font-bold uppercase mb-2">{t('authorName')} AI</h3>
+                    <p className="text-muted-foreground">{t('introduction')}</p>
                   </div>
                 </div>
               </div>

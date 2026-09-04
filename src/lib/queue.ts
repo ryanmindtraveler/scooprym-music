@@ -36,12 +36,13 @@ export const canUseQStash = () => {
     const url = new URL(base);
     const hostname = url.hostname.toLowerCase();
     const isLoopback =
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname === '::1' ||
-      hostname.endsWith('.localhost');
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname.endsWith('.localhost');
 
-    return !isLoopback && !!process.env.QSTASH_TOKEN && process.env.QSTASH_TOKEN !== 'mock_token';
+    const hasPublishToken = !!process.env.QSTASH_TOKEN && process.env.QSTASH_TOKEN !== 'mock_token';
+    const hasSigningKeys = !!process.env.QSTASH_CURRENT_SIGNING_KEY && !!process.env.QSTASH_NEXT_SIGNING_KEY;
+
+    // 没有签名密钥时 Worker 无法验证投递，不能把任务伪装成“已成功排队”。
+    return !isLoopback && hasPublishToken && hasSigningKeys;
   } catch {
     return false;
   }

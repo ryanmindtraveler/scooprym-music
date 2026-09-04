@@ -4,19 +4,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ban, Play } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { LiveSong } from './types';
 
 export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
+  const t = useTranslations('Dashboard.admin.overview');
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Live Generation Feed</CardTitle>
-        <CardDescription>Real-time stream of newly created songs.</CardDescription>
+        <CardTitle>{t('liveFeed')}</CardTitle>
+        <CardDescription>{t('liveFeedDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {songs.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-            <p className="text-sm">No live activity detected.</p>
+            <p className="text-sm">{t('noLiveActivity')}</p>
           </div>
         )}
         {songs.map((song) => (
@@ -36,7 +38,7 @@ export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
                     <AvatarFallback>{(song.user?.name?.[0] || 'U').toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <p className="text-xs text-muted-foreground">
-                    {song.user?.name || 'Anonymous'} ·{' '}
+                    {song.user?.name || t('anonymous')} ·{' '}
                     <span suppressHydrationWarning>{new Date(song.createdAt).toLocaleTimeString()}</span>
                   </p>
                 </div>

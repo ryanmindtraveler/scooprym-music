@@ -1,10 +1,26 @@
 /**
  * @file image.service.ts
- * @description Encapsulates image generation logic, focusing on album covers via Replicate.
+ * @description 封装歌曲封面生成：Qwen Image 3 Pro → Nano Banana 2 → Seedream 5.0 Pro → FLUX Schnell。
  */
 
-import { IMAGE_MODEL } from '@/ai/config/models';
+import {
+  IMAGE_FALLBACK_MODEL,
+  NANO_BANANA_IMAGE_MODEL,
+  QWEN_IMAGE_PRO_MODEL,
+  SEEDREAM_IMAGE_PRO_MODEL,
+} from '@/ai/config/models';
 import Replicate from 'replicate';
+
+const OPENROUTER_IMAGE_ENDPOINT = 'https://openrouter.ai/api/v1/images';
+const OPENROUTER_IMAGE_TIMEOUT_MILLIS = 120_000;
+const COVER_IMAGE_RESOLUTION = '1K';
+
+export interface CoverGenerationOptions {
+  title: string;
+  lyrics?: string;
+  sourceText?: string;
+  artPrompt?: string;
+}
 
 type ImageSourceInput =
   | string
@@ -66,7 +82,7 @@ export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promi
           ? imageSource.url
           : typeof imageSource?.toString === 'function'
             ? imageSource.toString()
-          : null;
+            : null;
 
   if (!resolvedImageSource) {
     throw new Error('Invalid image source input');
@@ -100,46 +116,106 @@ export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promi
 }
 
 /**
- * 2. Generate Cover Image URL via Replicate
+ * 构造符合 ScoopRYM 品牌气质的专辑封面提示词。
  */
-export async function generateCoverImageDataUrl(options: {
-  title: string;
-  lyrics?: string;
-  sourceText?: string;
-  artPrompt?: string;
-}): Promise<string | null> {
+export function buildCoverPrompt(options: CoverGenerationOptions) {
+  const { title, lyrics, sourceText, artPrompt } = options;
+  const creativeSource = (sourceText || lyrics || '')
+    .replace(/\[[^\]]+\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return [
+    `Create a square album cover for the meme song "${title}".`,
+    'ScoopRYM Gallery house style: full-bleed editorial pop-art with comic-book confidence, cyber-pop polish, tabloid energy, and a witty story-specific visual punchline.',
+    'Palette: electric magenta, cyan, cobalt, violet, acid yellow, and hot red with deep cinematic contrast, luminous rim light, and crisp illustrated contours.',
+    'Create a dynamic narrative scene rather than an isolated portrait: expressive body language, recognizable story props, and a rich layered environment across foreground, midground, and background.',
+    'The image should feel like an outrageous music-video freeze frame with diagonal motion, cinematic depth, scale contrast, and enough bold detail to remain readable as a small thumbnail.',
+    'Keep it stylized and editorial rather than photorealistic. Detailed costumes, props, and environments are essential.',
+    artPrompt && artPrompt.trim().length > 0 ? `Creative direction: ${artPrompt.trim().slice(0, 800)}` : '',
+    sourceText && sourceText.trim().length > 0
+      ? `Reported story cue: ${sourceText.replace(/\s+/g, ' ').trim().slice(0, 480)}`
+      : creativeSource.length > 0
+        ? `Song mood cue: ${creativeSource.slice(0, 480)}`
+        : '',
+    'Avoid plain or single-color backgrounds, empty studio portraits, passport-style framing, minimalist gradients, generic glamour photography, weak detail, and large unused negative space.',
+    'Finish: polished commercial album artwork, expressive, crisp, layered, high-energy, premium, and instantly shareable as entertainment-news culture.',
+    'Hard constraints: no text, no letters, no logos, no watermark, no UI, no mockup, no border, no duplicated limbs or malformed hands.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+interface OpenRouterImageResponse {
+  data?: Array<{
+    b64_json?: string;
+    media_type?: string;
+  }>;
+  error?: {
+    message?: string;
+  };
+}
+
+async function generateOpenRouterCover(modelId: string, prompt: string): Promise<string | null> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(new Error(`OpenRouter image generation timed out: ${modelId}`)),
+    OPENROUTER_IMAGE_TIMEOUT_MILLIS
+  );
+
+  try {
+    const response = await fetch(OPENROUTER_IMAGE_ENDPOINT, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_BASE_URL || 'https://scooprym.app',
+        'X-Title': 'ScoopRYM',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        prompt,
+        n: 1,
+        resolution: COVER_IMAGE_RESOLUTION,
+        aspect_ratio: '1:1',
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as OpenRouterImageResponse | null;
+    if (!response.ok) {
+      throw new Error(payload?.error?.message || `OpenRouter image request failed: ${response.status}`);
+    }
+
+    const image = payload?.data?.[0];
+    if (!image?.b64_json) {
+      throw new Error('OpenRouter returned no image data');
+    }
+
+    return `data:${image.media_type || 'image/png'};base64,${image.b64_json}`;
+  } catch (error) {
+    console.warn(`[image-service] OpenRouter cover model ${modelId} failed.`, error);
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function generateReplicateCover(prompt: string): Promise<string | null> {
   const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
-    console.warn('[image-service] Missing REPLICATE_API_TOKEN, skipping cover generation.');
     return null;
   }
 
   const replicate = new Replicate({ auth: apiKey });
 
-  const { title, lyrics, sourceText, artPrompt } = options;
-  const creativeSource = (sourceText || lyrics || '').replace(/\[[^\]]+\]/g, ' ').replace(/\s+/g, ' ').trim();
-
-  const prompt =
-    artPrompt && artPrompt.trim().length > 0
-      ? artPrompt.trim()
-      : [
-          `Album cover for "${title}".`,
-          'Create one iconic focal subject or scene with immediate thumbnail readability.',
-          'Visual style: premium contemporary album art, cinematic lighting, bold silhouette, controlled color palette, rich emotional atmosphere.',
-          sourceText && sourceText.trim().length > 0
-            ? `Story cue: ${sourceText.slice(0, 320)}`
-            : creativeSource.length > 0
-              ? `Mood cue: ${creativeSource.slice(0, 320)}`
-              : '',
-          'Composition: square cover, single dominant subject, centered or slightly off-center, uncluttered background, strong negative space, no tiny competing objects.',
-          'Finish: polished, stylish, expressive, graphic, premium, not muddy, not chaotic, not collage-heavy.',
-          'Hard constraints: no text, no letters, no logos, no watermark, no UI, no mockup, no border, no duplicated subjects.',
-        ]
-          .filter(Boolean)
-          .join('\n');
-
   try {
-    const output = await replicate.run(IMAGE_MODEL, {
+    const output = await replicate.run(IMAGE_FALLBACK_MODEL, {
       input: {
         prompt,
         go_fast: true,
@@ -167,7 +243,7 @@ export async function generateCoverImageDataUrl(options: {
             ? ((firstOutput as { url: string }).url as string)
             : typeof (firstOutput as { toString?: unknown }).toString === 'function'
               ? (firstOutput as { toString: () => string }).toString()
-            : null;
+              : null;
 
     if (!imageUrl) {
       console.warn('[image-service] Replicate returned no valid image URL');
@@ -176,56 +252,59 @@ export async function generateCoverImageDataUrl(options: {
 
     return imageUrl;
   } catch (error) {
-    console.error('[image-service] Replicate API exception:', error);
+    console.warn('[image-service] FLUX fallback failed.', error);
     return null;
   }
 }
 
 /**
- * 3. Generate Cover with Retry Logic
+ * 按质量顺序生成封面，并在提供商不可用时自动降级。
  */
-export async function generateCoverWithRetry(
-  options: {
-    title: string;
-    lyrics?: string;
-    sourceText?: string;
-    artPrompt?: string;
-  },
-  retries = 3
-): Promise<string | null> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      // Logic: If this is the LAST attempt, use a "Safe Fallback" prompt.
-      // This bypasses specific content safety filters by requesting generic abstract art.
-      const isLastAttempt = i === retries - 1;
-      const currentOptions = isLastAttempt
-        ? {
-            title: 'Abstract Vibes',
-            sourceText:
-              'Abstract digital art, colorful music visualization, geometric shapes, high quality, 4k wallpaper',
-            lyrics: '', // Remove lyrics to avoid text triggers
-            artPrompt:
-              'Abstract album cover, luminous geometric forms, bold silhouette, saturated color contrast, cinematic lighting, premium digital art, no text, no logo, no watermark.',
-          }
-        : options;
+export async function generateCoverImageDataUrl(options: CoverGenerationOptions): Promise<string | null> {
+  const prompt = buildCoverPrompt(options);
 
-      if (isLastAttempt) {
-        console.log('[image-service] Last retry attempt: Switching to Safe Fallback prompt.');
-      }
-
-      const result = await generateCoverImageDataUrl(currentOptions);
-      if (result) {
-        if (isLastAttempt) console.log('[image-service] Safe Fallback succeeded.');
-        return result;
-      }
-
-      console.warn(`[image-service] Cover generation returned null, retrying (${i + 1}/${retries})...`);
-    } catch (error) {
-      console.error(`[image-service] Cover generation attempt ${i + 1} failed:`, error);
+  if (!process.env.OPENROUTER_API_KEY) {
+    console.warn('[image-service] Missing OPENROUTER_API_KEY; using FLUX fallback.');
+  } else {
+    const qwenImage = await generateOpenRouterCover(QWEN_IMAGE_PRO_MODEL, prompt);
+    if (qwenImage) {
+      console.info(`[image-service] Cover generated with ${QWEN_IMAGE_PRO_MODEL}.`);
+      return qwenImage;
     }
-    if (i < retries - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const geminiImage = await generateOpenRouterCover(NANO_BANANA_IMAGE_MODEL, prompt);
+    if (geminiImage) {
+      console.info(`[image-service] Cover generated with ${NANO_BANANA_IMAGE_MODEL}.`);
+      return geminiImage;
+    }
+
+    const seedreamImage = await generateOpenRouterCover(SEEDREAM_IMAGE_PRO_MODEL, prompt);
+    if (seedreamImage) {
+      console.info(`[image-service] Cover generated with ${SEEDREAM_IMAGE_PRO_MODEL}.`);
+      return seedreamImage;
     }
   }
-  return null;
+
+  const fallbackImage = await generateReplicateCover(prompt);
+  if (fallbackImage) {
+    console.info(`[image-service] Cover generated with ${IMAGE_FALLBACK_MODEL}.`);
+  }
+  return fallbackImage;
+}
+
+/**
+ * 首轮失败后再使用不包含具体人物与事件的安全提示词尝试一次。
+ */
+export async function generateCoverWithRetry(options: CoverGenerationOptions, retries = 2): Promise<string | null> {
+  const result = await generateCoverImageDataUrl(options);
+  if (result || retries <= 1) {
+    return result;
+  }
+
+  console.warn('[image-service] Retrying cover generation with the ScoopRYM Gallery fallback direction.');
+  return generateCoverImageDataUrl({
+    title: options.title,
+    artPrompt:
+      'Full-bleed surreal entertainment-news scene in ScoopRYM Gallery house style: dynamic character action, a funny visual punchline, layered neon city or backstage environment, comic editorial linework, story props, cinematic depth, saturated magenta-cyan-violet palette, no plain background, no text.',
+  });
 }

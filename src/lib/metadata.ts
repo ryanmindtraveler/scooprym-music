@@ -17,6 +17,8 @@ export function constructMetadata({
   locale,
   pathname,
   keywords = [],
+  includeDefaultKeywords = true,
+  includeLanguageAlternates = true,
 }: {
   title?: string;
   description?: string;
@@ -25,6 +27,8 @@ export function constructMetadata({
   locale?: Locale;
   pathname?: string;
   keywords?: string[];
+  includeDefaultKeywords?: boolean;
+  includeLanguageAlternates?: boolean;
 } = {}): Metadata {
   title = title || defaultMessages.Metadata.title;
   description = description || defaultMessages.Metadata.description;
@@ -37,7 +41,7 @@ export function constructMetadata({
 
   // Generate hreflang alternates if we have multiple locales
   const alternates =
-    routing.locales.length > 1
+    includeLanguageAlternates && routing.locales.length > 1
       ? {
           canonical: canonicalUrl,
           ...generateAlternates(activePathname as any),
@@ -68,7 +72,7 @@ export function constructMetadata({
   return {
     title,
     description,
-    keywords: [...defaultKeywords, ...keywords],
+    keywords: includeDefaultKeywords ? [...defaultKeywords, ...keywords] : keywords.length > 0 ? keywords : undefined,
     alternates,
     openGraph: {
       type: 'website',

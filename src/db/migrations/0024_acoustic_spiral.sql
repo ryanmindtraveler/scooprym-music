@@ -1,0 +1,1 @@
+CREATE INDEX "story_candidate_vote_day_candidate_idx" ON "scooprym"."story_candidate_vote" USING btree ("vote_day","candidate_id");

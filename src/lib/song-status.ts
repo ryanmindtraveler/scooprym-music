@@ -1,10 +1,16 @@
 export type SongProcessingStatus =
+  | 'queued'
   | 'processing'
+  | 'generating_audio'
+  | 'uploading_audio'
   | 'audio_uploaded'
+  | 'generating_cover'
+  | 'finalizing'
   | 'completed'
   | 'failed_generation'
   | 'processing_queue_failed'
   | 'failed_audio_upload'
+  | 'failed_quality_check'
   | 'failed_internal_error'
   | 'failed_credit_deduction'
   | 'completed_without_cover';
@@ -15,6 +21,7 @@ export const SONG_FAILURE_PROCESSING_STATUSES: SongProcessingStatus[] = [
   'failed_generation',
   'processing_queue_failed',
   'failed_audio_upload',
+  'failed_quality_check',
   'failed_internal_error',
   'failed_credit_deduction',
 ];
@@ -36,19 +43,42 @@ export function getSongStatusPresentation({
   hasCoverImageUrl?: boolean;
 }): SongStatusPresentation {
   switch (processingStatus) {
-    case 'processing':
+    case 'queued':
       return {
         status: 'processing',
-        message: 'Audio is still processing...',
+        message: 'Your song is queued for generation...',
+        musicStatus: 'processing',
+        coverStatus: 'processing',
+      };
+    case 'processing':
+    case 'generating_audio':
+      return {
+        status: 'processing',
+        message: 'The track is being composed...',
+        musicStatus: 'processing',
+        coverStatus: 'processing',
+      };
+    case 'uploading_audio':
+      return {
+        status: 'processing',
+        message: 'The finished audio is being saved...',
         musicStatus: 'processing',
         coverStatus: 'processing',
       };
     case 'audio_uploaded':
+    case 'generating_cover':
       return {
         status: 'generating_cover',
         message: 'Audio is ready. Cover art is still generating...',
         musicStatus: 'uploaded',
         coverStatus: 'generating',
+      };
+    case 'finalizing':
+      return {
+        status: 'generating_cover',
+        message: 'Finalizing the track and cover...',
+        musicStatus: 'uploaded',
+        coverStatus: hasCoverImageUrl ? 'completed' : 'generating',
       };
     case 'completed':
     case 'completed_without_cover':
@@ -59,6 +89,7 @@ export function getSongStatusPresentation({
         coverStatus: 'completed',
       };
     case 'failed_audio_upload':
+    case 'failed_quality_check':
     case 'failed_credit_deduction':
     case 'failed_generation':
     case 'failed_internal_error':
@@ -66,7 +97,10 @@ export function getSongStatusPresentation({
       return {
         status: 'failed',
         message: 'Processing failed',
-        musicStatus: processingStatus === 'failed_credit_deduction' ? 'uploaded' : 'failed',
+        musicStatus:
+          processingStatus === 'failed_credit_deduction' || processingStatus === 'failed_quality_check'
+            ? 'uploaded'
+            : 'failed',
         coverStatus: hasCoverImageUrl ? 'completed' : 'failed',
       };
     default:

@@ -34,12 +34,8 @@ export default async function RoadmapPage() {
           <div className="mx-auto max-w-5xl space-y-16">
             {/* Header */}
             <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
-                {t('title')}
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                {t('subtitle')}
-              </p>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">{t('title')}</h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{t('subtitle')}</p>
             </div>
 
             {/* Roadmap */}

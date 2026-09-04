@@ -1,0 +1,1 @@
+CREATE INDEX "song_play_song_created_at_idx" ON "scooprym"."song_play" USING btree ("song_id","created_at");

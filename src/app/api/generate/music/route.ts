@@ -1,318 +1,417 @@
 import { randomUUID } from 'crypto';
+import { isMusicGenerationConfigured } from '@/ai/music/lib/generation';
+import { buildFallbackMusicProductionPrompt, finalizeMusicProductionPrompt } from '@/ai/music/lib/prompt';
 import { getDb } from '@/db/index';
-import { song as songTable } from '@/db/schema';
-import type { FullSongsPromptBundle } from '@/features/full-songs/types/full-songs';
+import {
+  generationAttempt,
+  songCreationRun,
+  songCreationStep,
+  song as songTable,
+  story as storyTable,
+} from '@/db/schema';
+import { mapGenerationError } from '@/lib/music/error-handler';
+import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { getSession } from '@/lib/server';
+import { dispatchMusicJob, markMusicQueueFailure } from '@/lib/song-job-dispatch';
+import { inspectSongLyrics } from '@/lib/song-product-check';
+import {
+  type MusicGenerationRequest,
+  createMusicRequestFingerprint,
+  musicGenerationRequestSchema,
+  prepareMiniMaxLyricsForGeneration,
+} from '@/lib/song-workflow';
+import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
-import { mapGenerationError } from '@/lib/music/error-handler';
-import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
-import { type ProcessMusicOptions, processMusicBackground } from '@/lib/song-workflow';
-import { and, eq } from 'drizzle-orm';
+export const maxDuration = 300;
 
-type GenerateMusicBody = {
-  lyrics?: string;
-  prompt?: string;
-  outputFormat?: 'url' | 'hex';
-  audioFormat?: 'mp3' | 'wav' | 'pcm';
-  title?: string;
-  sourceUrl?: string;
-  sourceText?: string;
-  sourceSummary?: string;
-  newsSummary?: string;
-  musicDirectionPrompt?: string;
-  musicProductionPrompt?: string;
-  coverArtPrompt?: string;
-  promptBundle?: FullSongsPromptBundle;
-  storyBrief?: {
-    summary?: string;
-    angle?: string;
-  };
+type ExistingJob = {
+  id: string;
+  userId: string;
+  title: string;
+  audioUrl: string;
+  coverImageUrl: string | null;
+  processingStatus: string | null;
+  generationRequestHash: string | null;
 };
 
+function getWorkflowSafetyDecision(workshop: unknown) {
+  if (!workshop || typeof workshop !== 'object') return undefined;
+  const safety = (workshop as { safety?: unknown }).safety;
+  if (!safety || typeof safety !== 'object') return undefined;
+  const decision = (safety as { decision?: unknown }).decision;
+  return decision === 'allow' || decision === 'review' || decision === 'block' ? decision : undefined;
+}
+
+function jobResponse(job: ExistingJob, idempotent: boolean, executionMode?: string) {
+  return NextResponse.json(
+    {
+      success: true,
+      audio: job.audioUrl || '',
+      song: {
+        id: job.id,
+        title: job.title,
+        audioUrl: job.audioUrl || null,
+        coverImageUrl: job.coverImageUrl,
+        processingStatus: job.processingStatus || 'queued',
+      },
+      meta: {
+        songId: job.id,
+        idempotent,
+        executionMode,
+        info: idempotent ? 'Existing generation job returned.' : 'Generation job queued.',
+      },
+    },
+    { status: idempotent ? 200 : 202 }
+  );
+}
+
+async function findJob(songId: string) {
+  const db = await getDb();
+  const [savedSong] = await db
+    .select({
+      id: songTable.id,
+      userId: songTable.userId,
+      title: songTable.title,
+      audioUrl: songTable.audioUrl,
+      coverImageUrl: songTable.coverImageUrl,
+    })
+    .from(songTable)
+    .where(eq(songTable.id, songId))
+    .limit(1);
+  if (!savedSong) return undefined;
+
+  const [attempt] = await db
+    .select({
+      processingStatus: generationAttempt.processingStatus,
+      generationRequestHash: generationAttempt.generationRequestHash,
+    })
+    .from(generationAttempt)
+    .where(eq(generationAttempt.songId, songId))
+    .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
+    .limit(1);
+
+  return {
+    ...savedSong,
+    processingStatus: attempt?.processingStatus || null,
+    generationRequestHash: attempt?.generationRequestHash || null,
+  };
+}
+
+function sameIdempotentRequest(job: ExistingJob, userId: string, requestHash: string) {
+  return job.userId === userId && job.generationRequestHash === requestHash;
+}
+
+async function enhanceProductionPrompt(
+  direction: string,
+  production: string,
+  lyrics: string,
+  storyContext: string,
+  productionVariantId?: string
+) {
+  const dynamicRecipe = buildDynamicProductionRecipe({
+    direction,
+    storyContext,
+    lyrics,
+    variantId: productionVariantId,
+  });
+  const productionRecipe = dynamicRecipe ? formatDynamicProductionRecipe(dynamicRecipe) : undefined;
+  const fallbackPrompt = buildFallbackMusicProductionPrompt({
+    direction,
+    production,
+    lyrics,
+    storyContext,
+    dynamicRecipe,
+  });
+  if (!direction && !production) return fallbackPrompt;
+
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const { enhanceMusicPrompt } = await import('@/ai/text/lib/generation');
+    const enhanced = await Promise.race([
+      enhanceMusicPrompt({
+        tags: direction || production,
+        productionNotes: production,
+        productionRecipe,
+        lyrics,
+      }),
+      new Promise<null>((resolve) => {
+        timeout = setTimeout(() => resolve(null), 30_000);
+      }),
+    ]);
+    if (enhanced) return finalizeMusicProductionPrompt(enhanced);
+  } catch (error) {
+    console.warn('[generate-music] Prompt enhancement failed; using the trusted fallback prompt.', error);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+
+  return fallbackPrompt;
+}
+
 export async function POST(req: Request) {
-  let songId: string | null = null;
-  let session: any = null;
-  let userId: string | undefined;
-  let songInserted = false;
+  let insertedSongId: string | null = null;
+  let userId: string | null = null;
 
   try {
+    const session = await getSession();
+    userId = session?.user?.id || null;
+    if (!session?.user || !userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Please login first' }, { status: 401 });
+    }
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden: Administrator access required' }, { status: 403 });
+    }
+
     const { getRateLimiter } = await import('@/lib/ratelimit');
-
-    session = await getSession();
-    userId = session?.user?.id;
-    const identifier = userId || (req.headers.get('x-forwarded-for') ?? '127.0.0.1');
-
-    const { success } = await getRateLimiter().limit(identifier);
-    if (!success) {
+    const { success: withinLimit } = await getRateLimiter().limit(userId);
+    if (!withinLimit) {
       return NextResponse.json(
         { success: false, error: 'Too many requests. Please try again in a minute.', code: 429 },
         { status: 429 }
       );
     }
 
-    const body: GenerateMusicBody = await req.json();
-    const {
-      lyrics,
-      prompt,
-      outputFormat = 'url',
-      audioFormat = 'mp3',
-      title,
-      sourceText,
-      sourceUrl,
-      sourceSummary,
-      newsSummary: legacyNewsSummary,
-      musicDirectionPrompt,
-      musicProductionPrompt,
-      coverArtPrompt,
-      promptBundle,
-      songId: clientSongId,
-    } = body as GenerateMusicBody & { songId?: string };
-    const effectiveSourceSummary = sourceSummary || legacyNewsSummary || body.storyBrief?.summary;
-    const effectiveMusicDirectionPrompt = musicDirectionPrompt || promptBundle?.musicDirectionPrompt || prompt || '';
-    const effectiveMusicProductionPrompt =
-      musicProductionPrompt || promptBundle?.musicProductionPrompt || prompt || effectiveMusicDirectionPrompt;
-    const effectiveCoverArtPrompt = coverArtPrompt || promptBundle?.coverArtPrompt;
-
-    if (!lyrics || lyrics.trim().length < 10) {
-      const unifiedError = mapGenerationError({
-        success: false,
-        error: 'Lyrics required (min 10 chars)',
-        statusCode: 400,
-      });
-      return NextResponse.json(unifiedError, { status: 400 });
+    let rawBody: unknown;
+    try {
+      rawBody = await req.json();
+    } catch {
+      return NextResponse.json({ success: false, error: 'Request body must be valid JSON' }, { status: 400 });
     }
 
-    const apiKey = process.env.MINIMAXI_API_KEY;
-    if (!apiKey) {
-      const unifiedError = mapGenerationError({
-        success: false,
-        error: 'Service configuration error (API Key)',
-        statusCode: 500,
-      });
-      return NextResponse.json(unifiedError, { status: 500 });
+    const parsed = musicGenerationRequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid music generation request',
+          issues: parsed.error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })),
+        },
+        { status: 400 }
+      );
     }
 
-    if (!userId) {
-      const unifiedError = mapGenerationError({
-        success: false,
-        error: 'Unauthorized: Please login first',
-        statusCode: 401,
-      });
-      return NextResponse.json(unifiedError, { status: 401 });
-    }
-
-    const { hasEnoughCredits } = await import('@/credits/credits');
-    const hasCredits = await hasEnoughCredits({ userId, requiredCredits: 2 });
-    if (!hasCredits) {
-      const unifiedError = mapGenerationError({
-        success: false,
-        error: 'Insufficient credits (Code: 1010)',
-        statusCode: 402,
-      });
-      return NextResponse.json(unifiedError, { status: 402 });
-    }
-
-    const effectiveTitle =
-      title?.trim() || (lyrics.split('\n').find((l) => l.trim().length > 0) || 'Generated Track').slice(0, 50);
-
-    const db = await getDb();
-    if (clientSongId && /^[0-9a-f-]{36}$/i.test(clientSongId)) {
-      const existingSong = await db.select({ id: songTable.id }).from(songTable).where(eq(songTable.id, clientSongId)).limit(1);
-      if (existingSong.length > 0) {
+    const body: MusicGenerationRequest = parsed.data;
+    const requestHash = createMusicRequestFingerprint(body);
+    const existing = await findJob(body.songId);
+    if (existing) {
+      if (!sameIdempotentRequest(existing, userId, requestHash)) {
         return NextResponse.json(
-          {
-            success: false,
-            error: 'Song ID conflict. Please retry generation.',
-          },
+          { success: false, error: 'This generation id is already assigned to a different request' },
           { status: 409 }
         );
       }
+
+      let executionMode: string | undefined;
+      if (existing.processingStatus === 'queued') {
+        executionMode = await dispatchMusicJob(existing.id, userId);
+      }
+      return jobResponse(existing, true, executionMode);
     }
 
-    songId = clientSongId && /^[0-9a-f-]{36}$/i.test(clientSongId) ? clientSongId : randomUUID();
-    await db.insert(songTable).values({
-      id: songId!,
-      userId,
-      title: effectiveTitle,
-      lyrics,
-      prompt: effectiveMusicDirectionPrompt,
-      sourceText,
-      sourceUrl,
-      newsSummary: effectiveSourceSummary,
-      audioUrl: '',
-      processingStatus: 'processing',
-      creditsDeducted: false,
-      isAdminGenerated: session?.user?.role === 'admin',
-    });
-    songInserted = true;
-
-    let effectivePrompt =
-      effectiveMusicProductionPrompt && effectiveMusicProductionPrompt.trim().length >= 10
-        ? effectiveMusicProductionPrompt.trim()
-        : 'Auto, dynamic, emotional, based on lyrics context';
-
-    try {
-      if (effectiveMusicDirectionPrompt && lyrics) {
-        const { enhanceMusicPrompt } = await import('@/ai/text/lib/generation');
-
-        const enhanced = await Promise.race([
-          enhanceMusicPrompt({ tags: effectiveMusicDirectionPrompt, lyrics }),
-          new Promise<string | null>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 4000)),
-        ]);
-
-        if (enhanced) {
-          effectivePrompt = enhanced.slice(0, 500);
-        }
-      }
-    } catch (enhanceErr) {
-      console.warn('[Music Prompt] Enhancement skipped/failed:', enhanceErr);
-    }
-
-    let cleanedLyrics = lyrics.replace(/\[(.*?):\s*.*?\]/g, '[$1]');
-    cleanedLyrics = cleanedLyrics.replace(/\s*\([^)]*\)/g, '').trim();
-
-    if (cleanedLyrics.length < 5) {
-      console.warn('[Lyrics Cleaning] Cleaned lyrics too short, reverting to original.');
-      cleanedLyrics = lyrics;
-    }
-
-    const tempAudioUrl = '';
-    const coverImagePromise = null;
-
-    const currentSongId = songId;
-    if (!currentSongId) {
-      throw new Error('Song ID missing before background processing setup');
-    }
-
-    const processOptions: ProcessMusicOptions = {
-      lyrics: cleanedLyrics,
-      prompt: effectivePrompt,
-      musicDirectionPrompt: effectiveMusicDirectionPrompt,
-      coverArtPrompt: effectiveCoverArtPrompt,
-      title: effectiveTitle,
-      sourceText,
-      sourceUrl,
-      outputFormat,
-      audioFormat,
-      songId: currentSongId,
-      userId,
-    };
-
-    const shouldUseQStash = canUseQStash();
-
-    const runInlineBackgroundWork = () => {
-      const fireBackgroundWork = () => {
-        const backgroundWork = processMusicBackground(tempAudioUrl, processOptions, null);
-        backgroundWork.catch((err) => console.error('[Inline Background] Background work failed:', err));
-      };
-
-      // @ts-ignore
-      if (typeof waitUntil === 'function') {
-        // @ts-ignore
-        waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
-      }
-      // @ts-ignore
-      else if ((req as any).waitUntil) {
-        // @ts-ignore
-        (req as any).waitUntil(processMusicBackground(tempAudioUrl, processOptions, coverImagePromise));
-      } else {
-        setTimeout(fireBackgroundWork, 0);
-      }
-    };
-
-    const handleInlineFallbackFailure = async (reason: string) => {
-      try {
-        const dbInstance = await getDb();
-        const updatedRows = await dbInstance
-          .update(songTable)
-          .set({
-            processingStatus: 'processing_queue_failed',
-            creditError: reason,
-          })
-          .where(and(eq(songTable.id, currentSongId), eq(songTable.userId, userId!)))
-          .returning({ id: songTable.id });
-
-        if (updatedRows.length === 0) {
-          await dbInstance
-            .update(songTable)
-            .set({ processingStatus: 'processing_queue_failed', creditError: reason })
-            .where(and(eq(songTable.id, currentSongId), eq(songTable.userId, userId!)));
-        }
-      } catch (dbErr) {
-        console.error('Failed to update/refund in inline fallback catch:', dbErr);
-      }
-    };
-
-    if (!shouldUseQStash) {
-      console.log(
-        `[QStash] Disabled for local or non-public base URL. Using inline background execution for ${currentSongId}.`
+    if (!isMusicGenerationConfigured()) {
+      return NextResponse.json(
+        { success: false, error: 'Music generation service is not configured' },
+        { status: 503 }
       );
+    }
 
-      try {
-        runInlineBackgroundWork();
-      } catch (fallbackError) {
-        console.error(`[Inline Background] Execution failed for ${songId}:`, fallbackError);
-        await handleInlineFallbackFailure('Inline background execution failed');
+    const effectiveSourceSummary = body.sourceSummary || body.newsSummary || body.storyBrief?.summary;
+    const effectiveDirection =
+      body.musicDirectionPrompt || body.promptBundle?.musicDirectionPrompt || body.prompt || '';
+    const requestedProduction =
+      body.musicProductionPrompt || body.promptBundle?.musicProductionPrompt || body.prompt || effectiveDirection;
+    const effectiveCoverArtPrompt = body.coverArtPrompt || body.promptBundle?.coverArtPrompt;
+    const generationLyrics = prepareMiniMaxLyricsForGeneration(body.lyrics);
+    const lyricCheck = inspectSongLyrics(generationLyrics);
+    if (!lyricCheck.passed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: lyricCheck.issues.join(' '),
+          issues: lyricCheck.issues,
+        },
+        { status: 422 }
+      );
+    }
+    const sungLines = lyricCheck.lyrics.split(/\r?\n/).filter((line) => line.trim() && !/^\[[^\]]+\]$/.test(line));
+    console.info('[music-generation] Prepared complete MiniMax lyric.', {
+      sungLines: sungLines.length,
+      words: sungLines.join(' ').split(/\s+/).filter(Boolean).length,
+    });
+    const storyContext = [body.title, effectiveSourceSummary || body.sourceText]
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 8_000);
+    const generationPrompt = await enhanceProductionPrompt(
+      effectiveDirection,
+      requestedProduction,
+      lyricCheck.lyrics,
+      storyContext,
+      body.productionVariantId || body.promptBundle?.productionVariantId
+    );
+    const effectiveTitle =
+      body.title ||
+      (lyricCheck.lyrics.split('\n').find((line) => line.trim().length > 0) || 'Generated Track').slice(0, 200);
+
+    const db = await getDb();
+    const inserted = await db.transaction(async (tx) => {
+      if (body.workflowRunId) {
+        const [ownedRun] = await tx
+          .select({
+            id: songCreationRun.id,
+            currentStage: songCreationRun.currentStage,
+            lyricWorkshop: songCreationRun.lyricWorkshop,
+          })
+          .from(songCreationRun)
+          .where(and(eq(songCreationRun.id, body.workflowRunId), eq(songCreationRun.userId, session.user.id)))
+          .limit(1);
+        if (!ownedRun) {
+          throw new Error('The creation workflow does not exist or belongs to another user');
+        }
+        const safetyDecision = getWorkflowSafetyDecision(ownedRun.lyricWorkshop);
+        const isLegacyQualityReview =
+          ownedRun.currentStage === 'lyrics_review' && safetyDecision !== 'review' && safetyDecision !== 'block';
+        if (ownedRun.currentStage !== 'lyrics_ready' && !isLegacyQualityReview) {
+          throw new Error(
+            safetyDecision === 'review' || safetyDecision === 'block'
+              ? "This story is outside ScoopRYM's editorial safety boundary"
+              : 'Lyrics are not ready for music production'
+          );
+        }
       }
-    } else {
-      try {
-        const workerUrl = getWorkerUrl('api/worker/generate-music');
 
-        const qstashResponse = await qstash.publishJSON({
-          url: workerUrl,
-          body: {
-            audioContent: tempAudioUrl,
-            options: processOptions,
-          },
-          retries: 3,
+      let storyId = body.songId;
+
+      if (body.sourceUrl) {
+        const [createdStory] = await tx
+          .insert(storyTable)
+          .values({
+            id: randomUUID(),
+            sourceUrl: body.sourceUrl,
+            sourceText: body.sourceText,
+            newsSummary: effectiveSourceSummary,
+          })
+          .onConflictDoUpdate({
+            target: storyTable.sourceUrl,
+            set: {
+              sourceText: body.sourceText,
+              newsSummary: effectiveSourceSummary,
+              updatedAt: new Date(),
+            },
+          })
+          .returning({ id: storyTable.id });
+
+        if (createdStory) {
+          storyId = createdStory.id;
+        }
+      } else {
+        await tx
+          .insert(storyTable)
+          .values({
+            id: storyId,
+            sourceText: body.sourceText,
+            newsSummary: effectiveSourceSummary,
+          })
+          .onConflictDoNothing({ target: storyTable.id });
+      }
+
+      const [createdSong] = await tx
+        .insert(songTable)
+        .values({
+          id: body.songId,
+          storyId,
+          userId: session.user.id,
+          title: effectiveTitle,
+          // 保存实际发送给音乐模型的歌词，避免数据库歌词与成品不一致。
+          lyrics: lyricCheck.lyrics,
+          audioUrl: '',
+          isAdminGenerated: true,
+        })
+        .onConflictDoNothing({ target: songTable.id })
+        .returning({
+          id: songTable.id,
+          userId: songTable.userId,
+          title: songTable.title,
+          audioUrl: songTable.audioUrl,
+          coverImageUrl: songTable.coverImageUrl,
         });
 
-        console.log(`[QStash] Job published! MessageID: ${qstashResponse.messageId}`);
-      } catch (queueError: any) {
-        console.error(
-          `[QStash] Publish failed for ${currentSongId}. Falling back to inline background execution.`,
-          queueError
-        );
+      if (!createdSong) return undefined;
 
-        try {
-          runInlineBackgroundWork();
-        } catch (fallbackError) {
-          console.error(`[QStash] Inline fallback execution also failed for ${currentSongId}:`, fallbackError);
-          await handleInlineFallbackFailure('Queue publish and inline fallback failed');
-        }
+      const [attempt] = await tx
+        .insert(generationAttempt)
+        .values({
+          id: body.songId,
+          songId: createdSong.id,
+          prompt: effectiveDirection,
+          generationPrompt,
+          coverArtPrompt: effectiveCoverArtPrompt,
+          outputFormat: body.outputFormat,
+          audioFormat: body.audioFormat,
+          generationRequestHash: requestHash,
+          generationBillingMode: 'internal_admin',
+          processingStatus: 'queued',
+          processingError: null,
+          creditsDeducted: false,
+        })
+        .returning({
+          processingStatus: generationAttempt.processingStatus,
+          generationRequestHash: generationAttempt.generationRequestHash,
+        });
+
+      if (body.workflowRunId) {
+        const now = new Date();
+        await tx
+          .update(songCreationRun)
+          .set({
+            songId: createdSong.id,
+            status: 'queued',
+            currentStage: 'queued_audio',
+            title: effectiveTitle,
+            lyrics: lyricCheck.lyrics,
+            lastError: null,
+            updatedAt: now,
+          })
+          .where(and(eq(songCreationRun.id, body.workflowRunId), eq(songCreationRun.userId, session.user.id)));
+        await tx.insert(songCreationStep).values({
+          id: randomUUID(),
+          runId: body.workflowRunId,
+          stage: 'queued_audio',
+          status: 'completed',
+          attempt: 1,
+          outputMetadata: { songId: createdSong.id },
+          completedAt: now,
+        });
       }
+
+      return { ...createdSong, ...attempt };
+    });
+
+    if (!inserted) {
+      const racedJob = await findJob(body.songId);
+      if (racedJob && sameIdempotentRequest(racedJob, userId, requestHash)) {
+        let executionMode: string | undefined;
+        if (racedJob.processingStatus === 'queued') {
+          executionMode = await dispatchMusicJob(racedJob.id, userId);
+        }
+        return jobResponse(racedJob, true, executionMode);
+      }
+      return NextResponse.json(
+        { success: false, error: 'This generation id is already assigned to a different request' },
+        { status: 409 }
+      );
     }
 
-    return NextResponse.json({
-      success: true,
-      audio: tempAudioUrl,
-      song: {
-        id: songId,
-        title: effectiveTitle,
-        audioUrl: null,
-        coverImageUrl: null,
-      },
-      meta: {
-        songId,
-        info: 'Background processing via QStash started.',
-      },
-    });
-  } catch (error: any) {
-    console.error('[generate-music] Handler Exception:', error);
-    if (songInserted && songId && userId) {
-      try {
-        const dbInstance = await getDb();
-        await dbInstance
-          .update(songTable)
-          .set({
-            processingStatus: 'failed_generation',
-            creditError: error.message,
-          })
-          .where(and(eq(songTable.id, songId), eq(songTable.userId, userId)));
-      } catch (e) {
-        console.error('Failed to update song status in final catch:', e);
-      }
+    insertedSongId = inserted.id;
+    const executionMode = await dispatchMusicJob(inserted.id, userId);
+    return jobResponse(inserted, false, executionMode);
+  } catch (error) {
+    console.error('[generate-music] Handler exception:', error);
+    if (insertedSongId && userId) {
+      await markMusicQueueFailure(insertedSongId, userId, error).catch((dbError) => {
+        console.error(`[generate-music] Failed to terminalize ${insertedSongId}:`, dbError);
+      });
     }
     return NextResponse.json(mapGenerationError(error), { status: 500 });
   }

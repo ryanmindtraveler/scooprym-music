@@ -6,6 +6,7 @@ import type { User } from '@/lib/auth-types';
 import { userActionClient } from '@/lib/safe-action';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { type CreatePortalParams, createCustomerPortal } from '@/payment/server';
+import { Routes } from '@/routes';
 import { eq } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { z } from 'zod';
@@ -44,7 +45,7 @@ export const createPortalAction = userActionClient.schema(portalSchema).action(a
     const locale = await getLocale();
 
     // Create the portal session with localized URL if no custom return URL is provided
-    const returnUrlWithLocale = returnUrl || getUrlWithLocale('/settings/billing', locale);
+    const returnUrlWithLocale = returnUrl || getUrlWithLocale(Routes.SettingsBilling, locale);
     const params: CreatePortalParams = {
       customerId: customerResult[0].customerId,
       returnUrl: returnUrlWithLocale,

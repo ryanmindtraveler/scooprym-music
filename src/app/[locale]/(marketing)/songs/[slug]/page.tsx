@@ -1,12 +1,22 @@
 import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
+import type { SongCommentItem } from '@/components/songs/song-comments';
 import { getDb } from '@/db';
-import { songFavorite, song as songTable } from '@/db/schema';
+import { songComment, songFavorite, song as songTable, story as storyTable, user } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { routing } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/metadata';
-import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getSession } from '@/lib/server';
-import { getIdFromSlug, slugify } from '@/lib/utils';
+import {
+  getSongCanonicalSlug,
+  getSongSearchHeadline,
+  getSongSeoDescription,
+  getSongSeoTitle,
+  getSongStoryContext,
+} from '@/lib/song-seo';
+import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
+import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';
-import { and, eq, isNull, notInArray, or } from 'drizzle-orm';
+import { and, count, desc, eq, notInArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -28,99 +38,155 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const t = await getTranslations({ locale, namespace: 'NotFoundPage' });
 
   const db = await getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
 
-  const [song] = await db
-    .select()
+  const [row] = await db
+    .select({
+      song: songTable,
+      story: storyTable,
+      prompt: latestAttempt.prompt,
+      processingStatus: latestAttempt.processingStatus,
+    })
     .from(songTable)
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
         eq(songTable.id, id),
-        or(
-          isNull(songTable.processingStatus),
-          notInArray(songTable.processingStatus, [
-            'failed_generation',
-            'processing_queue_failed',
-            'failed_audio_upload',
-            'failed_credit_deduction',
-          ])
-        )
+        eq(songTable.isPublished, true),
+        notInArray(latestAttempt.processingStatus, [
+          'failed_generation',
+          'processing_queue_failed',
+          'failed_audio_upload',
+          'failed_credit_deduction',
+        ])
       )
     )
     .limit(1);
 
-  if (!song) {
+  if (!row) {
     return constructMetadata({
       title: t('title'),
       description: t('message'),
       locale,
     });
   }
+  const song = {
+    ...row.song,
+    sourceUrl: row.story.sourceUrl,
+    sourceText: row.story.sourceText,
+    newsSummary: row.story.newsSummary,
+    prompt: row.prompt,
+    processingStatus: row.processingStatus,
+  };
 
-  const titleSlug = slugify(song.title || 'song');
-  const canonicalSlug = `${titleSlug}-${song.id}`;
-
-  const backgroundContent = song.newsSummary || song.sourceText || song.lyrics || '';
-  const cleanContent = backgroundContent
-    .replace(/\[.*?\]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  const rawDescription = cleanContent
-    ? `Listen to "${song.title}": ${cleanContent}`.slice(0, 160)
-    : `Listen to ${song.title}, an AI-generated track by ScoopRYM.`;
-
-  const description = rawDescription.length > 160 ? `${rawDescription.slice(0, 157)}...` : rawDescription;
+  const canonicalSlug = getSongCanonicalSlug(song);
 
   return constructMetadata({
-    title: `${song.title} | ScoopRYM AI Meme Song`,
-    description,
+    title: getSongSeoTitle(song),
+    description: getSongSeoDescription(song),
     image: song.coverImageUrl || undefined,
-    locale,
+    locale: routing.defaultLocale,
     pathname: `/songs/${canonicalSlug}`,
-    keywords: [song.title, 'AI Song', 'Meme Song', 'Funny Song', 'Viral Song', 'Diss Track', 'Battle Song', 'Rap Battle'],
+    includeDefaultKeywords: false,
+    includeLanguageAlternates: false,
   });
 }
 
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
-  const { slug, locale } = resolvedParams;
+  const { slug } = resolvedParams;
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
-  const session = await getSession();
-  const userId = session?.user?.id;
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
 
-  const [song] = await db
-    .select()
+  const [row] = await db
+    .select({
+      song: songTable,
+      story: storyTable,
+      prompt: latestAttempt.prompt,
+      processingStatus: latestAttempt.processingStatus,
+    })
     .from(songTable)
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
         eq(songTable.id, id),
-        or(
-          isNull(songTable.processingStatus),
-          notInArray(songTable.processingStatus, [
-            'failed_generation',
-            'processing_queue_failed',
-            'failed_audio_upload',
-            'failed_credit_deduction',
-          ])
-        )
+        eq(songTable.isPublished, true),
+        notInArray(latestAttempt.processingStatus, [
+          'failed_generation',
+          'processing_queue_failed',
+          'failed_audio_upload',
+          'failed_credit_deduction',
+        ])
       )
     )
     .limit(1);
 
-  if (!song) {
+  if (!row) {
     notFound();
   }
+  const song = {
+    ...row.song,
+    sourceUrl: row.story.sourceUrl,
+    sourceText: row.story.sourceText,
+    newsSummary: row.story.newsSummary,
+    prompt: row.prompt,
+    processingStatus: row.processingStatus,
+  };
 
-  let isFavorite = false;
-  if (userId) {
-    const [fav] = await db
-      .select()
-      .from(songFavorite)
-      .where(and(eq(songFavorite.songId, id), eq(songFavorite.userId, userId)));
-    isFavorite = !!fav;
+  const canonicalSlug = getSongCanonicalSlug(song);
+  const canonicalUrl = getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale);
+  if (slug !== canonicalSlug) {
+    permanentRedirect(canonicalUrl);
   }
+
+  const session = await getSession();
+  const userId = session?.user?.id;
+
+  const isAdmin = session?.user?.role === 'admin';
+  const [favoriteRows, commentCountRows, commentRows] = await Promise.all([
+    userId
+      ? db
+          .select({ id: songFavorite.id })
+          .from(songFavorite)
+          .where(and(eq(songFavorite.songId, id), eq(songFavorite.userId, userId)))
+          .limit(1)
+      : Promise.resolve([]),
+    db
+      .select({ total: count() })
+      .from(songComment)
+      .where(and(eq(songComment.songId, id), eq(songComment.status, 'visible'))),
+    db
+      .select({
+        id: songComment.id,
+        content: songComment.content,
+        createdAt: songComment.createdAt,
+        authorId: user.id,
+        authorName: user.name,
+        authorImage: user.image,
+      })
+      .from(songComment)
+      .innerJoin(user, eq(user.id, songComment.userId))
+      .where(and(eq(songComment.songId, id), eq(songComment.status, 'visible')))
+      .orderBy(desc(songComment.createdAt))
+      .limit(12),
+  ]);
+  const isFavorite = favoriteRows.length > 0;
+  const commentTotal = Number(commentCountRows[0]?.total ?? 0);
+  const initialComments: SongCommentItem[] = commentRows.map((comment) => ({
+    id: comment.id,
+    content: comment.content,
+    createdAt: comment.createdAt.toISOString(),
+    author: {
+      id: comment.authorId,
+      name: comment.authorName,
+      image: comment.authorImage,
+    },
+    canDelete: isAdmin || comment.authorId === userId,
+  }));
 
   const serializableSong: Song = {
     ...song,
@@ -130,21 +196,30 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     plays: song.plays || 0,
   };
 
-  const titleSlug = slugify(song.title || 'song');
-  const canonicalSlug = `${titleSlug}-${song.id}`;
-
-  if (slug !== canonicalSlug) {
-    permanentRedirect(getUrlWithLocale(`/songs/${canonicalSlug}`, locale));
-  }
+  const searchHeadline = getSongSearchHeadline(serializableSong);
+  const seoDescription = getSongSeoDescription(serializableSong);
 
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
     name: serializableSong.title,
-    url: getUrlWithLocale(`/songs/${canonicalSlug}`, resolvedParams.locale),
-    datePublished: serializableSong.createdAt ? new Date(serializableSong.createdAt).toISOString() : undefined,
+    headline: searchHeadline,
+    description: seoDescription,
+    url: canonicalUrl,
+    mainEntityOfPage: canonicalUrl,
+    datePublished: new Date(serializableSong.publishedAt || serializableSong.createdAt).toISOString(),
+    dateModified: new Date(serializableSong.updatedAt || serializableSong.createdAt).toISOString(),
     duration: song.durationSec ? `PT${song.durationSec}S` : undefined,
     image: song.coverImageUrl || undefined,
+    audio: song.audioUrl
+      ? {
+          '@type': 'AudioObject',
+          contentUrl: song.audioUrl,
+          duration: song.durationSec ? `PT${song.durationSec}S` : undefined,
+          encodingFormat: 'audio/mpeg',
+        }
+      : undefined,
+    isBasedOn: song.sourceUrl || undefined,
     byArtist: {
       '@type': 'MusicGroup',
       name: 'ScoopRYM',
@@ -157,16 +232,36 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   };
 
   const breadcrumbs = [
-    { name: locale === 'zh' ? '首页' : 'Home', item: getUrlWithLocale('/', resolvedParams.locale) },
-    { name: locale === 'zh' ? '画廊' : 'Gallery', item: `${getUrlWithLocale('/', resolvedParams.locale)}#gallery` },
-    { name: serializableSong.title, item: getUrlWithLocale(`/songs/${canonicalSlug}`, resolvedParams.locale) },
+    { name: 'Home', item: getUrlWithLocale('/', routing.defaultLocale) },
+    { name: 'Gallery', item: `${getUrlWithLocale('/', routing.defaultLocale)}#gallery` },
+    { name: searchHeadline, item: canonicalUrl },
   ];
 
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-black">
       <JsonLd data={musicRecordingSchema} />
       <BreadcrumbJsonLd items={breadcrumbs} />
-      <SongDetailClient song={serializableSong} initialIsFavorite={isFavorite} autoPlay={true} />
+      <SongDetailClient
+        song={serializableSong}
+        initialIsFavorite={isFavorite}
+        searchHeadline={searchHeadline}
+        storyContext={getSongStoryContext(serializableSong)}
+        initialComments={{
+          comments: initialComments,
+          total: commentTotal,
+          totalPages: Math.max(1, Math.ceil(commentTotal / 12)),
+        }}
+        autoPlay={true}
+        viewer={
+          session?.user
+            ? {
+                id: session.user.id,
+                name: session.user.name || 'ScoopRYM listener',
+                image: session.user.image || null,
+              }
+            : null
+        }
+      />
     </div>
   );
 }

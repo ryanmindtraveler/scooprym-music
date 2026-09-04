@@ -18,6 +18,13 @@ export const ratelimit = new Ratelimit({
   prefix: '@scooprym/ratelimit',
 });
 
+const storySubmissionRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 d'),
+  analytics: true,
+  prefix: '@scooprym/story-submission',
+});
+
 export const mockRatelimit = {
   limit: async (identifier: string) => ({ success: true, limit: 10, remaining: 9, reset: 0 }),
 };
@@ -37,6 +44,24 @@ export const getRateLimiter = () => {
         console.error('[RateLimit] Upstash Redis Error (Possibly Quota Hit):', error);
         // Fail-Open: allow request if limiter is broken
         return { success: true, limit: 10, remaining: 9, reset: 0 };
+      }
+    },
+  };
+};
+
+/** 每位登录用户或匿名访客在滚动 24 小时内最多提交 5 条新闻线索。 */
+export const getStorySubmissionRateLimiter = () => {
+  if (!process.env.UPSTASH_REDIS_REST_URL || process.env.UPSTASH_REDIS_REST_URL.includes('mock-url')) {
+    return mockRatelimit;
+  }
+
+  return {
+    limit: async (identifier: string) => {
+      try {
+        return await storySubmissionRatelimit.limit(identifier);
+      } catch (error) {
+        console.error('[StorySubmissionRateLimit] Upstash Redis error:', error);
+        return { success: true, limit: 5, remaining: 4, reset: 0 };
       }
     },
   };

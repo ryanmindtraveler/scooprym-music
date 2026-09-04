@@ -1,6 +1,6 @@
 'use client';
 
-import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
+import type { SongItem } from '@/app/[locale]/(protected)/dashboard/mysongs/types';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatBusinessDate } from '@/lib/business-time';
 import { cn } from '@/lib/utils';
 import { Clock, Loader2, Music2, Pause, Play, Trash2 } from 'lucide-react';
 import { memo } from 'react';
@@ -137,14 +138,14 @@ function SongRowBase({
           <span className="flex items-center gap-1">
             <Clock className="size-3" />
             <span className="hidden xs:inline">
-              {new Date(item.createdAt).toLocaleDateString(undefined, {
+              {formatBusinessDate(item.createdAt, {
                 month: '2-digit',
                 day: '2-digit',
                 year: 'numeric',
               })}
             </span>
             <span className="xs:hidden">
-              {new Date(item.createdAt).toLocaleDateString(undefined, {
+              {formatBusinessDate(item.createdAt, {
                 month: '2-digit',
                 day: '2-digit',
               })}

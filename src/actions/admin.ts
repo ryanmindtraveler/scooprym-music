@@ -1,8 +1,20 @@
 'use server';
 
 import { getDb } from '@/db';
-import { payment, song, user } from '@/db/schema';
-import { and, count, desc, eq, gt, gte, sql } from 'drizzle-orm';
+import {
+  generationAttempt,
+  payment,
+  song,
+  songEngagementEvent,
+  storyCandidate,
+  storyCandidateVote,
+  user,
+} from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { getBusinessDayStart, getPreviousBusinessDayKeys } from '@/lib/business-time';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
+import { getVoteDay } from '@/lib/story-voting';
+import { and, count, countDistinct, desc, eq, gt, gte, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
 
 /**
  * Fetch Key Performance Indicators (KPIs)
@@ -70,7 +82,10 @@ export async function getAdminStats() {
   const subsGrowth = calculateGrowth(activeSubs, recentSubs);
 
   // 5. Queue Length
-  const queueResult = await db.select({ count: count() }).from(song).where(eq(song.processingStatus, 'processing'));
+  const queueResult = await db
+    .select({ count: count() })
+    .from(generationAttempt)
+    .where(eq(generationAttempt.processingStatus, 'processing'));
 
   const queueLength = queueResult[0]?.count || 0;
 
@@ -96,6 +111,7 @@ export async function getAdminStats() {
  */
 export async function getLiveSongs(limit = 20) {
   const db = getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
 
   const songs = await db
     .select({
@@ -103,8 +119,8 @@ export async function getLiveSongs(limit = 20) {
       title: song.title,
       coverImageUrl: song.coverImageUrl,
       audioUrl: song.audioUrl,
-      prompt: song.prompt,
-      tags: song.prompt, // Using prompt as tags for now if separate tags aren't stored array
+      prompt: latestAttempt.prompt,
+      tags: latestAttempt.prompt, // 暂时将最近一次生成方向作为标签展示。
       duration: song.durationSec,
       createdAt: song.createdAt,
       user: {
@@ -114,6 +130,7 @@ export async function getLiveSongs(limit = 20) {
       },
     })
     .from(song)
+    .leftJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
     .leftJoin(user, eq(song.userId, user.id))
     .orderBy(desc(song.createdAt))
     .limit(limit);
@@ -153,30 +170,27 @@ export async function getRecentTransactions(limit = 10) {
  */
 export async function getDailyStats() {
   const db = getDb();
+  const now = new Date();
 
-  // Create an array of last 7 days strings
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
-  });
+  const businessDayKeys = getPreviousBusinessDayKeys(now, 7).reverse();
+  const last7Days = businessDayKeys.map((dayKey) =>
+    new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', timeZone: 'UTC' }).format(
+      new Date(`${dayKey}T12:00:00.000Z`)
+    )
+  );
+  const sevenDaysAgo = getBusinessDayStart(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1_000));
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
-
-  // Group by date (Adjusted to UTC+8 for Chinese Context as per user environment)
-  // We offset the DB timestamp by 8 hours to align with the JS 'last7Days' generation
-  // which runs in the system timezone (CST/UTC+8).
+  // 数据库存 UTC 时间点，统计时转换为 America/Los_Angeles 的业务日。
+  const californiaDate = sql`(${song.createdAt} AT TIME ZONE 'UTC') AT TIME ZONE 'America/Los_Angeles'`;
   const rawStats = await db
     .select({
-      date: sql<string>`to_char(${song.createdAt} + interval '8 hours', 'Mon DD')`,
+      date: sql<string>`to_char(${californiaDate}, 'Mon DD')`,
       count: count(),
     })
     .from(song)
     .where(gte(song.createdAt, sevenDaysAgo))
-    .groupBy(sql`to_char(${song.createdAt} + interval '8 hours', 'Mon DD')`)
-    .orderBy(sql`to_char(${song.createdAt} + interval '8 hours', 'Mon DD')`);
+    .groupBy(sql`to_char(${californiaDate}, 'Mon DD')`)
+    .orderBy(sql`to_char(${californiaDate}, 'Mon DD')`);
 
   // Fill in missing days
   const stats = last7Days.map((dateStr) => {
@@ -188,4 +202,153 @@ export async function getDailyStats() {
   });
 
   return stats;
+}
+
+/** 最近 30 天内容消费漏斗。 */
+export async function getEngagementFunnel() {
+  const db = getDb();
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [row] = await db
+    .select({
+      detailViews: sql<number>`count(*) filter (where ${songEngagementEvent.eventType} = 'detail_view')`,
+      playStarts: sql<number>`count(*) filter (where ${songEngagementEvent.eventType} = 'play_start')`,
+      qualifiedPlays: sql<number>`count(*) filter (where ${songEngagementEvent.eventType} = 'play_qualified')`,
+      completedPlays: sql<number>`count(*) filter (where ${songEngagementEvent.eventType} = 'play_complete')`,
+      shares: sql<number>`count(*) filter (where ${songEngagementEvent.eventType} = 'share')`,
+    })
+    .from(songEngagementEvent)
+    .where(gte(songEngagementEvent.createdAt, since));
+
+  return {
+    detailViews: Number(row?.detailViews || 0),
+    playStarts: Number(row?.playStarts || 0),
+    qualifiedPlays: Number(row?.qualifiedPlays || 0),
+    completedPlays: Number(row?.completedPlays || 0),
+    shares: Number(row?.shares || 0),
+  };
+}
+
+/**
+ * 编辑部每日运营汇总。
+ * 这里只聚合各业务模块的状态，不在 Overview 中复制 Radar、创作或发布功能。
+ */
+export async function getEditorialOperations() {
+  const db = getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
+  const now = new Date();
+  const businessDayStart = getBusinessDayStart(now);
+  const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  const voteDay = getVoteDay(now);
+
+  const [
+    freshRows,
+    shortlistedRows,
+    inProductionRows,
+    adoptedTodayRows,
+    voteRows,
+    activeGenerationRows,
+    failedGenerationRows,
+    readyForReviewRows,
+    scheduledRows,
+    publishedTodayRows,
+    topVotedRows,
+  ] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(storyCandidate)
+      .where(
+        and(gte(storyCandidate.publishedAt, threeDaysAgo), inArray(storyCandidate.status, ['new', 'shortlisted']))
+      ),
+    db.select({ count: count() }).from(storyCandidate).where(eq(storyCandidate.status, 'shortlisted')),
+    db.select({ count: count() }).from(storyCandidate).where(eq(storyCandidate.status, 'adopted')),
+    db.select({ count: count() }).from(storyCandidate).where(gte(storyCandidate.adoptedAt, businessDayStart)),
+    db
+      .select({
+        selections: count(storyCandidateVote.id),
+        voters: countDistinct(storyCandidateVote.userId),
+        stories: countDistinct(storyCandidateVote.candidateId),
+      })
+      .from(storyCandidateVote)
+      .where(eq(storyCandidateVote.voteDay, voteDay)),
+    db
+      .select({ count: count() })
+      .from(song)
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(inArray(latestAttempt.processingStatus, ['queued', 'processing', 'audio_uploaded'])),
+    db
+      .select({ count: count() })
+      .from(song)
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(
+        and(
+          inArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES),
+          gte(latestAttempt.updatedAt, threeDaysAgo)
+        )
+      ),
+    db
+      .select({ count: count() })
+      .from(song)
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(
+        and(
+          inArray(latestAttempt.processingStatus, ['completed', 'completed_without_cover']),
+          or(eq(song.isPublished, false), isNull(song.isPublished)),
+          gte(latestAttempt.updatedAt, threeDaysAgo)
+        )
+      ),
+    db
+      .select({ count: count() })
+      .from(song)
+      .where(and(or(eq(song.isPublished, false), isNull(song.isPublished)), isNotNull(song.scheduledAt))),
+    db
+      .select({ count: count() })
+      .from(song)
+      .where(and(eq(song.isPublished, true), gte(song.publishedAt, businessDayStart))),
+    db
+      .select({
+        id: storyCandidate.id,
+        title: storyCandidate.sourceTitle,
+        votes: count(storyCandidateVote.id),
+      })
+      .from(storyCandidateVote)
+      .innerJoin(storyCandidate, eq(storyCandidate.id, storyCandidateVote.candidateId))
+      .where(eq(storyCandidateVote.voteDay, voteDay))
+      .groupBy(storyCandidate.id, storyCandidate.sourceTitle)
+      .orderBy(desc(count(storyCandidateVote.id)))
+      .limit(1),
+  ]);
+
+  const votes = voteRows[0];
+  const topVoted = topVotedRows[0];
+
+  return {
+    voteDay,
+    radar: {
+      fresh: Number(freshRows[0]?.count || 0),
+      shortlisted: Number(shortlistedRows[0]?.count || 0),
+      inProduction: Number(inProductionRows[0]?.count || 0),
+      adoptedToday: Number(adoptedTodayRows[0]?.count || 0),
+    },
+    audience: {
+      selections: Number(votes?.selections || 0),
+      voters: Number(votes?.voters || 0),
+      stories: Number(votes?.stories || 0),
+      topStory: topVoted
+        ? {
+            id: topVoted.id,
+            title: topVoted.title,
+            votes: Number(topVoted.votes || 0),
+          }
+        : null,
+    },
+    production: {
+      active: Number(activeGenerationRows[0]?.count || 0),
+      failed: Number(failedGenerationRows[0]?.count || 0),
+    },
+    publishing: {
+      readyForReview: Number(readyForReviewRows[0]?.count || 0),
+      scheduled: Number(scheduledRows[0]?.count || 0),
+      publishedToday: Number(publishedTodayRows[0]?.count || 0),
+    },
+  };
 }

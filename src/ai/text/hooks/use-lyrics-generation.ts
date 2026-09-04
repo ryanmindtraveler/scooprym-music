@@ -1,3 +1,4 @@
+import { normalizeGeneratedLyrics } from '@/ai/text/lib/lyrics-quality';
 import { useCreateStore } from '@/store';
 import { useMutation } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
@@ -10,13 +11,6 @@ import type { GenerateLyricsResponse, RewriteLyricsResponse } from '@/ai/text/ty
  * 辅助函数：规范化歌词段落格式
  * 确保每个段落标签（如 [Verse]）前后有正确的换行，使显示更整洁
  */
-function normalizeLyricsSections(raw: string) {
-  return raw
-    .replace(/\s*\[(intro|verse|pre-chorus|chorus|bridge|outro)\]\s*/gi, '\n[$1]\n')
-    .replace(/\n{3,}/g, '\n\n') // 消除多余的空行
-    .trim();
-}
-
 // ==================== 类型定义 ====================
 
 // Hook 返回值接口
@@ -92,7 +86,7 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
     mutationFn: async (payload: {
       newsUrl?: string;
       prompt?: string;
-      modelProvider?: string;
+      directionPrompt?: string;
     }) => {
       const res = await fetch('/api/generate/lyrics', {
         method: 'POST',
@@ -165,12 +159,12 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
       const payload = {
         newsUrl: newsLink || undefined,
         prompt: newsContent || undefined,
-        modelProvider: 'openai', // 默认或从配置获取
+        directionPrompt: musicPrompt.trim() || undefined,
       };
 
       const data = await generateLyricsMutation.mutateAsync(payload);
 
-      const newLyrics = normalizeLyricsSections(data.lyrics || '');
+      const newLyrics = normalizeGeneratedLyrics(data.lyrics || '');
       const songTitle = data.title || 'Generated Track';
       const summary = data.summary;
 
@@ -211,7 +205,7 @@ export function useLyricsGeneration(): UseLyricsGenerationReturn {
         const after = lyrics.substring(end);
         const newLyrics = before + data.rewrittenText + after;
 
-        setLyrics(normalizeLyricsSections(newLyrics));
+        setLyrics(normalizeGeneratedLyrics(newLyrics));
         setSelectionRange(null); // 重置选择
         toast.success('Lyrics rewritten! Fresh bars.');
       }

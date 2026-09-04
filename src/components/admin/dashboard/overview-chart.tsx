@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface OverviewChartProps {
@@ -11,13 +12,14 @@ interface OverviewChartProps {
 }
 
 export function OverviewChart({ data }: OverviewChartProps) {
+  const t = useTranslations('Dashboard.admin.overview');
   // If data is scarce, fill with mock or just render what we have.
   // The backend returns { date: 'Jan 01', count: 12 }
 
   return (
     <Card className="col-span-4">
       <CardHeader>
-        <CardTitle>Total Generations</CardTitle>
+        <CardTitle>{t('totalGenerations')}</CardTitle>
       </CardHeader>
       <CardContent className="pl-2">
         <ResponsiveContainer width="100%" height={350}>

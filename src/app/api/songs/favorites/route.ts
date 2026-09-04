@@ -1,9 +1,10 @@
 import { getDb } from '@/db';
-import { song, songFavorite } from '@/db/schema';
+import { song, songFavorite, story } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getSession } from '@/lib/server';
 import { getSongSourceCompatFields } from '@/lib/song-source';
 import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
-import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -21,15 +22,17 @@ export async function GET(request: Request) {
     }
 
     const db = await getDb();
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
 
     const [totalRes] = await db
       .select({ count: sql<number>`count(*)` })
       .from(songFavorite)
       .innerJoin(song, eq(songFavorite.songId, song.id))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
           eq(songFavorite.userId, userId),
-          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
+          notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
         )
       );
     const total = Number(totalRes?.count || 0);
@@ -45,19 +48,21 @@ export async function GET(request: Request) {
         category: sql<string>`'News'`,
         coverImageUrl: song.coverImageUrl,
         lyrics: song.lyrics,
-        prompt: song.prompt,
-        sourceText: song.sourceText,
-        sourceUrl: song.sourceUrl,
-        sourceSummary: sql<string | null>`${song.newsSummary}`,
-        newsSummary: song.newsSummary,
+        prompt: latestAttempt.prompt,
+        sourceText: story.sourceText,
+        sourceUrl: story.sourceUrl,
+        sourceSummary: story.newsSummary,
+        newsSummary: story.newsSummary,
         favoriteCreatedAt: songFavorite.createdAt,
       })
       .from(songFavorite)
       .innerJoin(song, eq(songFavorite.songId, song.id))
+      .innerJoin(story, eq(story.id, song.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
           eq(songFavorite.userId, userId),
-          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
+          notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
         )
       )
       .orderBy(desc(songFavorite.createdAt))

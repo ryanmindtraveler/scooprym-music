@@ -15,12 +15,10 @@ function getOgCopy(locale: string) {
 
   return {
     isZh,
-    subtitle: isZh ? '把头条、闹剧和八卦变成' : 'Turn headlines, drama, and gossip into',
-    highlight: isZh ? 'AI 梗歌' : 'AI Meme Song',
-    badge: isZh ? '音乐整活协议' : 'Music Identity Protocol',
-    alt: isZh
-      ? 'ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。'
-      : 'ScoopRYM - Turn Headlines, Drama, and Gossip into AI Meme Song.',
+    subtitle: isZh ? '每日发布' : 'Daily Meme Songs from',
+    highlight: isZh ? '爆红时刻梗歌' : 'Viral Moments',
+    badge: isZh ? '听 · 笑 · 分享' : 'Listen · Laugh · Share',
+    alt: isZh ? 'ScoopRYM — 每日爆红时刻梗歌' : 'ScoopRYM — Daily Meme Songs from Viral Moments',
   };
 }
 
@@ -156,8 +154,7 @@ export default async function Image({
             letterSpacing: '-0.01em',
           }}
         >
-          {copy.subtitle}{' '}
-          <span style={{ color: '#818CF8', fontWeight: 600 }}>{copy.highlight}</span>
+          {copy.subtitle} <span style={{ color: '#818CF8', fontWeight: 600 }}>{copy.highlight}</span>
         </p>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 40, opacity: 0.4 }}>

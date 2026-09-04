@@ -14,7 +14,7 @@ export const PROVIDERS: Record<
     displayName: 'Google',
     iconPath: '/provider-icons/google.svg',
     color: 'from-blue-500 to-emerald-500',
-    models: ['gemini-3.1-flash-lite-image'],
+    models: ['gemini-3-pro-image', 'gemini-3.1-flash-image', 'gemini-3.1-flash-lite-image'],
   },
   // https://ai-sdk.dev/providers/ai-sdk-providers/replicate#image-models
   replicate: {
@@ -86,14 +86,14 @@ export const PROVIDERS: Record<
 
 export const MODEL_CONFIGS: Record<ModelMode, Record<ProviderKey, string>> = {
   performance: {
-    google: 'gemini-3.1-flash-lite-image',
+    google: 'gemini-3.1-flash-image',
     replicate: 'black-forest-labs/flux-schnell',
     openai: 'dall-e-3',
     fireworks: 'accounts/fireworks/models/flux-1-schnell-fp8',
     fal: 'fal-ai/flux/dev',
   },
   quality: {
-    google: 'gemini-3.1-flash-lite-image',
+    google: 'gemini-3-pro-image',
     replicate: 'black-forest-labs/flux-schnell',
     openai: 'dall-e-3',
     fireworks: 'accounts/fireworks/models/flux-1-dev-fp8',

@@ -10,10 +10,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { useSidebarLinks } from '@/config/sidebar-config';
-import { useCreditBalance } from '@/hooks/billing/use-credits';
 import { LocaleLink } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Routes } from '@/routes';
@@ -21,7 +19,6 @@ import { useTranslations } from 'next-intl';
 import type * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Logo } from '../layout/logo';
-import { UpgradeCard } from './upgrade-card';
 
 /**
  * Dashboard sidebar
@@ -31,51 +28,18 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
   const [mounted, setMounted] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const currentUser = session?.user;
-  const { state } = useSidebar();
   // console.log('sidebar currentUser:', currentUser);
-
-  const { data: balance, isLoading: isBalanceLoading } = useCreditBalance();
 
   const sidebarLinks = useSidebarLinks();
 
-  // Inject Credits Balance Value into Badge (Stylized as colored text)
-  const sidebarLinksWithBadge = useMemo(() => {
-    return sidebarLinks.map((item) => {
-      if (item.items) {
-        return {
-          ...item,
-          items: item.items.map((subItem) => {
-            if (subItem.href === Routes.SettingsCredits) {
-              return {
-                ...subItem,
-                badge: (
-                  <span className="font-bold">
-                    (
-                    <span className="text-indigo-600 dark:text-indigo-400">
-                      {isBalanceLoading ? '...' : (balance ?? 0)}
-                    </span>
-                    )
-                  </span>
-                ),
-                badgeClassName: 'ml-1',
-              };
-            }
-            return subItem;
-          }),
-        };
-      }
-      return item;
-    });
-  }, [sidebarLinks, balance, isBalanceLoading]);
-
   const filteredSidebarLinks = useMemo(() => {
-    return sidebarLinksWithBadge.filter((link) => {
+    return sidebarLinks.filter((link) => {
       if (link.authorizeOnly) {
         return link.authorizeOnly.includes(currentUser?.role || '');
       }
       return true;
     });
-  }, [sidebarLinksWithBadge, currentUser]);
+  }, [sidebarLinks, currentUser]);
 
   useEffect(() => {
     setMounted(true);
@@ -102,9 +66,6 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         {/* Only show UI components when not in loading state */}
         {!isPending && mounted && (
           <>
-            {/* show upgrade card if user is not a member, and sidebar is not collapsed */}
-            {currentUser && state !== 'collapsed' && <UpgradeCard />}
-
             {/* show user profile if user is logged in */}
             {currentUser && <SidebarUser user={currentUser} />}
           </>

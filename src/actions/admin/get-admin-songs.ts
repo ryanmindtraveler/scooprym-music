@@ -1,17 +1,18 @@
 'use server';
 
 import { getDb } from '@/db';
-import { song as songTable, user as userTable } from '@/db/schema';
+import { song as songTable, story as storyTable, user as userTable } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { auth } from '@/lib/auth';
 import type { SortingState } from '@tanstack/react-table';
-import { type AnyColumn, type SQL, and, asc, count, desc, eq, ilike, isNull, or } from 'drizzle-orm';
+import { type AnyColumn, type SQL, and, asc, count, desc, eq, ilike, isNotNull, isNull, or } from 'drizzle-orm';
 
 interface GetAdminSongsParams {
   pageIndex: number;
   pageSize: number;
   search?: string;
   sorting?: SortingState;
-  status?: 'all' | 'published' | 'unpublished';
+  status?: 'all' | 'published' | 'scheduled' | 'unpublished';
 }
 
 export async function getAdminSongsAction({
@@ -34,21 +35,27 @@ export async function getAdminSongsAction({
     }
 
     const db = await getDb();
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
     const offset = pageIndex * pageSize;
 
     // Conditions: Admin users only for now (as per requirement to publish admin songs)
     const whereConditions: (SQL<unknown> | undefined)[] = [eq(userTable.role, 'admin')];
 
     // Filter by status
-    console.log('getAdminSongsAction status:', status);
     if (status === 'published') {
       whereConditions.push(eq(songTable.isPublished, true));
+    } else if (status === 'scheduled') {
+      whereConditions.push(
+        and(or(eq(songTable.isPublished, false), isNull(songTable.isPublished)), isNotNull(songTable.scheduledAt))
+      );
     } else if (status === 'unpublished') {
-      whereConditions.push(or(eq(songTable.isPublished, false), isNull(songTable.isPublished)));
+      whereConditions.push(
+        and(or(eq(songTable.isPublished, false), isNull(songTable.isPublished)), isNull(songTable.scheduledAt))
+      );
     }
 
     if (search) {
-      whereConditions.push(or(ilike(songTable.title, `%${search}%`), ilike(songTable.prompt, `%${search}%`)));
+      whereConditions.push(or(ilike(songTable.title, `%${search}%`), ilike(latestAttempt.prompt, `%${search}%`)));
     }
 
     // Dynamic sorting
@@ -67,6 +74,8 @@ export async function getAdminSongsAction({
         .select({ count: count() })
         .from(songTable)
         .innerJoin(userTable, eq(songTable.userId, userTable.id))
+        .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+        .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
         .where(and(...whereConditions));
 
       const items = await tx
@@ -77,17 +86,21 @@ export async function getAdminSongsAction({
           audioUrl: songTable.audioUrl,
           coverImageUrl: songTable.coverImageUrl,
           isPublished: songTable.isPublished,
+          scheduledAt: songTable.scheduledAt,
+          publishedAt: songTable.publishedAt,
           plays: songTable.plays,
           durationSec: songTable.durationSec,
           lyrics: songTable.lyrics,
-          prompt: songTable.prompt,
-          newsSummary: songTable.newsSummary,
-          sourceText: songTable.sourceText,
-          sourceUrl: songTable.sourceUrl,
+          prompt: latestAttempt.prompt,
+          newsSummary: storyTable.newsSummary,
+          sourceText: storyTable.sourceText,
+          sourceUrl: storyTable.sourceUrl,
           authorName: userTable.name, // Join to get author name
         })
         .from(songTable)
         .innerJoin(userTable, eq(songTable.userId, userTable.id))
+        .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+        .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
         .where(and(...whereConditions))
         .limit(pageSize)
         .offset(offset)

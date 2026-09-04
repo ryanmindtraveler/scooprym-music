@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn, slugify } from '@/lib/utils';
 import { Share2 } from 'lucide-react';
@@ -30,6 +31,7 @@ export function ShareButton({ songId, songTitle, className, variant = 'ghost', s
 
     const url = `${getCanonicalBaseUrl()}/songs/${slug}-${songId}`;
     navigator.clipboard.writeText(url);
+    void recordSongEngagement(songId, 'share', createEngagementSessionId('share')).catch(() => {});
     toast.success('Link copied to clipboard');
   };
 

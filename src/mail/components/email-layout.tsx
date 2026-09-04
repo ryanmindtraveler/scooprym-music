@@ -1,6 +1,6 @@
-import * as React from 'react';
 import type { BaseEmailProps } from '@/mail/types';
 import { Container, Font, Head, Hr, Html, Section, Tailwind, Text } from '@react-email/components';
+import type * as React from 'react';
 import { createTranslator } from 'use-intl/core';
 
 interface EmailLayoutProps extends BaseEmailProps {

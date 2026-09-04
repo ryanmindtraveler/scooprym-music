@@ -1,11 +1,30 @@
 'use client';
 
+import { getFailedProductionLabel } from '@/lib/music-retry-policy';
 import { cn } from '@/lib/utils';
 import { useCreateStore, usePlayerStore } from '@/store';
 import type { CreationTask } from '@/store/create-store';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Disc, Loader2, Music2, Pause, Play, Sparkles } from 'lucide-react';
+import { AlertCircle, Loader2, Music2, Pause, Play, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+
+const PHASE_LABELS: Record<NonNullable<CreationTask['workflowPhase']>, string> = {
+  source_preparation: 'Preparing source',
+  lyrics_studio: 'Writing lyrics',
+  music_production: 'Producing audio',
+  cover_production: 'Creating cover',
+  product_check: 'Checking release',
+  publish_ready: 'Ready to publish',
+};
+
+function getTaskPhaseLabel(task: CreationTask) {
+  if (task.workflowStage === 'uploading_audio') return 'Saving audio';
+  if (task.workflowPhase) return PHASE_LABELS[task.workflowPhase];
+  if (task.status === 'queued') return 'Waiting to start';
+  if (task.status === 'generating_cover') return 'Creating cover';
+  if (task.status === 'completed' || task.status === 'completed_without_cover') return 'Ready to publish';
+  return 'Producing audio';
+}
 
 export function TaskQueueView({ switchToStage }: { switchToStage: () => void }) {
   const tasks = useCreateStore((state) => state.tasks);
@@ -28,6 +47,48 @@ export function TaskQueueView({ switchToStage }: { switchToStage: () => void }) 
   const currentSong = usePlayerStore((state) => state.currentSong);
 
   const updateTask = useCreateStore((state) => state.updateTask);
+
+  const retryTask = async (task: CreationTask) => {
+    if (!task.workflowRunId) {
+      toast.error('This older task cannot be retried from the queue. Open it on Stage and create a new version.');
+      return;
+    }
+
+    const previousStatus = task.status;
+    const isCoverRetry = task.retryableStage === 'generating_cover';
+    const isProductCheckRetry = task.retryableStage === 'checking_product' || task.retryableStage === 'finalizing';
+    updateTask(task.id, {
+      status: isCoverRetry ? 'generating_cover' : 'processing',
+      workflowPhase: isCoverRetry ? 'cover_production' : isProductCheckRetry ? 'product_check' : 'music_production',
+      workflowStage: isCoverRetry ? 'generating_cover' : isProductCheckRetry ? 'checking_product' : 'queued_audio',
+      updatedAt: Date.now(),
+      error: undefined,
+    });
+
+    try {
+      const response = await fetch(`/api/generate/workflows/${task.workflowRunId}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: isProductCheckRetry ? 'product_check' : 'music' }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'The retry could not be started');
+      }
+
+      // 请求期间的旧轮询响应可能覆盖乐观状态；收到服务端确认后重新开始轮询。
+      updateTask(task.id, {
+        status: result.stage === 'product_check' ? 'completed' : 'processing',
+        error: undefined,
+        updatedAt: Date.now(),
+      });
+
+      toast.success(isProductCheckRetry ? 'Release check restarted' : 'Production restarted');
+    } catch (error) {
+      updateTask(task.id, { status: previousStatus, error: error instanceof Error ? error.message : 'Retry failed' });
+      toast.error(error instanceof Error ? error.message : 'Retry failed');
+    }
+  };
 
   const handleTaskClick = async (task: CreationTask) => {
     // Allow selecting failed tasks to view lyrics/prompt and potentially retry
@@ -144,7 +205,8 @@ export function TaskQueueView({ switchToStage }: { switchToStage: () => void }) 
         <AnimatePresence mode="popLayout" initial={false}>
           {tasks.map((task, index) => {
             const isActive = musicId === task.id;
-            const isProcessing = task.status === 'processing' || task.status === 'generating_cover';
+            const isProcessing =
+              task.status === 'queued' || task.status === 'processing' || task.status === 'generating_cover';
             const isFailed = task.status === 'failed';
 
             return (
@@ -245,12 +307,33 @@ export function TaskQueueView({ switchToStage }: { switchToStage: () => void }) 
                       {isProcessing ? (
                         <span className="text-[10px] font-semibold text-indigo-500 flex items-center gap-1">
                           <Loader2 className="size-2.5 animate-spin" />
-                          {task.status === 'generating_cover' ? 'Painting...' : 'Cooking...'}
+                          {getTaskPhaseLabel(task)}
                         </span>
                       ) : isFailed ? (
-                        <span className="text-[10px] font-semibold text-red-500 flex items-center gap-1">
-                          <AlertCircle className="size-2.5" /> Failed
-                        </span>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-red-600">
+                            <AlertCircle className="size-2.5 shrink-0" />
+                            <span className="truncate" title={task.error}>
+                              {getFailedProductionLabel(task.retryableStage, !!task.audioUrl)}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void retryTask(task);
+                            }}
+                            className={cn(
+                              'inline-flex h-6 shrink-0 items-center gap-1 rounded-md border px-2 text-[10px] font-semibold transition-colors',
+                              'border-red-200 bg-white text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400',
+                              isActive && 'border-white/40 bg-white/15 text-white hover:bg-white/25'
+                            )}
+                            aria-label={`Retry ${task.title}`}
+                          >
+                            <RotateCcw className="size-2.5" />
+                            Retry
+                          </button>
+                        </div>
                       ) : (
                         <span
                           className={cn(
@@ -258,7 +341,7 @@ export function TaskQueueView({ switchToStage }: { switchToStage: () => void }) 
                             isActive ? 'text-indigo-100' : 'text-slate-500'
                           )}
                         >
-                          {task.style || 'Custom Vibe'}
+                          {task.workflowPhase === 'publish_ready' ? 'Ready to publish' : task.style || 'Custom Vibe'}
                         </span>
                       )}
                     </div>

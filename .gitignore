@@ -107,6 +107,15 @@ temp/
 tmp/
 uploads/
 downloads/
+/.tmp/
+/.tmp-test-logs/
+/output/
+/.playwright-cli/
+
+# Codex local runtime artifacts (shared MCP config lives in .mcp.json)
+/.codex/config.toml
+/.codex/tmp-*
+/.codex/generated-*
 
 # Package managers
 package-lock.json

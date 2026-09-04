@@ -1,6 +1,6 @@
 'use client';
 
-import type { SongItem } from '@/app/[locale]/(protected)/mysongs/types';
+import type { SongItem } from '@/app/[locale]/(protected)/dashboard/mysongs/types';
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { SongRow } from '@/components/songs/song-row';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTogglePublish } from '@/hooks/admin/use-admin-songs';
+import { useSchedulePublish, useTogglePublish } from '@/hooks/admin/use-admin-songs';
+import { formatBusinessDateTime, parseBusinessDateTimeInput } from '@/lib/business-time';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import type { SortingState } from '@tanstack/react-table';
-import { CheckCircle2, ChevronLeft, ChevronRight, EyeOff, ListMusic, Loader2, Search } from 'lucide-react';
+import {
+  CalendarClock,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  EyeOff,
+  ListMusic,
+  Loader2,
+  Search,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface SongsTableProps {
   data: SongItem[];
@@ -21,7 +33,7 @@ interface SongsTableProps {
   pageIndex: number;
   pageSize: number;
   search: string;
-  status: 'all' | 'published' | 'unpublished';
+  status: 'all' | 'published' | 'scheduled' | 'unpublished';
   sorting: SortingState;
   loading: boolean;
   onSearch: (value: string) => void;
@@ -46,7 +58,10 @@ export function SongsTable({
 }: SongsTableProps) {
   const { currentSong, isPlaying: globalIsPlaying, play, pause } = usePlayerStore();
   const { mutate: togglePublish } = useTogglePublish();
+  const { mutate: schedulePublish, isPending: isScheduling } = useSchedulePublish();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+  const [scheduledAt, setScheduledAt] = useState('');
   const [selectedSong, setSelectedSong] = useState<SongItem | null>(null);
 
   const totalPages = Math.ceil(total / pageSize);
@@ -64,6 +79,24 @@ export function SongsTable({
         artist: 'AI Generated',
       });
     }
+  };
+
+  const submitSchedule = (songId: string) => {
+    if (!scheduledAt) return;
+    const californiaSchedule = parseBusinessDateTimeInput(scheduledAt);
+    if (!californiaSchedule) {
+      toast.error('Choose a valid California date and time.');
+      return;
+    }
+    schedulePublish(
+      { songId, scheduledAt: californiaSchedule.toISOString() },
+      {
+        onSuccess: () => {
+          setSchedulingId(null);
+          setScheduledAt('');
+        },
+      }
+    );
   };
 
   const handlePublishToggle = (songId: string, currentStatus: boolean) => {
@@ -93,7 +126,7 @@ export function SongsTable({
 
         {/* Status Filter Tabs */}
         <Tabs value={status} onValueChange={onStatusChange} className="w-full sm:w-auto">
-          <TabsList className="bg-muted/50 p-1 h-10 w-full sm:w-auto grid grid-cols-3 sm:flex">
+          <TabsList className="bg-muted/50 p-1 h-10 w-full sm:w-auto grid grid-cols-4 sm:flex">
             <TabsTrigger
               value="all"
               className="gap-2 px-4 shadow-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all text-muted-foreground"
@@ -107,6 +140,13 @@ export function SongsTable({
             >
               <CheckCircle2 className="h-4 w-4" />
               <span>Published</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="scheduled"
+              className="gap-2 px-4 shadow-none data-[state=active]:bg-background data-[state=active]:text-violet-600 data-[state=active]:shadow-sm transition-all text-muted-foreground"
+            >
+              <CalendarClock className="h-4 w-4" />
+              <span>Scheduled</span>
             </TabsTrigger>
             <TabsTrigger
               value="unpublished"
@@ -144,20 +184,68 @@ export function SongsTable({
               // Admin typically doesn't delete from this view unless requested, keeping clean.
               // Insert 'Publish' toggle.
               actionEnd={
-                <div className="flex items-center gap-3 mr-4 bg-muted/30 px-3 py-1.5 rounded-full border border-border/50">
-                  <Label
-                    htmlFor={`publish-${song.id}`}
-                    className="text-xs font-medium text-muted-foreground cursor-pointer select-none"
-                  >
-                    {song.isPublished ? 'Published' : 'Hidden'}
-                  </Label>
-                  <Switch
-                    id={`publish-${song.id}`}
-                    checked={!!song.isPublished}
-                    onCheckedChange={() => handlePublishToggle(song.id, !!song.isPublished)}
-                    disabled={togglingId === song.id}
-                    className="scale-90"
-                  />
+                <div className="mr-4 flex items-center gap-2">
+                  {schedulingId === song.id ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-background px-2 py-1 shadow-sm">
+                      <Input
+                        type="datetime-local"
+                        value={scheduledAt}
+                        onChange={(event) => setScheduledAt(event.target.value)}
+                        className="h-8 w-[190px] border-0 px-2 text-xs shadow-none focus-visible:ring-0"
+                        aria-label={`Schedule ${song.title}`}
+                      />
+                      <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">PT</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8"
+                        disabled={!scheduledAt || isScheduling}
+                        onClick={() => submitSchedule(song.id)}
+                      >
+                        {isScheduling ? <Loader2 className="size-3.5 animate-spin" /> : 'Set'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => setSchedulingId(null)}
+                        aria-label="Close schedule editor"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 rounded-full"
+                      disabled={!!song.isPublished}
+                      onClick={() => {
+                        setSchedulingId(song.id);
+                        setScheduledAt('');
+                      }}
+                    >
+                      <CalendarClock className="size-3.5" />
+                      {song.scheduledAt ? formatBusinessDateTime(song.scheduledAt) : 'Schedule'}
+                    </Button>
+                  )}
+                  <div className="flex items-center gap-3 rounded-full border border-border/50 bg-muted/30 px-3 py-1.5">
+                    <Label
+                      htmlFor={`publish-${song.id}`}
+                      className="text-xs font-medium text-muted-foreground cursor-pointer select-none"
+                    >
+                      {song.isPublished ? 'Published' : 'Hidden'}
+                    </Label>
+                    <Switch
+                      id={`publish-${song.id}`}
+                      checked={!!song.isPublished}
+                      onCheckedChange={() => handlePublishToggle(song.id, !!song.isPublished)}
+                      disabled={togglingId === song.id}
+                      className="scale-90"
+                    />
+                  </div>
                 </div>
               }
             />

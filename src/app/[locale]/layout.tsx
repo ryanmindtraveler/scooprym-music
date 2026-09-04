@@ -4,7 +4,9 @@ import AffonsoScript from '@/components/affiliate/affonso';
 import PromotekitScript from '@/components/affiliate/promotekit';
 import { TailwindIndicator } from '@/components/layout/tailwind-indicator';
 import { GlobalPlayer } from '@/components/player/global-player';
+import { PersistentPlayer } from '@/components/player/persistent-player';
 import { routing } from '@/i18n/routing';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
 import { type Locale, NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -14,10 +16,9 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import type { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
-import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 
 import '@/styles/globals.css';
-import { getWebsiteJsonLd, JsonLd } from '@/components/seo/json-ld';
+import { JsonLd, getWebsiteJsonLd } from '@/components/seo/json-ld';
 
 interface LocaleLayoutProps {
   children: ReactNode;
@@ -127,6 +128,7 @@ export default async function LocaleLayout({ children, modal, params }: LocaleLa
               {modal}
 
               <GlobalPlayer />
+              <PersistentPlayer />
               <Toaster richColors position="top-right" offset={64} />
               <TailwindIndicator />
               <Analytics />

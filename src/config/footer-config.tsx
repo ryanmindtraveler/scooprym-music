@@ -30,23 +30,23 @@ export function useFooterLinks(): NestedMenuItem[] {
           external: false,
         },
         {
-          title: t('gallery.title'),
+          title: 'Today’s Drops',
+          href: '/#today',
+          external: false,
+        },
+        {
+          title: 'The Week on Repeat',
+          href: '/#biggest',
+          external: false,
+        },
+        {
+          title: 'Gallery',
           href: Routes.Gallery,
           external: false,
         },
         {
-          title: t('features.title'),
-          href: Routes.Features,
-          external: false,
-        },
-        {
-          title: t('pricing.title'),
-          href: Routes.Pricing,
-          external: false,
-        },
-        {
-          title: t('faq.title'),
-          href: Routes.FAQ,
+          title: 'Send a Story',
+          href: '/#desk',
           external: false,
         },
       ],

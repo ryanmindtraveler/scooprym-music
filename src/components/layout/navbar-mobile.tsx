@@ -10,9 +10,9 @@ import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { Portal } from '@radix-ui/react-portal';
+import type { User } from 'better-auth';
 import { ArrowUpRightIcon, ChevronDownIcon, ChevronRightIcon, MenuIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { User } from 'better-auth';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { RemoveScroll } from 'react-remove-scroll';
@@ -22,9 +22,16 @@ import { UserButtonMobile } from './user-button-mobile';
 interface NavbarMobileProps extends React.HTMLAttributes<HTMLDivElement> {
   currentUser?: User;
   isPending?: boolean;
+  isAdmin?: boolean;
 }
 
-export function NavbarMobile({ className, currentUser, isPending = false, ...other }: NavbarMobileProps) {
+export function NavbarMobile({
+  className,
+  currentUser,
+  isPending = false,
+  isAdmin = false,
+  ...other
+}: NavbarMobileProps) {
   const t = useTranslations();
   const [open, setOpen] = React.useState<boolean>(false);
   const localePathname = useLocalePathname();
@@ -77,14 +84,10 @@ export function NavbarMobile({ className, currentUser, isPending = false, ...oth
 
         {/* navbar right shows menu icon and user button */}
         <div className="flex items-center justify-end gap-4">
-          {/* show user button if user is logged in */}
           {isPending ? (
-            <Skeleton className="size-8 border rounded-full" />
+            <Skeleton className="size-8 rounded-full border" />
           ) : currentUser ? (
-            <>
-              {/* <CreditsBalanceButton /> */}
-              <UserButtonMobile user={currentUser} />
-            </>
+            <UserButtonMobile user={currentUser} />
           ) : null}
 
           <Button
@@ -107,8 +110,9 @@ export function NavbarMobile({ className, currentUser, isPending = false, ...oth
           {/* if we don't add RemoveScroll component, the underlying
             page will scroll when we scroll the mobile menu */}
           <RemoveScroll allowPinchZoom enabled>
-            {/* Only render MainMobileMenu when not in loading state */}
-            {!isPending && <MainMobileMenu userLoggedIn={!!currentUser} onLinkClicked={handleToggleMobileMenu} />}
+            {!isPending && (
+              <MainMobileMenu userLoggedIn={!!currentUser} isAdmin={isAdmin} onLinkClicked={handleToggleMobileMenu} />
+            )}
           </RemoveScroll>
         </Portal>
       )}
@@ -118,10 +122,11 @@ export function NavbarMobile({ className, currentUser, isPending = false, ...oth
 
 interface MainMobileMenuProps {
   userLoggedIn: boolean;
+  isAdmin: boolean;
   onLinkClicked: () => void;
 }
 
-function MainMobileMenu({ userLoggedIn, onLinkClicked }: MainMobileMenuProps) {
+function MainMobileMenu({ userLoggedIn, isAdmin, onLinkClicked }: MainMobileMenuProps) {
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
   const t = useTranslations();
   const menuLinks = useNavbarLinks();
@@ -133,35 +138,41 @@ function MainMobileMenu({ userLoggedIn, onLinkClicked }: MainMobileMenuProps) {
       bg-background backdrop-blur-md animate-in fade-in-0"
     >
       <div className="size-full flex flex-col items-start space-y-4">
-        {/* action buttons */}
-        {userLoggedIn ? null : (
-          <div className="w-full flex flex-col gap-4 px-4">
+        {!userLoggedIn ? (
+          <div className="flex w-full flex-col gap-4 px-4">
             <LocaleLink
               href={Routes.Login}
               onClick={onLinkClicked}
-              className={cn(
-                buttonVariants({
-                  variant: 'outline',
-                  size: 'lg',
-                }),
-                'w-full'
-              )}
+              className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full')}
             >
               {t('Common.login')}
             </LocaleLink>
             <LocaleLink
               href={Routes.Register}
-              className={cn(
-                buttonVariants({
-                  variant: 'default',
-                  size: 'lg',
-                }),
-                'w-full'
-              )}
               onClick={onLinkClicked}
+              className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'w-full')}
             >
               {t('Common.signUp')}
             </LocaleLink>
+          </div>
+        ) : (
+          <div className="flex w-full flex-col gap-3 px-4">
+            <LocaleLink
+              href={Routes.Dashboard}
+              onClick={onLinkClicked}
+              className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'w-full rounded-full font-bold')}
+            >
+              Dashboard
+            </LocaleLink>
+            {isAdmin && (
+              <LocaleLink
+                href={Routes.AdminDashboard}
+                onClick={onLinkClicked}
+                className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'w-full rounded-full font-bold')}
+              >
+                Admin
+              </LocaleLink>
+            )}
           </div>
         )}
 

@@ -1,10 +1,12 @@
 import { ImagePlayground } from '@/ai/image/components/ImagePlayground';
 import { getRandomSuggestions } from '@/ai/image/lib/suggestions';
 import { constructMetadata } from '@/lib/metadata';
+import { getSession } from '@/lib/server';
 import { ImageIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 
 export async function generateMetadata({
   params,
@@ -24,6 +26,11 @@ export async function generateMetadata({
 }
 
 export default async function AIImagePage() {
+  const session = await getSession();
+  if (session?.user?.role !== 'admin') {
+    redirect('/');
+  }
+
   const t = await getTranslations('AIImagePage');
 
   return (

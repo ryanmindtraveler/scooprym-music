@@ -4,6 +4,11 @@ import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE_NAME, routing } from './i18n/rou
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
 
 const intlMiddleware = createMiddleware(routing);
+const songIntlMiddleware = createMiddleware({
+  ...routing,
+  // 歌曲与八卦正文目前只有英文版本，不能向搜索引擎声明不存在的翻译页。
+  alternateLinks: false,
+});
 
 /**
  * 1. Next.js middleware
@@ -79,8 +84,17 @@ export default async function middleware(req: NextRequest) {
     const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? '';
     const proto = req.headers.get('x-forwarded-proto') ?? nextUrl.protocol.replace(':', '');
     const canonicalHost = 'scooprym.app';
+    // 本地生产预览仍应可通过 localhost 访问，便于在真实登录态浏览器中验收。
+    const normalizedHost = host.toLowerCase();
+    const isLocalHost =
+      normalizedHost === 'localhost' ||
+      normalizedHost.startsWith('localhost:') ||
+      normalizedHost === '127.0.0.1' ||
+      normalizedHost.startsWith('127.0.0.1:') ||
+      normalizedHost === '[::1]' ||
+      normalizedHost.startsWith('[::1]:');
 
-    if (host && (host !== canonicalHost || proto !== 'https')) {
+    if (host && !isLocalHost && (host !== canonicalHost || proto !== 'https')) {
       const redirectUrl = new URL(req.url);
       redirectUrl.protocol = 'https:';
       redirectUrl.host = canonicalHost;
@@ -115,6 +129,18 @@ export default async function middleware(req: NextRequest) {
   // Get the pathname of the request (e.g. /zh/dashboard to /dashboard)
   const pathnameWithoutLocale = getPathnameWithoutLocale(nextUrl.pathname, LOCALES);
 
+  // 歌曲搜索落地页只有英文正文；把带非默认语言前缀的重复 URL 合并到唯一英文版本。
+  const localePrefix = nextUrl.pathname.split('/')[1];
+  if (
+    localePrefix &&
+    localePrefix !== DEFAULT_LOCALE &&
+    LOCALES.includes(localePrefix) &&
+    pathnameWithoutLocale.startsWith('/songs/')
+  ) {
+    const canonicalSongUrl = new URL(`${pathnameWithoutLocale}${nextUrl.search}`, nextUrl);
+    return NextResponse.redirect(canonicalSongUrl, 308);
+  }
+
   // If the route can not be accessed by logged in users, redirect if the user is logged in
   if (isLoggedIn) {
     const isNotAllowedRoute = routesNotAllowedByLoggedInUsers.some((route) =>
@@ -142,7 +168,7 @@ export default async function middleware(req: NextRequest) {
 
   // Apply intlMiddleware for all routes
   console.log('<< middleware end, applying intlMiddleware');
-  return intlMiddleware(req);
+  return pathnameWithoutLocale.startsWith('/songs/') ? songIntlMiddleware(req) : intlMiddleware(req);
 }
 
 /**

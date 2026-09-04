@@ -1,0 +1,1 @@
+ALTER TABLE "scooprym"."story_candidate" ALTER COLUMN "provider" SET DEFAULT 'rss';

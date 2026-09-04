@@ -1,27 +1,42 @@
 import { getDb } from '@/db/index';
-import { song as songTable } from '@/db/schema';
+import { generationAttempt, songCreationRun, song as songTable, story as storyTable } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { buildStoryBrief } from '@/features/full-songs/services/full-songs-helpers';
+import { resolveProductionRetryStage } from '@/lib/music-retry-policy';
 import { getSession } from '@/lib/server';
+import { getSongCreationPhase } from '@/lib/song-creation-workflow';
 import { getSongSourceCompatFields, getSongSourceSummary } from '@/lib/song-source';
 import { getSongStatusPresentation } from '@/lib/song-status';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 const STALE_PROCESSING_TIMEOUT_MINUTES = 45;
+const songIdSchema = z.string().uuid();
 
 export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
   try {
-    const params = await props.params;
+    const { id: rawId } = await props.params;
+    const parsedId = songIdSchema.safeParse(rawId);
+    if (!parsedId.success) {
+      return NextResponse.json({ success: false, error: 'Invalid song ID' }, { status: 400 });
+    }
+
     const session = await getSession();
     const userId = session?.user?.id;
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
 
     const db = await getDb();
-    const [song] = await db
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
+    const [selectedSong] = await db
       .select({
         id: songTable.id,
+        attemptId: latestAttempt.id,
         userId: songTable.userId,
         title: songTable.title,
         audioUrl: songTable.audioUrl,
@@ -29,104 +44,129 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
         coverImageUrl: songTable.coverImageUrl,
         coverImageKey: songTable.coverImageKey,
         createdAt: songTable.createdAt,
-        updatedAt: songTable.updatedAt,
-        creditsDeducted: songTable.creditsDeducted,
-        processingStatus: songTable.processingStatus,
-        creditError: songTable.creditError,
-        sourceSummary: songTable.newsSummary,
-        newsSummary: songTable.newsSummary,
-        sourceText: songTable.sourceText,
-        sourceUrl: songTable.sourceUrl,
+        updatedAt: latestAttempt.updatedAt,
+        creditsDeducted: latestAttempt.creditsDeducted,
+        processingStatus: latestAttempt.processingStatus,
+        processingError: latestAttempt.processingError,
+        creditError: latestAttempt.creditError,
+        sourceSummary: storyTable.newsSummary,
+        newsSummary: storyTable.newsSummary,
+        sourceText: storyTable.sourceText,
+        sourceUrl: storyTable.sourceUrl,
       })
       .from(songTable)
-      .where(eq(songTable.id, params.id));
+      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+      .where(and(eq(songTable.id, parsedId.data), eq(songTable.userId, userId)))
+      .limit(1);
 
-    if (!song) {
+    if (!selectedSong) {
       return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });
     }
 
-    if (song.userId !== userId) {
-      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-    }
-
-    const sourceSummary = getSongSourceSummary(song) || '';
-    let { status, message, musicStatus, coverStatus } = getSongStatusPresentation({
-      processingStatus: song.processingStatus,
-      hasAudioKey: !!song.audioKey,
-      hasCoverImageUrl: !!song.coverImageUrl,
-    });
-
+    let currentSong = selectedSong;
     const now = new Date();
-    const created = new Date(song.createdAt);
-    const lastProgressAt = song.updatedAt ? new Date(song.updatedAt) : created;
-    const minutesSinceCreation = (now.getTime() - created.getTime()) / (1000 * 60);
-    const minutesSinceLastProgress = (now.getTime() - lastProgressAt.getTime()) / (1000 * 60);
+    const createdAt = new Date(currentSong.createdAt);
+    const lastProgressAt = currentSong.updatedAt ? new Date(currentSong.updatedAt) : createdAt;
+    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / 60_000;
+    const minutesSinceLastProgress = (now.getTime() - lastProgressAt.getTime()) / 60_000;
+    const activeStatus = [
+      'queued',
+      'processing',
+      'generating_audio',
+      'uploading_audio',
+      'audio_uploaded',
+      'generating_cover',
+      'finalizing',
+    ].includes(currentSong.processingStatus || '');
 
-    const shouldFailAsStale =
-      minutesSinceLastProgress > STALE_PROCESSING_TIMEOUT_MINUTES &&
-      status !== 'completed' &&
-      status !== 'failed' &&
-      (song.processingStatus === 'processing' || song.processingStatus === 'audio_uploaded');
+    if (activeStatus && minutesSinceLastProgress > STALE_PROCESSING_TIMEOUT_MINUTES) {
+      const timeoutMessage = `Processing stalled for more than ${STALE_PROCESSING_TIMEOUT_MINUTES} minutes`;
+      const [timedOut] = await db
+        .update(generationAttempt)
+        .set({
+          processingStatus: 'failed_generation',
+          processingError: timeoutMessage,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(generationAttempt.id, currentSong.attemptId),
+            eq(generationAttempt.songId, currentSong.id),
+            eq(generationAttempt.processingStatus, currentSong.processingStatus!)
+          )
+        )
+        .returning({ id: generationAttempt.id });
 
-    if (shouldFailAsStale) {
-      console.log(
-        `[processing-status] Detected stale task ${params.id} (${minutesSinceLastProgress.toFixed(1)} mins since last progress). Cleaning up...`
-      );
-
-      status = 'failed';
-      message = 'Processing stalled and was marked as failed.';
-      if (musicStatus === 'processing') musicStatus = 'failed';
-      if (coverStatus === 'processing' || coverStatus === 'generating') coverStatus = 'failed';
-
-      try {
-        const dbForUpdate = await getDb();
-        await dbForUpdate
-          .update(songTable)
-          .set({
-            processingStatus: 'failed_generation',
-            creditError: `Processing stalled (>${STALE_PROCESSING_TIMEOUT_MINUTES} mins since last progress)`,
-          })
-          .where(eq(songTable.id, params.id));
-      } catch (cleanupErr) {
-        console.error('[processing-status] Cleanup side-effect failed:', cleanupErr);
+      if (timedOut) {
+        currentSong = {
+          ...currentSong,
+          processingStatus: 'failed_generation',
+          processingError: timeoutMessage,
+          updatedAt: now,
+        };
       }
     }
 
+    const sourceSummary = getSongSourceSummary(currentSong) || '';
+    const presentation = getSongStatusPresentation({
+      processingStatus: currentSong.processingStatus,
+      hasAudioKey: !!currentSong.audioKey,
+      hasCoverImageUrl: !!currentSong.coverImageUrl,
+    });
+    const processingError = currentSong.processingError || currentSong.creditError || null;
+    const [workflow] = await db
+      .select({
+        id: songCreationRun.id,
+        status: songCreationRun.status,
+        currentStage: songCreationRun.currentStage,
+        lastError: songCreationRun.lastError,
+      })
+      .from(songCreationRun)
+      .where(and(eq(songCreationRun.songId, currentSong.id), eq(songCreationRun.userId, userId)))
+      .orderBy(desc(songCreationRun.createdAt))
+      .limit(1);
+
     return NextResponse.json({
       success: true,
-      status,
-      message,
-      musicStatus,
-      coverStatus,
-      creditsDeducted: song.creditsDeducted || false,
-      creditError: song.creditError || null,
+      ...presentation,
+      creditsDeducted: currentSong.creditsDeducted || false,
+      processingError,
+      // 兼容旧版客户端字段；管理员内部任务不再进行积分扣费。
+      creditError: processingError,
       song: {
-        id: song.id,
-        title: song.title,
-        audioUrl: song.audioUrl,
-        coverImageUrl: song.coverImageUrl,
-        createdAt: song.createdAt,
-        updatedAt: song.updatedAt,
-        ...getSongSourceCompatFields(song),
+        id: currentSong.id,
+        title: currentSong.title,
+        audioUrl: currentSong.audioUrl,
+        coverImageUrl: currentSong.coverImageUrl,
+        createdAt: currentSong.createdAt,
+        updatedAt: currentSong.updatedAt,
+        ...getSongSourceCompatFields(currentSong),
         storyBrief: buildStoryBrief(sourceSummary, ''),
       },
       details: {
-        hasAudioKey: !!song.audioKey,
-        hasCoverImageUrl: !!song.coverImageUrl,
-        hasCoverImageKey: !!song.coverImageKey,
-        processingStatus: song.processingStatus || 'processing',
+        hasAudioKey: !!currentSong.audioKey,
+        hasCoverImageUrl: !!currentSong.coverImageUrl,
+        hasCoverImageKey: !!currentSong.coverImageKey,
+        processingStatus: currentSong.processingStatus || 'queued',
         minutesSinceCreation: Math.round(minutesSinceCreation * 10) / 10,
         minutesSinceLastProgress: Math.round(minutesSinceLastProgress * 10) / 10,
       },
+      workflow: workflow
+        ? {
+            ...workflow,
+            retryableStage: resolveProductionRetryStage(
+              currentSong.processingStatus,
+              workflow.currentStage,
+              !!currentSong.audioKey && !!currentSong.audioUrl,
+              !!currentSong.coverImageKey && !!currentSong.coverImageUrl
+            ),
+            phase: getSongCreationPhase(workflow.currentStage),
+          }
+        : null,
     });
-  } catch (error: any) {
-    console.error('Error fetching song processing status:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error?.message || 'Failed to fetch processing status',
-      },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('[processing-status] Failed to load generation status:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch processing status' }, { status: 500 });
   }
 }

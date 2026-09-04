@@ -6,8 +6,10 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-import { ANALYZER_MODEL, ANALYZER_OPENROUTER_MODEL } from '@/ai/config/models';
+import { ANALYZER_MODEL, ANALYZER_OPENROUTER_MODEL, OPENAI_TEXT_MODEL } from '@/ai/config/models';
 import type { TextProvider } from './provider-config';
+import { getStructuredOutputSettings, runWithTextProviderFallback } from './provider-fallback';
+import { assertReaderSafeHttpUrl, extractUrlContent } from './url-content-extractor';
 
 const sourceAnalysisSchema = z.object({
   isValid: z
@@ -24,11 +26,30 @@ export interface AnalyzeSourceMaterialParams {
   prompt?: string;
   sourceMode?: FullSongsSourceMode;
   provider?: TextProvider;
+  preparedSource?: NormalizedSourceSnapshot;
 }
 
 export interface SourceAnalysisResult {
   title: string;
   storyBrief: FullSongsBrief;
+  source: NormalizedSourceSnapshot;
+}
+
+export interface NormalizedSourceSnapshot {
+  url?: string;
+  title?: string;
+  text: string;
+  fetchedAt?: string;
+}
+
+export class SourceMaterialError extends Error {
+  readonly statusCode: number;
+
+  constructor(message: string, statusCode = 422) {
+    super(message);
+    this.name = 'SourceMaterialError';
+    this.statusCode = statusCode;
+  }
 }
 
 const openrouter = createOpenRouter({
@@ -47,93 +68,18 @@ const deepseek = createDeepSeek({
   apiKey: process.env.DEEPSEEK_API_KEY ?? '',
 });
 
-const FALLBACK_PROVIDER_ORDER: TextProvider[] = ['deepseek', 'openrouter', 'google'];
-
-function providerHasApiKey(provider: TextProvider) {
+const getModel = (provider: TextProvider = 'openrouter', openrouterModel = ANALYZER_OPENROUTER_MODEL) => {
   switch (provider) {
     case 'openrouter':
-      return !!process.env.OPENROUTER_API_KEY;
-    case 'google':
-      return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    case 'deepseek':
-      return !!process.env.DEEPSEEK_API_KEY;
-    case 'openai':
-      return !!process.env.OPENAI_API_KEY;
-    default:
-      return false;
-  }
-}
-
-function getProviderFallbackOrder(preferred?: TextProvider) {
-  const ordered = [preferred, ...FALLBACK_PROVIDER_ORDER].filter(Boolean) as TextProvider[];
-  return Array.from(new Set(ordered)).filter(providerHasApiKey);
-}
-
-function shouldFallbackToNextProvider(error: unknown) {
-  const candidate = error as {
-    statusCode?: number;
-    message?: string;
-    cause?: { statusCode?: number; message?: string };
-    responseBody?: string;
-  };
-
-  const statusCode = candidate?.statusCode || candidate?.cause?.statusCode;
-  const message = `${candidate?.message || ''} ${candidate?.cause?.message || ''} ${candidate?.responseBody || ''}`.toLowerCase();
-
-  if (statusCode === 401 || statusCode === 402 || statusCode === 403 || statusCode === 429) {
-    return true;
-  }
-
-  return (
-    message.includes('incorrect api key') ||
-    message.includes('invalid_api_key') ||
-    message.includes('rate limit') ||
-    message.includes('quota') ||
-    message.includes('insufficient_quota') ||
-    message.includes('authentication') ||
-    message.includes('unauthorized')
-  );
-}
-
-async function generateObjectWithProviderFallback<T>({
-  provider,
-  execute,
-}: {
-  provider?: TextProvider;
-  execute: (activeProvider: TextProvider) => Promise<T>;
-}) {
-  const providerOrder = getProviderFallbackOrder(provider);
-  let lastError: unknown;
-
-  if (providerOrder.length === 0) {
-    throw new Error('No configured text model provider is available');
-  }
-
-  for (const activeProvider of providerOrder) {
-    try {
-      return await execute(activeProvider);
-    } catch (error) {
-      lastError = error;
-      if (!shouldFallbackToNextProvider(error)) {
-        throw error;
-      }
-      console.warn(`[source-analysis] Provider ${activeProvider} failed, trying next fallback provider.`, error);
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error('All source analysis providers failed');
-}
-
-const getModel = (provider: TextProvider = 'openrouter') => {
-  switch (provider) {
-    case 'openrouter':
-      return openrouter(ANALYZER_OPENROUTER_MODEL);
+      return openrouter(openrouterModel);
     case 'google':
       return google('gemini-3.1-flash-lite');
     case 'deepseek':
       return deepseek(ANALYZER_MODEL);
+    case 'openai':
+      return openai(OPENAI_TEXT_MODEL);
     default:
-      return openai(ANALYZER_MODEL);
+      return openai(OPENAI_TEXT_MODEL);
   }
 };
 
@@ -147,18 +93,74 @@ function getModeHint(sourceMode?: FullSongsSourceMode) {
         : 'Treat the source as story-driven freeform text and preserve its narrative arc.';
 }
 
-export function buildSourceMaterialPrompt({ newsUrl, prompt }: { newsUrl?: string; prompt?: string }) {
-  const parts: string[] = [];
+export async function prepareSourceMaterial({
+  newsUrl,
+  prompt,
+}: {
+  newsUrl?: string;
+  prompt?: string;
+}): Promise<NormalizedSourceSnapshot> {
+  const userContext = prompt?.trim();
 
   if (newsUrl) {
-    parts.push(`Source URL: ${newsUrl}`);
+    let normalizedUrl: string;
+    try {
+      normalizedUrl = await assertReaderSafeHttpUrl(newsUrl);
+    } catch (error) {
+      throw new SourceMaterialError(error instanceof Error ? error.message : 'Source URL is not allowed', 400);
+    }
+
+    const extracted = await extractUrlContent(normalizedUrl);
+    if (!extracted.success || !extracted.content) {
+      throw new SourceMaterialError(
+        extracted.error || 'The source page could not be extracted. Add a readable public source and try again.'
+      );
+    }
+
+    return {
+      url: normalizedUrl,
+      title: extracted.title?.trim() || undefined,
+      text: extracted.content,
+      fetchedAt: new Date().toISOString(),
+    };
   }
 
-  if (prompt) {
+  if (!userContext) {
+    throw new SourceMaterialError('No usable source content was provided', 400);
+  }
+
+  return { text: userContext };
+}
+
+export function buildSourceMaterialPrompt({
+  source,
+  prompt,
+}: {
+  source: NormalizedSourceSnapshot;
+  prompt?: string;
+}) {
+  const parts: string[] = [];
+
+  if (source.url) {
+    parts.push(
+      [
+        `Source URL: ${source.url}`,
+        source.title ? `Source Title: ${source.title}` : undefined,
+        source.fetchedAt ? `Source Fetched At: ${source.fetchedAt}` : undefined,
+        `Extracted Source Text:\n${source.text}`,
+      ]
+        .filter(Boolean)
+        .join('\n')
+    );
+  } else {
+    parts.push(`User Source Text:\n${source.text}`);
+  }
+
+  if (prompt?.trim() && prompt.trim() !== source.text) {
     parts.push(`User Context:\n${prompt}`);
   }
 
-  return parts.join('\n\n') || 'No usable source content was provided.';
+  return parts.join('\n\n');
 }
 
 export async function analyzeSourceMaterial({
@@ -166,8 +168,10 @@ export async function analyzeSourceMaterial({
   prompt,
   sourceMode,
   provider,
+  preparedSource,
 }: AnalyzeSourceMaterialParams): Promise<SourceAnalysisResult> {
-  const sourceContent = buildSourceMaterialPrompt({ newsUrl, prompt });
+  const source = preparedSource || (await prepareSourceMaterial({ newsUrl, prompt }));
+  const sourceContent = buildSourceMaterialPrompt({ source, prompt });
   const modeHint = getModeHint(sourceMode);
 
   const analysisSystemPrompt = `You are a source analyst for an AI content studio.
@@ -186,16 +190,18 @@ Safety:
 - Avoid unsafe amplification of hateful or explicitly violent content.
 `;
 
-  const { object } = await generateObjectWithProviderFallback({
+  const { object } = await runWithTextProviderFallback({
     provider,
-    execute: async (activeProvider) =>
+    scope: 'source-analysis',
+    execute: async (activeProvider, activeModel, abortSignal) =>
       generateObject({
-        model: getModel(activeProvider),
+        abortSignal,
+        model: getModel(activeProvider, activeModel),
         schema: sourceAnalysisSchema,
         system: analysisSystemPrompt,
         prompt: sourceContent,
-        temperature: 0.4,
-        maxOutputTokens: 300,
+        ...getStructuredOutputSettings(activeProvider, 0.4),
+        maxOutputTokens: 600,
       }),
   });
 
@@ -209,5 +215,6 @@ Safety:
       summary: object.summary,
       angle: object.angle,
     },
+    source,
   };
 }

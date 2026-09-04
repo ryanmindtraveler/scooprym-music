@@ -1,9 +1,10 @@
 import { getDb } from '@/db/index';
-import { song, songPlay } from '@/db/schema';
+import { song, songPlay, story } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getSession } from '@/lib/server';
 import { getSongSourceCompatFields } from '@/lib/song-source';
 import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
-import { and, desc, eq, isNull, notInArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -20,17 +21,16 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     const db = await getDb();
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
     const lastPlayedAtExpr = sql<string>`max(${songPlay.createdAt})`;
 
     const [totalRes] = await db
       .select({ count: sql<number>`count(distinct ${songPlay.songId})` })
       .from(songPlay)
       .innerJoin(song, eq(songPlay.songId, song.id))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
-        and(
-          eq(songPlay.userId, userId),
-          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
-        )
+        and(eq(songPlay.userId, userId), notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
       );
     const total = Number(totalRes?.count || 0);
 
@@ -45,22 +45,21 @@ export async function GET(request: NextRequest) {
         category: sql<string>`'News'`,
         coverImageUrl: song.coverImageUrl,
         lyrics: song.lyrics,
-        prompt: song.prompt,
-        sourceText: song.sourceText,
-        sourceUrl: song.sourceUrl,
-        sourceSummary: sql<string | null>`${song.newsSummary}`,
-        newsSummary: song.newsSummary,
+        prompt: latestAttempt.prompt,
+        sourceText: story.sourceText,
+        sourceUrl: story.sourceUrl,
+        sourceSummary: story.newsSummary,
+        newsSummary: story.newsSummary,
         lastPlayedAt: lastPlayedAtExpr,
       })
       .from(songPlay)
       .innerJoin(song, eq(songPlay.songId, song.id))
+      .innerJoin(story, eq(story.id, song.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
-        and(
-          eq(songPlay.userId, userId),
-          or(isNull(song.processingStatus), notInArray(song.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
-        )
+        and(eq(songPlay.userId, userId), notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
       )
-      .groupBy(song.id)
+      .groupBy(song.id, story.id, latestAttempt.prompt)
       .orderBy(desc(lastPlayedAtExpr))
       .limit(limit)
       .offset(offset);

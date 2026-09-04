@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { websiteConfig } from '@/config/website';
+import { useMounted } from '@/hooks/ui/use-mounted';
 import { LocaleLink, useLocalePathname, useLocaleRouter } from '@/i18n/navigation';
 import { LOCALES, routing } from '@/i18n/routing';
 import { authClient } from '@/lib/auth-client';
@@ -37,6 +38,7 @@ interface SidebarUserProps {
  * User navigation for the dashboard sidebar
  */
 export function SidebarUser({ user, className }: SidebarUserProps) {
+  const mounted = useMounted();
   const { setTheme } = useTheme();
   const router = useLocaleRouter();
   const { isMobile } = useSidebar();
@@ -78,6 +80,25 @@ export function SidebarUser({ user, className }: SidebarUserProps) {
       },
     });
   };
+
+  // Radix DropdownMenu 在 React 19.2 + Next 15.5 SSR 下可能生成不同的 useId。
+  // 服务端和客户端首帧先输出相同的静态账户按钮，挂载后再启用交互菜单。
+  if (!mounted) {
+    return (
+      <SidebarMenu className="border-t pt-4">
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" className="pointer-events-none cursor-default" aria-hidden="true" tabIndex={-1}>
+            <UserAvatar name={user.name} image={user.image} className="size-8 border" />
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold">{user.name}</span>
+              <span className="truncate text-xs">{user.email}</span>
+            </div>
+            <ChevronsUpDown className="ml-auto size-4" />
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
 
   return (
     <SidebarMenu className="border-t pt-4">

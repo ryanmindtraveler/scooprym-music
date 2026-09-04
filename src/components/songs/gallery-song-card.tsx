@@ -3,22 +3,24 @@
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
-import { cn, slugify } from '@/lib/utils';
+import { formatBusinessDate } from '@/lib/business-time';
+import { getSongCanonicalSlug } from '@/lib/song-seo';
+import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
-import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import { Eye, Loader2, Pause, Play } from 'lucide-react';
+import { Eye, Loader2, Music2, Pause, Play } from 'lucide-react';
 import Image from 'next/image';
 
 import type { Song } from '@/types/song';
 
 interface GallerySongCardProps {
   item: Song;
+  queue?: Song[];
   onSelect?: (song: Song) => void;
   priority?: boolean;
 }
 
-export function GallerySongCard({ item, onSelect, priority = false }: GallerySongCardProps) {
+export function GallerySongCard({ item, queue = [], onSelect, priority = false }: GallerySongCardProps) {
   const { isPlaying: globalIsPlaying, currentSong, play, pause } = usePlayerStore();
   const isThisSongPlaying = globalIsPlaying && currentSong?.id === item.id;
   const isThisLoading = false;
@@ -29,16 +31,29 @@ export function GallerySongCard({ item, onSelect, priority = false }: GallerySon
     if (isThisSongPlaying) {
       pause();
     } else if (item.audioUrl) {
-      play({
-        id: item.id,
-        title: item.title,
-        audioUrl: item.audioUrl!,
-        coverImageUrl: item.coverImageUrl,
-        artist: 'AI Generated',
-        newsSummary: item.newsSummary || undefined,
-        newsContent: item.sourceText || undefined,
-        newsLink: item.sourceUrl || undefined,
+      const toPlayerSong = (song: Song) => ({
+        id: song.id,
+        title: song.title,
+        audioUrl: song.audioUrl || '',
+        coverImageUrl: song.coverImageUrl,
+        artist: 'ScoopRYM',
+        newsSummary: song.newsSummary || undefined,
+        newsContent: song.sourceText || undefined,
+        newsLink: song.sourceUrl || undefined,
       });
+      play(
+        {
+          id: item.id,
+          title: item.title,
+          audioUrl: item.audioUrl!,
+          coverImageUrl: item.coverImageUrl,
+          artist: 'AI Generated',
+          newsSummary: item.newsSummary || undefined,
+          newsContent: item.sourceText || undefined,
+          newsLink: item.sourceUrl || undefined,
+        },
+        queue.map(toPlayerSong)
+      );
     }
   };
 
@@ -52,16 +67,13 @@ export function GallerySongCard({ item, onSelect, priority = false }: GallerySon
   let formattedDate = 'Recent';
   try {
     if (item.createdAt) {
-      formattedDate = format(new Date(item.createdAt), 'MMM d');
+      formattedDate = formatBusinessDate(item.createdAt, { month: 'short', day: 'numeric' });
     }
   } catch (e) {
     // Fallback
   }
 
-  // Generate SEO-friendly Slug: "song-title-uuid"
-  const titleSlug = slugify(item.title || 'song');
-  // Use full UUID with hyphens for maximum safety and compatibility
-  const songUrl = `/songs/${titleSlug}-${item.id}`;
+  const songUrl = `/songs/${getSongCanonicalSlug(item)}`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
@@ -146,22 +158,22 @@ export function GallerySongCard({ item, onSelect, priority = false }: GallerySon
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-1 flex-col px-5 pt-4 pb-5 relative">
+        <div className="relative flex flex-1 flex-col px-4 pb-3.5 pt-3">
           {/* News Snippet - Editorial Quote Style */}
           <LocaleLink
             href={songUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-left w-full focus:outline-none mb-4 group/snippet"
+            className="group/snippet mb-2.5 block w-full text-left focus:outline-none"
           >
-            <div className="relative bg-rose-50/50 dark:bg-rose-950/20 p-3.5 rounded-xl hover:bg-rose-100/50 dark:hover:bg-rose-900/30 transition-all group/report shadow-sm">
-              <p className="text-sm font-medium text-rose-950 dark:text-rose-50 leading-relaxed line-clamp-3 group-hover/snippet:text-rose-700 dark:group-hover/snippet:text-rose-300 transition-colors">
+            <div className="group/report relative rounded-[10px] bg-rose-50/50 px-3 py-2.5 shadow-sm transition-colors hover:bg-rose-100/50 dark:bg-rose-950/20 dark:hover:bg-rose-900/30">
+              <p className="line-clamp-3 text-[13px] font-medium leading-[1.35] text-rose-950 transition-colors group-hover/snippet:text-rose-700 dark:text-rose-50 dark:group-hover/snippet:text-rose-300">
                 {description}
               </p>
             </div>
           </LocaleLink>
 
-          {/* Title - Clean Editorial Style */}
+          {/* Song information */}
           <div className="mb-1">
             <LocaleLink
               href={songUrl}
@@ -174,29 +186,30 @@ export function GallerySongCard({ item, onSelect, priority = false }: GallerySon
               }}
               className="block text-left w-full focus:outline-none group/title"
             >
-              <h3 className="line-clamp-2 text-sm font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-[1.2] group-hover:text-pink-600 transition-colors">
-                {item.title}
-              </h3>
-            </LocaleLink>
-          </div>
-
-          {/* Music Meta (Genre / Stats) */}
-          <div className="flex items-center gap-3 text-xs text-gray-400 font-medium">
-            {/* ... existing stats ... */}
-            <div className="flex items-center gap-1">
-              <div className="flex gap-0.5 h-3 items-end">
-                <div className="w-0.5 h-1.5 bg-pink-500 rounded-full animate-[music-bar_1s_ease-in-out_infinite]" />
-                <div className="w-0.5 h-3 bg-pink-500 rounded-full animate-[music-bar_1.2s_ease-in-out_infinite_0.1s]" />
-                <div className="w-0.5 h-2 bg-pink-500 rounded-full animate-[music-bar_0.8s_ease-in-out_infinite_0.2s]" />
+              <div className="flex items-start gap-1.5">
+                <Music2 className="mt-px size-3.5 shrink-0 text-pink-500" aria-hidden="true" />
+                <h3 className="line-clamp-2 text-[13px] font-bold leading-[1.18] tracking-tight text-slate-900 transition-colors group-hover:text-pink-600 dark:text-slate-100">
+                  {item.title}
+                </h3>
               </div>
-              <span>Audio</span>
+            </LocaleLink>
+
+            <div className="mt-1 flex items-center gap-2 text-[11px] font-medium leading-none text-gray-400">
+              <div className="flex items-center gap-1">
+                <div className="flex gap-0.5 h-3 items-end">
+                  <div className="w-0.5 h-1.5 bg-pink-500 rounded-full animate-[music-bar_1s_ease-in-out_infinite]" />
+                  <div className="w-0.5 h-3 bg-pink-500 rounded-full animate-[music-bar_1.2s_ease-in-out_infinite_0.1s]" />
+                  <div className="w-0.5 h-2 bg-pink-500 rounded-full animate-[music-bar_0.8s_ease-in-out_infinite_0.2s]" />
+                </div>
+                <span>Audio</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <div className="flex items-center gap-1">
+                <Eye className="size-3" /> {item.plays || 0}
+              </div>
+              <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <span>{formattedDate}</span>
             </div>
-            <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-            <div className="flex items-center gap-1">
-              <Eye className="size-3" /> {item.plays || 0}
-            </div>
-            <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-            <span>{formattedDate}</span>
           </div>
         </div>
       </div>

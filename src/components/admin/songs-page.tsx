@@ -3,10 +3,12 @@
 import { SongsTable } from '@/components/admin/songs-table';
 import { useAdminSongs } from '@/hooks/admin/use-admin-songs';
 import type { SortingState } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { parseAsIndex, parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { useMemo } from 'react';
 
 export function SongsPageClient() {
+  const t = useTranslations('Dashboard.admin.publish');
   const [{ page, pageSize, search, sortId, sortDesc, status }, setQueryStates] = useQueryStates({
     page: parseAsIndex.withDefault(0),
     pageSize: parseAsInteger.withDefault(10),
@@ -19,9 +21,10 @@ export function SongsPageClient() {
   const sorting: SortingState = useMemo(() => [{ id: sortId, desc: Boolean(sortDesc) }], [sortId, sortDesc]);
 
   // Cast string to specific union type
-  const filterStatus = (['all', 'published', 'unpublished'].includes(status) ? status : 'all') as
+  const filterStatus = (['all', 'published', 'scheduled', 'unpublished'].includes(status) ? status : 'all') as
     | 'all'
     | 'published'
+    | 'scheduled'
     | 'unpublished';
 
   const { data, isLoading } = useAdminSongs(page, pageSize, search, sorting, filterStatus);
@@ -35,10 +38,10 @@ export function SongsPageClient() {
   }, [data?.items]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Song Publishing</h1>
-        <p className="text-muted-foreground">Manage and publish official songs to the Trending Gallery.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
       <SongsTable

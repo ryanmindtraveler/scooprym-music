@@ -79,22 +79,8 @@ export const featuresContent: Record<string, FeatureContent> = {
       'Turn bizarre public behavior, weird social stories, and absurd real-world situations into satirical songs with stronger social commentary.'
     ),
     keywords: {
-      en: [
-        'drama song',
-        'internet drama song',
-        'social commentary song',
-        'meme song',
-        'comedy song',
-        'funny song',
-      ],
-      zh: [
-        'drama song',
-        'internet drama song',
-        'social commentary song',
-        'meme song',
-        'comedy song',
-        'funny song',
-      ],
+      en: ['drama song', 'internet drama song', 'social commentary song', 'meme song', 'comedy song', 'funny song'],
+      zh: ['drama song', 'internet drama song', 'social commentary song', 'meme song', 'comedy song', 'funny song'],
     },
     intro: {
       en: [
@@ -385,22 +371,8 @@ export const featuresContent: Record<string, FeatureContent> = {
       'Turn celebrity gossip, influencer meltdowns, apology videos, and public feuds into Meme Song with harder punchlines and diss-track energy.'
     ),
     keywords: {
-      en: [
-        'gossip song',
-        'drama song',
-        'meme song',
-        'diss track',
-        'diss track generator',
-        'AI diss track generator',
-      ],
-      zh: [
-        'gossip song',
-        'drama song',
-        'meme song',
-        'diss track',
-        'diss track generator',
-        'AI diss track generator',
-      ],
+      en: ['gossip song', 'drama song', 'meme song', 'diss track', 'diss track generator', 'AI diss track generator'],
+      zh: ['gossip song', 'drama song', 'meme song', 'diss track', 'diss track generator', 'AI diss track generator'],
     },
     intro: {
       en: [
@@ -549,22 +521,8 @@ export const featuresContent: Record<string, FeatureContent> = {
       'Turn headlines, awkward interviews, local news clips, and corporate blunders into Meme Song with strong replay value.'
     ),
     keywords: {
-      en: [
-        'headline song',
-        'news song',
-        'drama song',
-        'meme song',
-        'meme song generator',
-        'headline song generator',
-      ],
-      zh: [
-        'headline song',
-        'news song',
-        'drama song',
-        'meme song',
-        'meme song generator',
-        'headline song generator',
-      ],
+      en: ['headline song', 'news song', 'drama song', 'meme song', 'meme song generator', 'headline song generator'],
+      zh: ['headline song', 'news song', 'drama song', 'meme song', 'meme song generator', 'headline song generator'],
     },
 
     intro: {

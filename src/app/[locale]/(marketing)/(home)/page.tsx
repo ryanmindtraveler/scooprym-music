@@ -1,23 +1,26 @@
+import { BiggestDrops } from '@/components/blocks/daily/biggest-drops';
+import { DailyFaqSection } from '@/components/blocks/daily/daily-faq';
+import { DailyHome } from '@/components/blocks/daily/daily-home';
+import { SectionWaveDivider } from '@/components/blocks/daily/section-wave-frame';
+import { VoteSubmitSection } from '@/components/blocks/daily/vote-submit';
+import GallerySection from '@/components/blocks/gallery/gallery';
 import HeroSection from '@/components/blocks/hero/hero';
 import { JsonLd } from '@/components/seo/json-ld';
 import { getDb } from '@/db';
-import { song as songTable, user } from '@/db/schema';
-import { songFavorite } from '@/db/schema';
+import { songPlay, songReaction, song as songTable, story as storyTable, user } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { routing } from '@/i18n/routing';
+import { getBusinessDayStart } from '@/lib/business-time';
 import { constructMetadata } from '@/lib/metadata';
 import { isMissingPublishFlagError } from '@/lib/song-publish';
-import { getSession } from '@/lib/server';
+import { type SongReactionType, isSongReactionType } from '@/lib/song-reactions';
+import { getSongCanonicalSlug } from '@/lib/song-seo';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
-import { slugify } from '@/lib/utils'; // Re-importing utils
 import type { Song } from '@/types/song';
-import { and, desc, eq, isNull, notInArray, or } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, notInArray, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { FaqSection } from '@/components/blocks/faqs/faqs';
-import Features3Section from '@/components/blocks/features/features3';
-import GallerySection from '@/components/blocks/gallery/gallery';
-import { MusicGeneratorBlock } from '@/components/blocks/generator/music-generator';
-import PricingSection from '@/components/blocks/pricing/pricing';
 
 /**
  * https://next-intl.dev/docs/environments/actions-metadata-route-handlers#metadata-api
@@ -51,6 +54,7 @@ export default async function HomePage(props: HomePageProps) {
   const tHome = await getTranslations({ locale, namespace: 'HomePage' });
 
   const db = await getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
   const failedStatuses: string[] = [
     'failed_generation',
     'processing_queue_failed',
@@ -61,21 +65,33 @@ export default async function HomePage(props: HomePageProps) {
 
   // Find songs where userId is in the list of admin users
   // "The gallery must show admin role user's songs automatically"
-  let adminSongRows: Array<{ song: typeof songTable.$inferSelect }> = [];
+  let adminSongRows: Array<{
+    song: typeof songTable.$inferSelect;
+    story: typeof storyTable.$inferSelect;
+    prompt: string | null;
+    processingStatus: string | null;
+  }> = [];
   try {
     adminSongRows = await db
-      .select()
+      .select({
+        song: songTable,
+        story: storyTable,
+        prompt: latestAttempt.prompt,
+        processingStatus: latestAttempt.processingStatus,
+      })
       .from(songTable)
       .innerJoin(user, eq(songTable.userId, user.id))
+      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
           eq(user.role, 'admin'),
           eq(songTable.isPublished, true),
-          or(isNull(songTable.processingStatus), notInArray(songTable.processingStatus, failedStatuses))
+          notInArray(latestAttempt.processingStatus, failedStatuses)
         )
       )
-      .orderBy(desc(songTable.createdAt))
-      .limit(15);
+      .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.updatedAt}, ${songTable.createdAt})`))
+      .limit(100);
   } catch (error) {
     if (!isMissingPublishFlagError(error)) {
       throw error;
@@ -83,71 +99,106 @@ export default async function HomePage(props: HomePageProps) {
 
     console.warn('[marketing/home] is_published column missing, fallback query enabled');
     adminSongRows = await db
-      .select()
+      .select({
+        song: songTable,
+        story: storyTable,
+        prompt: latestAttempt.prompt,
+        processingStatus: latestAttempt.processingStatus,
+      })
       .from(songTable)
       .innerJoin(user, eq(songTable.userId, user.id))
-      .where(and(eq(user.role, 'admin'), or(isNull(songTable.processingStatus), notInArray(songTable.processingStatus, failedStatuses))))
+      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+      .where(and(eq(user.role, 'admin'), notInArray(latestAttempt.processingStatus, failedStatuses)))
       .orderBy(desc(songTable.createdAt))
-      .limit(15);
+      .limit(100);
   }
-  const adminSongs = adminSongRows.map((row) => row.song);
+  const adminSongs = adminSongRows.map((row) => ({
+    ...row.song,
+    prompt: row.prompt,
+    processingStatus: row.processingStatus,
+    sourceUrl: row.story.sourceUrl,
+    sourceText: row.story.sourceText,
+    newsSummary: row.story.newsSummary,
+  }));
 
-  // Fetch current user session to check for likes
-  const session = await getSession();
-  const userId = session?.user?.id;
-  let likedSongIds = new Set<string>();
+  const now = new Date();
+  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weeklyPlayRows =
+    adminSongs.length > 0
+      ? await db
+          .select({
+            songId: songPlay.songId,
+            count: count(),
+          })
+          .from(songPlay)
+          .where(
+            and(
+              inArray(
+                songPlay.songId,
+                adminSongs.map((song) => song.id)
+              ),
+              gte(songPlay.createdAt, weekStart)
+            )
+          )
+          .groupBy(songPlay.songId)
+      : [];
+  const weeklyPlaysBySong = new Map(weeklyPlayRows.map((row) => [row.songId, Number(row.count) || 0]));
 
-  if (userId) {
-    const favorites = await db
-      .select({ songId: songFavorite.songId })
-      .from(songFavorite)
-      .where(eq(songFavorite.userId, userId));
-    likedSongIds = new Set(favorites.map((f) => f.songId));
+  const reactionRows =
+    adminSongs.length > 0
+      ? await db
+          .select({
+            songId: songReaction.songId,
+            reactionType: songReaction.reactionType,
+            count: count(),
+          })
+          .from(songReaction)
+          .where(
+            inArray(
+              songReaction.songId,
+              adminSongs.map((song) => song.id)
+            )
+          )
+          .groupBy(songReaction.songId, songReaction.reactionType)
+      : [];
+
+  const topReactionBySong = new Map<string, { type: SongReactionType; count: number }>();
+  for (const row of reactionRows) {
+    if (!isSongReactionType(row.reactionType)) continue;
+    const reactionCount = Number(row.count) || 0;
+    const current = topReactionBySong.get(row.songId);
+    if (!current || reactionCount > current.count) {
+      topReactionBySong.set(row.songId, { type: row.reactionType, count: reactionCount });
+    }
   }
 
   const serializedSongs = adminSongs.map((song) => ({
     ...song,
-    isLiked: likedSongIds.has(song.id),
     createdAt: song.createdAt ? song.createdAt.toISOString() : new Date().toISOString(),
     updatedAt: song.updatedAt ? song.updatedAt.toISOString() : new Date().toISOString(),
+    weeklyPlays: weeklyPlaysBySong.get(song.id) || 0,
+    topReaction: topReactionBySong.get(song.id) || null,
   })) as unknown as Song[];
 
-  // Handle shared song via query param ?s=xxxx
-  const searchParams = await props.searchParams;
-  const sharedSongId = searchParams.s as string | undefined;
-  let sharedSong: Song | null = null;
-
-  if (sharedSongId) {
-    const [foundSong] = await db
-      .select()
-      .from(songTable)
-      .where(
-        and(
-          eq(songTable.id, sharedSongId),
-          or(
-            isNull(songTable.processingStatus),
-            notInArray(songTable.processingStatus, failedStatuses)
-          )
-        )
-      )
-      .limit(1);
-
-    if (foundSong) {
-      // Check if logged in user liked this shared song
-      let isSharedSongLiked = false;
-      if (userId) {
-        // We already have likedSongIds set, utilize it
-        isSharedSongLiked = likedSongIds.has(foundSong.id);
-      }
-
-      sharedSong = {
-        ...foundSong,
-        isLiked: isSharedSongLiked,
-        createdAt: foundSong.createdAt ? foundSong.createdAt.toISOString() : new Date().toISOString(),
-        updatedAt: foundSong.updatedAt ? foundSong.updatedAt.toISOString() : new Date().toISOString(),
-      } as unknown as Song;
-    }
-  }
+  // Today 区按正式发布时间排序，并保证同一 Story 只出现一个歌曲版本。
+  const uniqueStorySongs = serializedSongs.filter((song, index, songs) => {
+    const storyKey = song.storyId || song.id;
+    return songs.findIndex((candidate) => (candidate.storyId || candidate.id) === storyKey) === index;
+  });
+  const businessDayStart = getBusinessDayStart(now);
+  const freshTodaySongs = uniqueStorySongs.filter((song) => {
+    const publishedAt = song.publishedAt ? new Date(song.publishedAt) : null;
+    return Boolean(publishedAt && publishedAt >= businessDayStart);
+  });
+  const freshSongIds = new Set(freshTodaySongs.map((song) => song.id));
+  const dailySongs = [...freshTodaySongs, ...uniqueStorySongs.filter((song) => !freshSongIds.has(song.id))].slice(0, 4);
+  const freshnessLabel =
+    freshTodaySongs.length >= 4
+      ? 'Fresh Today'
+      : freshTodaySongs.length > 0
+        ? `${Math.min(freshTodaySongs.length, 4)} New Today`
+        : 'Latest Drops';
 
   // Prepare Structured Data (JSON-LD) for the Gallery
   const jsonLd = {
@@ -164,7 +215,7 @@ export default async function HomePage(props: HomePageProps) {
         name: song.title,
         image: song.coverImageUrl || undefined,
         datePublished: song.createdAt,
-        url: getUrlWithLocale(`/songs/${slugify(song.title || 'song')}-${song.id}`, locale),
+        url: getUrlWithLocale(`/songs/${getSongCanonicalSlug(song)}`, routing.defaultLocale),
         byArtist: {
           '@type': 'MusicGroup',
           name: 'ScoopRYM',
@@ -178,19 +229,19 @@ export default async function HomePage(props: HomePageProps) {
     <>
       <JsonLd data={jsonLd} />
       <div className="flex flex-col">
-        <HeroSection />
-
-        {/* Music Generator Section */}
-        <MusicGeneratorBlock />
-
-        {/* Gallery Section with potential initial modal */}
-        <GallerySection songs={serializedSongs} initialSelectedSong={sharedSong} />
-
-        <Features3Section />
-
-        <PricingSection />
-
-        <FaqSection />
+        <HeroSection featuredSong={serializedSongs[0]} songs={serializedSongs} />
+        <SectionWaveDivider from="hero" to="today" />
+        <DailyHome songs={dailySongs} freshnessLabel={freshnessLabel} />
+        <SectionWaveDivider from="today" to="biggest" />
+        <BiggestDrops songs={serializedSongs} />
+        <SectionWaveDivider from="biggest" to="paper" />
+        <VoteSubmitSection mode="vote" />
+        <SectionWaveDivider from="paper" to="gallery" />
+        <GallerySection songs={serializedSongs} />
+        <SectionWaveDivider from="gallery" to="submit" />
+        <VoteSubmitSection mode="submit" />
+        <SectionWaveDivider from="submit" to="paper" />
+        <DailyFaqSection />
       </div>
     </>
   );

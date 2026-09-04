@@ -192,10 +192,10 @@ export default async function FeaturePage({ params }: Props) {
 
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mb-10">
-            <Link
-              href={`${getUrlWithLocale('/', locale as Locale)}#features`}
-              className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-slate-900"
-            >
+          <Link
+            href={`${getUrlWithLocale('/', locale as Locale)}#features`}
+            className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-slate-900"
+          >
             <span className="transition-transform group-hover:-translate-x-1">{'<-'}</span>
             {isZh ? '返回特性卡片' : 'Back to feature cards'}
           </Link>
@@ -320,60 +320,60 @@ export default async function FeaturePage({ params }: Props) {
                   const songUrl = archiveSongUrls[idx];
 
                   return (
-                  <article
-                    key={item.title}
-                    className="group relative flex h-full flex-col overflow-hidden rounded-[3rem] border border-white/80 bg-white/60 p-10 shadow-xl shadow-slate-200/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-pink-200/50 backdrop-blur-xl"
-                  >
-                    {/* Background Index Decor */}
-                    <div className="absolute -right-4 -top-8 select-none font-mono text-[10rem] font-black leading-none text-slate-900/[0.03] transition-all duration-500 group-hover:text-pink-500/[0.05] group-hover:-translate-y-2">
-                      {String(idx + 1).padStart(2, '0')}
-                    </div>
-
-                    <div className="relative z-10 flex flex-col h-full">
-                      <div className="mb-8 flex items-center justify-between">
-                        <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-pink-500/10 to-purple-500/10 text-pink-500 ring-1 ring-pink-500/20 shadow-sm">
-                          <ZapIcon className="size-7" />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-pink-500/60">
-                          LOG_ID: {((idx + 1) * 1337).toString(36).toUpperCase()}
-                        </span>
+                    <article
+                      key={item.title}
+                      className="group relative flex h-full flex-col overflow-hidden rounded-[3rem] border border-white/80 bg-white/60 p-10 shadow-xl shadow-slate-200/40 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-pink-200/50 backdrop-blur-xl"
+                    >
+                      {/* Background Index Decor */}
+                      <div className="absolute -right-4 -top-8 select-none font-mono text-[10rem] font-black leading-none text-slate-900/[0.03] transition-all duration-500 group-hover:text-pink-500/[0.05] group-hover:-translate-y-2">
+                        {String(idx + 1).padStart(2, '0')}
                       </div>
 
-                      <h3 className="text-3xl font-black leading-[1.1] tracking-tight text-slate-900 group-hover:text-pink-600 transition-colors">
-                        {item.title}
-                      </h3>
-
-                      <div className="mt-4 h-1 w-12 rounded-full bg-linear-to-r from-pink-500 to-transparent transition-all duration-500 group-hover:w-24 group-hover:from-pink-400 group-hover:to-pink-600" />
-
-                      <p className="mt-8 text-lg font-bold leading-relaxed text-slate-600 grow group-hover:text-slate-900 transition-colors">
-                        "{item.description}"
-                      </p>
-
-                      <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-8">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            {isZh ? '收录日期' : 'Detection Date'}
-                          </span>
-                          <span className="text-sm font-black text-pink-500">
-                            {isZh ? '2025/26 档案分析' : '2025/26 ANALYSIS'}
-                          </span>
-                        </div>
-                        {songUrl ? (
-                          <Link
-                            href={songUrl}
-                            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200"
-                            aria-label={`Open song for ${item.title}`}
-                          >
-                            <ArrowRightIcon className="size-5" />
-                          </Link>
-                        ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200">
-                            <ArrowRightIcon className="size-5" />
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="mb-8 flex items-center justify-between">
+                          <div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-pink-500/10 to-purple-500/10 text-pink-500 ring-1 ring-pink-500/20 shadow-sm">
+                            <ZapIcon className="size-7" />
                           </div>
-                        )}
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-pink-500/60">
+                            LOG_ID: {((idx + 1) * 1337).toString(36).toUpperCase()}
+                          </span>
+                        </div>
+
+                        <h3 className="text-3xl font-black leading-[1.1] tracking-tight text-slate-900 group-hover:text-pink-600 transition-colors">
+                          {item.title}
+                        </h3>
+
+                        <div className="mt-4 h-1 w-12 rounded-full bg-linear-to-r from-pink-500 to-transparent transition-all duration-500 group-hover:w-24 group-hover:from-pink-400 group-hover:to-pink-600" />
+
+                        <p className="mt-8 text-lg font-bold leading-relaxed text-slate-600 grow group-hover:text-slate-900 transition-colors">
+                          "{item.description}"
+                        </p>
+
+                        <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-8">
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              {isZh ? '收录日期' : 'Detection Date'}
+                            </span>
+                            <span className="text-sm font-black text-pink-500">
+                              {isZh ? '2025/26 档案分析' : '2025/26 ANALYSIS'}
+                            </span>
+                          </div>
+                          {songUrl ? (
+                            <Link
+                              href={songUrl}
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200"
+                              aria-label={`Open song for ${item.title}`}
+                            >
+                              <ArrowRightIcon className="size-5" />
+                            </Link>
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400 transition-all duration-300 group-hover:rotate-45 group-hover:border-pink-500 group-hover:bg-pink-500 group-hover:text-white group-hover:shadow-lg group-hover:shadow-pink-200">
+                              <ArrowRightIcon className="size-5" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </article>
+                    </article>
                   );
                 })}
               </div>
@@ -913,9 +913,7 @@ export default async function FeaturePage({ params }: Props) {
 
           <section className="rounded-[2.5rem] border border-white/60 bg-white/40 p-10 text-center shadow-2xl shadow-slate-200/50 backdrop-blur-3xl sm:p-16">
             <h2 className="text-3xl font-black tracking-tight sm:text-5xl text-slate-900 leading-[1.1]">
-              {isZh
-                ? '准备好将这个视角转化为 Diss Track 或梗歌了吗？'
-                : 'Ready to turn this angle into Meme Song?'}
+              {isZh ? '准备好将这个视角转化为 Diss Track 或梗歌了吗？' : 'Ready to turn this angle into Meme Song?'}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600 font-bold sm:text-xl">
               {isZh

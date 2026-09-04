@@ -8,11 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function slugify(text: string): string {
   if (!text) return 'song';
 
-  let slug = text
-    .toString()
-    .normalize('NFKD')
-    .trim()
-    .toLowerCase();
+  let slug = text.toString().normalize('NFKD').trim().toLowerCase();
 
   // Strip combining marks after normalization so accented characters become stable ASCII-friendly slugs.
   slug = slug.replace(/[\u0300-\u036f]/g, '');

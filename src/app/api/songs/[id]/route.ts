@@ -1,10 +1,11 @@
 import { getDb } from '@/db/index';
-import { song } from '@/db/schema';
+import { generationAttempt, song, story } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { buildStoryBrief } from '@/features/full-songs/services/full-songs-helpers';
 import { getSession } from '@/lib/server';
 import { getSongSourceCompatFields, getSongSourceSummary } from '@/lib/song-source';
 import { deleteFile } from '@/storage';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -18,7 +19,20 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
 
     const { id } = params;
     const db = await getDb();
-    const [row] = await db.select().from(song).where(and(eq(song.id, id), eq(song.userId, userId)));
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
+    const [row] = await db
+      .select({
+        song,
+        sourceText: story.sourceText,
+        sourceUrl: story.sourceUrl,
+        newsSummary: story.newsSummary,
+        prompt: latestAttempt.prompt,
+        processingStatus: latestAttempt.processingStatus,
+      })
+      .from(song)
+      .innerJoin(story, eq(story.id, song.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(and(eq(song.id, id), eq(song.userId, userId)));
 
     if (!row) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
@@ -29,7 +43,9 @@ export async function GET(request: NextRequest, props: { params: Promise<{ id: s
     return NextResponse.json({
       success: true,
       data: {
-        ...row,
+        ...row.song,
+        prompt: row.prompt,
+        processingStatus: row.processingStatus,
         ...getSongSourceCompatFields({
           sourceSummary: row.newsSummary,
           sourceText: row.sourceText,
@@ -55,22 +71,63 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
 
     const { id } = params;
     const db = await getDb();
-    const [row] = await db.select().from(song).where(and(eq(song.id, id), eq(song.userId, userId)));
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
+    const [row] = await db
+      .select({
+        id: song.id,
+        audioKey: song.audioKey,
+        coverImageKey: song.coverImageKey,
+        processingStatus: latestAttempt.processingStatus,
+      })
+      .from(song)
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
+      .where(and(eq(song.id, id), eq(song.userId, userId)));
     if (!row) {
       return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 });
     }
 
-    if (row.audioKey) {
-      try {
-        await deleteFile(row.audioKey);
-      } catch (e) {
-        console.error('delete audio error', e);
-      }
+    const activeStatuses = ['queued', 'processing', 'audio_uploaded'];
+    if (activeStatuses.includes(row.processingStatus || '')) {
+      return NextResponse.json(
+        { success: false, error: 'A song cannot be deleted while generation is still in progress' },
+        { status: 409 }
+      );
     }
 
-    await db.delete(song).where(and(eq(song.id, id), eq(song.userId, userId)));
+    const [deleted] = await db
+      .delete(song)
+      .where(
+        and(
+          eq(song.id, id),
+          eq(song.userId, userId),
+          sql`not exists (
+            select 1
+            from ${generationAttempt}
+            where ${generationAttempt.songId} = ${song.id}
+              and ${generationAttempt.processingStatus} in ('queued', 'processing', 'audio_uploaded')
+          )`
+        )
+      )
+      .returning({ audioKey: song.audioKey, coverImageKey: song.coverImageKey });
+
+    if (!deleted) {
+      return NextResponse.json(
+        { success: false, error: 'Song state changed; wait for generation to finish and try again' },
+        { status: 409 }
+      );
+    }
+
+    const storageKeys = [deleted.audioKey, deleted.coverImageKey].filter((key): key is string => !!key);
+    const cleanupResults = await Promise.allSettled(storageKeys.map((key) => deleteFile(key)));
+    cleanupResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`delete song storage cleanup failed for ${storageKeys[index]}`, result.reason);
+      }
+    });
+
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error?.message || 'Failed to delete song' }, { status: 500 });
+  } catch (error) {
+    console.error('delete song error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete song' }, { status: 500 });
   }
 }

@@ -1,0 +1,2 @@
+DROP INDEX "scooprym"."story_candidate_vote_user_day_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "story_candidate_vote_user_day_candidate_unique" ON "scooprym"."story_candidate_vote" USING btree ("user_id","vote_day","candidate_id");

@@ -1,5 +1,6 @@
 'use client';
 
+import { SidebarUser } from '@/components/dashboard/sidebar-user';
 import { ScoopRYMLogo } from '@/components/layout/logo-scooprym';
 import {
   Sidebar,
@@ -14,55 +15,76 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, LogOut, Music2, Settings, Users } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
+import { Routes } from '@/routes';
+import type { User } from 'better-auth';
+import { Flag, LayoutDashboard, Music2, Radar, Send, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type * as React from 'react';
 
-// Defines the admin navigation structure
 const adminNav = [
   {
-    title: 'Dashboard',
-    url: '/admin/dashboard',
+    key: 'overview',
+    url: Routes.AdminDashboard,
     icon: LayoutDashboard,
   },
   {
-    title: 'User Management',
-    url: '/admin/users',
-    icon: Users,
+    key: 'storyRadar',
+    url: Routes.AdminStoryRadar,
+    icon: Radar,
   },
   {
-    title: 'Music Management',
-    url: '/admin/songs',
+    key: 'createSong',
+    url: Routes.AdminCreate,
     icon: Music2,
   },
-];
+  {
+    key: 'publishSongs',
+    url: Routes.AdminSongs,
+    icon: Send,
+  },
+  {
+    key: 'commentReports',
+    url: Routes.AdminComments,
+    icon: Flag,
+  },
+  {
+    key: 'users',
+    url: Routes.AdminUsers,
+    icon: Users,
+  },
+] as const;
 
-export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname();
+interface AdminSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user: User;
+}
+
+export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
+  const pathname = useLocalePathname();
+  const t = useTranslations('Dashboard.admin.shell');
 
   return (
     <Sidebar {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <Link href="/" className="flex items-center gap-2">
+          <LocaleLink href={Routes.Root} className="flex items-center gap-2">
             <ScoopRYMLogo className="h-8 w-8" />
-            <span className="font-bold text-lg tracking-tight">Admin Console</span>
-          </Link>
+            <span className="font-semibold text-base tracking-tight">{t('brand')}</span>
+          </LocaleLink>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('group')}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {adminNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
+                    <LocaleLink href={item.url}>
                       <item.icon className="size-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                      <span>{t(item.key)}</span>
+                    </LocaleLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -71,16 +93,7 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/" className="text-muted-foreground hover:text-foreground">
-                <LogOut className="size-4" />
-                <span>Return to App</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

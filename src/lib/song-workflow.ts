@@ -1,410 +1,1038 @@
 /**
- * @file song-workflow.ts (Moved from services/song.service.ts)
- * @description Encapsulates song management logic, including background processing, storage, and database updates.
+ * @file song-workflow.ts
+ * @description 管理音乐生成请求校验、任务幂等指纹与持久化 Worker 状态机。
  */
 
-import { dataUrlToImageBuffer } from '@/ai/image/lib/cover-generation';
+import { createHash } from 'crypto';
+import { lookup } from 'node:dns/promises';
+import { BlockList, isIP } from 'node:net';
+import { MINIMAX_MUSIC_MODEL } from '@/ai/config/models';
+import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { getDb } from '@/db/index';
-import { creditTransaction, song as songTable } from '@/db/schema';
-import { uploadFile } from '@/storage';
-import { and, eq, like, sql } from 'drizzle-orm';
+import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
+import { audioInputHash, findAudioCheckpoint } from '@/lib/audio-checkpoint';
+import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
+import {
+  completeWorkflowStage,
+  failWorkflowStep,
+  getWorkflowRunBySongId,
+  startWorkflowStage,
+} from '@/lib/song-creation-workflow';
+import { inspectSongProduct, readImageDimensions } from '@/lib/song-product-check';
+import { deleteFile, uploadFile } from '@/storage';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { performance } from 'perf_hooks';
+import { z } from 'zod';
+
+export const MAX_GENERATED_AUDIO_BYTES = 25 * 1024 * 1024;
+const AUDIO_DOWNLOAD_TIMEOUT_MS = 120_000;
+const MAX_AUDIO_REDIRECTS = 5;
+const ACTIVE_JOB_STATUSES = [
+  'processing',
+  'generating_audio',
+  'uploading_audio',
+  'audio_uploaded',
+  'generating_cover',
+  'finalizing',
+] as const;
+const FALLBACK_COVER_URL = '/images/funny-censored-fallback.png';
+
+type HostnameLookup = (hostname: string) => Promise<ReadonlyArray<{ address: string; family: number }>>;
+
+const lookupHostAddresses: HostnameLookup = async (hostname) => lookup(hostname, { all: true, verbatim: true });
+
+const blockedAudioV4Addresses = new BlockList();
+const blockedAudioV6Addresses = new BlockList();
+
+for (const [network, prefix] of [
+  ['0.0.0.0', 8],
+  ['10.0.0.0', 8],
+  ['100.64.0.0', 10],
+  ['127.0.0.0', 8],
+  ['169.254.0.0', 16],
+  ['172.16.0.0', 12],
+  ['192.0.0.0', 24],
+  ['192.0.2.0', 24],
+  ['192.88.99.0', 24],
+  ['192.168.0.0', 16],
+  ['198.18.0.0', 15],
+  ['198.51.100.0', 24],
+  ['203.0.113.0', 24],
+  ['224.0.0.0', 4],
+  ['240.0.0.0', 4],
+] as const) {
+  blockedAudioV4Addresses.addSubnet(network, prefix, 'ipv4');
+}
+
+for (const [network, prefix] of [
+  ['::', 128],
+  ['::1', 128],
+  ['::ffff:0:0', 96],
+  ['64:ff9b::', 96],
+  ['64:ff9b:1::', 48],
+  ['100::', 64],
+  ['2001::', 23],
+  ['2001:2::', 48],
+  ['2001:db8::', 32],
+  ['2002::', 16],
+  ['fc00::', 7],
+  ['fe80::', 10],
+  ['fec0::', 10],
+  ['ff00::', 8],
+] as const) {
+  blockedAudioV6Addresses.addSubnet(network, prefix, 'ipv6');
+}
+
+const optionalTrimmedText = (maxLength: number) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().trim().max(maxLength).optional()
+  );
+
+const optionalHttpUrl = z.preprocess(
+  (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+  z
+    .string()
+    .trim()
+    .max(2048)
+    .url()
+    .refine((value) => {
+      const parsed = new URL(value);
+      return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && !parsed.username && !parsed.password;
+    }, 'Only credential-free HTTP(S) source URLs are allowed')
+    .optional()
+);
+
+const promptBundleSchema = z
+  .object({
+    musicDirectionPrompt: z.string().trim().min(1).max(2000),
+    lyricsWritingPrompt: optionalTrimmedText(4000),
+    musicProductionPrompt: optionalTrimmedText(2000),
+    productionVariantId: optionalTrimmedText(100),
+    coverArtPrompt: optionalTrimmedText(4000),
+  })
+  .strict();
+
+const storyBriefSchema = z
+  .object({
+    summary: optionalTrimmedText(4000),
+    angle: optionalTrimmedText(2000),
+  })
+  .strict();
+
+export const musicGenerationRequestSchema = z
+  .object({
+    songId: z.string().uuid(),
+    workflowRunId: z.string().uuid().optional(),
+    // MiniMax 官方音乐接口的项目歌词上限为 3500 字符；入口明确拒绝超限，禁止静默裁剪。
+    lyrics: z.string().trim().min(10).max(3_500),
+    prompt: optionalTrimmedText(2000),
+    outputFormat: z.enum(['url', 'hex']).default('url'),
+    audioFormat: z.enum(['mp3', 'wav', 'pcm']).default('mp3'),
+    title: optionalTrimmedText(200),
+    sourceUrl: optionalHttpUrl,
+    sourceText: optionalTrimmedText(50_000),
+    sourceSummary: optionalTrimmedText(4000),
+    newsSummary: optionalTrimmedText(4000),
+    musicDirectionPrompt: optionalTrimmedText(2000),
+    musicProductionPrompt: optionalTrimmedText(2000),
+    productionVariantId: optionalTrimmedText(100),
+    coverArtPrompt: optionalTrimmedText(4000),
+    promptBundle: promptBundleSchema.optional(),
+    storyBrief: storyBriefSchema.optional(),
+    // 兼容现有客户端；异步任务始终由服务端决定执行方式。
+    useStream: z.boolean().optional(),
+  })
+  .strict();
+
+export type MusicGenerationRequest = z.infer<typeof musicGenerationRequestSchema>;
+export type AudioFormat = MusicGenerationRequest['audioFormat'];
+export type OutputFormat = MusicGenerationRequest['outputFormat'];
+
+export function cleanLyricsForGeneration(lyrics: string) {
+  const cleaned = normalizeStructuredLyrics(lyrics)
+    // 括号内可能是需要演唱的呼应、和声或短 ad-lib，官方音乐模型支持并能利用这些内容。
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  return cleaned.length >= 5 ? cleaned : lyrics.trim();
+}
 
 /**
- * Generate SEO-friendly filename for cover image
- * Format: person-event-uuid.ext
- * Example: taylor-swift-eras-tour-e707ddb3.png
+ * MiniMax 官方音乐接口接收最长 3500 字符的结构化歌词。
+ * 供应商边界只负责清理格式，绝不能改写、截断或删除已经通过编辑流程的歌词。
  */
-function generateCoverFilename(
-  title: string,
-  sourceText: string | undefined,
-  songId: string,
-  extension: string
-): string {
-  // Try to extract person/entity from title or sourceText
-  const content = `${title} ${sourceText || ''}`;
+export function prepareMiniMaxLyricsForGeneration(lyrics: string) {
+  return cleanLyricsForGeneration(lyrics);
+}
 
-  // Common name patterns (celebrities, politicians, etc.)
-  const namePatterns = [
-    // Full names (2-3 capitalized words)
-    /\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/,
-    // Single capitalized word that looks like a name
-    /\b([A-Z][a-z]{2,})\b/,
-  ];
+export function createMusicRequestFingerprint(request: MusicGenerationRequest) {
+  const effectiveSourceSummary = request.sourceSummary || request.newsSummary || request.storyBrief?.summary || '';
+  const effectiveDirection =
+    request.musicDirectionPrompt || request.promptBundle?.musicDirectionPrompt || request.prompt || '';
+  const effectiveProduction =
+    request.musicProductionPrompt ||
+    request.promptBundle?.musicProductionPrompt ||
+    request.prompt ||
+    effectiveDirection;
 
-  let person = '';
-  for (const pattern of namePatterns) {
-    const match = content.match(pattern);
-    if (match) {
-      person = match[1].toLowerCase().replace(/\s+/g, '-');
-      break;
+  const canonicalRequest = {
+    songId: request.songId,
+    workflowRunId: request.workflowRunId || '',
+    lyrics: request.lyrics,
+    prompt: request.prompt || '',
+    outputFormat: request.outputFormat,
+    audioFormat: request.audioFormat,
+    title: request.title || '',
+    sourceUrl: request.sourceUrl || '',
+    sourceText: request.sourceText || '',
+    sourceSummary: effectiveSourceSummary,
+    musicDirectionPrompt: effectiveDirection,
+    musicProductionPrompt: effectiveProduction,
+    productionVariantId: request.productionVariantId || request.promptBundle?.productionVariantId || '',
+    coverArtPrompt: request.coverArtPrompt || request.promptBundle?.coverArtPrompt || '',
+  };
+
+  return createHash('sha256').update(JSON.stringify(canonicalRequest), 'utf8').digest('hex');
+}
+
+export interface AudioFileDescriptor {
+  extension: 'mp3' | 'wav' | 'pcm';
+  mimeType: 'audio/mpeg' | 'audio/wav' | 'audio/L16';
+}
+
+export function getAudioFileDescriptor(audioFormat: AudioFormat): AudioFileDescriptor {
+  switch (audioFormat) {
+    case 'wav':
+      return { extension: 'wav', mimeType: 'audio/wav' };
+    case 'pcm':
+      return { extension: 'pcm', mimeType: 'audio/L16' };
+    default:
+      return { extension: 'mp3', mimeType: 'audio/mpeg' };
+  }
+}
+
+function assertAudioSignature(buffer: Buffer, audioFormat: AudioFormat) {
+  if (buffer.length === 0) {
+    throw new Error('Generated audio is empty');
+  }
+
+  if (audioFormat === 'wav') {
+    const hasWaveHeader =
+      buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WAVE';
+    if (!hasWaveHeader) {
+      throw new Error('Generated WAV has an invalid header');
     }
   }
 
-  // Extract event/topic from title
-  // Remove common words and extract key topic
-  const stopWords =
-    /\b(the|a|an|is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|shall|can|need|dare|ought|used|to|of|in|for|on|with|at|by|from|as|into|through|during|before|after|above|below|between|under|again|further|then|once|here|there|when|where|why|how|all|each|few|more|most|other|some|such|no|nor|not|only|own|same|so|than|too|very|just|now)\b/gi;
-
-  let event = title
-    .replace(stopWords, ' ')
-    .replace(/[^\w\s-]/g, ' ') // Remove special chars
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-'); // Convert spaces to hyphens
-
-  // Limit event length
-  event = event.slice(0, 50).replace(/-+$/, '');
-
-  // If no person extracted, use shortened UUID as person
-  if (!person) {
-    person = 'cover';
+  if (audioFormat === 'mp3') {
+    const hasId3Header = buffer.length >= 3 && buffer.subarray(0, 3).toString('ascii') === 'ID3';
+    const hasFrameSync = buffer.length >= 2 && buffer[0] === 0xff && (buffer[1] & 0xe0) === 0xe0;
+    if (!hasId3Header && !hasFrameSync) {
+      throw new Error('Generated MP3 has an invalid header');
+    }
   }
-
-  // Shorten UUID to first 8 chars for readability while maintaining uniqueness
-  const shortId = songId.slice(0, 8);
-
-  // Build filename: person-event-shortId.extension
-  const filename = `${person}-${event}-${shortId}.${extension}`;
-
-  return filename.replace(/-{2,}/g, '-').toLowerCase(); // Remove duplicate hyphens
 }
 
-export interface ProcessMusicOptions {
-  lyrics: string;
-  prompt?: string;
-  musicDirectionPrompt?: string;
-  coverArtPrompt?: string;
-  title?: string;
-  sourceText?: string;
-  sourceUrl?: string;
-  outputFormat: 'url' | 'hex';
-  audioFormat: 'mp3' | 'wav' | 'pcm';
-  songId: string;
-  userId: string;
+export function decodeGeneratedAudioHex(content: string, audioFormat: AudioFormat) {
+  const normalized = content.trim().replace(/^0x/i, '');
+  if (!normalized || normalized.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(normalized)) {
+    throw new Error('Generated audio contains invalid hexadecimal data');
+  }
+  if (normalized.length / 2 > MAX_GENERATED_AUDIO_BYTES) {
+    throw new Error('Generated audio exceeds the maximum allowed size');
+  }
+
+  const buffer = Buffer.from(normalized, 'hex');
+  assertAudioSignature(buffer, audioFormat);
+  return buffer;
+}
+
+async function readResponseWithLimit(response: Response) {
+  const declaredSize = Number(response.headers.get('content-length') || 0);
+  if (Number.isFinite(declaredSize) && declaredSize > MAX_GENERATED_AUDIO_BYTES) {
+    throw new Error('Generated audio exceeds the maximum allowed size');
+  }
+
+  if (!response.body) {
+    throw new Error('Generated audio response has no body');
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_GENERATED_AUDIO_BYTES) {
+      await reader.cancel('Generated audio exceeds the maximum allowed size');
+      throw new Error('Generated audio exceeds the maximum allowed size');
+    }
+    chunks.push(value);
+  }
+
+  return Buffer.concat(
+    chunks.map((chunk) => Buffer.from(chunk)),
+    totalBytes
+  );
+}
+
+function isPublicAudioAddress(address: string) {
+  const family = isIP(address);
+  if (family === 4) {
+    return !blockedAudioV4Addresses.check(address, 'ipv4');
+  }
+  if (family === 6) {
+    return !blockedAudioV6Addresses.check(address, 'ipv6');
+  }
+  return false;
+}
+
+function isBenchmarkAudioIpv4(address: string) {
+  const octets = address.split('.').map(Number);
+  return (
+    octets.length === 4 &&
+    octets.every((octet) => Number.isInteger(octet) && octet >= 0 && octet <= 255) &&
+    octets[0] === 198 &&
+    (octets[1] === 18 || octets[1] === 19)
+  );
 }
 
 /**
- * Background task to handle post-generation steps:
- * 1. Download/Parse audio
- * 2. Upload to Storage (Audio)
- * 3. Wait for Cover Image & Upload to Storage
- * 4. Deduct Credits
- * 5. Update Database Status
+ * Clash/Mihomo 的 Fake-IP 模式会在本地开发环境把公开 CDN 域名统一解析到
+ * RFC 2544 的 198.18.0.0/15。仅当 URL 使用域名、全部解析结果均为该网段，
+ * 且当前不是生产环境时允许继续由代理获取；IP 字面量、混合结果和其他私网
+ * 地址仍然拒绝。响应仍会经过逐跳重定向、大小、MIME 与音频签名校验。
  */
+function isDevelopmentAudioFakeIpResolution(
+  addresses: ReadonlyArray<{ address: string; family: number }>,
+  environment = process.env.NODE_ENV
+) {
+  return (
+    environment !== 'production' &&
+    addresses.length > 0 &&
+    addresses.every(({ address, family }) => family === 4 && isBenchmarkAudioIpv4(address))
+  );
+}
+
+async function assertPublicAudioUrl(url: URL, lookupImplementation: HostnameLookup) {
+  if ((url.protocol !== 'https:' && url.protocol !== 'http:') || url.username || url.password) {
+    throw new Error('Generated audio URL must be a credential-free HTTP(S) URL');
+  }
+
+  const hostname = url.hostname
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '')
+    .toLowerCase();
+  if (!hostname || hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    throw new Error('Generated audio URL must resolve to a public host');
+  }
+
+  const literalFamily = isIP(hostname);
+  const addresses = literalFamily
+    ? [{ address: hostname, family: literalFamily }]
+    : await lookupImplementation(hostname);
+
+  const containsBlockedAddress = addresses.some(({ address }) => !isPublicAudioAddress(address));
+  const isLocalProxyFakeIp =
+    literalFamily === 0 && containsBlockedAddress && isDevelopmentAudioFakeIpResolution(addresses);
+
+  if (addresses.length === 0 || (containsBlockedAddress && !isLocalProxyFakeIp)) {
+    throw new Error('Generated audio URL must resolve only to public IP addresses');
+  }
+
+  if (isLocalProxyFakeIp) {
+    console.warn(`[song-workflow] Allowing development proxy Fake-IP for generated audio host: ${hostname}`);
+  }
+}
+
+async function downloadGeneratedAudioOnce(
+  content: string,
+  audioFormat: AudioFormat,
+  fetchImplementation: typeof fetch = fetch,
+  lookupImplementation: HostnameLookup = lookupHostAddresses
+) {
+  let url: URL;
+  try {
+    url = new URL(content);
+  } catch {
+    throw new Error('Generated audio URL is invalid');
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AUDIO_DOWNLOAD_TIMEOUT_MS);
+
+  try {
+    for (let redirectCount = 0; redirectCount <= MAX_AUDIO_REDIRECTS; redirectCount += 1) {
+      await assertPublicAudioUrl(url, lookupImplementation);
+
+      const response = await fetchImplementation(url, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: controller.signal,
+      });
+
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        if (redirectCount === MAX_AUDIO_REDIRECTS) {
+          throw new Error('Generated audio URL exceeded the redirect limit');
+        }
+
+        const location = response.headers.get('location');
+        if (!location) {
+          throw new Error('Generated audio redirect is missing a Location header');
+        }
+
+        url = new URL(location, url);
+        continue;
+      }
+
+      if (!response.ok) {
+        throw Object.assign(new Error(`Generated audio download failed (${response.status})`), {
+          statusCode: response.status,
+        });
+      }
+
+      const contentType = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+      if (contentType && !contentType.startsWith('audio/') && contentType !== 'application/octet-stream') {
+        throw new Error(`Generated audio returned an unexpected content type: ${contentType}`);
+      }
+
+      const buffer = await readResponseWithLimit(response);
+      assertAudioSignature(buffer, audioFormat);
+      return buffer;
+    }
+
+    throw new Error('Generated audio URL exceeded the redirect limit');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/** 仅重试安全的 GET 下载，不重试会计费的音乐生成请求。 */
+export async function downloadGeneratedAudio(
+  content: string,
+  audioFormat: AudioFormat,
+  fetchImplementation: typeof fetch = fetch,
+  lookupImplementation: HostnameLookup = lookupHostAddresses
+) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await downloadGeneratedAudioOnce(content, audioFormat, fetchImplementation, lookupImplementation);
+    } catch (error) {
+      const status = (error as { statusCode?: number })?.statusCode;
+      const transient =
+        error instanceof TypeError ||
+        (error instanceof Error && error.name === 'AbortError') ||
+        status === 429 ||
+        (status !== undefined && status >= 500);
+      if (attempt === 0 && transient) {
+        console.warn('[song-workflow] Audio download interrupted; retrying transfer only.');
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(
+          'Audio download timed out after two transfer attempts. The generated audio checkpoint was preserved; retry saving audio, not music generation.'
+        );
+      }
+      throw error;
+    }
+  }
+  throw new Error('Audio download failed');
+}
+
+export async function materializeGeneratedAudio(
+  content: string,
+  outputFormat: OutputFormat,
+  audioFormat: AudioFormat,
+  fetchImplementation: typeof fetch = fetch
+) {
+  return outputFormat === 'hex'
+    ? decodeGeneratedAudioHex(content, audioFormat)
+    : downloadGeneratedAudio(content, audioFormat, fetchImplementation);
+}
+
+function generateCoverFilename(title: string, sourceText: string | null, songId: string, extension: string) {
+  const content = `${title} ${sourceText || ''}`;
+  const nameMatch = content.match(/\b([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b/);
+  const person = nameMatch?.[1]?.toLowerCase().replace(/\s+/g, '-') || 'cover';
+  const event = title
+    .replace(/[^\w\s-]/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .slice(0, 50)
+    .replace(/-+$/, '');
+
+  return `${person}-${event || 'song'}-${songId.slice(0, 8)}.${extension}`.replace(/-{2,}/g, '-');
+}
+
 export interface BackgroundProcessResult {
   success: boolean;
+  retryable?: boolean;
+  skipped?: boolean;
+  processingStatus?: string | null;
   audioUrl?: string;
   coverImageUrl?: string;
   error?: string;
 }
 
 /**
- * Background task to handle post-generation steps:
- * 1. Download/Parse audio
- * 2. Upload to Storage (Audio)
- * 3. Wait for Cover Image & Upload to Storage
- * 4. Deduct Credits
- * 5. Update Database Status
+ * 对已经永久保存的音频、封面与元数据执行独立成品门禁。
+ * 该步骤不调用生成模型，可在修复元数据或重新生成封面后单独重试。
  */
-export async function processMusicBackground(
-  audioContent: string | null | undefined, // Support missing audio (Async Generation)
-  options: ProcessMusicOptions,
-  coverImagePromise: Promise<string | null> | null // Nullable for robustness
-): Promise<BackgroundProcessResult> {
-  const bgStartTime = performance.now();
-  const { userId, songId, title, outputFormat, audioFormat, lyrics, prompt } = options;
-
-  console.log(`[song-workflow] Starting background processing for song ${songId}...`);
-  const effectiveTitle = title?.trim() || 'Generated Track';
+export async function runPersistedSongProductCheck({
+  songId,
+  userId,
+  attemptId,
+  coverFallback = false,
+  coverDimensions = null,
+}: {
+  songId: string;
+  userId: string;
+  attemptId?: string;
+  coverFallback?: boolean;
+  coverDimensions?: { width: number; height: number } | null;
+}) {
   const db = await getDb();
+  const attemptFilter = attemptId
+    ? and(eq(generationAttempt.songId, songId), eq(generationAttempt.id, attemptId))
+    : eq(generationAttempt.songId, songId);
+  const [record] = await db
+    .select({
+      attemptId: generationAttempt.id,
+      title: songTable.title,
+      lyrics: songTable.lyrics,
+      audioUrl: songTable.audioUrl,
+      audioKey: songTable.audioKey,
+      coverImageUrl: songTable.coverImageUrl,
+      coverImageKey: songTable.coverImageKey,
+      durationSec: songTable.durationSec,
+      sourceUrl: storyTable.sourceUrl,
+      sourceText: storyTable.sourceText,
+      sourceSummary: storyTable.newsSummary,
+    })
+    .from(generationAttempt)
+    .innerJoin(songTable, eq(songTable.id, generationAttempt.songId))
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .where(and(attemptFilter, eq(songTable.userId, userId)))
+    .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
+    .limit(1);
+  if (!record) throw new Error('Song product assets do not exist');
 
-  // --- ASYNC GENERATION LOGIC ---
-  let finalAudioContent = audioContent;
+  // 兼容旧任务：将已经可以无损恢复的 HTML/转义换行统一回写，避免成品门禁误杀并要求重新付费生成。
+  const normalizedLyrics = normalizeStructuredLyrics(record.lyrics || '').trim();
+  if (normalizedLyrics && normalizedLyrics !== record.lyrics) {
+    await db
+      .update(songTable)
+      .set({ lyrics: normalizedLyrics, updatedAt: new Date() })
+      .where(and(eq(songTable.id, songId), eq(songTable.userId, userId)));
+  }
 
-  if (!finalAudioContent) {
-    console.log(
-      `[song-workflow] No audio content provided. Starting Async Generation for ${songId} (Inline/Worker)...`
-    );
-    try {
-      // Dynamic import to avoid circular deps with route->workflow->generation
-      const { generateMusic } = await import('@/ai/music/lib/generation');
-      const apiKey = process.env.MINIMAXI_API_KEY;
+  const workflowRun = await getWorkflowRunBySongId(songId);
+  const stepId = workflowRun ? await startWorkflowStage(workflowRun.id, 'checking_product') : undefined;
+  const result = inspectSongProduct({
+    ...record,
+    lyrics: normalizedLyrics || record.lyrics,
+    coverFallback,
+    coverDimensions,
+  });
 
-      if (!apiKey) throw new Error('System missing MINIMAXI_API_KEY');
+  await db
+    .update(generationAttempt)
+    .set({
+      processingStatus: result.passed ? 'completed' : 'failed_quality_check',
+      processingError: result.passed ? null : result.issues.join(' | '),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(generationAttempt.id, record.attemptId), eq(generationAttempt.songId, songId)));
 
-      const musicResult = await generateMusic({
-        apiKey,
-        prompt: prompt || '',
-        lyrics: lyrics || '',
-        outputFormat,
-        audioFormat,
-        stream: false,
+  if (workflowRun && stepId) {
+    if (result.passed) {
+      await completeWorkflowStage(workflowRun.id, stepId, 'checking_product', {
+        nextStage: 'publish_ready',
+        runStatus: 'completed',
+        metadata: result,
       });
-
-      if (!musicResult.success || !musicResult.audioContent) {
-        throw new Error(musicResult.error || 'Async Generation Failed');
-      }
-
-      finalAudioContent = musicResult.audioContent;
-      console.log(
-        `[song-workflow] Async Generation Succeeded for ${songId}. Content Length: ${finalAudioContent?.length}`
-      );
-    } catch (genError: any) {
-      console.error(`[song-workflow] Async Generation Failed for ${songId}:`, genError);
-
-      // No credits have been charged yet, so we only need to mark the task failed.
-      await db
-        .update(songTable)
-        .set({
-          processingStatus: 'failed_generation',
-          creditError: genError.message,
-        })
-        .where(eq(songTable.id, songId));
-
-      return { success: false, error: genError.message };
+    } else {
+      await failWorkflowStep(workflowRun.id, stepId, new Error(`Product check failed: ${result.issues.join(' | ')}`));
     }
   }
-  // ------------------------------
 
+  return result;
+}
+
+export async function failActiveMusicJob(songId: string, error: unknown) {
+  const message = getErrorMessage(error);
   try {
-    // ==================== Parallel Execution: Audio & Cover Pipelines ====================
-    const [audioUploadResult, coverGenerateResult] = await Promise.allSettled([
-      // Task A: Audio Pipeline
-      (async () => {
-        const pipelineStart = performance.now();
-        try {
-          // A1. Get Buffer
-          let fileBuffer: Buffer;
-          const fileExt = audioFormat === 'wav' ? 'wav' : 'mp3';
+    const db = await getDb();
+    const [attempt] = await db
+      .select({ id: generationAttempt.id })
+      .from(generationAttempt)
+      .where(eq(generationAttempt.songId, songId))
+      .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
+      .limit(1);
+    if (!attempt) return message;
 
-          if (outputFormat === 'hex') {
-            const hex = finalAudioContent;
-            if (!hex || hex.length === 0) {
-              throw new Error('Empty hex string received from audio generation');
-            }
-            const matches = hex.match(/.{1,2}/g);
-            if (!matches) {
-              throw new Error('Invalid hex string format');
-            }
-            const bytes = new Uint8Array(matches.map((b) => Number.parseInt(b, 16)));
-            fileBuffer = Buffer.from(bytes);
-          } else {
-            // Download with timeout
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 60_000); // Increased timeout for larger files
+    await db
+      .update(generationAttempt)
+      .set({
+        processingStatus: 'failed_internal_error',
+        processingError: message,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(generationAttempt.id, attempt.id), inArray(generationAttempt.processingStatus, [...ACTIVE_JOB_STATUSES]))
+      );
+  } catch (dbError) {
+    console.error(`[song-workflow] Unable to persist unexpected terminal status for ${songId}:`, dbError);
+  }
 
-            // @ts-ignore
-            const audioRes = await fetch(finalAudioContent, { signal: controller.signal });
-            clearTimeout(timeout);
+  return message;
+}
 
-            if (!audioRes.ok) throw new Error(`Download failed: ${audioRes.status}`);
-            fileBuffer = Buffer.from(await audioRes.arrayBuffer());
-          }
+function getErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || 'Unknown generation error');
+  return message.slice(0, 2000);
+}
 
-          // A2. Upload
-          const uploadStartTime = performance.now();
-          const uploaded = await uploadFile(
-            fileBuffer,
-            `song.${fileExt}`,
-            fileExt === 'wav' ? 'audio/wav' : 'audio/mpeg',
-            `songs/${userId}`
-          );
-          console.log(
-            `[Performance] Audio uploaded for ${songId} in ${(performance.now() - uploadStartTime).toFixed(2)}ms`
-          );
-
-          // A3. Update DB
-          await db
-            .update(songTable)
-            .set({
-              audioUrl: uploaded.url,
-              audioKey: uploaded.key,
-              processingStatus: 'audio_uploaded',
-              updatedAt: new Date(),
-            })
-            .where(eq(songTable.id, songId));
-
-          return uploaded;
-        } catch (error) {
-          console.error(`[song-workflow] Audio pipeline failed for ${songId}:`, error);
-          throw error;
-        }
-      })(),
-
-      // Task B: Cover Pipeline
-      (async () => {
-        try {
-          // B1. Await generation (or null if not started)
-          let imageDataUrl = coverImagePromise ? await coverImagePromise : null;
-
-          // If no image url (e.g. Inline Fallback passed null), try to generate it now
-          if (!imageDataUrl) {
-            try {
-              const { generateCoverWithRetry } = await import('@/ai/image/lib/cover-generation');
-              const coverSource =
-                options.coverArtPrompt ||
-                options.musicDirectionPrompt ||
-                options.prompt ||
-                options.lyrics?.slice(0, 100) ||
-                options.title ||
-                'Music Cover';
-
-              imageDataUrl = await generateCoverWithRetry({
-                title: options.title || 'Untitled',
-                lyrics: options.lyrics || '',
-                sourceText: coverSource,
-                artPrompt: options.coverArtPrompt,
-              });
-            } catch (coverGenErr) {
-              console.error('[song-workflow] Background Cover Generation failed (non-fatal):', coverGenErr);
-              // Continue to use fallback image
-            }
-          }
-
-          if (imageDataUrl) {
-            // B2. Convert & Upload
-            const { buffer, mime, extension } = await dataUrlToImageBuffer(imageDataUrl);
-            // Generate SEO-friendly filename: person-event-uuid.ext
-            const coverFilename = generateCoverFilename(options.title || 'song', options.sourceText, songId, extension);
-            const coverUpload = await uploadFile(buffer, coverFilename, mime, `song-covers/${userId}`);
-
-            // B3. Update DB
-            await db
-              .update(songTable)
-              .set({
-                coverImageUrl: coverUpload.url,
-                coverImageKey: coverUpload.key,
-              })
-              .where(eq(songTable.id, songId));
-
-            return coverUpload;
-          }
-          return null;
-        } catch (error) {
-          console.error(`[song-workflow] Cover pipeline failed for ${songId}:`, error);
-          throw error;
-        }
-      })(),
-    ]);
-
-    // ==================== Finalize & Credits ====================
-
-    // Only deduct credits if Audio uploaded successfully
-    if (audioUploadResult.status === 'fulfilled') {
-      try {
-        console.log(`[song-workflow] Audio upload valid. Proceeding to deduct credits for song ${songId}...`);
-
-        const { consumeCredits } = await import('@/credits/credits');
-        const idSuffix = `[ID:${songId}]`;
-
-        const [existingRecordRows, netCreditRows] = await Promise.all([
-          db
-            .select({ creditsDeducted: songTable.creditsDeducted })
-            .from(songTable)
-            .where(eq(songTable.id, songId))
-            .limit(1),
-          db
-            .select({
-              netAmount: sql<number>`COALESCE(SUM(${creditTransaction.amount}), 0)`,
-            })
-            .from(creditTransaction)
-            .where(and(eq(creditTransaction.userId, userId), like(creditTransaction.description, `%${idSuffix}`))),
-        ]);
-
-        const existingRecord = existingRecordRows[0];
-        const netAmount = Number(netCreditRows[0]?.netAmount || 0);
-
-        if (existingRecord?.creditsDeducted || netAmount < 0) {
-          console.log(
-            `[song-workflow] Credits already deducted for ${songId} (Status=${existingRecord?.creditsDeducted}, Net=${netAmount}). Skipping charge.`
-          );
-        } else {
-          const uniqueDescription = `Generate music: ${effectiveTitle} [ID:${songId}]`;
-          await consumeCredits({
-            userId,
-            amount: 2,
-            description: uniqueDescription,
-          });
-        }
-
-        const coverSuccess = coverGenerateResult.status === 'fulfilled' && !!coverGenerateResult.value;
-        const finalStatus = 'completed';
-        const coverUpload = coverGenerateResult.status === 'fulfilled' ? coverGenerateResult.value : null;
-
-        const finalCoverUrl = coverUpload?.url || '/images/funny-censored-fallback.png';
-
-        await db
-          .update(songTable)
-          .set({
-            creditsDeducted: true,
-            processingStatus: finalStatus,
-            coverImageUrl: finalCoverUrl, // Ensure DB has the fallback
-            updatedAt: new Date(),
-          })
-          .where(eq(songTable.id, songId));
-
-        console.log(
-          `[song-workflow] Background processing succeeded for ${songId}. Status: ${finalStatus} (Cover: ${coverSuccess ? 'Generated' : 'Fallback'})`
-        );
-        console.log(
-          `[Performance] Background worker for ${songId} total time: ${(performance.now() - bgStartTime).toFixed(2)}ms`
-        );
-
-        return {
-          success: true,
-          audioUrl: audioUploadResult.value.url,
-          coverImageUrl: finalCoverUrl,
-        };
-      } catch (creditError) {
-        console.error(`[song-workflow] Credit deduction failed for ${songId}:`, creditError);
-        await db
-          .update(songTable)
-          .set({
-            creditsDeducted: false,
-            creditError: String(creditError),
-            processingStatus: 'failed_credit_deduction',
-          })
-          .where(eq(songTable.id, songId));
-
-        return {
-          success: false,
-          audioUrl: audioUploadResult.value.url,
-          error: 'Credit deduction failed',
-        };
-      }
-    } else {
-      // Audio failed
-      console.error(`[song-workflow] Audio upload failed for ${songId}:`, audioUploadResult.reason);
-
-      await db.update(songTable).set({ processingStatus: 'failed_audio_upload' }).where(eq(songTable.id, songId));
-
-      return {
-        success: false,
-        error: `Audio upload failed: ${audioUploadResult.reason}`,
-      };
-    }
-  } catch (globalError: any) {
-    console.error(`[song-workflow] Fatal background error for ${songId}:`, globalError);
-
-    // Keep fatal cleanup idempotent. Credits are only charged after audio upload succeeds,
-    // so this branch should not perform automatic refunds or force-reset credit flags.
-    try {
-      await db
-        .update(songTable)
-        .set({
-          processingStatus: 'failed_internal_error',
-          creditError: globalError.message || 'Fatal workflow error',
+async function removeUploads(keys: Array<string | null | undefined>) {
+  await Promise.all(
+    keys
+      .filter((key): key is string => !!key)
+      .map((key) =>
+        deleteFile(key).catch((error) => {
+          console.error(`[song-workflow] Failed to remove orphaned upload ${key}:`, error);
         })
-        .where(eq(songTable.id, songId));
-    } catch (dbError) {
-      // If DB connection is also dead, just log it.
-      console.error(`[song-workflow] Critical: Failed to report fatal error to DB for ${songId}:`, dbError);
-    }
+      )
+  );
+}
 
+/**
+ * 原子领取并执行一个已持久化的音乐任务。
+ * 外部 API 调用均发生在短暂的 CAS 更新之后，不在数据库事务或锁内执行。
+ */
+export async function processMusicJob(
+  songId: string,
+  options: { coverOnly?: boolean } = {}
+): Promise<BackgroundProcessResult> {
+  const db = await getDb();
+  const startedAt = performance.now();
+
+  let job: Awaited<ReturnType<typeof claimMusicJob>>;
+  try {
+    job = await claimMusicJob(songId, options.coverOnly);
+  } catch (error) {
     return {
       success: false,
-      error: globalError.message || 'Fatal background workflow error',
+      retryable: true,
+      error: `Unable to claim generation job: ${getErrorMessage(error)}`,
     };
   }
+
+  if (!job) {
+    let existing: { processingStatus: string | null } | undefined;
+    try {
+      [existing] = await db
+        .select({ processingStatus: generationAttempt.processingStatus })
+        .from(generationAttempt)
+        .where(eq(generationAttempt.songId, songId))
+        .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
+        .limit(1);
+    } catch (error) {
+      return {
+        success: false,
+        retryable: true,
+        error: `Unable to inspect generation job: ${getErrorMessage(error)}`,
+      };
+    }
+    const processingStatus = existing?.processingStatus || null;
+    const isCompleted = processingStatus === 'completed' || processingStatus === 'completed_without_cover';
+
+    return {
+      success:
+        isCompleted ||
+        processingStatus === 'processing' ||
+        processingStatus === 'generating_audio' ||
+        processingStatus === 'uploading_audio' ||
+        processingStatus === 'audio_uploaded' ||
+        processingStatus === 'generating_cover' ||
+        processingStatus === 'finalizing',
+      skipped: true,
+      processingStatus,
+      error: existing ? undefined : 'Generation job does not exist',
+    };
+  }
+
+  const failJob = async (processingStatus: string, error: unknown) => {
+    const message = getErrorMessage(error);
+    try {
+      await db
+        .update(generationAttempt)
+        .set({
+          processingStatus,
+          processingError: message,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(generationAttempt.id, job.attemptId),
+            eq(generationAttempt.songId, job.id),
+            inArray(generationAttempt.processingStatus, [...ACTIVE_JOB_STATUSES])
+          )
+        );
+    } catch (dbError) {
+      console.error(`[song-workflow] Unable to persist terminal status for ${job.id}:`, dbError);
+    }
+    return { success: false, processingStatus, error: message } satisfies BackgroundProcessResult;
+  };
+
+  if (job.generationBillingMode !== 'internal_admin') {
+    return failJob('failed_internal_error', 'Unsupported generation billing mode');
+  }
+
+  if (!job.lyrics || !job.generationPrompt) {
+    return failJob('failed_internal_error', 'Generation job is missing trusted model inputs');
+  }
+  if (!['url', 'hex'].includes(job.outputFormat) || !['mp3', 'wav', 'pcm'].includes(job.audioFormat)) {
+    return failJob('failed_internal_error', 'Generation job contains an unsupported audio format');
+  }
+
+  const workflowRun = await getWorkflowRunBySongId(job.id).catch((error) => {
+    console.warn(`[song-workflow] Unable to resolve creation run for ${job.id}:`, error);
+    return undefined;
+  });
+  let activeWorkflowStep: string | undefined;
+  const startStage = async (
+    stage: 'generating_audio' | 'uploading_audio' | 'generating_cover' | 'finalizing' | 'checking_product',
+    provider?: string,
+    model?: string
+  ) => {
+    if (!workflowRun) return undefined;
+    activeWorkflowStep = await startWorkflowStage(workflowRun.id, stage, { provider, model });
+    return activeWorkflowStep;
+  };
+  const failStage = async (error: unknown) => {
+    if (!workflowRun || !activeWorkflowStep) return;
+    await failWorkflowStep(workflowRun.id, activeWorkflowStep, error).catch((persistenceError) => {
+      console.error(`[song-workflow] Unable to persist workflow failure for ${job.id}:`, persistenceError);
+    });
+  };
+
+  const audioFormat = job.audioFormat as AudioFormat;
+  const descriptor = getAudioFileDescriptor(audioFormat);
+  let audioUpload: Awaited<ReturnType<typeof uploadFile>>;
+
+  if (job.claimedFrom === 'audio_uploaded') {
+    if (!job.audioUrl || !job.audioKey) {
+      return failJob('failed_internal_error', 'Audio resume checkpoint is missing its stored audio asset');
+    }
+    audioUpload = { url: job.audioUrl, key: job.audioKey };
+  } else {
+    let generatedAudioContent: string;
+    let generatedOutputFormat: OutputFormat;
+    const inputHash = audioInputHash(job.lyrics, job.generationPrompt, audioFormat);
+    let checkpoint: string | null;
+    try {
+      checkpoint = workflowRun ? await findAudioCheckpoint(workflowRun.id, inputHash) : null;
+    } catch (error) {
+      // 读取恢复点失败时停止，不能将数据库异常误当成需要重新付费生成。
+      return failJob('failed_audio_upload', error);
+    }
+    if (checkpoint) {
+      generatedAudioContent = checkpoint;
+      generatedOutputFormat = 'url';
+      console.info('[song-workflow] Resuming saved provider audio; skipping music generation.');
+    } else {
+      await startStage('generating_audio', 'minimax', MINIMAX_MUSIC_MODEL);
+      try {
+        const { generateMusic } = await import('@/ai/music/lib/generation');
+        const musicResult = await generateMusic({
+          prompt: job.generationPrompt,
+          lyrics: job.lyrics,
+          outputFormat: job.outputFormat as OutputFormat,
+          audioFormat: job.audioFormat as AudioFormat,
+          stream: false,
+        });
+        if (!musicResult.success || !musicResult.audioContent) {
+          throw new Error(musicResult.error || 'Music provider returned no audio');
+        }
+        generatedAudioContent = musicResult.audioContent;
+        generatedOutputFormat = (musicResult.outputFormat || job.outputFormat) as OutputFormat;
+      } catch (error) {
+        console.error(`[song-workflow] Music generation failed for ${job.id}:`, error);
+        await failStage(error);
+        return failJob('failed_generation', error);
+      }
+
+      try {
+        if (workflowRun && activeWorkflowStep) {
+          await completeWorkflowStage(workflowRun.id, activeWorkflowStep, 'generating_audio', {
+            nextStage: 'uploading_audio',
+            metadata: {
+              outputFormat: generatedOutputFormat,
+              audioInputHash: inputHash,
+              ...(generatedOutputFormat === 'url' ? { generatedAudioUrl: generatedAudioContent } : {}),
+            },
+          });
+        }
+      } catch (error) {
+        // 模型已经成功；恢复点写入失败不能归类为可重新生成的模型失败。
+        await failStage(error);
+        return failJob('failed_audio_upload', error);
+      }
+    }
+
+    await startStage('uploading_audio');
+    try {
+      const buffer = await materializeGeneratedAudio(generatedAudioContent, generatedOutputFormat, audioFormat);
+      audioUpload = await uploadFile(
+        buffer,
+        `song-${job.id}.${descriptor.extension}`,
+        descriptor.mimeType,
+        `songs/${job.userId}`
+      );
+      await db.transaction(async (tx) => {
+        await tx
+          .update(songTable)
+          .set({
+            audioUrl: audioUpload.url,
+            audioKey: audioUpload.key,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(songTable.id, job.id), eq(songTable.userId, job.userId)));
+        await tx
+          .update(generationAttempt)
+          .set({ processingStatus: 'audio_uploaded', processingError: null, updatedAt: new Date() })
+          .where(and(eq(generationAttempt.id, job.attemptId), eq(generationAttempt.songId, job.id)));
+      });
+    } catch (error) {
+      console.error(`[song-workflow] Audio upload failed for ${job.id}:`, error);
+      await failStage(error);
+      return failJob('failed_audio_upload', error);
+    }
+    if (workflowRun && activeWorkflowStep) {
+      await completeWorkflowStage(workflowRun.id, activeWorkflowStep, 'uploading_audio', {
+        nextStage: 'audio_uploaded',
+        metadata: { audioFormat, storageKey: audioUpload.key },
+      });
+    }
+  }
+
+  await startStage('generating_cover', 'openrouter');
+  let coverUpload: Awaited<ReturnType<typeof uploadFile>> | null = null;
+  const coverFallback = false;
+  let coverDimensions: { width: number; height: number } | null = null;
+  let coverOperation: 'generation' | 'upload' = 'generation';
+  try {
+    await db
+      .update(generationAttempt)
+      .set({ processingStatus: 'generating_cover', updatedAt: new Date() })
+      .where(and(eq(generationAttempt.id, job.attemptId), eq(generationAttempt.songId, job.id)));
+    const imageDataUrl = await generateCoverWithRetry({
+      title: job.title,
+      lyrics: job.lyrics || '',
+      sourceText: job.sourceText?.trim() || job.newsSummary?.trim() || job.title,
+      artPrompt: job.coverArtPrompt || undefined,
+    });
+    if (imageDataUrl) {
+      const { buffer, mime, extension } = await dataUrlToImageBuffer(imageDataUrl);
+      coverDimensions = readImageDimensions(buffer, mime);
+      coverOperation = 'upload';
+      coverUpload = await uploadFile(
+        buffer,
+        generateCoverFilename(job.title, job.sourceText, job.id, extension),
+        mime,
+        `song-covers/${job.userId}`
+      );
+    } else {
+      throw new Error('The image provider returned no cover image.');
+    }
+  } catch (error) {
+    // 音频已持久化；封面失败必须停在真实失败阶段，不能伪装完成后才被发布检查拦截。
+    const failure = new Error(
+      `Audio is saved. Cover ${coverOperation} failed: ${getErrorMessage(error)} Retry cover only; music will not be regenerated.`
+    );
+    console.warn(`[song-workflow] Cover ${coverOperation} failed for ${job.id}:`, getErrorMessage(error));
+    await failStage(failure);
+    return failJob('failed_cover', failure);
+  }
+  if (workflowRun && activeWorkflowStep) {
+    await completeWorkflowStage(workflowRun.id, activeWorkflowStep, 'generating_cover', {
+      nextStage: 'finalizing',
+      metadata: { fallback: coverFallback, storageKey: coverUpload?.key || null },
+    });
+  }
+
+  const finalCoverUrl = coverUpload?.url || job.coverImageUrl || FALLBACK_COVER_URL;
+  const finalCoverKey = coverUpload?.key || job.coverImageKey || null;
+  await startStage('finalizing');
+  let finalized: { id: string } | undefined;
+  try {
+    finalized = await db.transaction(async (tx) => {
+      const [finalizingAttempt] = await tx
+        .update(generationAttempt)
+        .set({
+          processingStatus: 'finalizing',
+          processingError: null,
+          creditError: null,
+          // 管理员生产使用内部成本账本，不进入用户积分结算。
+          creditsDeducted: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(generationAttempt.id, job.attemptId),
+            eq(generationAttempt.songId, job.id),
+            inArray(generationAttempt.processingStatus, ['audio_uploaded', 'generating_cover', 'finalizing'])
+          )
+        )
+        .returning({ id: generationAttempt.id });
+
+      if (!finalizingAttempt) return undefined;
+
+      const [updatedSong] = await tx
+        .update(songTable)
+        .set({
+          audioUrl: audioUpload.url,
+          audioKey: audioUpload.key,
+          coverImageUrl: finalCoverUrl,
+          coverImageKey: finalCoverKey,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(songTable.id, job.id), eq(songTable.userId, job.userId)))
+        .returning({ id: songTable.id });
+
+      if (!updatedSong) throw new Error('Song disappeared before generation completed');
+      return updatedSong;
+    });
+  } catch (error) {
+    await failStage(error);
+    return failJob('failed_internal_error', error);
+  }
+
+  if (!finalized) {
+    await failStage('Generation job was deleted, cancelled, or expired before completion');
+    return {
+      success: false,
+      processingStatus: 'failed_internal_error',
+      error: 'Generation job was deleted, cancelled, or expired before completion',
+    };
+  }
+
+  if (workflowRun && activeWorkflowStep) {
+    await completeWorkflowStage(workflowRun.id, activeWorkflowStep, 'finalizing', {
+      nextStage: 'checking_product',
+      metadata: { coverFallback },
+    });
+  }
+
+  const productCheck = await runPersistedSongProductCheck({
+    songId: job.id,
+    userId: job.userId,
+    attemptId: job.attemptId,
+    coverFallback,
+    coverDimensions,
+  });
+  if (!productCheck.passed) {
+    return {
+      success: false,
+      processingStatus: 'failed_quality_check',
+      error: `Product check failed: ${productCheck.issues.join(' | ')}`,
+    };
+  }
+
+  await removeUploads([
+    job.audioKey && job.audioKey !== audioUpload.key ? job.audioKey : null,
+    job.coverImageKey && coverUpload?.key && job.coverImageKey !== coverUpload.key ? job.coverImageKey : null,
+  ]);
+
+  console.log(
+    `[song-workflow] Completed ${job.id} in ${Math.round(performance.now() - startedAt)}ms (internal admin billing)`
+  );
+  return {
+    success: true,
+    processingStatus: 'completed',
+    audioUrl: audioUpload.url,
+    coverImageUrl: finalCoverUrl,
+  };
+}
+
+async function claimMusicJob(songId: string, coverOnly = false) {
+  const db = await getDb();
+  const [candidate] = await db
+    .select({ attemptId: generationAttempt.id, processingStatus: generationAttempt.processingStatus })
+    .from(generationAttempt)
+    .innerJoin(songTable, eq(songTable.id, generationAttempt.songId))
+    .where(and(eq(generationAttempt.songId, songId), eq(songTable.isAdminGenerated, true)))
+    .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
+    .limit(1);
+
+  if (!candidate) return undefined;
+  // 维护恢复明确只补封面时，即便任务状态发生竞争，也绝不领取新的音乐生成任务。
+  if (coverOnly && candidate.processingStatus !== 'audio_uploaded') return undefined;
+
+  const claimableStatus = candidate.processingStatus === 'audio_uploaded' ? 'audio_uploaded' : 'queued';
+  const claimedStatus = claimableStatus === 'audio_uploaded' ? 'generating_cover' : 'generating_audio';
+
+  const [claimedAttempt] = await db
+    .update(generationAttempt)
+    .set({
+      processingStatus: claimedStatus,
+      processingError: null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(generationAttempt.id, candidate.attemptId), eq(generationAttempt.processingStatus, claimableStatus)))
+    .returning({
+      attemptId: generationAttempt.id,
+      prompt: generationAttempt.prompt,
+      generationPrompt: generationAttempt.generationPrompt,
+      coverArtPrompt: generationAttempt.coverArtPrompt,
+      outputFormat: generationAttempt.outputFormat,
+      audioFormat: generationAttempt.audioFormat,
+      generationBillingMode: generationAttempt.generationBillingMode,
+    });
+
+  if (!claimedAttempt) return undefined;
+
+  const [job] = await db
+    .select({
+      id: songTable.id,
+      userId: songTable.userId,
+      title: songTable.title,
+      lyrics: songTable.lyrics,
+      audioUrl: songTable.audioUrl,
+      audioKey: songTable.audioKey,
+      coverImageUrl: songTable.coverImageUrl,
+      coverImageKey: songTable.coverImageKey,
+      sourceText: storyTable.sourceText,
+      newsSummary: storyTable.newsSummary,
+      sourceUrl: storyTable.sourceUrl,
+      durationSec: songTable.durationSec,
+    })
+    .from(songTable)
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .where(eq(songTable.id, songId))
+    .limit(1);
+
+  if (!job) {
+    await db
+      .update(generationAttempt)
+      .set({
+        processingStatus: 'failed_internal_error',
+        processingError: 'Song or source story does not exist',
+        updatedAt: new Date(),
+      })
+      .where(eq(generationAttempt.id, claimedAttempt.attemptId));
+    return undefined;
+  }
+
+  return { ...job, ...claimedAttempt, claimedFrom: claimableStatus };
 }

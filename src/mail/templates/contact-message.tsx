@@ -1,9 +1,9 @@
-import * as React from 'react';
 import { defaultMessages } from '@/i18n/messages';
 import { routing } from '@/i18n/routing';
 import EmailLayout from '@/mail/components/email-layout';
 import type { BaseEmailProps } from '@/mail/types';
 import { Text } from '@react-email/components';
+import * as React from 'react';
 import { createTranslator } from 'use-intl/core';
 
 interface ContactMessageProps extends BaseEmailProps {

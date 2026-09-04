@@ -1,5 +1,6 @@
 'use client';
 
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
 import { usePlayerStore } from '@/store';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
@@ -8,6 +9,8 @@ export function GlobalPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const lastCountedSongId = useRef<string | null>(null);
+  const playSessionRef = useRef<string | null>(null);
+  const qualifiedSessionRef = useRef<string | null>(null);
 
   // Using selectors to prevent re-renders on every currentTime update
   const currentSong = usePlayerStore((state) => state.currentSong);
@@ -19,6 +22,7 @@ export function GlobalPlayer() {
   const setDuration = usePlayerStore((state) => state.setDuration);
   const pause = usePlayerStore((state) => state.pause);
   const setIsLoading = usePlayerStore((state) => state.setIsLoading);
+  const playNext = usePlayerStore((state) => state.playNext);
 
   // Helper to safely play audio and handle interruptions
   const safePlay = async (audio: HTMLAudioElement) => {
@@ -63,6 +67,12 @@ export function GlobalPlayer() {
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+      const currentId = usePlayerStore.getState().currentSong?.id;
+      const sessionId = playSessionRef.current;
+      if (currentId && sessionId && audio.currentTime >= 30 && qualifiedSessionRef.current !== sessionId) {
+        qualifiedSessionRef.current = sessionId;
+        void recordSongEngagement(currentId, 'play_qualified', sessionId).catch(() => {});
+      }
     };
 
     const handleLoadedMetadata = () => {
@@ -70,9 +80,12 @@ export function GlobalPlayer() {
     };
 
     const handleEnded = () => {
-      pause();
-      setCurrentTime(0);
-      setIsLoading(false);
+      const currentId = usePlayerStore.getState().currentSong?.id;
+      if (currentId && playSessionRef.current) {
+        void recordSongEngagement(currentId, 'play_complete', playSessionRef.current).catch(() => {});
+      }
+      lastCountedSongId.current = null;
+      playNext();
     };
 
     const handleWaiting = () => {
@@ -97,9 +110,12 @@ export function GlobalPlayer() {
       const currentId = usePlayerStore.getState().currentSong?.id;
       if (currentId && lastCountedSongId.current !== currentId) {
         lastCountedSongId.current = currentId;
+        playSessionRef.current = createEngagementSessionId('play');
+        qualifiedSessionRef.current = null;
         fetch(`/api/songs/${currentId}/play`, { method: 'POST' }).catch((err) =>
           console.warn('Failed to track play:', err)
         );
+        void recordSongEngagement(currentId, 'play_start', playSessionRef.current).catch(() => {});
       }
     };
 
@@ -130,7 +146,6 @@ export function GlobalPlayer() {
 
       // Since this is a component, we can import { toast } from 'sonner'
       toast.error(message);
-      toast.error(message);
       setIsLoading(false);
       pause();
     };
@@ -158,7 +173,7 @@ export function GlobalPlayer() {
       audio.removeEventListener('loadeddata', handleLoadedData);
       audio.src = '';
     };
-  }, [setCurrentTime, setDuration, pause, setIsLoading]);
+  }, [setCurrentTime, setDuration, pause, setIsLoading, playNext]);
 
   // Track the currently loaded URL to avoid infinite re-loading if `audio.src` (absolute) != `audioUrl` (relative)
   const currentUrlRef = useRef<string | null>(null);

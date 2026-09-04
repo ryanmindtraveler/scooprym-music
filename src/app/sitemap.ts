@@ -1,12 +1,12 @@
 import { featuresContent } from '@/config/features';
 import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
-import { song as songTable } from '@/db/schema';
+import { song as songTable, story as storyTable } from '@/db/schema';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { generateHreflangUrls } from '@/lib/hreflang';
-import { slugify } from '@/lib/utils';
-import { and, desc, isNotNull, ne } from 'drizzle-orm';
+import { getSongCanonicalSlug } from '@/lib/song-seo';
+import { and, desc, eq, isNotNull, ne } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';
 import type { Locale } from 'next-intl';
@@ -83,29 +83,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .select({
         id: songTable.id,
         title: songTable.title,
+        newsSummary: storyTable.newsSummary,
+        sourceText: storyTable.sourceText,
         updatedAt: songTable.updatedAt,
         createdAt: songTable.createdAt,
       })
       .from(songTable)
-      .where(and(isNotNull(songTable.audioUrl), ne(songTable.audioUrl, 'pending-stream'), ne(songTable.audioUrl, '')))
+      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .where(
+        and(
+          eq(songTable.isPublished, true),
+          isNotNull(songTable.audioUrl),
+          ne(songTable.audioUrl, 'pending-stream'),
+          ne(songTable.audioUrl, '')
+        )
+      )
       .orderBy(desc(songTable.createdAt))
       .limit(5000); // Increased limit to 5000
 
     sitemapList.push(
-      ...songs.flatMap((songItem: { id: string; title: string | null; updatedAt: Date; createdAt: Date }) => {
-        const slug = `${slugify(songItem.title || 'song')}-${songItem.id}`;
+      ...songs.map((songItem) => {
+        const slug = getSongCanonicalSlug({
+          ...songItem,
+          title: songItem.title || 'Story song',
+        });
         const route = `/songs/${slug}`;
         const lastModified = songItem.updatedAt ? new Date(songItem.updatedAt) : new Date(songItem.createdAt);
 
-        return routing.locales.map((locale) => ({
-          url: getUrl(route, locale),
+        return {
+          url: getUrl(route as Href, routing.defaultLocale),
           lastModified,
-          changeFrequency: 'monthly' as const,
+          changeFrequency: 'weekly' as const,
           priority: 0.7,
-          alternates: {
-            languages: generateHreflangUrls(route),
-          },
-        }));
+        };
       })
     );
   } catch (error) {

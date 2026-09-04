@@ -1,8 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
-    "description": "把每天最离谱的头条、最混乱的闹剧和最劲爆的八卦，变成机智又上头的 AI 梗歌。我们把每一场闹剧都做成洗脑神吐槽，纯属娱乐！",
+    "title": "ScoopRYM — 每日爆红时刻梗歌",
+    "description": "将最离谱的头条、最混乱的闹剧和最劲爆的八卦做成可听、可笑、可分享的歌曲。",
     "keywords": "headline song, news song, drama song, gossip song, meme song, comedy song, funny song, diss track, battle song, rap battle, AI song generator, text to song, song generator, diss track generator, meme song generator"
   },
   "Common": {
@@ -316,11 +316,11 @@
     "categoryUnavailable": "分类归档暂时不可用。"
   },
   "SongsPage": {
-    "title": "最新 AI 梗歌、Diss Track 与 Viral 热门歌曲",
-    "description": "探索 ScoopRYM 社区最新创作的 AI 梗歌、Diss Track、Battle 歌曲和 viral 热门单曲。",
-    "heroTitleLeading": "社区",
-    "heroTitleHighlight": "秀场",
-    "heroDescription": "发现 ScoopRYM AI 生成的最新热门歌曲。"
+    "title": "爆红时刻 Gallery | ScoopRYM",
+    "description": "浏览由爆红时刻、八卦和网络闹剧改编的每日 meme songs，并查看原始来源与歌词。",
+    "heroTitleLeading": "爆红",
+    "heroTitleHighlight": "时刻",
+    "heroDescription": "先看事件，再查原始来源、听 meme song，最后留下你的态度。"
   },
   "DocsPage": {
     "toc": "目录",
@@ -542,6 +542,59 @@
     }
   },
   "Dashboard": {
+    "navigation": {
+      "myPage": "我的主页",
+      "myComments": "我的评论",
+      "myVotes": "我的投票",
+      "savedSongs": "收藏歌曲"
+    },
+    "activity": {
+      "listeningTrail": "你的收听记录",
+      "recentlyPlayed": "最近播放",
+      "newestListens": "按最近收听排序",
+      "commentHistory": "你的评论记录",
+      "myComments": "我的评论",
+      "newestComments": "按最新评论排序",
+      "yourPicks": "你的选择",
+      "myVotes": "我的投票",
+      "newestPicks": "按最近投票排序",
+      "noPicks": "还没有投票",
+      "replayShelf": "你的收藏夹",
+      "savedSongs": "收藏歌曲",
+      "newestSaves": "按最近收藏排序",
+      "song": "首歌曲",
+      "songs": "首歌曲",
+      "comment": "条评论",
+      "comments": "条评论",
+      "pick": "次选择",
+      "picks": "次选择",
+      "voteHint": "为你希望 ScoopRYM 制作成歌曲的新闻投票，投票记录会显示在这里。",
+      "seeTrending": "查看当前热点",
+      "page": "第 {current} 页，共 {total} 页",
+      "previousPage": "上一页",
+      "nextPage": "下一页",
+      "number": "序号",
+      "cover": "封面",
+      "storyAndSong": "新闻与歌曲",
+      "saved": "收藏时间",
+      "lastPlayed": "上次播放",
+      "playback": "播放",
+      "noSavedSongs": "还没有收藏歌曲",
+      "nothingPlayed": "还没有播放记录",
+      "saveHint": "收藏想再次收听的歌曲，它就会出现在这里。",
+      "playHint": "从 Gallery 播放歌曲后，它会自动显示在这里。",
+      "exploreGallery": "浏览 Gallery",
+      "openStory": "查看这首歌曲背后的新闻。",
+      "savedAgo": "收藏于 {time}",
+      "pauseSong": "暂停《{title}》",
+      "playSong": "播放《{title}》",
+      "noComments": "还没有评论",
+      "commentHint": "前往歌曲详情页参与讨论，你的评论会显示在这里。",
+      "yourComment": "你的评论",
+      "commented": "评论时间",
+      "openSong": "打开歌曲",
+      "openNamedSong": "打开《{title}》"
+    },
     "home": {
       "title": "首页"
     },
@@ -556,8 +609,322 @@
     },
     "admin": {
       "title": "系统管理",
+      "shell": {
+        "brand": "ScoopRYM 管理后台",
+        "group": "编辑运营",
+        "overview": "运营总览",
+        "storyRadar": "热点雷达",
+        "createSong": "创作歌曲",
+        "publishSongs": "发布歌曲",
+        "commentReports": "评论举报",
+        "users": "用户管理"
+      },
+      "overview": {
+        "title": "编辑运营总览",
+        "description": "管理今天从热点选题到歌曲发布的完整流程。",
+        "system": "系统状态",
+        "liveConfiguration": "当前配置",
+        "musicProvider": "音乐模型",
+        "queue": "QStash 任务队列",
+        "processing": "处理中",
+        "idle": "空闲",
+        "database": "数据库",
+        "connected": "已连接",
+        "totalGenerations": "歌曲生成总量",
+        "listenerFunnel": "听众转化漏斗",
+        "funnelDescription": "查看新闻流量是否转化为收听与分享。",
+        "storyViews": "详情页浏览",
+        "playStarts": "开始播放",
+        "qualifiedListens": "收听满 30 秒",
+        "completed": "完整播放",
+        "shares": "分享",
+        "days30": "最近 30 天",
+        "liveFeed": "实时生成动态",
+        "liveFeedDescription": "实时查看最近生成的歌曲。",
+        "noLiveActivity": "当前没有生成动态。",
+        "anonymous": "匿名用户",
+        "desk": "编辑工作台",
+        "ballot": "投票批次 {date}",
+        "operationTitle": "今日内容运营",
+        "operationDescription": "集中查看当前热点、听众选择、制作进度和待发布内容。",
+        "needAttention": "{count} 项需要处理",
+        "pipelineClear": "流程正常",
+        "radar": "热点雷达",
+        "radarDescription": "发现值得制作成歌曲的新闻。",
+        "freshStories": "条新增新闻",
+        "shortlistedCount": "{count} 条已候选",
+        "openRadar": "打开雷达",
+        "audience": "听众投票",
+        "audienceDescription": "利用实时投票发现最有热度的选题。",
+        "votersToday": "位今日投票用户",
+        "selectionDetail": "{selections} 次选择，涉及 {stories} 条新闻",
+        "reviewVotes": "查看投票",
+        "production": "歌曲制作",
+        "productionDescription": "将选中的新闻推进到歌曲生成流程。",
+        "jobsActive": "个进行中任务",
+        "productionDetail": "{count} 条新闻制作中",
+        "openStudio": "打开创作台",
+        "publish": "发布审核",
+        "publishDescription": "歌曲进入网站前进行最终审核。",
+        "waitingReview": "首歌曲等待审核",
+        "publishDetail": "{scheduled} 首已排期 · 今日已发布 {published} 首",
+        "reviewSongs": "审核歌曲",
+        "audienceSignal": "听众信号",
+        "topStory": "{title} · {votes} 票",
+        "noVotes": "今天还没有投票，首页投票正在等待第一位用户。",
+        "operationSummary": "今日采用 {adopted} 条 · 近 3 天失败 {failed} 条"
+      },
+      "createStudio": {
+        "title": "音乐创作台",
+        "description": "梳理新闻、选择创作角度，然后设计歌曲声音。",
+        "briefTitle": "创作简报",
+        "briefDescription": "新闻 → 方向 → 制作",
+        "storySource": "1. 新闻来源",
+        "newsLink": "新闻链接",
+        "newsLinkHint": "也可以填写下方正文",
+        "newsLinkPlaceholder": "粘贴新闻链接……",
+        "sourceContext": "新闻正文 / 背景信息",
+        "sourceContextPlaceholder": "粘贴新闻正文，或者描述发生了什么……",
+        "storyLoaded": "新闻已载入",
+        "addStory": "添加新闻",
+        "hideSource": "收起新闻正文",
+        "editSource": "查看或编辑新闻",
+        "sourceReady": "新闻素材已载入",
+        "sourceReadyDescription": "系统将自动分析 {count} 个字符，并推荐合适的创作方向。",
+        "reviewSource": "查看正文 · {count} 字符",
+        "freestyle": "自由编排",
+        "closeFreestyle": "关闭自由编排",
+        "editorialDirection": "2. 创作方向",
+        "autoRecommended": "系统推荐",
+        "selectedDirection": "已选择",
+        "changeDirection": "更换创作方向",
+        "hideDirections": "收起其他选择",
+        "tagsReady": "已自动配置 {count} 个制作标签",
+        "analyzingDirection": "正在分析新闻",
+        "analyzingDirectionDescription": "新闻素材准备完成后，系统会自动推荐合适的歌曲风格。",
+        "recommendationExplanation": "系统已经根据新闻情绪、冲突类型和传播特点完成标签组合，可以直接使用，也可以更换一个容易理解的创作方向。",
+        "directions": {
+          "viral_pop": {
+            "label": "自定义风格",
+            "description": "已经明确想要的声音时，可以自行组合音乐要求。"
+          },
+          "newsroom_noir": {
+            "label": "暗黑新闻说唱",
+            "description": "适合突发新闻、公开反转和带悬念的严肃事件。"
+          },
+          "public_receipts": {
+            "label": "证据链吐槽",
+            "description": "适合截图实锤、前后矛盾和有公开证据的精准吐槽。"
+          },
+          "algorithm_circus": {
+            "label": "网络荒诞神曲",
+            "description": "适合离谱热梗、病毒式话题和无伤害的互联网混乱。"
+          },
+          "velvet_rope_whisper": {
+            "label": "明星八卦 R&B",
+            "description": "适合明星八卦、红毯名场面、恋情和精致互怼。"
+          },
+          "receipts_on_wax": {
+            "label": "复古嘻哈吐槽",
+            "description": "适合有事实依据的互怼、翻车和公开喊话。"
+          },
+          "apology_after_midnight": {
+            "label": "深夜情绪说唱",
+            "description": "适合道歉、遗憾、分手和口碑危机等情绪新闻。"
+          },
+          "main_character_emergency": {
+            "label": "洗脑派对神曲",
+            "description": "适合高调登场、时尚名场面、夸张表演和循环传播。"
+          },
+          "timeline_fever": {
+            "label": "互联网高能电音",
+            "description": "适合平台热潮、粉丝混战和高速传播的网络事件。"
+          },
+          "internet_folklore": {
+            "label": "神秘网络传闻",
+            "description": "适合离奇传闻、未解热梗和带悬疑感的网络故事。"
+          },
+          "group_chat_static": {
+            "label": "群聊式互怼",
+            "description": "适合多人争论、隔空回应和信息混乱的公开对话。"
+          },
+          "public_meltdown": {
+            "label": "失控现场说唱",
+            "description": "适合直播失控、公开爆发和节奏不断升级的名场面。"
+          }
+        },
+        "recommendedRecipe": "系统推荐的制作配方",
+        "producerPick": "制作人推荐",
+        "viaDirection": "基于「{direction}」",
+        "alternateRecipeReady": "备用制作方案已准备好，锁定后可以在新闻内容变化时继续保留。",
+        "recipeRecommendedReason": "系统根据新闻的情绪、冲突和传播特征自动推荐。",
+        "nextRecipe": "尝试下一个制作方案",
+        "next": "换一个",
+        "unlockRecipe": "解除制作方案锁定",
+        "lockRecipe": "锁定当前制作方案",
+        "recipeLocked": "制作方案已锁定",
+        "recipeTechnicalReady": "完整的英文制作配方已经准备好，生成时会自动发送给音乐模型，无需手动理解或填写。",
+        "fineTuneRecipe": "调整创作方向",
+        "productionVariants": {
+          "custom_tag_focus": "突出核心标签",
+          "custom_hook_first": "副歌优先",
+          "drill_bulletin": "紧张新闻播报",
+          "noir_dispatch": "暗夜新闻特写",
+          "industrial_evidence": "工业感证据链",
+          "cross_exam_breaks": "盘问式节拍",
+          "circus_trap_loop": "马戏 Trap 循环",
+          "electro_sideshow": "荒诞电子秀",
+          "flashbulb_rnb": "闪光灯 R&B",
+          "afterparty_garage": "派对后 UK Garage",
+          "verdict_boom_bap": "判词 Boom Bap",
+          "press_room_funk": "发布会 Funk",
+          "rainlit_emo_rap": "雨夜情绪说唱",
+          "notes_app_alt_pop": "备忘录另类流行",
+          "jersey_replay": "Jersey Club 循环",
+          "camera_ready_pop": "镜头感舞曲",
+          "notification_hyperpop": "通知音 Hyperpop",
+          "scroll_glitch_garage": "滑屏 Glitch Garage",
+          "tape_worn_phonk": "旧磁带 Phonk",
+          "archive_trip_hop": "档案感 Trip-Hop",
+          "glitch_hop_thread": "对话式 Glitch-Hop",
+          "cross_talk_breaks": "多人插话节拍",
+          "controlled_rage": "克制怒气说唱",
+          "industrial_comedown": "工业感失控现场"
+        },
+        "productionRecipe": "3. 制作配方",
+        "fineTune": "4. 细节调整（可选）",
+        "fineTunePlaceholder": "添加一个具体要求，例如诡异弦乐或 90 年代情景喜剧感……",
+        "clearForm": "清空表单",
+        "generate": "生成歌曲",
+        "buildLyrics": "生成歌词",
+        "createAnother": "继续创作歌曲 ✨"
+      },
+      "publish": {
+        "title": "发布歌曲",
+        "description": "审核生成的歌曲，并控制哪些内容会展示在网站前台。"
+      },
+      "comments": {
+        "title": "评论举报",
+        "description": "处理被举报的评论，维护健康的讨论环境。"
+      },
+      "userPage": {
+        "title": "用户管理",
+        "description": "管理用户账户、角色和访问状态。"
+      },
       "songs": {
         "title": "发布歌曲"
+      },
+      "storySubmissions": {
+        "eyebrow": "用户投稿通道",
+        "title": "用户投稿",
+        "description": "审核首页提交的新闻链接和文字线索，具有公开来源的投稿可进入热点雷达候选池。",
+        "filterLabel": "投稿状态筛选",
+        "filters": {
+          "pending": "待审核",
+          "adopted": "已发送至雷达",
+          "rejected": "已拒绝",
+          "all": "全部投稿"
+        },
+        "emptyTitle": "当前没有用户投稿",
+        "emptyDescription": "用户从首页提交的新线索会自动显示在这里。",
+        "writtenTip": "文字线索",
+        "tipCount": "{count} 条投稿",
+        "submittedBy": "提交人：{name}",
+        "reviewNote": "审核备注：{reason}",
+        "reviewedBy": "审核人：{name}",
+        "openSubmittedStory": "打开投稿新闻",
+        "review": "审核",
+        "reject": "拒绝",
+        "sourceRequired": "发送至雷达前，需要验证并添加公开新闻来源",
+        "sendToRadar": "发送至雷达",
+        "edit": "编辑",
+        "restore": "恢复",
+        "onRadar": "已进入热点雷达",
+        "publicSource": "公开新闻来源",
+        "editorialSummary": "编辑摘要",
+        "summaryPlaceholder": "用一句简洁有力的话说明发生了什么",
+        "cancel": "取消",
+        "saveAndInspect": "保存并验证",
+        "saveTip": "保存线索",
+        "duplicateMessage": "该来源在 {domain} 已有 {count} 条投稿。",
+        "editorialDesk": "编辑台",
+        "mergeExisting": "合并至现有投稿",
+        "rejectionNote": "内部拒绝备注（可选）",
+        "rejectionPlaceholder": "重复、无法验证或偏离主题……",
+        "rejectTip": "拒绝投稿",
+        "reviewError": "无法审核这条投稿。",
+        "rejectedSuccess": "投稿已拒绝。",
+        "restoredSuccess": "投稿已返回待审核队列。",
+        "saveError": "无法保存这条投稿。",
+        "sourceVerified": "来源验证完成，新闻信息已更新。",
+        "tipUpdated": "文字线索已更新。",
+        "mergeError": "无法合并这些投稿。",
+        "mergeSuccess": "重复投稿已合并，用户关注度已计入现有记录。",
+        "sendError": "无法将这条投稿发送至热点雷达。",
+        "sendSuccess": "投稿已加入热点雷达候选池。"
+      },
+      "voteResults": {
+        "title": "用户投票结果",
+        "description": "查看用户希望制作成歌曲的近期新闻，排名采用与首页一致的三日加权规则。",
+        "liveUpdate": "根据实时投票更新",
+        "uniqueVoters": "投票用户数",
+        "storySelections": "新闻选择次数",
+        "storiesReceivingVotes": "获得投票的新闻数",
+        "emptyTitle": "最近三天暂无投票",
+        "emptyDescription": "用户在首页完成投票后，结果会显示在这里。",
+        "voteBreakdown": "今日 {today} 票 · 三日 {threeDays} 票 · {voters} 位用户",
+        "weighted": "加权占比",
+        "openSource": "打开 {domain}",
+        "openingStudio": "正在打开创作台",
+        "openStudio": "打开创作台",
+        "createSong": "创作歌曲",
+        "openStudioTimeout": "打开创作台超时，请重试。",
+        "openStudioError": "无法打开音乐创作台。",
+        "statuses": {
+          "new": "新增",
+          "shortlisted": "已候选",
+          "adopted": "制作中",
+          "dismissed": "已忽略"
+        },
+        "categories": {
+          "celebrityDrama": "明星八卦",
+          "internetChaos": "网络离谱",
+          "absurdHeadlines": "荒诞社会"
+        }
+      },
+      "storyRadar": {
+        "title": "热点雷达",
+        "description": "在新闻进入编辑流程前，审核明星八卦、网络热梗和荒诞新闻。近期且未被忽略的新闻可以进入首页投票，加入候选可提高其优先级。",
+        "scanning": "正在扫描来源",
+        "scan": "扫描最新新闻",
+        "statusFilters": "候选新闻状态筛选",
+        "categoryFilters": "候选新闻类别筛选",
+        "allTopics": "全部类别",
+        "emptyTitle": "当前筛选下没有候选新闻",
+        "emptyDescription": "运行扫描以收集最新新闻，或者调整状态与类别筛选。",
+        "matchScore": "匹配分数 {score}",
+        "matched": "匹配词：{terms}",
+        "openOriginal": "打开新闻原文",
+        "dismiss": "忽略",
+        "shortlist": "加入候选",
+        "openStudio": "打开创作台",
+        "createSong": "创作歌曲",
+        "openingStudio": "正在打开创作台",
+        "openStudioTimeout": "打开创作台超时，请重试。",
+        "openStudioError": "无法打开音乐创作台。",
+        "restore": "恢复",
+        "statuses": {
+          "all": "全部",
+          "new": "新增",
+          "shortlisted": "已候选",
+          "adopted": "制作中",
+          "dismissed": "已忽略"
+        },
+        "categories": {
+          "celebrityDrama": "明星八卦",
+          "internetChaos": "网络热梗",
+          "absurdHeadlines": "荒诞新闻"
+        }
       },
       "users": {
         "title": "用户管理",
@@ -847,12 +1214,22 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
+    "description": "The wildest headlines, messiest drama, and hottest gossip—turned into songs you can listen to, laugh at, and share.",
     "hero": {
-      "title": "头条的嘻哈之声",
-      "description": "把头条、闹剧和八卦变成 AI 梗歌。",
-      "semanticTitle": "ScoopRYM - 把头条、闹剧和八卦变成 AI 梗歌。",
-      "subtitle": "把<headlines>头条</headlines>、<drama>闹剧</drama>和<gossip>八卦</gossip>变成<songs>AI 梗歌</songs>。"
+      "title": "Daily Meme Songs from Viral Moments",
+      "description": "The wildest headlines, messiest drama, and hottest gossip—turned into songs you can listen to, laugh at, and share.",
+      "semanticTitle": "ScoopRYM: Daily Meme Songs from Viral Moments",
+      "subtitle": "Daily Meme Songs from Viral Moments",
+      "titlePrimary": "Daily Meme Songs",
+      "titleSecondary": "from Viral Moments",
+      "descriptionHeadlines": "The wildest headlines",
+      "descriptionDrama": "messiest drama",
+      "descriptionGossip": "hottest gossip",
+      "descriptionLineTwo": "—turned into songs you can listen to, laugh at, and share.",
+      "cta": "Play Today’s Drop",
+      "playNow": "Play Now",
+      "pause": "Pause",
+      "galleryCta": "Gallery"
     },
     "logocloud": {
       "title": "您最爱公司都是我们的合作伙伴"
@@ -935,12 +1312,19 @@
     },
     "gallery": {
       "eyebrow": "热榜新鲜出炉",
-      "title": "热门八卦与头条歌曲",
+      "title": "画廊",
       "titleLeading": "热门八卦与",
       "titleHighlight": "头条歌曲",
-      "descriptionLong": "看看社区正在把今天最热的话题做成什么样的歌。",
-      "empty": "还没有热门歌曲，来做第一首吧！",
+      "descriptionLong": "浏览近期头条、八卦和网络闹剧，再听听它们被改编成的 meme song。",
+      "empty": "暂时还没有已发布的内容。",
       "cta": "查看更多",
+      "pagination": {
+        "ariaLabel": "画廊分页",
+        "showing": "正在显示第 {start}-{end} 条，共 {total} 条",
+        "previous": "上一页",
+        "next": "下一页",
+        "page": "第 {page} 页"
+      },
       "subtitle": "正在流行",
       "description": "发现最火的 AI 生成曲目",
       "categories": {

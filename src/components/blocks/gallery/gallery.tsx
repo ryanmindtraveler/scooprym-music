@@ -1,19 +1,9 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { useActionPermission } from '@/hooks/auth/use-permission';
-import { cn } from '@/lib/utils';
-import { Routes } from '@/routes';
-import { usePlayerStore } from '@/store';
-import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Clock, Eye, Loader2, Pause, Play, TrendingUp } from 'lucide-react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
+import { useRef, useState } from 'react';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
@@ -24,89 +14,36 @@ interface GallerySectionProps {
   initialSelectedSong?: Song | null;
 }
 
+// 桌面端每页固定呈现 5 列 × 4 行；较小屏幕沿用响应式列数，但分页总量保持 20。
+const GALLERY_PAGE_SIZE = 20;
+
 export default function GallerySection({ songs = [], initialSelectedSong = null }: GallerySectionProps) {
   const t = useTranslations('HomePage.gallery');
-  const router = useRouter();
+  const sectionRef = useRef<HTMLElement>(null);
   const [selectedSong, setSelectedSong] = useState<Song | null>(initialSelectedSong);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Use passed songs or empty array if none
   const displayItems = songs.length > 0 ? songs : [];
+  const totalPages = Math.max(1, Math.ceil(displayItems.length / GALLERY_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStart = (safeCurrentPage - 1) * GALLERY_PAGE_SIZE;
+  const pageItems = displayItems.slice(pageStart, pageStart + GALLERY_PAGE_SIZE);
 
-  const handleShowMoreClick = () => {
-    router.push(Routes.Home);
+  const goToPage = (page: number) => {
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    if (nextPage === safeCurrentPage) return;
+
+    setCurrentPage(nextPage);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    sectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
   };
 
   return (
     <section
+      ref={sectionRef}
       id="gallery"
-      className="relative z-20 px-4 pt-32 pb-32 md:pt-48 md:pb-48 overflow-visible selection:bg-pink-200 selection:text-pink-900"
+      className="relative z-20 scroll-mt-16 overflow-hidden bg-[linear-gradient(90deg,#ddd6fe_0%,#fbcfe8_50%,#bae6fd_100%)] px-4 py-24 selection:bg-pink-200 selection:text-pink-900 md:scroll-mt-20 md:py-28"
     >
-      {/* 1. Static Gradient Background (Cyan -> Pink) - Matching User Image */}
-      <div className="absolute inset-0 z-0">
-        <div
-          className="absolute inset-0 opacity-100"
-          style={{
-            background: 'linear-gradient(135deg, #ddd6fe 0%, #fbcfe8 50%, #bae6fd 100%)', // Violet -> Pink -> Blue (Unicorn Cloth)
-          }}
-        />
-      </div>
-
-      {/* 2. Gentle Liquid Wave Glass Background Layer */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none opacity-90 mix-blend-normal"
-        style={{
-          top: '0',
-          bottom: '0',
-        }}
-      >
-        <div className="relative w-full h-full backdrop-blur-3xl">
-          {/* Top Wave */}
-          <div
-            className="absolute left-0 w-full overflow-hidden leading-0
-                            top-[-39px] h-[40px]
-                            md:top-[-99px] md:h-[100px]"
-          >
-            <svg
-              data-name="Layer 1"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 1440 320"
-              preserveAspectRatio="none"
-              className="block w-[calc(100%+1.3px)] h-full"
-            >
-              <path
-                fill="#ffffff"
-                fillOpacity="1"
-                d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              />
-            </svg>
-          </div>
-
-          {/* Middle Block: Solid White */}
-          <div className="absolute inset-0 bg-white" />
-
-          {/* Bottom Wave (Rotated 180) */}
-          <div
-            className="absolute left-0 w-full overflow-hidden leading-0 transform rotate-180
-                            bottom-[-39px] h-[40px]
-                            md:bottom-[-99px] md:h-[100px]"
-          >
-            <svg
-              data-name="Layer 1"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 1440 320"
-              preserveAspectRatio="none"
-              className="block w-[calc(100%+1.3px)] h-full"
-            >
-              <path
-                fill="#ffffff"
-                fillOpacity="1"
-                d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,224C672,245,768,267,864,261.3C960,256,1056,224,1152,197.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
-
       {/* Modal for Selected Song (Client Side Only - No URL Change) */}
       {selectedSong && (
         <SongDetailDialog
@@ -119,69 +56,103 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
         />
       )}
 
-      {/* Main Content Area */}
-      <div className="mx-auto max-w-[1800px] px-4 md:px-8 space-y-12 relative z-10">
-        <div className="text-center space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 border border-gray-200 shadow-sm text-sm font-bold tracking-widest text-gray-500 mb-2"
-          >
-            <TrendingUp className="w-4 h-4 text-pink-500" />
-            <span>{t('eyebrow')}</span>
-          </motion.div>
-
+      <div className="relative z-10 mx-auto w-full max-w-[2040px] px-4 md:px-8">
+        <div className="max-w-2xl">
           <motion.h2
-            initial={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 18 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-6xl md:text-8xl font-black tracking-tighter text-transparent bg-clip-text bg-linear-to-r from-gray-900 via-gray-700 to-gray-900 drop-shadow-sm pb-2"
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="w-fit border-b-[5px] border-pink-500 pb-2 text-5xl font-black leading-[0.92] tracking-[-0.065em] text-slate-950 md:text-6xl"
           >
-            {t('titleLeading')}{' '}
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-violet-500">
-              {t('titleHighlight')}
-            </span>
+            {t('title')}
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xl font-medium text-gray-600 max-w-2xl mx-auto"
+            transition={{ duration: 0.45, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-5 max-w-xl text-base font-semibold leading-7 text-slate-700 md:text-lg"
           >
             {t('descriptionLong')}
           </motion.p>
         </div>
 
         {displayItems.length === 0 ? (
-          <div className="text-center py-20 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-3xl">
-            <p className="text-2xl font-bold text-gray-400">{t('empty')}</p>
+          <div className="mt-12 rounded-3xl border border-slate-900/10 bg-white/55 px-6 py-20 text-center">
+            <p className="text-xl font-bold text-slate-600">{t('empty')}</p>
           </div>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {displayItems.map((item, index) => (
+          <div
+            key={safeCurrentPage}
+            className="mt-12 grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          >
+            {pageItems.map((item, index) => (
               <GallerySongCard
                 key={item.id}
                 item={item}
                 onSelect={(song) => setSelectedSong(song)}
-                priority={index < 4}
+                priority={safeCurrentPage === 1 && index < 5}
+                queue={displayItems}
               />
             ))}
           </div>
         )}
 
-        <div className="text-center pt-8">
-          <button
-            type="button"
-            onClick={handleShowMoreClick}
-            className="inline-flex items-center justify-center px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+        {displayItems.length > 0 && (
+          <nav
+            aria-label={t('pagination.ariaLabel')}
+            className="mt-14 flex flex-col gap-5 border-t border-slate-950/15 pt-6 sm:flex-row sm:items-center sm:justify-between"
           >
-            {t('cta')}
-          </button>
-        </div>
+            <p className="text-sm font-bold text-slate-700">
+              {t('pagination.showing', {
+                start: pageStart + 1,
+                end: Math.min(pageStart + GALLERY_PAGE_SIZE, displayItems.length),
+                total: displayItems.length,
+              })}
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => goToPage(safeCurrentPage - 1)}
+                disabled={safeCurrentPage === 1}
+                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-slate-950/15 bg-white/60 px-4 text-sm font-black text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-35"
+              >
+                <ChevronLeft className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{t('pagination.previous')}</span>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => goToPage(page)}
+                  aria-current={page === safeCurrentPage ? 'page' : undefined}
+                  aria-label={t('pagination.page', { page })}
+                  className={`flex size-11 items-center justify-center rounded-full text-sm font-black shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 ${
+                    page === safeCurrentPage
+                      ? 'bg-slate-950 text-white'
+                      : 'border border-slate-950/15 bg-white/60 text-slate-800 hover:-translate-y-0.5 hover:bg-white'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => goToPage(safeCurrentPage + 1)}
+                disabled={safeCurrentPage === totalPages}
+                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-slate-950/15 bg-white/60 px-4 text-sm font-black text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-35"
+              >
+                <span className="hidden sm:inline">{t('pagination.next')}</span>
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          </nav>
+        )}
       </div>
     </section>
   );

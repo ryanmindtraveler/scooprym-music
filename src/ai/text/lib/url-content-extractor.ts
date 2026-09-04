@@ -4,6 +4,8 @@
  * Implementation of Strategy C: Local libraries + Specialized Scrapers.
  */
 
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { YoutubeTranscript } from 'youtube-transcript';
@@ -23,23 +25,223 @@ export interface ExtractedContent {
   error?: string;
 }
 
+const MAX_EXTRACTED_CONTENT_LENGTH = 12_000;
+const MIN_EXTRACTED_CONTENT_LENGTH = 80;
+const MAX_READER_RESPONSE_BYTES = 1_500_000;
+const BLOCKED_HOSTNAMES = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'ip6-loopback']);
+
+export class UnsafeSourceUrlError extends Error {
+  readonly statusCode = 400;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnsafeSourceUrlError';
+  }
+}
+
+function isBlockedIpv4(address: string) {
+  const octets = address.split('.').map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return true;
+  }
+
+  const [a, b, c] = octets;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0 && (c === 0 || c === 2)) ||
+    (a === 192 && b === 88 && c === 99) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
+    a >= 224
+  );
+}
+
+function isBenchmarkIpv4(address: string) {
+  const octets = address.split('.').map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) {
+    return false;
+  }
+
+  return octets[0] === 198 && (octets[1] === 18 || octets[1] === 19);
+}
+
+/**
+ * Clash 等本地代理的 Fake-IP 模式会在开发环境把公开域名解析到 RFC 2544
+ * 基准测试网段 198.18.0.0/15。这里只兼容“全部结果均为该网段”的域名解析；
+ * 生产环境、IP 字面量、混合公网/私网结果及其他私网地址仍一律拒绝。
+ */
+export function isDevelopmentFakeIpResolution(
+  addresses: Array<{ address: string; family: number }>,
+  environment = process.env.NODE_ENV
+) {
+  return (
+    environment !== 'production' &&
+    addresses.length > 0 &&
+    addresses.every(({ address, family }) => family === 4 && isBenchmarkIpv4(address))
+  );
+}
+
+/**
+ * 判定地址是否属于本机、私网、链路本地或保留地址。
+ * 对 IPv6 采用“只允许当前全球单播 2000::/3”的保守策略，并额外排除文档及转换网段。
+ */
+export function isBlockedIpAddress(rawAddress: string) {
+  const address = rawAddress
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .split('%')[0];
+  const family = isIP(address);
+
+  if (family === 4) {
+    return isBlockedIpv4(address);
+  }
+
+  if (family !== 6) {
+    return true;
+  }
+
+  const mappedIpv4 = address.match(/(?:^|:)ffff:(\d{1,3}(?:\.\d{1,3}){3})$/)?.[1];
+  if (mappedIpv4) {
+    return isBlockedIpv4(mappedIpv4);
+  }
+
+  return (
+    address === '::' ||
+    address === '::1' ||
+    !/^[23]/.test(address) ||
+    address.startsWith('2001:db8:') ||
+    address.startsWith('2001:0:') ||
+    address.startsWith('2002:')
+  );
+}
+
+function parseHttpSourceUrl(rawUrl: string) {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new UnsafeSourceUrlError('Source URL is invalid');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new UnsafeSourceUrlError('Source URL must use HTTP or HTTPS');
+  }
+
+  if (parsed.username || parsed.password) {
+    throw new UnsafeSourceUrlError('Source URL must not contain credentials');
+  }
+
+  const hostname = parsed.hostname
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '');
+  if (!hostname || BLOCKED_HOSTNAMES.has(hostname) || hostname.endsWith('.localhost') || hostname.endsWith('.local')) {
+    throw new UnsafeSourceUrlError('Local or private source URLs are not allowed');
+  }
+
+  if (isIP(hostname) && isBlockedIpAddress(hostname)) {
+    throw new UnsafeSourceUrlError('Local, private, or reserved source addresses are not allowed');
+  }
+
+  parsed.hash = '';
+  return parsed;
+}
+
+async function validateResolvedHttpUrl(rawUrl: string, allowDevelopmentFakeIp: boolean) {
+  const parsed = parseHttpSourceUrl(rawUrl);
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+
+  if (!isIP(hostname)) {
+    let addresses: Array<{ address: string; family: number }>;
+    try {
+      addresses = await lookup(hostname, { all: true, verbatim: true });
+    } catch {
+      throw new UnsafeSourceUrlError('Source hostname could not be resolved');
+    }
+
+    const containsBlockedAddress = addresses.some(({ address }) => isBlockedIpAddress(address));
+    const isLocalProxyFakeIp =
+      allowDevelopmentFakeIp && containsBlockedAddress && isDevelopmentFakeIpResolution(addresses);
+
+    if (addresses.length === 0 || (containsBlockedAddress && !isLocalProxyFakeIp)) {
+      throw new UnsafeSourceUrlError('Source hostname resolves to a local, private, or reserved address');
+    }
+
+    if (isLocalProxyFakeIp) {
+      console.warn(`[extractor] Allowing development proxy Fake-IP resolution for public hostname: ${hostname}`);
+    }
+  }
+
+  return parsed.toString();
+}
+
+/**
+ * 校验应用服务器将要直接访问的 URL。全部 DNS 结果都必须是公开地址，
+ * 任何开发代理 Fake-IP、私网、回环或保留地址都会被拒绝。
+ */
+export async function assertPublicHttpUrl(rawUrl: string) {
+  return validateResolvedHttpUrl(rawUrl, false);
+}
+
+/**
+ * 校验交给 Jina/Firecrawl 等外部阅读器处理的来源 URL。
+ * 仅该边界在非生产环境兼容本地代理 Fake-IP；后续本机直连回退仍会再次
+ * 调用 assertPublicHttpUrl，因此不会把这个兼容规则扩散到服务器网络。
+ */
+export async function assertReaderSafeHttpUrl(rawUrl: string) {
+  return validateResolvedHttpUrl(rawUrl, true);
+}
+
+function normalizeExtractedText(content: string) {
+  return content
+    .replace(/\0/g, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, MAX_EXTRACTED_CONTENT_LENGTH);
+}
+
+function hasUsableContent(content?: string) {
+  if (!content) return false;
+  const normalized = normalizeExtractedText(content);
+  return (
+    normalized.length >= MIN_EXTRACTED_CONTENT_LENGTH &&
+    !/^\(?no text content found/i.test(normalized) &&
+    !/^\(?transcript unavailable/i.test(normalized)
+  );
+}
+
 // --- Platform Detectors ---
 
 export function detectUrlType(url: string): UrlType {
-  // YouTube: Standard, Shorts, Embeds, Shortlinks
-  if (/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)/i.test(url)) {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return 'generic';
+  }
+
+  const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+  const isHost = (domain: string) => hostname === domain || hostname.endsWith(`.${domain}`);
+
+  if (isHost('youtube.com') || hostname === 'youtu.be') {
     return 'youtube';
   }
-  // Twitter/X
-  if (/(?:twitter\.com|x\.com)\/\w+\/status\//i.test(url)) {
+  if ((isHost('twitter.com') || isHost('x.com')) && /\/[^/]+\/status\//i.test(parsed.pathname)) {
     return 'twitter';
   }
-  // TikTok: Web + Mobile Shortlinks (vt/vm)
-  if (/(?:tiktok\.com\/|vt\.tiktok\.com|vm\.tiktok\.com)/i.test(url)) {
+  if (isHost('tiktok.com')) {
     return 'tiktok';
   }
-  // Instagram: Web + Shortlinks
-  if (/(?:instagram\.com|instagr\.am)\/(?:p|reels?|reel)\//i.test(url)) {
+  if ((isHost('instagram.com') || hostname === 'instagr.am') && /^\/(?:p|reels?|reel)\//i.test(parsed.pathname)) {
     return 'instagram';
   }
   return 'generic';
@@ -80,7 +282,11 @@ async function extractYoutube(rawUrl: string): Promise<ExtractedContent> {
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
 
     try {
-      const { data } = await axios.get(oembedUrl, { timeout: 3000 });
+      const { data } = await axios.get(oembedUrl, {
+        timeout: 3000,
+        maxRedirects: 0,
+        maxContentLength: 256_000,
+      });
       title = data.title || title;
       author = data.author_name || author;
     } catch (e) {
@@ -224,20 +430,6 @@ async function extractYoutube(rawUrl: string): Promise<ExtractedContent> {
         console.warn('[extractor] Fallback failed:', fallbackErr);
       }
 
-      // FALLBACK 2: Return success with just metadata if we have at least a title
-      // This ensures we don't fail completely just because there are no subtitles
-      if (title && title !== 'YouTube Video') {
-        console.log(`[extractor] Falling back to YouTube metadata for ${url}`);
-        return {
-          success: true,
-          urlType: 'youtube',
-          title,
-          author,
-          description: 'Note: Subtitles/Transcript not available for this video.',
-          content: `(Transcript unavailable. Using video title: "${title}")`,
-        };
-      }
-
       throw transcriptError;
     }
   } catch (error: any) {
@@ -248,6 +440,114 @@ async function extractYoutube(rawUrl: string): Promise<ExtractedContent> {
       error: error?.message || 'Failed to extract transcript from YouTube video.',
     };
   }
+}
+
+async function fetchPublicHtml(rawUrl: string) {
+  let currentUrl = rawUrl;
+
+  for (let redirectCount = 0; redirectCount <= 3; redirectCount++) {
+    currentUrl = await assertPublicHttpUrl(currentUrl);
+    const response = await axios.get(currentUrl, {
+      timeout: 15_000,
+      maxRedirects: 0,
+      maxContentLength: MAX_READER_RESPONSE_BYTES,
+      maxBodyLength: MAX_READER_RESPONSE_BYTES,
+      responseType: 'text',
+      validateStatus: (status) => status >= 200 && status < 400,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.1',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+    });
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.location;
+      if (!location) {
+        throw new Error('Source redirected without a destination');
+      }
+      currentUrl = new URL(location, currentUrl).toString();
+      continue;
+    }
+
+    const contentType = String(response.headers['content-type'] || '').toLowerCase();
+    if (contentType && !contentType.includes('text/') && !contentType.includes('html')) {
+      throw new Error('Source did not return readable text or HTML');
+    }
+
+    return response.data as string;
+  }
+
+  throw new Error('Source redirected too many times');
+}
+
+export interface PublicPageMetadata {
+  title: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  publishedAt: Date | null;
+}
+
+function cleanMetadataValue(value: string | undefined, maxLength: number) {
+  const cleaned = value?.replace(/\s+/g, ' ').trim();
+  return cleaned ? cleaned.slice(0, maxLength) : null;
+}
+
+/**
+ * 从已通过 SSRF 校验的公开页面提取编辑部需要的轻量元数据。
+ * 图片地址只保存，不由服务器继续请求。
+ */
+export async function extractPublicPageMetadata(rawUrl: string): Promise<PublicPageMetadata> {
+  const normalizedUrl = await assertPublicHttpUrl(rawUrl);
+  const html = await fetchPublicHtml(normalizedUrl);
+  const $ = cheerio.load(html);
+  const title = cleanMetadataValue(
+    $('meta[property="og:title"]').attr('content') ||
+      $('meta[name="twitter:title"]').attr('content') ||
+      $('title').text(),
+    300
+  );
+  const description = cleanMetadataValue(
+    $('meta[property="og:description"]').attr('content') ||
+      $('meta[name="twitter:description"]').attr('content') ||
+      $('meta[name="description"]').attr('content'),
+    1000
+  );
+  const rawImage = cleanMetadataValue(
+    $('meta[property="og:image:secure_url"]').attr('content') ||
+      $('meta[property="og:image"]').attr('content') ||
+      $('meta[name="twitter:image"]').attr('content'),
+    2048
+  );
+  let imageUrl: string | null = null;
+  if (rawImage) {
+    try {
+      const resolved = new URL(rawImage, normalizedUrl);
+      if (
+        (resolved.protocol === 'http:' || resolved.protocol === 'https:') &&
+        !resolved.username &&
+        !resolved.password
+      ) {
+        imageUrl = resolved.toString();
+      }
+    } catch {
+      imageUrl = null;
+    }
+  }
+
+  const rawPublishedAt =
+    $('meta[property="article:published_time"]').attr('content') ||
+    $('meta[name="date"]').attr('content') ||
+    $('time[datetime]').first().attr('datetime');
+  const parsedPublishedAt = rawPublishedAt ? new Date(rawPublishedAt) : null;
+
+  return {
+    title,
+    description,
+    imageUrl,
+    publishedAt: parsedPublishedAt && !Number.isNaN(parsedPublishedAt.getTime()) ? parsedPublishedAt : null,
+  };
 }
 
 /**
@@ -264,7 +564,10 @@ async function extractGeneric(url: string, type: UrlType = 'generic'): Promise<E
     const jinaUrl = `https://r.jina.ai/${url}`;
 
     const { data: jinaMarkdown } = await axios.get(jinaUrl, {
-      timeout: 25000, // Increased to 25s to handle complex pages
+      timeout: 25_000,
+      maxRedirects: 0,
+      maxContentLength: MAX_READER_RESPONSE_BYTES,
+      maxBodyLength: MAX_READER_RESPONSE_BYTES,
       headers: {
         'X-With-Images-Summary': 'true',
         'X-Return-Format': 'markdown',
@@ -316,6 +619,9 @@ async function extractGeneric(url: string, type: UrlType = 'generic'): Promise<E
             'Content-Type': 'application/json',
           },
           timeout: 15000,
+          maxRedirects: 0,
+          maxContentLength: MAX_READER_RESPONSE_BYTES,
+          maxBodyLength: MAX_READER_RESPONSE_BYTES,
         }
       );
 
@@ -337,16 +643,7 @@ async function extractGeneric(url: string, type: UrlType = 'generic'): Promise<E
   // Strategy C: Basic Axios + Cheerio (Fallback)
   try {
     console.log(`[extractor] Strategy C (Cheerio) starting for: ${url}`);
-    // Fake a browser user agent to avoid basic blocks
-    const { data } = await axios.get(url, {
-      timeout: 15000, // Increased to 15s
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-    });
+    const data = await fetchPublicHtml(url);
 
     const $ = cheerio.load(data);
 
@@ -409,21 +706,50 @@ async function extractGeneric(url: string, type: UrlType = 'generic'): Promise<E
 // --- Main Facade ---
 
 export async function extractUrlContent(url: string): Promise<ExtractedContent> {
-  const type = detectUrlType(url);
-  console.log(`[extractor] Service detected type: ${type} for URL: ${url}`);
+  let normalizedUrl: string;
+  try {
+    normalizedUrl = await assertReaderSafeHttpUrl(url);
+  } catch (error) {
+    return {
+      success: false,
+      urlType: 'generic',
+      error: error instanceof Error ? error.message : 'Source URL is not allowed',
+    };
+  }
+
+  const type = detectUrlType(normalizedUrl);
+  console.log(`[extractor] Service detected type: ${type} for URL: ${normalizedUrl}`);
+
+  let result: ExtractedContent;
 
   switch (type) {
     case 'youtube':
-      return await extractYoutube(url);
+      result = await extractYoutube(normalizedUrl);
+      break;
     case 'twitter':
     case 'tiktok':
     case 'instagram':
       // For free tier, we treat these as generic Jina fallbacks
       // because actual parsing requires paid API or heavy puppeteer
-      return await extractGeneric(url, type);
+      result = await extractGeneric(normalizedUrl, type);
+      break;
     default:
-      return await extractGeneric(url, 'generic');
+      result = await extractGeneric(normalizedUrl, 'generic');
+      break;
   }
+
+  if (!result.success || !hasUsableContent(result.content)) {
+    return {
+      success: false,
+      urlType: type,
+      error: result.error || 'The source page did not contain enough readable content',
+    };
+  }
+
+  return {
+    ...result,
+    content: normalizeExtractedText(result.content || ''),
+  };
 }
 
 /**
@@ -431,7 +757,7 @@ export async function extractUrlContent(url: string): Promise<ExtractedContent> 
  */
 export function formatExtractedContentForAI(extracted: ExtractedContent, originalUrl: string): string {
   if (!extracted.success) {
-    return `Source URL: ${originalUrl}\n\n[System Note: Could not extract content. Error: ${extracted.error}]`;
+    throw new Error(extracted.error || `Could not extract content from ${originalUrl}`);
   }
 
   const lines = [
@@ -444,9 +770,7 @@ export function formatExtractedContentForAI(extracted: ExtractedContent, origina
   if (extracted.description) lines.push(`Summary: ${extracted.description}`);
 
   if (extracted.content) {
-    // Truncate for AI context limit (approx 3000 chars is usually safe for lyrics context)
-    const safeContent =
-      extracted.content.length > 3000 ? extracted.content.substring(0, 3000) + '... (truncated)' : extracted.content;
+    const safeContent = normalizeExtractedText(extracted.content);
 
     lines.push(`\n--- Extracted Content ---\n${safeContent}`);
   }
@@ -456,8 +780,8 @@ export function formatExtractedContentForAI(extracted: ExtractedContent, origina
 
 export function isUrl(str: string): boolean {
   try {
-    new URL(str);
-    return true;
+    const url = new URL(str);
+    return url.protocol === 'http:' || url.protocol === 'https:';
   } catch {
     return false;
   }

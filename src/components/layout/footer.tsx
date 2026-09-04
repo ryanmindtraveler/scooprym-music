@@ -22,7 +22,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
         className
       )}
     >
-      <Container className="px-4">
+      <Container className="max-w-[1760px] px-4 md:px-6 2xl:px-8">
         <div className="grid grid-cols-2 gap-12 py-16 lg:grid-cols-4">
           <div className="flex flex-col items-start col-span-full md:col-span-2">
             <div className="space-y-6">
@@ -81,7 +81,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
       </Container>
 
       <div className="border-t border-border/50 py-8">
-        <Container className="px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <Container className="max-w-[1760px] px-4 md:px-6 2xl:px-8 flex flex-col items-center justify-between gap-4 md:flex-row">
           <span className="text-muted-foreground text-sm font-medium">
             &copy; {new Date().getFullYear()} {t('Metadata.name')} All Rights Reserved.
           </span>

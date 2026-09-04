@@ -72,6 +72,7 @@ export class S3Provider implements StorageProvider {
       secretAccessKey,
       endpoint: endpointWithBucket,
       region,
+      requestAbortTimeout: 120_000,
     });
 
     return this.s3Client;
@@ -107,10 +108,27 @@ export class S3Provider implements StorageProvider {
       }
 
       // Upload the file using s3mini
-      const response = await s3.putObject(key, fileContent, contentType);
-
-      if (!response.ok) {
-        throw new UploadError(`Failed to upload file: ${response.statusText}`);
+      // 一次上传的所有重试使用相同 key 与文件内容，避免断连后产生多份对象或重复生成封面。
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          const response = await s3.putObject(key, fileContent, contentType);
+          if (!response.ok) {
+            throw Object.assign(new UploadError(`Storage upload returned HTTP ${response.status}`), {
+              statusCode: response.status,
+            });
+          }
+          break;
+        } catch (error) {
+          const candidate = error as { statusCode?: number; status?: number };
+          const status = candidate.statusCode ?? candidate.status;
+          const message = error instanceof Error ? error.message : '';
+          const retryable = status
+            ? status === 408 || status === 429 || status >= 500
+            : /fetch failed|other side closed|socket|timeout|timed out|abort|econnreset|network/i.test(message);
+          if (!retryable || attempt === 3) throw error;
+          console.warn(`[storage] Upload interrupted; retrying the same object (${attempt}/3).`);
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+        }
       }
 
       // Generate the URL

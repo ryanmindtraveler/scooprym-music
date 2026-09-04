@@ -1,5 +1,6 @@
 
-import { boolean, index, integer, pgSchema, text, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const scooprymSchema = pgSchema('scooprym');
 
@@ -154,18 +155,174 @@ export const creditTransaction = scooprymSchema.table(
   })
 );
 
+export const story = scooprymSchema.table(
+  'story',
+  {
+    id: text('id').primaryKey(),
+    sourceUrl: text('source_url'),
+    sourceText: text('source_text'),
+    newsSummary: text('news_summary'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    storySourceUrlUnique: uniqueIndex('story_source_url_unique').on(table.sourceUrl),
+    storyCreatedAtIdx: index('story_created_at_idx').on(table.createdAt),
+  })
+);
+
+/**
+ * 后台新闻雷达抓取到的候选内容。
+ * 候选内容与正式 story 分离，管理员完成筛选前不会进入音乐生产流程。
+ */
+export const storyCandidate = scooprymSchema.table(
+  'story_candidate',
+  {
+    id: text('id').primaryKey(),
+    provider: text('provider').notNull().default('rss'),
+    sourceUrl: text('source_url').notNull(),
+    sourceTitle: text('source_title').notNull(),
+    sourceDomain: text('source_domain').notNull(),
+    sourceImageUrl: text('source_image_url'),
+    category: text('category').notNull(),
+    matchedTerms: text('matched_terms'),
+    relevanceScore: integer('relevance_score').notNull().default(0),
+    status: text('status').notNull().default('new'),
+    storyId: text('story_id').references(() => story.id, { onDelete: 'set null' }),
+    adoptedAt: timestamp('adopted_at'),
+    publishedAt: timestamp('published_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    storyCandidateSourceUrlUnique: uniqueIndex('story_candidate_source_url_unique').on(table.sourceUrl),
+    storyCandidateStatusPublishedIdx: index('story_candidate_status_published_idx').on(
+      table.status,
+      table.publishedAt
+    ),
+    storyCandidateCategoryIdx: index('story_candidate_category_idx').on(table.category),
+    storyCandidateStoryIdIdx: index('story_candidate_story_id_idx').on(table.storyId),
+    storyCandidateCategoryCheck: check(
+      'story_candidate_category_check',
+      sql`${table.category} in ('celebrity_drama', 'internet_chaos', 'absurd_headlines')`
+    ),
+    storyCandidateStatusCheck: check(
+      'story_candidate_status_check',
+      sql`${table.status} in ('new', 'shortlisted', 'adopted', 'dismissed')`
+    ),
+  })
+);
+
+/**
+ * 用户对新闻雷达候选话题的投票记录。
+ * 每位用户每天最多选择三个候选话题；同一天修改选择时，会整体替换当天的投票集合。
+ * 历史记录用于三日加权统计。
+ */
+export const storyCandidateVote = scooprymSchema.table(
+  'story_candidate_vote',
+  {
+    id: text('id').primaryKey(),
+    candidateId: text('candidate_id')
+      .notNull()
+      .references(() => storyCandidate.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    voteDay: text('vote_day').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    storyCandidateVoteCandidateCreatedIdx: index('story_candidate_vote_candidate_created_idx').on(
+      table.candidateId,
+      table.createdAt
+    ),
+    storyCandidateVoteUserCreatedIdx: index('story_candidate_vote_user_created_idx').on(
+      table.userId,
+      table.createdAt
+    ),
+    storyCandidateVoteDayCandidateIdx: index('story_candidate_vote_day_candidate_idx').on(
+      table.voteDay,
+      table.candidateId
+    ),
+    storyCandidateVoteUserDayCandidateUnique: uniqueIndex('story_candidate_vote_user_day_candidate_unique').on(
+      table.userId,
+      table.voteDay,
+      table.candidateId
+    ),
+  })
+);
+
+/**
+ * 读者提交给编辑部的公开新闻线索。
+ * 相同来源链接只保留一个审核条目，并通过 submissionCount 汇总重复投稿热度。
+ */
+export const storySubmission = scooprymSchema.table(
+  'story_submission',
+  {
+    id: text('id').primaryKey(),
+    sourceUrl: text('source_url'),
+    sourceDomain: text('source_domain'),
+    note: text('note'),
+    sourceTitle: text('source_title'),
+    sourceDescription: text('source_description'),
+    sourceImageUrl: text('source_image_url'),
+    sourcePublishedAt: timestamp('source_published_at'),
+    submittedBy: text('submitted_by').references(() => user.id, { onDelete: 'set null' }),
+    status: text('status').notNull().default('pending'),
+    submissionCount: integer('submission_count').notNull().default(1),
+    candidateId: text('candidate_id').references(() => storyCandidate.id, { onDelete: 'set null' }),
+    reviewedBy: text('reviewed_by').references(() => user.id, { onDelete: 'set null' }),
+    reviewedAt: timestamp('reviewed_at'),
+    rejectionReason: text('rejection_reason'),
+    lastSubmittedAt: timestamp('last_submitted_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    storySubmissionSourceUrlUnique: uniqueIndex('story_submission_source_url_unique').on(table.sourceUrl),
+    storySubmissionStatusSubmittedIdx: index('story_submission_status_submitted_idx').on(
+      table.status,
+      table.lastSubmittedAt
+    ),
+    storySubmissionSubmitterIdx: index('story_submission_submitter_idx').on(table.submittedBy),
+    storySubmissionCandidateIdx: index('story_submission_candidate_idx').on(table.candidateId),
+    storySubmissionStatusCheck: check(
+      'story_submission_status_check',
+      sql`${table.status} in ('pending', 'adopted', 'rejected')`
+    ),
+    storySubmissionUrlLengthCheck: check(
+      'story_submission_url_length_check',
+      sql`${table.sourceUrl} is null or char_length(${table.sourceUrl}) between 12 and 2048`
+    ),
+    storySubmissionNoteLengthCheck: check(
+      'story_submission_note_length_check',
+      sql`${table.note} is null or char_length(btrim(${table.note})) between 10 and 280`
+    ),
+    storySubmissionContentCheck: check(
+      'story_submission_content_check',
+      sql`${table.sourceUrl} is not null or ${table.note} is not null`
+    ),
+    storySubmissionRejectionReasonCheck: check(
+      'story_submission_rejection_reason_check',
+      sql`${table.rejectionReason} is null or char_length(btrim(${table.rejectionReason})) between 4 and 280`
+    ),
+    storySubmissionCountCheck: check('story_submission_count_check', sql`${table.submissionCount} >= 1`),
+  })
+);
+
 export const song = scooprymSchema.table(
   'song',
   {
     id: text('id').primaryKey(),
+    storyId: text('story_id')
+      .notNull()
+      .references(() => story.id, { onDelete: 'cascade' }),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     lyrics: text('lyrics'),
-    prompt: text('prompt'),
-    sourceUrl: text('source_url'),
-    sourceText: text('source_text'),
     audioUrl: text('audio_url').notNull(),
     audioKey: text('audio_key'),
     // 封面图片存储在对象存储中，这里保存访问 URL 与存储 key
@@ -176,15 +333,113 @@ export const song = scooprymSchema.table(
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     isAdminGenerated: boolean('is_admin_generated').default(false),
-    creditsDeducted: boolean('credits_deducted').default(false),
-    processingStatus: text('processing_status').default('processing'),
-    creditError: text('credit_error'),
-    newsSummary: text('news_summary'),
     isPublished: boolean('is_published').default(false),
+    scheduledAt: timestamp('scheduled_at'),
+    publishedAt: timestamp('published_at'),
   },
   (table) => ({
+    songStoryIdIdx: index('song_story_id_idx').on(table.storyId),
     songUserIdIdx: index('song_user_id_idx').on(table.userId),
     songCreatedAtIdx: index('song_created_at_idx').on(table.createdAt),
+    songScheduledAtIdx: index('song_scheduled_at_idx').on(table.scheduledAt),
+    songPublishedAtIdx: index('song_published_at_idx').on(table.publishedAt),
+  })
+);
+
+export const generationAttempt = scooprymSchema.table(
+  'generation_attempt',
+  {
+    id: text('id').primaryKey(),
+    songId: text('song_id')
+      .notNull()
+      .references(() => song.id, { onDelete: 'cascade' }),
+    prompt: text('prompt'),
+    generationPrompt: text('generation_prompt'),
+    coverArtPrompt: text('cover_art_prompt'),
+    outputFormat: text('output_format').notNull().default('url'),
+    audioFormat: text('audio_format').notNull().default('mp3'),
+    generationRequestHash: text('generation_request_hash'),
+    generationBillingMode: text('generation_billing_mode').notNull().default('internal_admin'),
+    processingStatus: text('processing_status').default('queued'),
+    processingError: text('processing_error'),
+    creditsDeducted: boolean('credits_deducted').default(false),
+    creditError: text('credit_error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    generationAttemptSongIdIdx: index('generation_attempt_song_id_idx').on(table.songId),
+    generationAttemptStatusUpdatedIdx: index('generation_attempt_status_updated_idx').on(
+      table.processingStatus,
+      table.updatedAt
+    ),
+    generationAttemptSongCreatedIdx: index('generation_attempt_song_created_idx').on(table.songId, table.createdAt),
+  })
+);
+
+/**
+ * 一次完整的歌曲创作运行。它跨越歌词、人工确认、音频、封面和收尾阶段，
+ * 与具体供应商解耦，允许页面刷新后恢复，也允许后台按阶段重试。
+ */
+export const songCreationRun = scooprymSchema.table(
+  'song_creation_run',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    songId: text('song_id').references(() => song.id, { onDelete: 'set null' }),
+    status: text('status').notNull().default('running'),
+    currentStage: text('current_stage').notNull().default('source_ready'),
+    workflowVersion: integer('workflow_version').notNull().default(1),
+    sourceMode: text('source_mode'),
+    sourceUrl: text('source_url'),
+    sourceText: text('source_text'),
+    directionPrompt: text('direction_prompt'),
+    productionVariantId: text('production_variant_id'),
+    title: text('title'),
+    summary: text('summary'),
+    lyrics: text('lyrics'),
+    lyricWorkshop: jsonb('lyric_workshop'),
+    inputHash: text('input_hash'),
+    lastError: text('last_error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    completedAt: timestamp('completed_at'),
+  },
+  (table) => ({
+    songCreationRunUserUpdatedIdx: index('song_creation_run_user_updated_idx').on(table.userId, table.updatedAt),
+    songCreationRunSongIdx: index('song_creation_run_song_idx').on(table.songId),
+    songCreationRunStatusUpdatedIdx: index('song_creation_run_status_updated_idx').on(
+      table.status,
+      table.updatedAt
+    ),
+  })
+);
+
+/**
+ * 工作流步骤日志。每次尝试单独保留，不覆盖旧错误，便于审计成本与定位故障。
+ */
+export const songCreationStep = scooprymSchema.table(
+  'song_creation_step',
+  {
+    id: text('id').primaryKey(),
+    runId: text('run_id')
+      .notNull()
+      .references(() => songCreationRun.id, { onDelete: 'cascade' }),
+    stage: text('stage').notNull(),
+    status: text('status').notNull().default('running'),
+    attempt: integer('attempt').notNull().default(1),
+    provider: text('provider'),
+    model: text('model'),
+    outputMetadata: jsonb('output_metadata'),
+    error: text('error'),
+    startedAt: timestamp('started_at').notNull().defaultNow(),
+    completedAt: timestamp('completed_at'),
+  },
+  (table) => ({
+    songCreationStepRunStartedIdx: index('song_creation_step_run_started_idx').on(table.runId, table.startedAt),
+    songCreationStepRunStageIdx: index('song_creation_step_run_stage_idx').on(table.runId, table.stage),
   })
 );
 
@@ -204,6 +459,46 @@ export const songPlay = scooprymSchema.table(
     songPlayUserIdIdx: index('song_play_user_id_idx').on(table.userId),
     songPlayUserCreatedAtIdx: index('song_play_user_created_at_idx').on(table.userId, table.createdAt),
     songPlaySongIdIdx: index('song_play_song_id_idx').on(table.songId),
+    songPlaySongCreatedAtIdx: index('song_play_song_created_at_idx').on(table.songId, table.createdAt),
+  })
+);
+
+/**
+ * 匿名与登录用户共用的内容消费事件，用于计算播放漏斗。
+ * actorKey 使用账户 ID 或匿名浏览器 ID，不保存原始 IP。
+ */
+export const songEngagementEvent = scooprymSchema.table(
+  'song_engagement_event',
+  {
+    id: text('id').primaryKey(),
+    songId: text('song_id')
+      .notNull()
+      .references(() => song.id, { onDelete: 'cascade' }),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    actorKey: text('actor_key').notNull(),
+    eventSessionId: text('event_session_id').notNull(),
+    eventType: text('event_type').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    songEngagementEventUnique: uniqueIndex('song_engagement_event_unique').on(
+      table.songId,
+      table.actorKey,
+      table.eventSessionId,
+      table.eventType
+    ),
+    songEngagementEventTypeCreatedIdx: index('song_engagement_event_type_created_idx').on(
+      table.eventType,
+      table.createdAt
+    ),
+    songEngagementEventSongCreatedIdx: index('song_engagement_event_song_created_idx').on(
+      table.songId,
+      table.createdAt
+    ),
+    songEngagementEventTypeCheck: check(
+      'song_engagement_event_type_check',
+      sql`${table.eventType} in ('detail_view', 'play_start', 'play_qualified', 'play_complete', 'share')`
+    ),
   })
 );
 
@@ -223,5 +518,94 @@ export const songFavorite = scooprymSchema.table(
     songFavoriteUserIdIdx: index('song_favorite_user_id_idx').on(table.userId),
     songFavoriteUserCreatedAtIdx: index('song_favorite_user_created_at_idx').on(table.userId, table.createdAt),
     songFavoriteSongIdIdx: index('song_favorite_song_id_idx').on(table.songId),
+  })
+);
+
+export const songReaction = scooprymSchema.table(
+  'song_reaction',
+  {
+    id: text('id').primaryKey(),
+    songId: text('song_id')
+      .notNull()
+      .references(() => song.id, { onDelete: 'cascade' }),
+    actorKey: text('actor_key').notNull(),
+    reactionType: text('reaction_type').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    songReactionSongActorUnique: uniqueIndex('song_reaction_song_actor_unique').on(table.songId, table.actorKey),
+    songReactionSongTypeIdx: index('song_reaction_song_type_idx').on(table.songId, table.reactionType),
+    songReactionTypeCheck: check(
+      'song_reaction_type_check',
+      sql`${table.reactionType} in ('clown', 'dead', 'popcorn', 'eyes', 'receipts')`
+    ),
+  })
+);
+
+/**
+ * 歌曲详情页的公开评论。
+ * 评论与歌曲、登录用户分别关联，歌曲或账户删除时同步清理。
+ */
+export const songComment = scooprymSchema.table(
+  'song_comment',
+  {
+    id: text('id').primaryKey(),
+    songId: text('song_id')
+      .notNull()
+      .references(() => song.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    status: text('status').notNull().default('visible'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    songCommentSongCreatedIdx: index('song_comment_song_created_idx').on(table.songId, table.createdAt),
+    songCommentUserCreatedIdx: index('song_comment_user_created_idx').on(table.userId, table.createdAt),
+    songCommentContentLengthCheck: check(
+      'song_comment_content_length_check',
+      sql`char_length(btrim(${table.content})) between 1 and 500`
+    ),
+    songCommentStatusCheck: check('song_comment_status_check', sql`${table.status} in ('visible', 'hidden')`),
+  })
+);
+
+/** 用户对公开评论的举报，交由管理员审核。 */
+export const songCommentReport = scooprymSchema.table(
+  'song_comment_report',
+  {
+    id: text('id').primaryKey(),
+    commentId: text('comment_id')
+      .notNull()
+      .references(() => songComment.id, { onDelete: 'cascade' }),
+    reporterId: text('reporter_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    status: text('status').notNull().default('pending'),
+    handledBy: text('handled_by').references(() => user.id, { onDelete: 'set null' }),
+    handledAt: timestamp('handled_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    songCommentReportReporterUnique: uniqueIndex('song_comment_report_reporter_unique').on(
+      table.commentId,
+      table.reporterId
+    ),
+    songCommentReportStatusCreatedIdx: index('song_comment_report_status_created_idx').on(
+      table.status,
+      table.createdAt
+    ),
+    songCommentReportReasonCheck: check(
+      'song_comment_report_reason_check',
+      sql`${table.reason} in ('spam', 'harassment', 'misinformation', 'other')`
+    ),
+    songCommentReportStatusCheck: check(
+      'song_comment_report_status_check',
+      sql`${table.status} in ('pending', 'actioned', 'dismissed')`
+    ),
   })
 );

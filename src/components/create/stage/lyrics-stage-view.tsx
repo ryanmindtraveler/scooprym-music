@@ -3,11 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
+import { buildDisplaySongTitle, cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
+import type { LyricWorkshop } from '@/types/lyric-workshop';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Loader2, Mic2, Sparkles } from 'lucide-react';
+import { AlertCircle, Check, FileText, Loader2, Mic2, Radio, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BeatPad } from '../immersive/beat-pad';
 import { SpectrumLoader } from '../immersive/spectrum-loader';
@@ -16,6 +17,8 @@ import { HeaderPlayer } from './header-player';
 // Re-using the props interface (simplified or adapted if needed)
 export interface LyricsStageViewProps {
   lyrics: string;
+  lyricWorkshop: LyricWorkshop | null;
+  onUseDraft: (lyrics: string) => void;
   setLyrics: (value: string) => void;
   isEditing: boolean;
   setIsEditing: (value: boolean) => void;
@@ -46,6 +49,8 @@ export interface LyricsStageViewProps {
 
 export function LyricsStageView({
   lyrics,
+  lyricWorkshop,
+  onUseDraft,
   setLyrics,
   isEditing,
   setIsEditing,
@@ -72,6 +77,8 @@ export function LyricsStageView({
   hasPrevious,
   hasNext,
 }: LyricsStageViewProps) {
+  const [isWorkshopOpen, setIsWorkshopOpen] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
   // Logic: Show overlay (BeatPad) when:
   const showOverlay = (!musicUrl && musicLoading) || (musicLoading && processingStatus === 'processing');
   const showGeneratingBanner =
@@ -83,7 +90,6 @@ export function LyricsStageView({
 
   const { currentSong, isPlaying } = usePlayerStore();
   const isPlayingThisSong = isPlaying && currentSong?.id === songId;
-
   // Auto-exit edit mode when playback starts
   useEffect(() => {
     if (isPlayingThisSong && isEditing) {
@@ -103,7 +109,14 @@ export function LyricsStageView({
     };
   }, [musicUrl, songId, songTitle, currentSong, coverImageUrl]);
 
-  // Fallback chain: AI Summary -> User Text -> User URL (Props > PlayerStore)
+  const lyricHeader = useMemo(() => {
+    const selectedHook = lyricWorkshop?.hookCandidates.find((hook) => hook.id === lyricWorkshop.selectedHookId)?.phrase;
+    return {
+      songTitle: buildDisplaySongTitle(songTitle, selectedHook, lyrics),
+      category: lyricWorkshop?.categoryLabel || 'Meme Song',
+    };
+  }, [lyricWorkshop, lyrics, songTitle]);
+
   const displaySummary =
     newsSummary ||
     currentSong?.newsSummary ||
@@ -215,14 +228,34 @@ export function LyricsStageView({
           </div>
 
           {/* Content */}
-          <div className="flex flex-col justify-center gap-1.5 min-w-0">
-            <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white leading-tight drop-shadow-sm line-clamp-1 py-0.5">
-              {songTitle || 'New Creation'}
+          <div className="flex min-w-0 flex-col justify-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-2 text-[9px] font-black uppercase tracking-[0.18em] text-pink-600 dark:text-pink-300">
+              <Mic2 className="size-3.5 shrink-0" />
+              <span>Song title</span>
+              <span className="text-slate-300 dark:text-slate-600">/</span>
+              <span className="truncate text-slate-500 dark:text-slate-400">{lyricHeader.category}</span>
+            </div>
+            <h2 className="line-clamp-1 py-0.5 font-serif text-3xl font-black leading-tight tracking-tight text-slate-950 drop-shadow-sm md:text-4xl dark:text-white">
+              {lyricHeader.songTitle}
             </h2>
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 max-w-xl">
-                {displaySummary || <span className="opacity-50 italic">No context available</span>}
+              <p
+                className={cn(
+                  'max-w-3xl text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300',
+                  !isSummaryExpanded && 'line-clamp-2'
+                )}
+              >
+                {displaySummary || <span className="italic opacity-50">Story summary will appear here.</span>}
               </p>
+              {displaySummary && displaySummary.length > 180 && (
+                <button
+                  type="button"
+                  onClick={() => setIsSummaryExpanded((expanded) => !expanded)}
+                  className="w-fit text-[10px] font-black uppercase tracking-[0.14em] text-pink-600 transition-colors hover:text-pink-700 dark:text-pink-300 dark:hover:text-pink-200"
+                >
+                  {isSummaryExpanded ? 'Show less' : 'Read summary'}
+                </button>
+              )}
               {showGeneratingBanner && (
                 <div className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50/90 px-3 py-1.5 text-xs font-bold text-amber-800 shadow-sm ring-1 ring-amber-200/80 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-400/20">
                   <Loader2 className="size-3.5 animate-spin" />
@@ -237,8 +270,34 @@ export function LyricsStageView({
         <div className="flex flex-col items-end gap-3 shrink-0 pointer-events-auto">
           <div className="h-10 w-px" />
           <div className="flex items-center gap-3 pt-1">
+            {lyricWorkshop && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsWorkshopOpen(true)}
+                className="h-9 rounded-full border-slate-200 bg-white/85 px-4 text-[10px] font-black uppercase tracking-[0.14em] text-slate-700 shadow-sm backdrop-blur-xl hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700 dark:border-white/10 dark:bg-slate-950/70 dark:text-slate-200"
+              >
+                <Radio className="mr-2 size-3.5 text-pink-500" />
+                Writers’ Room
+              </Button>
+            )}
+            {lyrics && !musicUrl && processingStatus === 'failed' && (
+              <Button
+                type="button"
+                onClick={() => handleRegenerateAudio()}
+                disabled={musicLoading}
+                className="h-9 rounded-full bg-slate-950 px-5 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-lg shadow-slate-950/15 hover:bg-pink-600 dark:bg-white dark:text-slate-950"
+              >
+                {musicLoading ? (
+                  <Loader2 className="mr-2 size-3.5 animate-spin" />
+                ) : (
+                  <Check className="mr-2 size-3.5" />
+                )}
+                Retry Production
+              </Button>
+            )}
             <AnimatePresence>
-              {isEditing && musicLyricsSnapshot && hasUnsavedLyricsChanges && (
+              {isEditing && musicUrl && musicLyricsSnapshot && hasUnsavedLyricsChanges && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -246,7 +305,7 @@ export function LyricsStageView({
                 >
                   <Button
                     size="sm"
-                    onClick={handleRegenerateAudio}
+                    onClick={() => handleRegenerateAudio()}
                     disabled={musicLoading}
                     className="h-8 px-4 rounded-full bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all"
                   >
@@ -289,6 +348,232 @@ export function LyricsStageView({
             hasNext={hasNext}
           />
         )}
+      </div>
+
+      <AnimatePresence>
+        {isWorkshopOpen && lyricWorkshop && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close writers room"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsWorkshopOpen(false)}
+              className="absolute inset-0 z-40 bg-slate-950/12 backdrop-blur-[2px]"
+            />
+            <motion.aside
+              initial={{ opacity: 0, x: 36, scale: 0.98 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 28, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="absolute bottom-5 right-5 top-20 z-50 flex w-[min(440px,calc(100%-2.5rem))] flex-col overflow-hidden rounded-[28px] border border-slate-200/80 bg-[#fffdf8]/96 shadow-[0_28px_90px_-28px_rgba(15,23,42,0.45)] backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/96"
+            >
+              <WritersRoomPanel
+                workshop={lyricWorkshop}
+                onClose={() => setIsWorkshopOpen(false)}
+                onUseDraft={(draftLyrics) => {
+                  onUseDraft(draftLyrics);
+                  setIsWorkshopOpen(false);
+                }}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function WritersRoomPanel({
+  workshop,
+  onClose,
+  onUseDraft,
+}: {
+  workshop: LyricWorkshop;
+  onClose: () => void;
+  onUseDraft: (lyrics: string) => void;
+}) {
+  const selectedPremise = workshop.comicPremises.find((item) => item.id === workshop.selectedPremiseId);
+  const selectedHook = workshop.hookCandidates.find((item) => item.id === workshop.selectedHookId);
+  const selectedStrategy = workshop.memeStrategyCandidates?.find((item) => item.id === workshop.selectedMemeStrategyId);
+  const decisionTone =
+    workshop.safety.decision === 'allow'
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+      : 'bg-amber-50 text-amber-800 ring-amber-200';
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-start justify-between border-b border-slate-200/70 px-5 py-4 dark:border-white/8">
+        <div>
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-pink-600">
+            <Radio className="size-3.5" /> Writers’ Room
+          </div>
+          <h3 className="mt-1 font-serif text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+            Hook before harmony.
+          </h3>
+        </div>
+        <Button type="button" variant="ghost" size="icon" onClick={onClose} className="rounded-full">
+          <X className="size-4" />
+        </Button>
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-slate-950 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-white dark:bg-white dark:text-slate-950">
+            {workshop.categoryLabel}
+          </span>
+          <span
+            className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] ring-1 ${decisionTone}`}
+          >
+            <ShieldCheck className="mr-1 inline size-3" /> {workshop.safety.decision}
+          </span>
+          <span className="rounded-full bg-pink-50 px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-pink-700 ring-1 ring-pink-200">
+            {workshop.toneCeiling} cut
+          </span>
+        </div>
+
+        {workshop.safety.decision !== 'allow' && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-900">
+            {workshop.safety.reason}
+          </div>
+        )}
+
+        {workshop.qualityGate?.passed === false && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-900 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
+            <p className="font-black uppercase tracking-[0.12em]">Editorial notes</p>
+            <p className="mt-1">
+              {workshop.qualityGate.deterministicIssues[0] ||
+                workshop.qualityGate.factualIssues[0] ||
+                'The lyric has optional editorial improvements.'}
+            </p>
+            <p className="mt-2 text-[10px] opacity-70">These notes do not block music production.</p>
+            <p className="mt-2 text-[10px] opacity-70">
+              Estimated performance: {workshop.qualityGate.estimatedDurationSeconds}s
+            </p>
+          </div>
+        )}
+
+        <section>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Satire target</p>
+          <p className="mt-1 text-sm font-bold leading-relaxed text-slate-800 dark:text-slate-100">
+            {workshop.satireTarget}
+          </p>
+        </section>
+
+        <section className="rounded-2xl border border-pink-200/80 bg-pink-50/70 p-4 dark:border-pink-400/15 dark:bg-pink-500/8">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-pink-600">Selected comic premise</p>
+          <p className="mt-2 font-serif text-lg font-black leading-snug text-slate-950 dark:text-white">
+            “{selectedPremise?.line}”
+          </p>
+        </section>
+
+        {selectedStrategy && (
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/5">
+            <div className="flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[0.14em] text-slate-500">
+              <span>{selectedStrategy.narrativeForm.replaceAll('_', ' ')}</span>
+              <span aria-hidden="true">·</span>
+              <span>{selectedStrategy.propagationAction.replaceAll('_', ' ')}</span>
+            </div>
+            <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-200">
+              {selectedStrategy.whyNative}
+            </p>
+          </section>
+        )}
+
+        <section>
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Hook lab</p>
+            <span className="text-[9px] font-bold text-slate-400">{workshop.hookCandidates.length} tested</span>
+          </div>
+          <div className="mt-2 grid gap-2">
+            {workshop.hookCandidates.slice(0, 6).map((hook) => {
+              const isSelected = hook.id === selectedHook?.id;
+              return (
+                <div
+                  key={hook.id}
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border px-3 py-2.5',
+                    isSelected
+                      ? 'border-slate-950 bg-slate-950 text-white dark:border-white dark:bg-white dark:text-slate-950'
+                      : 'border-slate-200 bg-white/70 text-slate-700 dark:border-white/8 dark:bg-white/5 dark:text-slate-200'
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black">{hook.phrase}</p>
+                    <p
+                      className={cn(
+                        'text-[9px] font-bold uppercase tracking-widest',
+                        isSelected ? 'opacity-60' : 'text-slate-400'
+                      )}
+                    >
+                      {hook.mode}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      'ml-3 font-mono text-xs font-black',
+                      isSelected ? 'text-pink-300 dark:text-pink-600' : 'text-slate-400'
+                    )}
+                  >
+                    {hook.score}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Competing drafts</p>
+          <div className="mt-2 grid gap-3">
+            {workshop.drafts.map((draft) => (
+              <div
+                key={draft.id}
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/8 dark:bg-white/5"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-slate-950 dark:text-white">
+                      Draft {draft.id} · {draft.label}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{draft.focus}</p>
+                    <p className="mt-2 border-l-2 border-pink-400 pl-2 font-serif text-sm font-black leading-snug text-slate-900 dark:text-white">
+                      “{draft.hook}”
+                    </p>
+                  </div>
+                  {workshop.editorialDecision === draft.id && (
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-700">
+                      editor pick
+                    </span>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onUseDraft(draft.lyrics)}
+                  className="mt-3 h-8 w-full rounded-lg text-[10px] font-black uppercase tracking-wider"
+                >
+                  <FileText className="mr-2 size-3.5" /> Use this draft
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-slate-100/80 p-4 dark:bg-white/5">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Editor notes</p>
+          <ul className="mt-2 space-y-2">
+            {workshop.editorialNotes.map((note) => (
+              <li
+                key={note}
+                className="flex gap-2 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-300"
+              >
+                <Sparkles className="mt-0.5 size-3.5 shrink-0 text-pink-500" /> {note}
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   );

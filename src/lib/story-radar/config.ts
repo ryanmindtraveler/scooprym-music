@@ -1,0 +1,143 @@
+import type { StoryRadarCategory } from './types';
+
+export interface StoryRadarCategoryConfig {
+  id: StoryRadarCategory;
+  label: string;
+  queryTerms: readonly string[];
+  strongTerms: readonly string[];
+}
+
+export const STORY_RADAR_CATEGORY_CONFIG: readonly StoryRadarCategoryConfig[] = [
+  {
+    id: 'celebrity_drama',
+    label: 'Celebrity Drama',
+    queryTerms: [
+      'celebrity feud',
+      'celebrity backlash',
+      'celebrity apology',
+      'celebrity controversy',
+      'dating rumors',
+      'red carpet drama',
+    ],
+    strongTerms: [
+      'feud',
+      'backlash',
+      'apology',
+      'controversy',
+      'dating rumor',
+      'red carpet',
+      'celebrity',
+      'slams',
+      'blasts',
+      'divorce',
+      'breakup',
+      'split',
+      'lawsuit',
+      'denies',
+      'called out',
+      'scandal',
+      'clapback',
+      'defamation',
+      'haters',
+      'throws shade',
+    ],
+  },
+  {
+    id: 'internet_chaos',
+    label: 'Internet Chaos',
+    queryTerms: [
+      'influencer drama',
+      'viral controversy',
+      'internet reacts',
+      'social media backlash',
+      'brand apology',
+      'caught on camera',
+      'tiktok',
+      'youtube',
+      'streamer',
+      'online',
+      'meme',
+      'prank',
+      'banned',
+      'deleted',
+      'goes viral',
+      'twitch',
+      'reddit',
+      'fans react',
+      'livestream',
+      'creator',
+      'youtuber',
+    ],
+    strongTerms: [
+      'influencer',
+      'viral',
+      'internet reacts',
+      'social media',
+      'backlash',
+      'brand apology',
+      'caught on camera',
+    ],
+  },
+  {
+    id: 'absurd_headlines',
+    label: 'Absurd Headlines',
+    queryTerms: [
+      'bizarre incident',
+      'weird news',
+      'strange arrest',
+      'unusual incident',
+      'public stunt',
+      'ridiculous incident',
+    ],
+    strongTerms: [
+      'bizarre',
+      'weird',
+      'strange',
+      'unusual',
+      'stunt',
+      'ridiculous',
+      'odd',
+      'mistaken',
+      'accidentally',
+      'police say',
+    ],
+  },
+] as const;
+
+export const TRUSTED_STORY_DOMAINS = new Set([
+  'apnews.com',
+  'bbc.com',
+  'billboard.com',
+  'buzzfeed.com',
+  'complex.com',
+  'deadline.com',
+  'eonline.com',
+  'ew.com',
+  'huffpost.com',
+  'independent.co.uk',
+  'mashable.com',
+  'nypost.com',
+  'pagesix.com',
+  'people.com',
+  'reuters.com',
+  'rollingstone.com',
+  'theguardian.com',
+  'tmz.com',
+  'usatoday.com',
+  'variety.com',
+  'vulture.com',
+]);
+
+export const STORY_RADAR_RSS_SOURCES = [
+  { name: 'TMZ', url: 'https://www.tmz.com/rss.xml' },
+  { name: 'E! News', url: 'https://www.eonline.com/syndication/feeds/rssfeeds/topstories.xml' },
+  { name: 'Page Six', url: 'https://pagesix.com/feed/' },
+  { name: 'Variety', url: 'https://variety.com/feed/' },
+  { name: 'Daily Dot', url: 'https://www.dailydot.com/feed/' },
+  { name: 'Dexerto', url: 'https://www.dexerto.com/feed/' },
+  {
+    name: 'Oddity Central',
+    url: 'https://feeds.feedburner.com/odditycentral',
+    defaultCategory: 'absurd_headlines',
+  },
+] as const;

@@ -1,5 +1,5 @@
 import { getAdminSongsAction } from '@/actions/admin/get-admin-songs';
-import { updateSongPublishAction } from '@/actions/admin/update-song-publish';
+import { scheduleSongPublishAction, updateSongPublishAction } from '@/actions/admin/update-song-publish';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SortingState } from '@tanstack/react-table';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ export const adminSongsKeys = {
     pageSize: number;
     search: string;
     sorting: SortingState;
-    status: 'all' | 'published' | 'unpublished';
+    status: 'all' | 'published' | 'scheduled' | 'unpublished';
   }) => [...adminSongsKeys.lists(), filters] as const,
 };
 
@@ -23,7 +23,7 @@ export function useAdminSongs(
   pageSize: number,
   search: string,
   sorting: SortingState,
-  status: 'all' | 'published' | 'unpublished' = 'all'
+  status: 'all' | 'published' | 'scheduled' | 'unpublished' = 'all'
 ) {
   return useQuery({
     queryKey: adminSongsKeys.list({ pageIndex, pageSize, search, sorting, status }),
@@ -46,6 +46,23 @@ export function useAdminSongs(
       };
     },
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useSchedulePublish() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ songId, scheduledAt }: { songId: string; scheduledAt: string | null }) => {
+      const result = await scheduleSongPublishAction(songId, scheduledAt);
+      if (!result.success) throw new Error(result.error || 'Failed to schedule publication');
+      return result;
+    },
+    onSuccess: (_, variables) => {
+      toast.success(variables.scheduledAt ? 'Song scheduled' : 'Schedule removed');
+      queryClient.invalidateQueries({ queryKey: adminSongsKeys.all });
+    },
+    onError: (error) => toast.error(error.message),
   });
 }
 

@@ -24,28 +24,24 @@ export function useNavbarLinks(): NestedMenuItem[] {
       external: false,
     },
     {
-      title: t('gallery.title'),
+      title: 'Today',
+      href: '/#today',
+      external: false,
+    },
+    {
+      title: 'Weekly Hits',
+      href: '/#biggest',
+      external: false,
+    },
+    {
+      title: 'Gallery',
       href: Routes.Gallery,
       external: false,
     },
     {
-      title: t('features.title'),
-      href: Routes.Features,
+      title: 'Send a Story',
+      href: '/#desk',
       external: false,
     },
-    {
-      title: t('pricing.title'),
-      href: Routes.Pricing,
-      external: false,
-    },
-    {
-      title: t('faq.title'),
-      href: Routes.FAQ,
-      external: false,
-    },
-
-    // {
-    //   // removed per request: Login menu from navbar list
-    // },
   ];
 }

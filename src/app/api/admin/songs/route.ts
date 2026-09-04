@@ -1,10 +1,19 @@
 import { getDb } from '@/db/index';
 import { song as songTable } from '@/db/schema';
+import { getSession } from '@/lib/server';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    if (session.user.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     const db = await getDb();
     const adminSongs = await db
       .select()

@@ -49,6 +49,7 @@ export function Navbar({ scroll }: NavBarProps) {
   const [mounted, setMounted] = useState(false);
   const { data: session, isPending } = authClient.useSession();
   const currentUser = session?.user;
+  const isAdmin = currentUser?.role === 'admin';
 
   useEffect(() => {
     setMounted(true);
@@ -65,7 +66,7 @@ export function Navbar({ scroll }: NavBarProps) {
           : 'border-b border-black/5 dark:border-white/5 bg-white/60 dark:bg-slate-950/60 backdrop-blur-2xl shadow-sm'
       )}
     >
-      <Container className="px-4">
+      <Container className="max-w-[1760px] px-4 md:px-6 2xl:px-8">
         {/* desktop navbar */}
         <nav className="hidden lg:flex items-center justify-between">
           {/* logo and name */}
@@ -188,26 +189,36 @@ export function Navbar({ scroll }: NavBarProps) {
             </NavigationMenu>
           </div>
 
-          {/* navbar right show sign in or user */}
+          {/* 登录后的用户控制台入口；管理员额外显示管理后台入口 */}
           <div className="flex items-center gap-x-4">
             {!mounted || isPending ? (
-              <Skeleton className="size-8 border rounded-full" />
+              <Skeleton className="size-8 rounded-full border" />
             ) : currentUser ? (
               <>
                 <LocaleLink
-                  href={Routes.Home}
+                  href={Routes.Dashboard}
                   className={cn(
                     buttonVariants({ variant: 'default', size: 'sm' }),
-                    'font-bold rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90 mr-2 hidden md:flex'
+                    'hidden rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90 md:flex'
                   )}
                 >
                   Dashboard
                 </LocaleLink>
-                {/* <CreditsBalanceButton /> */}
+                {isAdmin && (
+                  <LocaleLink
+                    href={Routes.AdminDashboard}
+                    className={cn(
+                      buttonVariants({ variant: 'outline', size: 'sm' }),
+                      'hidden rounded-full px-6 font-bold md:flex'
+                    )}
+                  >
+                    Admin
+                  </LocaleLink>
+                )}
                 <UserButton user={currentUser} />
               </>
             ) : (
-              <div className="flex items-center gap-x-4">
+              <div className="flex items-center gap-x-3">
                 <LoginWrapper mode="modal" asChild>
                   <Button variant="ghost" size="sm" className="cursor-pointer font-bold hover:text-primary">
                     {t('Common.login')}
@@ -217,11 +228,8 @@ export function Navbar({ scroll }: NavBarProps) {
                 <LocaleLink
                   href={Routes.Register}
                   className={cn(
-                    buttonVariants({
-                      variant: 'default',
-                      size: 'sm',
-                    }),
-                    'font-bold rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90'
+                    buttonVariants({ variant: 'default', size: 'sm' }),
+                    'rounded-full bg-primary px-6 font-bold text-primary-foreground hover:bg-primary/90'
                   )}
                 >
                   {t('Common.signUp')}
@@ -237,7 +245,7 @@ export function Navbar({ scroll }: NavBarProps) {
         </nav>
 
         {/* mobile navbar */}
-        <NavbarMobile className="lg:hidden" currentUser={currentUser} isPending={isPending} />
+        <NavbarMobile className="lg:hidden" currentUser={currentUser} isPending={isPending} isAdmin={isAdmin} />
       </Container>
     </section>
   );

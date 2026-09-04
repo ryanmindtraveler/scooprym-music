@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Routes } from '@/routes';
 import {
   AlertCircleIcon,
   AlertTriangleIcon,
@@ -120,11 +121,11 @@ export function ErrorDisplay({ error, onRetry, onDismiss, className }: ErrorDisp
         break;
       case 'purchase_credits':
         // Navigate to credits purchase page
-        window.location.href = '/settings/billing';
+        window.location.href = Routes.SettingsBilling;
         break;
       case 'check_balance':
         // Navigate to dashboard
-        window.location.href = '/dashboard';
+        window.location.href = Routes.Dashboard;
         break;
       case 'sign_in':
         // Navigate to sign in

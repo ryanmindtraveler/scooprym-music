@@ -33,21 +33,27 @@ export enum Routes {
   ResetPassword = '/auth/reset-password', // 重置密码
 
   // --- 用户控制台 & 受保护路由 (Dashboard & Protected Routes) ---
-  Home = '/home', // 登录后的个人主页 (Quick Cook)
-  Dashboard = '/dashboard', // 数据统计后台
-  Create = '/create', // 核心功能：音乐创作工作室 (Studio)
-  MySongs = '/mysongs', // 个人作品库 (Library)
+  Dashboard = '/dashboard', // 普通用户控制台首页
+  DashboardComments = '/dashboard/comments', // 当前用户的评论记录
+  DashboardVotes = '/dashboard/votes', // 当前用户的热点投票记录
+  DashboardSaved = '/dashboard/saved', // 当前用户收藏的歌曲
+  AdminDashboard = '/admin/dashboard', // 管理员数据后台
+  Create = '/create', // 旧创作入口，仅用于兼容跳转
+  AdminCreate = '/admin/create', // 管理员音乐创作工作室
+  MySongs = '/dashboard/mysongs', // 个人作品库
   DashboardCreate = '/dashboard/create', // 控制台内的创作入口
   AdminUsers = '/admin/users', // 管理员用户管理页
   AdminSongs = '/admin/songs', // 管理员歌曲发布页
-  SettingsProfile = '/settings/profile', // 个人资料设置
-  SettingsBilling = '/settings/billing', // 账单/订阅管理
-  SettingsCredits = '/settings/credits', // 积分充值/消费明细
-  SettingsSecurity = '/settings/security', // 账号安全设置
-  SettingsNotifications = '/settings/notifications', // 通知首选项设置
+  AdminStoryRadar = '/admin/story-radar', // 管理员热点候选管理页
+  AdminComments = '/admin/comments', // 评论举报审核
+  SettingsProfile = '/dashboard/settings/profile', // 个人资料设置
+  SettingsBilling = '/dashboard/settings/billing', // 账单/订阅管理
+  SettingsCredits = '/dashboard/settings/credits', // 积分充值/消费明细
+  SettingsSecurity = '/dashboard/settings/security', // 账号安全设置
+  SettingsNotifications = '/dashboard/settings/notifications', // 通知首选项设置
 
   // --- 支付流程 (Payment Processing) ---
-  Payment = '/payment', // 支付收银台
+  Payment = '/dashboard/payment', // 支付收银台
 
   // --- AI 实验功能路由 (AI Sandbox/Playground) ---
   AIText = '/ai/text', // 文本生成实验室
@@ -89,13 +95,19 @@ export const routesNotAllowedByLoggedInUsers = [Routes.Login, Routes.Register];
  * 只有登录用户才能访问，未登录用户将被重定向至登录页
  */
 export const protectedRoutes = [
-  Routes.Home,
   Routes.Dashboard,
+  Routes.DashboardComments,
+  Routes.DashboardVotes,
+  Routes.DashboardSaved,
+  Routes.AdminDashboard,
   Routes.Create,
+  Routes.AdminCreate,
   Routes.MySongs,
   Routes.DashboardCreate,
   Routes.AdminUsers,
   Routes.AdminSongs,
+  Routes.AdminStoryRadar,
+  Routes.AdminComments,
   Routes.SettingsProfile,
   Routes.SettingsBilling,
   Routes.SettingsCredits,
@@ -106,6 +118,6 @@ export const protectedRoutes = [
 
 /**
  * 登录成功后的默认跳转路径
- * 优先读取网站配置文件，否则默认跳转至 /home
+ * 优先读取网站配置文件，否则默认跳转至 /dashboard
  */
-export const DEFAULT_LOGIN_REDIRECT = websiteConfig.routes.defaultLoginRedirect ?? Routes.Home;
+export const DEFAULT_LOGIN_REDIRECT = websiteConfig.routes.defaultLoginRedirect ?? Routes.Dashboard;

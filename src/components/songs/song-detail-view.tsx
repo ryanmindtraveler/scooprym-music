@@ -11,13 +11,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
+import { formatBusinessDate } from '@/lib/business-time';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
-import { format } from 'date-fns';
-import { useLocale } from 'next-intl';
 import {
   ChevronDown,
   Disc3, // Vinyl icon alternative
@@ -29,6 +29,7 @@ import {
   Play,
   Share2,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -61,6 +62,11 @@ export function SongDetailView({
 
   const isThisSongPlaying = globalIsPlaying && currentSong?.id === song.id;
 
+  useEffect(() => {
+    const sessionId = createEngagementSessionId('detail');
+    void recordSongEngagement(song.id, 'detail_view', sessionId).catch(() => {});
+  }, [song.id]);
+
   // Dynamic color extraction from album art
   const { primary, secondary, muted, darkMuted, isLoading: colorsLoading } = useImageColors(song.coverImageUrl);
 
@@ -77,7 +83,6 @@ export function SongDetailView({
         newsContent: song.sourceText || undefined,
         newsLink: song.sourceUrl || undefined,
       });
-      fetch(`/api/songs/${song.id}/play`, { method: 'POST' }).catch(() => {});
     }
   }, [song.id, autoPlay, song.audioUrl, song.title, song.coverImageUrl, play, currentSong?.id]);
 
@@ -132,7 +137,7 @@ export function SongDetailView({
 
   const formattedDate = useMemo(() => {
     try {
-      return format(new Date(song.createdAt), 'MMM d, yyyy');
+      return formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
       return '';
     }
@@ -424,7 +429,15 @@ export function SongDetailView({
                         side="left"
                         className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white"
                       >
-                        <p>{song.sourceUrl ? (locale.startsWith('zh') ? '查看来源' : 'Read Source') : locale.startsWith('zh') ? '搜索话题' : 'Search Topic'}</p>
+                        <p>
+                          {song.sourceUrl
+                            ? locale.startsWith('zh')
+                              ? '查看来源'
+                              : 'Read Source'
+                            : locale.startsWith('zh')
+                              ? '搜索话题'
+                              : 'Search Topic'}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>

@@ -9,6 +9,8 @@
 export interface GenerateMusicResult {
   success: boolean;
   audioContent?: string;
+  /** 提供商实际返回的载荷类型；可能与请求值不同。 */
+  outputFormat?: 'url' | 'hex';
   error?: string;
   details?: string;
   statusCode?: number;

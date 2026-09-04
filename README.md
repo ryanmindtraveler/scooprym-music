@@ -74,7 +74,7 @@ pnpm install
 复制 `.env.example` 到 `.env`：
 - `DATABASE_URL`: 你的 PostgreSQL 链接字符串。
 - `BETTER_AUTH_SECRET`: 使用 `openssl rand -base64 32` 生成。
-- `MINIMAX_API_KEY`: 连接 MiniMaxi 2.0 音乐生成。
+- `MINIMAX_API_KEY`: 连接 MiniMax 官方 Music 2.6 API；音乐生成不使用第三方回退渠道。
 - `OPENROUTER_API_KEY`: 连接主流 LLM (歌词/图像)。
 - `STRIPE_SECRET_KEY`: 处理支付流水。
 

@@ -32,12 +32,8 @@ export default async function ContactPage() {
           <div className="mx-auto max-w-4xl space-y-12">
             {/* Header */}
             <div className="text-center space-y-6">
-              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
-                {t('title')}
-              </h1>
-              <p className="text-xl text-muted-foreground max-w-xl mx-auto">
-                {t('description')}
-              </p>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">{t('title')}</h1>
+              <p className="text-xl text-muted-foreground max-w-xl mx-auto">{t('description')}</p>
             </div>
 
             {/* Form */}
