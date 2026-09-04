@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getIdFromSlug } from './utils';
 import { getSongCanonicalSlug, getSongSearchHeadline, getSongSeoDescription, getSongSeoTitle } from './song-seo';
 
 const song = {
@@ -25,4 +26,24 @@ describe('歌曲详情 SEO', () => {
     expect(getSongSeoDescription(song)).toContain('Bond’s Bold Blonde');
     expect(getSongSeoDescription(song).length).toBeLessThanOrEqual(159);
   });
+
+  it('含加号的旧网址仍能定位歌曲，新规范网址不再包含加号', () => {
+    const item = { ...song, newsSummary: 'A woman kissed the male lead 60+ times.' };
+    const oldSlug = `a-woman-kissed-the-male-lead-60+-times-${item.id}`;
+    const canonical = getSongCanonicalSlug(item);
+    expect(getIdFromSlug(oldSlug)).toBe(item.id);
+    expect(canonical).toBe(`a-woman-kissed-the-male-lead-60-times-${item.id}`);
+    expect(getIdFromSlug(canonical)).toBe(item.id);
+    expect(decodeURIComponent(encodeURIComponent(canonical))).toBe(canonical);
+  });
+
+  it.each(['60+ times', 'A + B = chaos', '音乐挑战来了', 'Beyoncé’s big moment', 'Wow 🚀 — what now'])(
+    '特殊字符标题生成稳定的规范路径：%s',
+    (newsSummary) => {
+      const canonical = getSongCanonicalSlug({ ...song, newsSummary });
+      expect(canonical).toMatch(/^[\p{L}\p{N}-]+$/u);
+      expect(getIdFromSlug(canonical)).toBe(song.id);
+      expect(decodeURIComponent(encodeURIComponent(canonical))).toBe(canonical);
+    }
+  );
 });

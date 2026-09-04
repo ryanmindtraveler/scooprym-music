@@ -28,7 +28,13 @@ export function getSongStoryContext(song: SeoSong) {
 
 export function getSongCanonicalSlug(song: SeoSong) {
   const searchableHeadline = truncateAtWord(getSongSearchHeadline(song), 82);
-  return `${slugify(searchableHeadline) || slugify(song.title) || 'story-song'}-${song.id}`;
+  // 只允许路径中稳定的字符，避免加号等符号在路由转换后造成规范地址自循环。
+  // 保留 Unicode 字母与数字；旧链接仍通过末尾的歌曲 ID 找到同一首作品。
+  const headlineSlug = slugify(searchableHeadline)
+    .replace(/[^\p{L}\p{N}-]+/gu, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${headlineSlug || 'story-song'}-${song.id}`;
 }
 
 export function getSongSeoTitle(song: SeoSong) {
