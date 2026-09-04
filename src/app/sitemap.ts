@@ -2,11 +2,11 @@ import { featuresContent } from '@/config/features';
 import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
-import { generateHreflangUrls } from '@/lib/hreflang';
 import { getSongCanonicalSlug } from '@/lib/song-seo';
-import { and, desc, eq, isNotNull, ne } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';
 import type { Locale } from 'next-intl';
@@ -19,16 +19,13 @@ type Href = Parameters<typeof getLocalePathname>[0]['href'];
  */
 const staticRoutes = [
   '/',
-  '/pricing',
+  '/songs',
   '/about',
   '/contact',
-  '/waitlist',
-  '/changelog',
   '/privacy',
   '/terms',
   '/cookie',
   ...(websiteConfig.blog.enable ? ['/blog'] : []),
-  ...(websiteConfig.docs.enable ? ['/docs'] : []),
 ];
 
 const featureRoutes = Object.keys(featuresContent).map((slug) => `/features/${slug}` as const);
@@ -50,28 +47,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const priority = route === '/' ? 1.0 : route === '/pricing' ? 0.9 : 0.8;
       const changeFrequency = (route === '/' ? 'daily' : 'weekly') as 'daily' | 'weekly';
 
-      return routing.locales.map((locale) => ({
+      return [routing.defaultLocale].map((locale) => ({
         url: getUrl(route, locale),
-        lastModified: new Date(),
         changeFrequency,
         priority,
-        alternates: {
-          languages: generateHreflangUrls(route),
-        },
       }));
     })
   );
 
   sitemapList.push(
     ...featureRoutes.flatMap((route) =>
-      routing.locales.map((locale) => ({
+      [routing.defaultLocale].map((locale) => ({
         url: getUrl(route, locale),
-        lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.75,
-        alternates: {
-          languages: generateHreflangUrls(route),
-        },
       }))
     )
   );
@@ -79,6 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 2. Add dynamic song routes
   try {
     const db = getDb();
+    const latestAttempt = createLatestGenerationAttemptQuery(db);
     const songs = await db
       .select({
         id: songTable.id,
@@ -90,9 +80,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       })
       .from(songTable)
       .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
           eq(songTable.isPublished, true),
+          notInArray(latestAttempt.processingStatus, [
+            'failed_generation',
+            'processing_queue_failed',
+            'failed_audio_upload',
+            'failed_credit_deduction',
+          ]),
           isNotNull(songTable.audioUrl),
           ne(songTable.audioUrl, 'pending-stream'),
           ne(songTable.audioUrl, '')
@@ -120,6 +117,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   } catch (error) {
     console.error('Failed to generate songs sitemap:', error);
+    // 数据库异常不能伪装成成功的空歌曲地图，避免搜索引擎误认为内容已移除。
+    throw error;
   }
 
   return sitemapList;

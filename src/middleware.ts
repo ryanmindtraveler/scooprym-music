@@ -1,4 +1,5 @@
 import createMiddleware from 'next-intl/middleware';
+import { getPublicEnglishPath } from './lib/public-routing';
 import { type NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE_NAME, routing } from './i18n/routing';
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
@@ -6,6 +7,7 @@ import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUser
 const intlMiddleware = createMiddleware(routing);
 const songIntlMiddleware = createMiddleware({
   ...routing,
+  locales: [DEFAULT_LOCALE],
   // 歌曲与八卦正文目前只有英文版本，不能向搜索引擎声明不存在的翻译页。
   alternateLinks: false,
 });
@@ -98,9 +100,20 @@ export default async function middleware(req: NextRequest) {
       const redirectUrl = new URL(req.url);
       redirectUrl.protocol = 'https:';
       redirectUrl.host = canonicalHost;
+      redirectUrl.pathname = getPublicEnglishPath(nextUrl.pathname) ?? nextUrl.pathname;
       console.log('<< middleware end, redirecting to canonical origin:', redirectUrl.toString());
       return NextResponse.redirect(redirectUrl, 308);
     }
+  }
+
+  const publicPath = getPublicEnglishPath(nextUrl.pathname);
+  if (publicPath !== null) {
+    if (publicPath !== nextUrl.pathname) {
+      const target = new URL(req.url);
+      target.pathname = publicPath;
+      return NextResponse.redirect(target, 308);
+    }
+    return songIntlMiddleware(req);
   }
 
   // Handle internal docs link redirection for internationalization

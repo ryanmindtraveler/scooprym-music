@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
+    server: { deps: { inline: ['next-intl'] } },
     environment: 'jsdom',
     setupFiles: [], // Add setup files if needed later
     include: ['**/*.test.{ts,tsx}'],

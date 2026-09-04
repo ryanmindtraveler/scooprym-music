@@ -4,6 +4,7 @@ import { routing } from '@/i18n/routing';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { generateAlternates, getCurrentHreflang } from './hreflang';
+import { getPublicEnglishPath } from './public-routing';
 import { getCanonicalBaseUrl, getImageUrl, getUrlWithLocale } from './urls/urls';
 
 /**
@@ -36,7 +37,12 @@ export function constructMetadata({
   const ogImageUrl = getImageUrl(image);
 
   // Generate canonical URL from pathname and locale
-  const activePathname = pathname || '/';
+  const publicPath = getPublicEnglishPath(pathname || '/');
+  const activePathname = publicPath ?? pathname ?? '/';
+  if (publicPath !== null) {
+    locale = routing.defaultLocale;
+    includeLanguageAlternates = false;
+  }
   const canonicalUrl = locale ? getUrlWithLocale(activePathname, locale).replace(/\/$/, '') : undefined;
 
   // Generate hreflang alternates if we have multiple locales
