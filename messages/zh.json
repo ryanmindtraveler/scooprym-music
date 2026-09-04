@@ -701,6 +701,9 @@
         "hideDirections": "收起其他选择",
         "tagsReady": "已自动配置 {count} 个制作标签",
         "analyzingDirection": "正在分析新闻",
+        "recommendStyle": "推荐风格",
+        "recommendingStyle": "正在推荐…",
+        "recommendStyleError": "推荐失败或超时，请检查新闻链接或正文后重试。",
         "analyzingDirectionDescription": "新闻素材准备完成后，系统会自动推荐合适的歌曲风格。",
         "recommendationExplanation": "系统已经根据新闻情绪、冲突类型和传播特点完成标签组合，可以直接使用，也可以更换一个容易理解的创作方向。",
         "directions": {

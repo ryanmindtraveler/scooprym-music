@@ -52,6 +52,7 @@ export async function dispatchMusicJob(songId: string, userId: string) {
         body: { songId },
         // 同一尝试的重复提交必须去重；显式重试会创建新的 attempt，因此仍能正常入队。
         deduplicationId: `scooprym-music-${attempt.id}`,
+        flowControl: { key: 'scooprym-music-production', parallelism: 2 },
         retries: 3,
       });
       console.log(`[generate-music] Queued ${songId} in QStash (${response.messageId})`);

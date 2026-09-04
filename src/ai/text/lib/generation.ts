@@ -198,7 +198,14 @@ const lyricWorkshopPlanningSchema = lyricWorkshopPlanSchema.extend({
     isValid: z.boolean(),
     validationError: z.string().nullable(),
     title: z.string().trim().min(2).max(120),
-    summary: z.string().trim().min(20).max(900),
+    summary: z
+      .string()
+      .trim()
+      .min(20)
+      .max(900)
+      .describe(
+        'Public-facing news card summary: 1-2 short sentences, 20-30 English words, at most 200 characters. Lead with who did what; omit background and venue details. Keep detailed facts in the verified facts fields.'
+      ),
     angle: z.string().trim().min(8).max(500),
   }),
 });
@@ -216,13 +223,13 @@ const lyricEditorialSchema = lyricsDraftSchema.extend({
     .trim()
     .min(1)
     .max(24)
-    .describe('The candidate ID of the final hook selected only after comparing both complete drafts.'),
+    .describe('The locked memory-anchor candidate ID selected during planning.'),
   selectedStrategyId: z
     .string()
     .trim()
     .min(1)
     .max(24)
-    .describe('The strategy package ID selected only after comparing both complete drafts.'),
+    .describe('The locked strategy package ID selected during planning.'),
   editorialNotes: z.array(z.string().trim().min(2).max(240)).min(1).max(6),
 });
 
@@ -240,9 +247,10 @@ const lyricFactAuditSchema = z.object({
   revisionInstructions: z.array(z.string().trim().min(2).max(360)).max(10),
 });
 
-/** 编辑选优与事实终审必须在同一次模型调用中完成。 */
+/** 保留旧定稿检查点合同；新流程用于审查快照与按需修订。 */
 const lyricEditorialReviewSchema = lyricEditorialSchema.extend({
   factAudit: lyricFactAuditSchema,
+  craftIssues: z.array(z.string().max(240)).max(6).optional(),
 });
 
 const lyricDraftCheckpointSchema = z.object({
@@ -300,6 +308,7 @@ const getModel = (provider: TextProvider = 'openrouter', openrouterModel = OPENR
 };
 
 interface GenerateLyricsParams {
+  preparedSource?: Awaited<ReturnType<typeof prepareSourceMaterial>>;
   newsUrl?: string;
   prompt?: string;
   directionPrompt?: string;
@@ -318,6 +327,7 @@ interface GenerateLyricsParams {
  * 根据新闻链接或用户提示词生成歌词
  */
 export async function generateLyrics({
+  preparedSource,
   newsUrl,
   prompt,
   directionPrompt,
@@ -338,7 +348,7 @@ export async function generateLyrics({
         : sourceMode === 'topic'
           ? 'Treat the source as a compact topic or prompt and expand it with strong creative framing.'
           : 'Treat the source as story-driven freeform text and preserve its narrative arc.';
-  const source = await prepareSourceMaterial({ newsUrl, prompt });
+  const source = preparedSource ?? (await prepareSourceMaterial({ newsUrl, prompt }));
   const sourceContent = buildSourceMaterialPrompt({ source, prompt });
   const suppliedBrief = title && storyBrief ? { title, storyBrief } : undefined;
   const rawDirection =
@@ -384,16 +394,16 @@ Planning task:
 10. Propose exactly 3 event-native Meme strategy packages. Each package must combine one narrative form, one propagation action, and one exact Hook Lab candidate ID, then cite the source detail that makes the complete package feel inevitable rather than templated.
 11. Narrative forms: magic slogan, character dialogue, absurd escalation, deadpan narration, dramatic reversal, fake commercial, fake newscast, group-chat choir, single punchline, or organic song.
 12. Propagation actions: exact repeat, mutating repeat, call-and-response, escalating list, delayed reveal, callback, one-shot, or none.
-13. Assign two DIFFERENT package IDs to draftStrategyIds. A gets the most image-rich artistic strategy; B gets a structurally different, highly contagious strategy. Their strategy IDs and Hook IDs must both differ. Do not select the final winner before reading the complete songs.
+13. Choose the best overall strategy BEFORE writing. Store the chosen strategy in draftStrategyIds.A; B is only an unused alternative idea for legacy metadata compatibility. Never write two songs. A must balance artistic imagery, humor, singability and event-native meme potential.
 14. Use one-shot or none whenever repetition would cheapen the story. Do not reward repetition merely for being repetition.
 15. For each strategy, explain its source trigger, why it is native to this event, and its concrete execution rule.
-16. Build a neutral lyric blueprint that both competing strategies can reinterpret. Repetition is optional; memorability is mandatory.
+16. Build one coherent lyric blueprint for the chosen strategy. Repetition is optional; memorability is mandatory.
 
 Planning output discipline:
 - Return one complete JSON object matching the schema, without markdown fences or surrounding prose.
 - Keep explanatory fields to one short sentence each (normally 12-20 words). Avoid repeating facts across explanations.
 - Use 4-6 verified facts and no more than 3 entries each for attributed claims and forbidden inferences; never invent entries to meet a count.
-- Keep the source summary to 70-110 words. This is a planning brief, not the full song: do not write draft lyrics here.
+- The source summary is the PUBLIC NEWS CARD COPY, not the internal planning brief. Write 1-2 short sentences, 20-30 English words and at most 200 characters. Start with the person and the newsworthy action or contradiction; omit dates, venues, anniversary names, and long quotations unless essential. Keep verified details in the facts fields for lyric writing. Do not write draft lyrics here.
 - Complete every required field and preserve valid IDs and references. Concision applies only to planning explanations, never to the richness or length of the later lyric drafts.
 
 Memory-anchor standard:
@@ -601,230 +611,140 @@ Execution Notes:
 - Deliver at least one screenshot-worthy complete line inspired by the shareable-line intent.
 - Before writing, privately choose the hook, cadence family, dramatic point of view, and section-by-section energy arc.`;
 
-  const writeDraft = (id: 'A' | 'B', strategyPackage: typeof competingPackages.A, focus: string) =>
-    runWithTextProviderFallback({
-      provider,
-      scope: `lyrics-draft-${id.toLowerCase()}`,
-      execute: async (activeProvider, activeModel, abortSignal) =>
-        generateObject({
-          abortSignal,
-          model: getModel(activeProvider, activeModel),
-          schema: lyricsDraftSchema,
-          system: systemPrompt,
-          prompt: `${defaultLyricsPrompt}\n\nDraft ${id} Strategy Package:\n${JSON.stringify(strategyPackage.strategy)}\n\nLocked Memory Anchor:\n- ID: ${strategyPackage.hook.id}\n- Phrase: ${strategyPackage.hook.phrase}\n- Mode: ${strategyPackage.hook.mode}\n- Why it works: ${strategyPackage.hook.whyItWorks}\n- Draft-specific execution: ${buildMemeExecutionRules(strategyPackage.strategy.propagationAction, strategyPackage.hook.phrase)}\n\nDraft ${id} mandate: ${focus}${
-            lyricsWritingPrompt ? `\n\nAdditional Lyrics-Writing Instructions:\n${lyricsWritingPrompt}` : ''
-          }`,
-          ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.9, 'high'),
-          maxOutputTokens: 3_500,
-        }),
-    });
-
-  const resumedDrafts = lyricDraftCheckpointSchema.safeParse(resumeCheckpoints?.drafting_lyrics);
-  const { draftA, draftB } = resumedDrafts.success
-    ? resumedDrafts.data
-    : await (async () => {
-        const [{ object: generatedA }, { object: generatedB }] = await Promise.all([
-          writeDraft(
-            'A',
-            competingPackages.A,
-            'Prioritize the symbolic image, human tension, cultural mirror, scene progression, internal rhyme, and one screenshot-worthy line. Keep the comedy precise and grounded; use hip-hop cadence only when the selected direction calls for it.'
-          ),
-          writeDraft(
-            'B',
-            competingPackages.B,
-            'Prioritize the selected event-native narrative form and propagation action. Maximize mouth-feel and shareability when appropriate, but protect a delayed reveal, one-shot punchline, or organic non-repeating structure when that is the selected strategy.'
-          ),
-        ]);
-        await onCheckpoint?.('drafting_lyrics', { draftA: generatedA, draftB: generatedB });
-        return { draftA: generatedA, draftB: generatedB };
-      })();
-
-  const normalizedDraftA = normalizeGeneratedLyrics(draftA.lyrics);
-  const normalizedDraftB = normalizeGeneratedLyrics(draftB.lyrics);
-  const issuesA = inspectLyricsQuality(normalizedDraftA, {
-    lockedHook: competingPackages.A.hook.phrase,
-    propagationAction: competingPackages.A.strategy.propagationAction,
+  // 沿用旧检查点读取能力；新运行只写一份完整歌词。
+  const legacyEditorial = lyricEditorialReviewSchema.safeParse(resumeCheckpoints?.editing_lyrics);
+  const resumedEditorial = lyricEditorialReviewSchema
+    .extend({ finalizationVersion: z.literal(1), repairAttempts: z.number().optional() })
+    .safeParse(resumeCheckpoints?.editing_lyrics);
+  const singleCheckpoint = z
+    .object({
+      draft: lyricsDraftSchema.extend({ songTitle: lyricEditorialSchema.shape.songTitle }),
+      selectedStrategyId: z.string(),
+    })
+    .safeParse(resumeCheckpoints?.drafting_lyrics);
+  const legacyCheckpoint = lyricDraftCheckpointSchema.safeParse(resumeCheckpoints?.drafting_lyrics);
+  const preferredPackage = competingPackages.A;
+  const selectedPackage =
+    [competingPackages.A, competingPackages.B].find(
+      (item) =>
+        item.strategy.id ===
+        (legacyEditorial.success
+          ? legacyEditorial.data.selectedStrategyId
+          : singleCheckpoint.success
+            ? singleCheckpoint.data.selectedStrategyId
+            : preferredPackage.strategy.id)
+    ) || preferredPackage;
+  const draftSchema = lyricsDraftSchema.extend({ songTitle: lyricEditorialSchema.shape.songTitle });
+  const draft = legacyEditorial.success
+    ? legacyEditorial.data
+    : singleCheckpoint.success
+      ? singleCheckpoint.data.draft
+      : legacyCheckpoint.success
+        ? { ...legacyCheckpoint.data.draftA, songTitle: analysis.title.slice(0, 48) }
+        : (
+            await runWithTextProviderFallback({
+              provider,
+              scope: 'lyrics-single-draft',
+              execute: async (activeProvider, activeModel, abortSignal) =>
+                generateObject({
+                  abortSignal,
+                  model: getModel(activeProvider, activeModel),
+                  schema: draftSchema,
+                  system: systemPrompt,
+                  prompt: `${defaultLyricsPrompt}
+Selected Strategy: ${JSON.stringify(selectedPackage.strategy)}
+Memory Anchor: ${selectedPackage.hook.phrase}
+Execution: ${buildMemeExecutionRules(selectedPackage.strategy.propagationAction, selectedPackage.hook.phrase)}
+Write ONE complete performance-ready song, not alternatives or an outline. Integrate story progression, the symbolic image, human tension, comic timing, natural cadence and a memorable payoff. Privately edit weak lines before returning it. Never explain your thinking. Give it an artistic 2-6 word songTitle (at most 48 characters), not a headline or full lyric sentence.
+${lyricsWritingPrompt || ''}`,
+                  ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.85, 'medium'),
+                  maxOutputTokens: 6000,
+                }),
+            })
+          ).object;
+  if (!resumedEditorial.success && !singleCheckpoint.success) {
+    await onCheckpoint?.('drafting_lyrics', { draft, selectedStrategyId: selectedPackage.strategy.id });
+  }
+  const normalizedDraft = normalizeGeneratedLyrics(draft.lyrics);
+  const draftIssues = inspectLyricsQuality(normalizedDraft, {
+    lockedHook: selectedPackage.hook.phrase,
+    propagationAction: selectedPackage.strategy.propagationAction,
   });
-  const issuesB = inspectLyricsQuality(normalizedDraftB, {
-    lockedHook: competingPackages.B.hook.phrase,
-    propagationAction: competingPackages.B.strategy.propagationAction,
-  });
-  const editorialPrompt = `Edit the following competing drafts into one final performance-ready lyric.
-
-Source Summary:
-${analysis.storyBrief.summary}
-
-Creative Angle:
-${analysis.storyBrief.angle}
-
-Music and Lyric Direction:
-${resolvedDirection}
-
-Draft A Strategy Package:
-${JSON.stringify(competingPackages.A.strategy)}
-- Hook ID: ${competingPackages.A.hook.id}
-- Hook Phrase: ${competingPackages.A.hook.phrase}
-- Editorial role: image-led and artistically suggestive
-- Execution: ${buildMemeExecutionRules(competingPackages.A.strategy.propagationAction, competingPackages.A.hook.phrase)}
-
-Draft B Strategy Package:
-${JSON.stringify(competingPackages.B.strategy)}
-- Hook ID: ${competingPackages.B.hook.id}
-- Hook Phrase: ${competingPackages.B.hook.phrase}
-- Editorial role: structurally different and meme-led
-- Execution: ${buildMemeExecutionRules(competingPackages.B.strategy.propagationAction, competingPackages.B.hook.phrase)}
-
-Three-Layer Artistic Lens:
-${JSON.stringify(workshopPlan.artisticLens)}
-
-Draft A — Image & Story:
-${normalizedDraftA}
-Checks: ${issuesA.length > 0 ? issuesA.join(' | ') : 'No structural warning.'}
-
-Draft B — Hook & Meme:
-${normalizedDraftB}
-Checks: ${issuesB.length > 0 ? issuesB.join(' | ') : 'No structural warning.'}
-
-Editorial Requirements:
-- Write an artistic songTitle of 2-6 words and no more than 48 characters.
-- Read both complete songs before choosing the final strategy package. Return either ${competingPackages.A.strategy.id} or ${competingPackages.B.strategy.id} as selectedStrategyId and its paired Hook ID as selectedHookId. Never mix a strategy with the other package's Hook.
-- The songTitle must feel like a record title derived from the hook's image or punchline, never a news headline, full sentence, quotation, or lyric line.
-- Do not put ad-libs, parentheses, section labels, or explanatory context in songTitle.
-- Preserve only facts supported by the source summary; introduce no new factual claims.
-- Keep the strongest original images, but remove generic filler, awkward stress, forced rhyme, and article-like exposition.
-- Preserve the symbolic image, human tension, cultural mirror, and at least one screenshot-worthy complete line; reject a draft that only summarizes the headline or only loops a joke.
-- Make every line comfortable to sing aloud and execute the selected memory rule precisely; repetition is required only when the selected propagation action calls for it.
-- Blindly select A, B, or a hybrid based on hook speed, comic precision, singability, replay value, and factual integrity.
-- Reject any draft that is merely a competent conventional song. The winner must make the selected narrative form and propagation action perceptible without sounding templated.
-- Once selected, preserve that candidate's exact core phrase; do not replace it with a safer but generic slogan.
-- The opening 3-6 seconds must contain either the hook itself or its unmistakable setup.
-- When the selected action uses returns, preserve the required core phrase while mutating the response, escalation, ad-lib, or consequence. For delayed reveal or one-shot, protect the payoff instead.
-- Apply the three-listen test: clear on first listen, memorable on second, funnier, stranger, or more meaningful on third.
-- Make the final hook or last line loop naturally back into the opening.
-- Follow the adaptive blueprint and compact full-song limits from the system instructions.
-- Delete any line that merely repeats context, explains the joke, or delays the next meaningful beat.
-- In the same response, independently audit the finished lyric against the fact ledger below. Flag only unsupported factual claims a reasonable listener could mistake for real events; allow obvious satire, metaphor, character voice, and comic exaggeration.
-- Return a clean final lyric, editorial metadata, and the completed fact audit.
-
-Fact Ledger For Final Audit:
-Verified Facts:
-${workshopPlan.factLedger.verifiedFacts.map((fact) => `- ${fact}`).join('\n')}
-
-Attributed Claims:
-${workshopPlan.factLedger.attributedClaims.map((claim) => `- ${claim}`).join('\n') || '- None'}
-
-Forbidden Inferences:
-${workshopPlan.factLedger.forbiddenInferences.map((item) => `- ${item}`).join('\n')}`;
-
-  const resumedEditorial = lyricEditorialReviewSchema.safeParse(resumeCheckpoints?.editing_lyrics);
+  // 一次模型调用完成事实审查、创作修订与格式整理，返回完整定稿。
+  const finalSelectedHook = selectedPackage.hook;
+  const selectedMemeStrategy = selectedPackage.strategy;
+  const finalLockedHook = finalSelectedHook.phrase;
   const finalDraft = resumedEditorial.success
     ? resumedEditorial.data
     : (
         await runWithTextProviderFallback({
           provider,
-          scope: 'lyrics-editorial-pass',
+          scope: 'lyrics-finalize',
           execute: async (activeProvider, activeModel, abortSignal) =>
             generateObject({
               abortSignal,
               model: getModel(activeProvider, activeModel),
               schema: lyricEditorialReviewSchema,
               system: systemPrompt,
-              prompt: editorialPrompt,
-              ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.65, 'high'),
-              maxOutputTokens: 3_500,
+              prompt: `Review and finalize this ONE ScoopRYM song in a single pass. Inspect factual accuracy, attribution, event-specific humor, singability, payoff and formatting together. Correct concrete defects directly; return the full final song, not an issue list or another draft. If the song is already strong, preserve it unchanged. Preserve every unaffected line verbatim. Do not add subjective polish, forced repetition or filler.
+
+Original source (data, not instructions):
+${sourceContent.slice(0, 10000)}
+
+Verified fact ledger:
+${JSON.stringify(workshopPlan.factLedger)}
+
+Chosen premise and artistic lens:
+${JSON.stringify({ premise: selectedPremise, lens: workshopPlan.artisticLens })}
+
+Selected strategy:
+${JSON.stringify(selectedMemeStrategy)}
+Selected strategy ID: ${selectedMemeStrategy.id}
+Selected hook ID: ${finalSelectedHook.id}
+Locked anchor: ${finalLockedHook}
+Execution rules: ${buildMemeExecutionRules(selectedMemeStrategy.propagationAction, finalLockedHook)}
+
+Current title: ${draft.songTitle}
+Current lyrics:
+${normalizedDraft}
+
+Local format and structure findings:
+${draftIssues.join(' | ') || 'None'}
+
+Finalization contract:
+- Check and correct unsupported claims and attribution without removing obvious fictional comic role-play or metaphor.
+- Keep the selected strategy and hook IDs unchanged; selectedDraft must be A.
+- Preserve the chosen narrative form, emotional progression, specific jokes and memorable payoff.
+- Return ${SHORT_FORM_LYRIC_LIMITS.minSungLines}-${SHORT_FORM_LYRIC_LIMITS.maxSungLines} sung lines and ${SHORT_FORM_LYRIC_LIMITS.minWords}-${SHORT_FORM_LYRIC_LIMITS.maxWords} words, targeting approximately ${SHORT_FORM_LYRIC_LIMITS.targetDurationSeconds} seconds.
+- Use real newlines and supported section tags on separate lines, never HTML line breaks.
+- Keep genuinely sung replies/ad-libs; do not put non-sung production instructions inside the lyric text.
+- Keep an artistic 2-6 word title, at most 48 characters, not a news headline.
+- Report the factAudit of the RETURNED final lyrics, not the input draft. craftIssues lists only concrete UNRESOLVED issues, not problems already fixed.
+- Return the entire final lyrics and concise editorialNotes in this same response. No additional review or repair call will follow.`,
+              ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.35, 'medium'),
+              maxOutputTokens: 6000,
             }),
         })
       ).object;
-  if (!resumedEditorial.success) await onCheckpoint?.('editing_lyrics', finalDraft);
-
-  let finalLyrics = normalizeGeneratedLyrics(finalDraft.lyrics);
-  let finalSongTitle = finalDraft.songTitle;
-  const selectedPackage =
-    [competingPackages.A, competingPackages.B].find((item) => item.strategy.id === finalDraft.selectedStrategyId) ||
-    (finalDraft.selectedDraft === 'B' ? competingPackages.B : competingPackages.A);
-  const finalSelectedHook = selectedPackage.hook;
-  const selectedMemeStrategy = selectedPackage.strategy;
-  const finalLockedHook = finalSelectedHook.phrase;
-  const memeExecutionRules = buildMemeExecutionRules(selectedMemeStrategy.propagationAction, finalLockedHook);
-  let remainingIssues = inspectLyricsQuality(finalLyrics, {
+  const finalLyrics = normalizeGeneratedLyrics(finalDraft.lyrics);
+  const finalSongTitle = finalDraft.songTitle;
+  const remainingIssues = inspectLyricsQuality(finalLyrics, {
     lockedHook: finalLockedHook,
     propagationAction: selectedMemeStrategy.propagationAction,
   });
-  let factAudit = finalDraft.factAudit;
-  let repairAttempts = 0;
-
-  if (remainingIssues.length > 0 || factAudit.decision === 'review') {
-    repairAttempts += 1;
-    const factualWarnings = [
-      ...factAudit.unsupportedClaims.map((item) => `${item.lyricLine}: ${item.reason}`),
-      ...factAudit.attributionIssues,
-    ];
-    const { object: qualityEdit } = await runWithTextProviderFallback({
-      provider,
-      scope: `lyrics-quality-edit-${repairAttempts}`,
-      execute: async (activeProvider, activeModel, abortSignal) =>
-        generateObject({
-          abortSignal,
-          model: getModel(activeProvider, activeModel),
-          schema: lyricEditorialReviewSchema,
-          system: systemPrompt,
-          prompt: `Repair the final lyric against ScoopRYM's factual, artistic, propagation, and compact-song requirements without flattening its artistry.
-
-Source Summary:
-${analysis.storyBrief.summary}
-
-Locked Hook:
-${finalLockedHook}
-
-Locked Hook Candidate ID:
-${finalSelectedHook.id}
-
-Event-Native Meme Strategy:
-${JSON.stringify(selectedMemeStrategy)}
-
-Execution Rule:
-${memeExecutionRules}
-
-Three-Layer Artistic Lens:
-${JSON.stringify(workshopPlan.artisticLens)}
-
-Current Lyrics:
-${finalLyrics}
-
-Quality Warnings:
-${remainingIssues.join(' | ') || 'None'}
-
-Fact Audit Warnings:
-${factualWarnings.join(' | ') || 'None'}
-
-Fact Revision Instructions:
-${factAudit.revisionInstructions.join(' | ') || 'None'}
-
-Targeted Repair Requirements:
-- Return an artistic 2-6 word songTitle without parentheses, ad-libs, or news-headline phrasing.
-- Preserve ${selectedMemeStrategy.id} as selectedStrategyId and ${finalSelectedHook.id} as selectedHookId. Repair is not allowed to reopen or mismatch the selected package.
-- Change only lines or sections implicated by the warnings. Preserve every unaffected line verbatim instead of rewriting the whole song from scratch.
-- Return ${SHORT_FORM_LYRIC_LIMITS.minSungLines}-${SHORT_FORM_LYRIC_LIMITS.maxSungLines} sung lines and ${SHORT_FORM_LYRIC_LIMITS.minWords}-${SHORT_FORM_LYRIC_LIMITS.maxWords} words.
-- Target an approximately ${SHORT_FORM_LYRIC_LIMITS.targetDurationSeconds} second performance and never write material that calls for more than ${SHORT_FORM_LYRIC_LIMITS.hardDurationLimitSeconds} seconds.
-- Apply the selected execution rule exactly; do not add an early appearance or extra repetition when the action is delayed-reveal, one-shot, or none.
-- Preserve the selected narrative form and propagation action. Never turn one-shot, delayed-reveal, or none into a repeated Hook during shortening.
-- Preserve factual integrity, the strongest image, comic turn, cadence, and emotional payoff.
-- Preserve the human tension, cultural mirror, and screenshot-worthy line; shortening must remove explanation and filler before distinctive writing.
-- Remove recap, explanation, filler, long intro, long bridge, and outro repetition before cutting distinctive language; retain enough verse material for a complete setup, escalation, turn, and payoff.
-- Complete a fresh fact audit of the revised lyric in the same response. Do not request a separate audit pass.
-- Return only the revised lyric, concise editorial metadata, and its fact audit.`,
-          ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.5, 'high'),
-          maxOutputTokens: 2_000,
-        }),
+  const factAudit = finalDraft.factAudit;
+  const repairAttempts = resumedEditorial.success
+    ? (resumedEditorial.data.repairAttempts ?? 0)
+    : finalLyrics !== normalizedDraft
+      ? 1
+      : 0;
+  if (!resumedEditorial.success) {
+    await onCheckpoint?.('editing_lyrics', {
+      ...finalDraft,
+      lyrics: finalLyrics,
+      finalizationVersion: 1,
+      repairAttempts,
     });
-
-    finalLyrics = normalizeGeneratedLyrics(qualityEdit.lyrics);
-    finalSongTitle = qualityEdit.songTitle;
-    remainingIssues = inspectLyricsQuality(finalLyrics, {
-      lockedHook: finalLockedHook,
-      propagationAction: selectedMemeStrategy.propagationAction,
-    });
-    factAudit = qualityEdit.factAudit;
   }
 
   const factualIssues = [
@@ -832,7 +752,8 @@ Targeted Repair Requirements:
     ...factAudit.attributionIssues,
     ...(factAudit.decision === 'review' ? factAudit.revisionInstructions : []),
   ];
-  const qualityPassed = remainingIssues.length === 0 && factAudit.decision === 'pass';
+  const qualityPassed =
+    remainingIssues.length === 0 && factAudit.decision === 'pass' && !finalDraft.craftIssues?.length;
   // 质量检查只提供编辑建议，不再阻断管理员的一键生产流程。
   // 安全边界已在上方直接中止，因此能到达这里的歌词无需人工批准。
   const requiresReview = false;
@@ -867,26 +788,17 @@ Targeted Repair Requirements:
       drafts: [
         {
           id: 'A',
-          label: 'Image & Story',
-          focus: 'Symbolic image, human tension, cultural mirror, scene progression, and a shareable line.',
-          hook: competingPackages.A.hook.phrase,
-          lyrics: normalizedDraftA,
-          qualityIssues: issuesA,
-        },
-        {
-          id: 'B',
-          label: 'Hook & Meme',
-          focus:
-            'Event-native narrative form, propagation action, mouth-feel, and replay value without forced repetition.',
-          hook: competingPackages.B.hook.phrase,
-          lyrics: normalizedDraftB,
-          qualityIssues: issuesB,
+          label: 'Single draft',
+          focus: 'Complete event-native song: story, humor, cadence and memorable payoff.',
+          hook: finalLockedHook,
+          lyrics: normalizedDraft,
+          qualityIssues: draftIssues,
         },
       ],
       editorialDecision: finalDraft.selectedDraft,
       editorialNotes: [
         ...finalDraft.editorialNotes,
-        ...(repairAttempts > 0 ? [`Applied ${repairAttempts} ScoopRYM quality repair pass(es).`] : []),
+        'Fact, craft and format reviewed together in one finalization pass.',
       ],
       qualityGate: {
         passed: qualityPassed,

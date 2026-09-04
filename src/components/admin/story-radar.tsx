@@ -2,12 +2,12 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useLocaleRouter } from '@/i18n/navigation';
+import { LocaleLink, useLocaleRouter } from '@/i18n/navigation';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { cn } from '@/lib/utils';
 import { Check, ExternalLink, Loader2, Newspaper, RefreshCw, RotateCcw, SearchX, Sparkles, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 export interface StoryRadarCandidateView {
@@ -54,6 +54,35 @@ const statusFilters: Array<{ id: 'all' | StoryCandidateStatus }> = [
 export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView[] }) {
   const t = useTranslations('Dashboard.admin.storyRadar');
   const router = useLocaleRouter();
+  const zh = useLocale() === 'zh';
+  const submitting = useRef(new Set<string>());
+  const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
+  const [jobs, setJobs] = useState<Record<string, { status: string; workflowStatus?: string; stage?: string }>>({});
+  const refreshJobs = async (signal?: AbortSignal) => {
+    try {
+      const response = await fetch('/api/admin/story-radar/jobs', { signal, cache: 'no-store' });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (signal?.aborted) return;
+      if (Array.isArray(data.jobs))
+        setJobs(Object.fromEntries(data.jobs.map((job: { candidateId: string }) => [job.candidateId, job])));
+    } catch {
+      /* 临时网络中断保留当前队列状态。 */
+    }
+  };
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      await refreshJobs(controller.signal);
+      if (!controller.signal.aborted) timer = setTimeout(poll, 10_000);
+    };
+    void poll();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, []);
   const [activeStatus, setActiveStatus] = useState<'all' | StoryCandidateStatus>('new');
   const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>('all');
   const [isScanning, setIsScanning] = useState(false);
@@ -131,26 +160,40 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
   }
 
   async function openInStudio(id: string) {
-    setPendingId(id);
+    if (submitting.current.has(id)) return;
+    submitting.current.add(id);
+    setSubmittingIds(new Set(submitting.current));
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 15_000);
     try {
-      const response = await fetch(`/api/admin/story-radar/${id}/adopt`, {
+      const response = await fetch(`/api/admin/story-radar/${id}/generate`, {
         method: 'POST',
         signal: controller.signal,
       });
-      const result = (await response.json()) as { success?: boolean; createUrl?: string; error?: string };
-      if (!response.ok || !result.success || !result.createUrl) {
+      const result = (await response.json()) as { success?: boolean; job?: { status: string }; error?: string };
+      if (!response.ok || !result.success || !result.job) {
         throw new Error(result.error || 'Could not move this story into production');
       }
-      router.push(result.createUrl);
+      const job = result.job;
+      setJobs((current) => ({ ...current, [id]: job }));
+      toast.success(
+        zh ? '已加入后台队列，可以继续选择其他新闻。' : 'Added to the background queue. You can select more stories.'
+      );
     } catch (error) {
       toast.error(
-        error instanceof DOMException && error.name === 'AbortError' ? t('openStudioTimeout') : t('openStudioError')
+        error instanceof DOMException && error.name === 'AbortError'
+          ? zh
+            ? '请求超时，正在查询任务状态；再次点击不会重复创建。'
+            : 'Request timed out. Checking job status; clicking again will not create a duplicate.'
+          : error instanceof Error
+            ? error.message
+            : t('openStudioError')
       );
-      setPendingId(null);
+      void refreshJobs();
     } finally {
       window.clearTimeout(timeoutId);
+      submitting.current.delete(id);
+      setSubmittingIds(new Set(submitting.current));
     }
   }
 
@@ -161,10 +204,15 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
           <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t('description')}</p>
         </div>
-        <Button onClick={scanLatestStories} disabled={isScanning} className="min-w-40">
-          <RefreshCw className={cn('size-4', isScanning && 'motion-safe:animate-spin')} />
-          {isScanning ? t('scanning') : t('scan')}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin/create')}>
+            {zh ? '查看创作队列' : 'View creation queue'}
+          </Button>
+          <Button onClick={scanLatestStories} disabled={isScanning} className="min-w-40">
+            <RefreshCw className={cn('size-4', isScanning && 'motion-safe:animate-spin')} />
+            {isScanning ? t('scanning') : t('scan')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
@@ -220,7 +268,8 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
         <div className="grid gap-3">
           {filteredCandidates.map((candidate) => {
             const category = categoryDetails[candidate.category];
-            const isPending = pendingId === candidate.id;
+            const isPending = pendingId === candidate.id || submittingIds.has(candidate.id);
+            const job = jobs[candidate.id];
 
             return (
               <article
@@ -268,12 +317,25 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 md:justify-end">
+                <div className="flex flex-wrap items-center gap-2 md:justify-end">
                   <Button asChild size="icon-sm" variant="ghost" aria-label={t('openOriginal')}>
                     <a href={candidate.sourceUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink />
                     </a>
                   </Button>
+                  {candidate.status !== 'dismissed' && (
+                    <Button asChild size="sm" variant="outline">
+                      <LocaleLink
+                        href={`/admin/create?${new URLSearchParams({
+                          content: candidate.sourceUrl,
+                          sourceTitle: candidate.sourceTitle,
+                          autoGenerate: 'false',
+                        }).toString()}`}
+                      >
+                        <ExternalLink /> {t('openStudio')}
+                      </LocaleLink>
+                    </Button>
+                  )}
                   {candidate.status === 'new' && (
                     <>
                       <Button
@@ -290,12 +352,36 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                     </>
                   )}
                   {(candidate.status === 'shortlisted' || candidate.status === 'adopted') && (
-                    <Button size="sm" disabled={isPending} onClick={() => openInStudio(candidate.id)}>
+                    <Button
+                      size="sm"
+                      disabled={isPending || (!!job && job.status !== 'failed')}
+                      onClick={() => openInStudio(candidate.id)}
+                    >
                       {isPending ? <Loader2 className="animate-spin" /> : <Sparkles />}
                       {isPending
-                        ? t('openingStudio')
-                        : candidate.status === 'adopted'
-                          ? t('openStudio')
+                        ? zh
+                          ? '正在入队'
+                          : 'Submitting'
+                        : job
+                          ? job.workflowStatus === 'completed'
+                            ? zh
+                              ? '已完成'
+                              : 'Completed'
+                            : job.status === 'failed'
+                              ? zh
+                                ? '重试任务'
+                                : 'Retry job'
+                              : job.workflowStatus === 'failed'
+                                ? zh
+                                  ? '失败 · 查看创作队列'
+                                  : 'Failed · Check studio queue'
+                                : job.status === 'queued'
+                                  ? zh
+                                    ? '已排队'
+                                    : 'Queued'
+                                  : zh
+                                    ? '制作中'
+                                    : 'Generating'
                           : t('createSong')}
                     </Button>
                   )}

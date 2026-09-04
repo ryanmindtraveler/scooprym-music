@@ -12,6 +12,7 @@ import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { formatBusinessDate } from '@/lib/business-time';
+import { getNewsCardSummary } from '@/lib/song-editorial';
 import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
@@ -389,7 +390,7 @@ export function SongDetailView({
               {/* Actions - Removed from here (Moved to Top Right) */}
 
               {/* News Summary */}
-              {(song.newsSummary || song.sourceText) && (
+              {(song.newsSummary || song.sourceUrl) && (
                 <div className="group/news relative w-full overflow-hidden rounded-2xl bg-white/3 hover:bg-white/6 border border-white/10 p-5 backdrop-blur-md transition-colors duration-500">
                   {/* Subtle Gradient Glow */}
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none group-hover/news:bg-indigo-400/30 transition-colors duration-500" />
@@ -410,7 +411,7 @@ export function SongDetailView({
                           type="button"
                           className="flex items-center justify-center size-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white hover:scale-105 transition-all border border-white/5 shadow-sm"
                           onClick={() => {
-                            const searchQuery = (song.newsSummary || song.sourceText || song.title || '').slice(0, 100);
+                            const searchQuery = (song.newsSummary || song.title || '').slice(0, 100);
                             window.open(
                               song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
                               '_blank'
@@ -450,7 +451,7 @@ export function SongDetailView({
                         isClean && 'text-slate-700 font-normal'
                       )}
                     >
-                      {song.newsSummary || song.sourceText}
+                      {song.newsSummary ? getNewsCardSummary(song) : 'Read the original report for background.'}
                     </p>
                   </div>
                 </div>

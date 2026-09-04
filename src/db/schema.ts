@@ -4,6 +4,44 @@ import { boolean, check, index, integer, jsonb, pgSchema, text, timestamp, uniqu
 
 export const scooprymSchema = pgSchema('scooprym');
 
+// 一条热点只允许一个自动生产任务，稳定ID贯穿歌词和音频，重复点击不新建付费任务。
+export const radarCreationJob = scooprymSchema.table('radar_creation_job', {
+  candidateId: text('candidate_id').primaryKey(),
+  userId: text('user_id').notNull(),
+  runId: text('run_id').notNull().unique(),
+  songId: text('song_id').notNull().unique(),
+  sourceUrl: text('source_url').notNull(),
+  sourceTitle: text('source_title').notNull(),
+  direction: text('direction').notNull(),
+  status: text('status').notNull().default('queued'),
+  sequence: integer('sequence').notNull().default(0),
+  leaseId: text('lease_id'),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  lyricResult: jsonb('lyric_result').$type<{ title: string; lyrics: string; summary: string; sourceText?: string }>(),
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// 独立保存每日选题快照，候选新闻后续编辑或删除不影响历史归档。
+export const hotSheetEdition = scooprymSchema.table('hot_sheet_edition', {
+  day: text('day').primaryKey(),
+  status: text('status').notNull(),
+  attemptId: text('attempt_id').notNull(),
+  stories: jsonb('stories').$type<Array<{
+    id: string;
+    sourceTitle: string;
+    sourceUrl: string;
+    category: string;
+    sourceDomain: string;
+    publishedAt: string | null;
+  }>>().notNull().default([]),
+  discovered: integer('discovered').notNull().default(0),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  error: text('error'),
+});
+
 export const user = scooprymSchema.table('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

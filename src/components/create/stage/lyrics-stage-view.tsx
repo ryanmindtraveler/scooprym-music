@@ -525,7 +525,9 @@ function WritersRoomPanel({
         </section>
 
         <section>
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Competing drafts</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+            {workshop.drafts.length === 1 ? 'Song draft' : 'Competing drafts'}
+          </p>
           <div className="mt-2 grid gap-3">
             {workshop.drafts.map((draft) => (
               <div
@@ -535,14 +537,14 @@ function WritersRoomPanel({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-black text-slate-950 dark:text-white">
-                      Draft {draft.id} · {draft.label}
+                      {workshop.drafts.length === 1 ? draft.label : `Draft ${draft.id} · ${draft.label}`}
                     </p>
                     <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{draft.focus}</p>
                     <p className="mt-2 border-l-2 border-pink-400 pl-2 font-serif text-sm font-black leading-snug text-slate-900 dark:text-white">
                       “{draft.hook}”
                     </p>
                   </div>
-                  {workshop.editorialDecision === draft.id && (
+                  {workshop.drafts.length > 1 && workshop.editorialDecision === draft.id && (
                     <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-700">
                       editor pick
                     </span>

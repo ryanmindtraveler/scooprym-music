@@ -1,7 +1,8 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-04 12:09_
+_Last updated: 2026-09-04 17:58_
 
 ## Pinned
+- 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
 - 2026-09-04 11:56：本轮用户授权仅提交并推送开发快照至 `origin/dev`，不合并 `main`；该快照不作为稳定发布。
 - 2026-09-02 23:44：歌词质量与事实审计警告只能作为 Writers’ Room 的可选编辑建议，不得阻断正常生产；安全判定不是 `allow` 时必须由服务端直接以 HTTP 422 中止，管理员不得通过人工批准绕过安全边界。
 - 2026-09-02 16:02：MiniMax 官方音乐生成的当前默认模型必须统一为 `music-2.0`；歌曲工作流阶段记录、实际供应商请求、制作提示词与管理后台显示均不得各自硬编码模型名，必须读取 `src/ai/config/models.ts` 导出的 `MINIMAX_MUSIC_MODEL`。
@@ -36,6 +37,8 @@ _Last updated: 2026-09-04 12:09_
 - 2026-07-21 11:37：Gallery 内容扩容保持现有业务流程与卡片结构不变，继续以新闻标题为信息优先级，并保留封面、播放、来源和歌词入口。
 
 ## Decisions
+- 2026-09-04 17:10：按用户合并审查与修正的要求，歌词普通路径改为“策划 → 单稿 → 一次完整定稿”；`lyrics-finalize` 一次调用共同检查并修正事实、创作和格式问题，强稿原样保留，取代 16:19 的“独立轻量审查后按需模型修订”方案。原策划与单稿提示词、模型配置保持不变，不新增人工赞同门槛。
+- 2026-09-04 16:19：按用户要求，歌词执行链改为“规划 → 单稿完整成歌 → 独立轻量审查 → 仅存在具体结构、事实或艺术问题时修订一次”；不再进行双稿竞争与无条件整合，保留原 Meme、事实、艺术和时长标准。本轮取代历史双稿执行方案，旧 A/B 检查点与定稿保持兼容。
 - 2026-09-03 11:13：按用户明确要求，内容安全尺度确定调整为宽松的公开事件讽刺政策：默认允许公开明星吐槽、粗口、调侃、角色对白、假广告及明显荒诞比喻；风险词、名人姓名或泛化名誉风险不得单独触发 `review`。用户既定敏感话题核心禁区与捏造真实严重指控仍为 `block`，不新增人工赞同步骤，不改变双稿竞争、艺术性与事件原生 Meme 创作结构。
 - 2026-09-02 23:44：歌词生成后的人工赞成门槛确定移除：安全允许的歌词自动进入 `lyrics_ready` 并自动发起音乐生产；创作台删除 `Approve & Produce` / `Reject` UI 与相关 handler。音乐接口继续兼容历史 `lyrics_review` 任务，但仅允许 safety 非 `review` / `block` 的旧任务进入生产。本决策取代 2026-09-02 11:11 中“质量或事实警告进入 `lyrics_review` 并由管理员批准”的旧流程。
 - 2026-09-02 16:02：MiniMax 官方默认音乐模型确定由 `music-2.6` 切换为 `music-2.0`，并以 `src/ai/config/models.ts` 中的 `MINIMAX_MUSIC_MODEL` 作为唯一配置源；本决策取代 2026-09-02 07:21 关于默认生产模型为 `music-2.6` 的旧模型选择，但不改变必须使用 MiniMax 官方渠道的约束。
@@ -185,8 +188,48 @@ _Last updated: 2026-09-04 12:09_
 - [P1][OPEN][#7] 在已登录 Chrome 页面读取连接恢复后，完成 Admin 创作舞台“短歌名 + 完整新闻摘要”新信息层级的最终视觉快照验收。（2026-08-31 19:52）
 - [P1][DOING][#8] 完成用户授权的开发快照 commit 与 push 至 `origin/dev`；TypeScript 与暂存检查已通过，当前尚未提交或推送，不合并 `main`。（2026-09-04 11:56）
 - [P1][DOING][#9] 将 `@ai-sdk/provider` 显式依赖修复提交并推送至 `dev`，后续核验 Vercel 部署结果；本次修复提交与推送尚未完成。（2026-09-04 12:09）
+- [P1][DONE][#10] Today’s Drops 短摘要修复的 TypeScript 检查已以 exit 0 通过，4 个相关文件已完成 Biome 格式化。（2026-09-04 12:27）
+- [P1][DONE][#11] The Hot Sheet 每日归档最终 `pnpm exec tsc --noEmit` 与 `git diff --check` 均以 exit 0 通过。（2026-09-04 14:34）
+- [P1][OPEN][#12] The Hot Sheet 每日归档上线前应用 0033 迁移，确认 production 部署与 `CRON_SECRET` 配置，并完成管理员浏览器、真实抓取和每日归档验证；本轮均未执行。（2026-09-04 14:32）
+- [P1][DONE][#13] Story Radar 后台逐条创作最终 `pnpm exec tsc --noEmit` 退出 0，`git diff --check` 通过，37 项测试再次通过。（2026-09-04 15:02）
+- [P1][OPEN][#14] Story Radar 的 0034 表已定点创建，QStash 发布令牌与两把签名密钥已确认存在；仍需用户选择公网隧道本地测试或部署分支并配置公网 worker，随后完成浏览器及付费端到端验证。当前 loopback 地址阻止入队，未擅自更改地址或部署；Drizzle 迁移游标未推进。（2026-09-04 17:58）
+- [P1][DONE][#15] 真实生成进度 UI 的最终 TypeScript 检查已通过。（2026-09-04 16:48）
+- [P1][DONE][#16] 合并歌词定稿调用后的最终 TypeScript 检查已通过。（2026-09-04 17:28）
 
 ## Done
+- 2026-09-04 17:58：确认当前 `.env` 连接 Supabase 远程数据库且 `scooprym.radar_creation_job` 缺失；用户继续授权修复后，使用 `scripts/check-radar-database.cjs --apply` 事务执行 0034，仅创建该表，验证 15 列齐全、记录数为 0。（evidence: `scripts/check-radar-database.cjs --apply` 与主流程数据库验证输出）
+- 2026-09-04 17:58：0034 建表语句改为 `CREATE TABLE IF NOT EXISTS`，便于后续正式迁移幂等执行；未推进 Drizzle 迁移游标、未运行其他迁移，`hot_sheet_edition` 仍缺失。诊断脚本仅输出配置存在性，不输出凭据。（evidence: 0034 migration、`scripts/check-radar-database.cjs`）
+- 2026-09-04 17:28：热点雷达新后台任务增加自动选型阶段：`processRadarCreation` 在歌词策划前抓取本条新闻，复用 `recommendSourceStyle` 选择 custom 或 11 套 preset，再由 `buildDynamicProductionRecipe` 匹配 variant；`source_ready` 步骤 metadata 保存 version 1、direction、styleId、reason、variantId、source 与 recipe，完成后独立重新投递。（evidence: `processRadarCreation`、`source_ready` metadata）
+- 2026-09-04 17:28：后台恢复复用选型快照，不重复抓取或推荐；歌词和音乐提交使用同一 direction / variant，并同步 run 显示字段；旧任务已有 planning / draft / edit 歌词时不更改风格。`source-analysis` 推荐函数新增可选 `preparedSource` 避免二次抓取，原 API 行为不变。（evidence: 雷达任务恢复、歌词与音乐参数、`source-analysis`）
+- 2026-09-04 17:28：后台自动选型相关 12 项测试、TypeScript 与 `git diff --check` 均通过。（evidence: 主流程测试及检查输出）
+- 2026-09-04 17:10：`generation.ts` 删除 `lyrics-single-audit` 与 `lyrics-quality-edit` 串行模式，改为一次 `lyrics-finalize` 完整定稿，使用 6000 输出预算及 medium reasoning；本地 `inspectLyricsQuality` 继续运行，不调用模型。（evidence: `generation.ts`）
+- 2026-09-04 17:10：`editing_lyrics` 检查点保存完整 normalized 最终歌词、`finalizationVersion: 1` 与 `repairAttempts`；恢复时仅跳过已有版本标记的定稿，旧无版本审查记录仅作为输入、仍需执行定稿，并保持 legacy A/B 兼容。`qualityPassed` 纳入残余 `craftIssues`，但沿用现有质量建议不阻断策略。（evidence: 歌词定稿检查点、恢复与质量检查逻辑）
+- 2026-09-04 17:28：[#16] 合并定稿相关静态管线 4 项、接口 6 项、后台队列 5 项共 15 项测试通过，`git diff --check` 及最终 TypeScript 检查通过。（evidence: 主流程测试、类型与差异检查输出）
+- 2026-09-04 16:48：完成公开歌曲背景泄漏原始抓取链接的修复：`song-editorial` 公共 helper 不再回退 `sourceText`，`getNewsDescription` 只取编辑摘要的后续句、最多 200 字，单句摘要返回空；清理摘要中的 Markdown、裸 URL 和 HTML。详情页背景展示条件仅依据 `newsSummary` / `sourceUrl`，歌曲弹窗与 Gallery 统一使用短摘要，不回退 `sourceText` 或 `prompt`。（evidence: `song-editorial`、歌曲详情页、歌曲弹窗及 Gallery）
+- 2026-09-04 16:48：公开背景修复的 `song-editorial` 7 项与 `song-seo` 3 项测试共 10 项通过，TypeScript 与 `git diff --check` 通过。（evidence: 主流程测试、类型与差异检查输出）
+- 2026-09-04 16:43：完成真实生成进度展示：删除 `generation-progress.tsx` 全部定时模拟百分比与虚假 `Mastering Audio`，改为每 4 秒读取经过用户归属校验的 `/api/generate/workflows/[runId]?view=progress` 状态，展示真实阶段、含排队重试的运行总耗时、距最近阶段更新时间、真实 running 步骤耗时及 attempt；已完成歌词检查点明确标为 done 并等待下一阶段，未知阶段不编造进度。（evidence: `generation-progress.tsx`、工作流 progress 查询）
+- 2026-09-04 16:43：进度组件按 `runId` 重挂载，使用 `AbortController` 实现 10 秒请求超时及取消，防止旧请求污染新任务；网络失败显示同步问题而非生成失败。`create-music-form` 在当前任务为 `queued` / `processing` / `generating_cover` 时继续展示进度，同时保留 `createAnother`。（evidence: 进度组件、`create-music-form`）
+- 2026-09-04 16:48：[#15] 新增 `src/lib/generation-progress.ts`，其 4 项单元测试及进度组件 3 项测试全部通过，原 single-draft 的 4 项测试亦通过；最终 TypeScript 复查已通过。（evidence: `src/lib/generation-progress.ts`、主流程测试与类型检查输出）
+- 2026-09-04 16:19：完成单稿歌词管线：使用 `lyrics-single-draft` 生成完整歌曲，`lyrics-single-audit` 独立轻量审查仅返回 `factAudit` 与 `craftIssues`、不复述歌词；删除双稿 `Promise.all` 与 `lyrics-editorial-pass` 无条件整合，仅在存在具体结构、事实或艺术问题时修订一次。正文与修订 `maxOutputTokens=6000`，审查为 3000；单稿 reasoning 为 medium，审查为 low。（evidence: 歌词管线 `lyrics-single-draft` / `lyrics-single-audit`）
+- 2026-09-04 16:19：完成单稿兼容及恢复支持：旧规划 `draftStrategyIds` 的 A 为主方案、B 仅作元数据备选，新 `workshop.drafts` 仅含 1 项；editing 检查点保存 `craftIssues`，避免续跑漏掉修订。新单稿界面显示 `Song draft`，不再显示 `Competing` / `editor pick`，旧 A/B 记录维持原显示与恢复兼容。（evidence: 歌词检查点、workshop 数据与单稿界面）
+- 2026-09-04 16:19：单稿调整相关 15 项测试通过，包括 4 项结构回归、5 项队列及 6 项歌词路由测试；TypeScript 检查退出 0，`git diff --check` 通过。（evidence: 主流程测试、类型及差异检查输出）
+- 2026-09-04 15:48：完成创作表单风格推荐：`CreateMusicForm` 已选风格卡右侧新增 `Recommend style / 推荐风格` 按钮，管理员 POST `/api/admin/recommend-style`，仅提交当前 `newsLink` / `newsContent` / `locale`，不读取历史 summary。`source-analysis` 复用安全 URL 抓取与当前 OpenRouter 文本模型 fallback，通过结构化输出选择 11 套预设或 `viral_pop` 自定义；预设沿用固定标签，自定义要求 4–7 个去重且有效的英文标签。（evidence: `CreateMusicForm`、`/api/admin/recommend-style`、`source-analysis`）
+- 2026-09-04 15:48：风格推荐 UI 应用标签后解锁并重置制作配方，显示本地化一句推荐理由，不触发歌词或音乐生成；输入、手动风格变化或生成开始时使在途请求失效，UI 超时为 120 秒，失败保留原风格。已补齐中英文消息。（evidence: 风格推荐交互与国际化消息）
+- 2026-09-04 15:48：风格推荐相关 10 项测试通过，包括 5 项接口权限、空输入、双输入、正文与错误脱敏测试，以及 5 项上下文隔离测试；TypeScript 检查退出 0，`git diff --check` 通过。（evidence: 主流程测试、类型与差异检查输出）
+- 2026-09-04 15:35：修复新闻导入被历史队列异步恢复覆盖：创作页检测 URL `content` 时建立导入屏障，并在清除参数后继续保留；历史队列仍合并但不自动 `loadTaskIntoStage`，`pendingSource` 存在时禁止旧 `shouldAutoGenerate` 与旧 workflow 恢复。异步 workflow 响应返回后，必须同时确认当前 store 的 `workflowRunId` 仍等于请求 ID 且响应 `run.id` 一致，才可恢复。（evidence: `create/page`、`creation-context-guard.ts`）
+- 2026-09-04 15:35：新增 `creation-context-guard.ts` 与 5 项回归测试，连同 `radar-creation-job` 的 5 项测试共 10 项通过；`tsc --noEmit` 退出 0，`git diff --check` 通过。（evidence: `creation-context-guard.ts`、相关回归测试与主流程检查输出）
+- 2026-09-04 15:20：完成 Story Radar 手动创作入口：每条非 `dismissed` 新闻新增描边 `Open Studio` 按钮，使用 `LocaleLink` 携带 `content=新闻URL`、`sourceTitle=标题`、`autoGenerate=false` 跳转创作页；原绿色后台自动生成按钮保持不变，响应式按钮容器支持换行。（evidence: Story Radar 列表按钮与 `LocaleLink` 参数）
+- 2026-09-04 15:20：创作页接收 `sourceTitle` 作为预览摘要，显式 `autoGenerate=false` 时不自动生成，其他旧入口继续保留自动生成行为；移除 `content` 的二次 `decodeURIComponent`，直接使用已由 `URLSearchParams` 解码的值。`pnpm exec tsc --noEmit` 退出 0，Biome 格式与 `git diff --check` 通过。（evidence: 创作页查询参数处理、主流程类型及格式检查输出）
+- 2026-09-04 15:00：完成 Story Radar 列表逐条后台创作：点击 `Create Song` 改为 POST `/api/admin/story-radar/[id]/generate`，返回 202 且不跳转；支持连续提交不同条目、每条独立提交锁，UI 每 10 秒查询状态，并提供手动 `View creation queue` 入口。（evidence: Story Radar 列表与 `/api/admin/story-radar/[id]/generate`）
+- 2026-09-04 15:00：新增 `radar_creation_job` 持久化表，以 candidate 主键及固定 `runId` / `songId` 防重复；0034 SQL、snapshot 与 journal 已生成，尚未执行迁移。QStash 签名 worker 按原歌词检查点分段续跑，复用原音乐提交服务，歌词队列与音乐队列各限制并发 2；保留原歌词提示词及安全校验，不自动发布。（evidence: `radar_creation_job`、0034 migration、QStash worker 与音乐提交服务）
+- 2026-09-04 15:02：[#13] Story Radar 后台创作最终复查完成：`pnpm exec tsc --noEmit` 退出 0，`git diff --check` 通过，37 项测试再次通过。（evidence: 主流程最终测试、类型检查与差异检查输出）
+- 2026-09-04 14:34：[#11] The Hot Sheet 每日归档最终 `pnpm exec tsc --noEmit` 与 `git diff --check` 均以 exit 0 通过；上线验证 TODO #12 仍待完成。（evidence: 主流程最终检查输出）
+- 2026-09-04 14:32：完成 The Hot Sheet 每日归档数据层：新增以日期为主键的 `hot_sheet_edition` JSON 不可变快照，使用 `attemptId` 领取与 10 分钟租约，成功或 partial 结果不重复覆盖，失败状态独立标记；0033 migration 已生成但未应用。（evidence: `hot_sheet_edition`、0033 migration）
+- 2026-09-04 14:32：完成每日调度与抓取边界调整：`/api/cron/hot-sheet` 每日 UTC 01:00 / 02:00 各触发一次，仅洛杉矶当地 hour 为 18 时执行，并验证 `CRON_SECRET`；原 13 点 editorial 任务只发布歌曲，不再抓新闻。（evidence: `/api/cron/hot-sheet`、editorial 调度实现）
+- 2026-09-04 14:32：完成 Admin Story Radar 历史归档界面，提供最近 7 期、日期查询表单与分类新闻；缺少迁移表时仅对 PostgreSQL `42P01` 降级归档区域，不影响其他区域。相关 21 项测试及初次 TypeScript 检查通过；上线说明已写入 `docs/hot-sheet-daily-archive.md`。（evidence: Story Radar archive 实现、主流程测试结果、`docs/hot-sheet-daily-archive.md`）
+- 2026-09-04 12:27：[#10] 短摘要修复的 TypeScript 检查已以 exit 0 通过，4 个相关文件已完成 Biome 格式化。（evidence: 主流程 TypeScript 与 Biome 执行结果）
+- 2026-09-04 12:26：完成 Today’s Drops 短摘要修复，回应用户“新摘要与旧版一样短”的要求：根因为生成规划要求 source summary 70–110 词并直接用作新闻摘要，主卡片允许 `line-clamp-8`；现将提示词和字段描述改为公开卡片 1–2 句、20–30 个英文词且不超过 200 字符，优先人物与事件，详细 verified facts 继续保留。schema 的 900 字符兼容上限不变，避免旧任务校验失败。（evidence: 生成规划提示词与摘要字段描述）
+- 2026-09-04 12:26：新增 `getNewsCardSummary`，旧内容卡片预览不超过 200 字符，优先保留完整首句，否则按单词边界省略；数据库全文保留，`daily-home` 主卡片改为 4 行。相关 4 项测试通过。（evidence: `getNewsCardSummary`、`daily-home` 与主流程测试输出）
 - 2026-09-04 12:09：完成 Vercel 类型检查依赖声明修复：`provider-fallback.ts` 直接导入 `@ai-sdk/provider`，但此前 `package.json` 未声明，导致 Vercel 无法解析；现已添加精确版本 `2.0.0` 并同步 `pnpm-lock.yaml` importer，无业务逻辑及其他依赖版本变更。（evidence: `package.json`、`pnpm-lock.yaml`、`provider-fallback.ts`）
 - 2026-09-04 12:09：依赖修复验证通过：`pnpm exec tsc --noEmit --incremental false`、`provider-fallback.test.ts` 全部 11 项测试、`frozen-lockfile --lockfile-only` 一致性检查；独立目录从 npm 官方 registry 安装 `@ai-sdk/provider@2.0.0` 并编译 `SharedV2ProviderOptions` 导入成功，离线尝试因缺 tarball 失败后在线重试成功。（evidence: 主流程验证输出、`F:/CodexHome/tmp/scooprym-provider-check-20260904`）
 - 2026-09-04 11:56：完成开发快照提交前扫描：297 个待提交且存在的文件中未发现常见 token 或本地 `.env` 敏感变量值匹配，未发现大于 10 MB 的文件；`git diff --check` 通过，检查时远端 `dev` 与本地 `HEAD` 一致。扫描通过不代表穷尽全部泄密模式。（evidence: 主流程提交前扫描、`git diff --check` 与远端分支核对结果）
@@ -443,6 +486,23 @@ _Last updated: 2026-09-04 12:09_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-04 17:58：当前 `NEXT_PUBLIC_BASE_URL=http://localhost:3000`；QStash token 与两把签名 key 虽已存在，`canUseQStash` 仍因 loopback 地址拒绝入队，云端无法回调本机。需用户选择公网隧道本地测试或部署分支后配置公网 worker；本轮未擅自改变地址或部署，未提交歌曲或调用付费模型。
+- 2026-09-04 17:58：本轮定点建表推进了此前“radar_creation_job 缺失”状态，但不代表完整迁移或端到端验收完成；TODO #14 保留公网回调与验收事项，TODO #12 的 Hot Sheet 迁移仍未完成。本次记录仅修改 `progress.md`。
+- 2026-09-04 17:28：新雷达任务在原歌词 3 个逻辑阶段之外增加一次风格推荐调用，已向用户说明，重试复用保存的快照；本轮未进行付费端到端验证、未提交或部署，既有 `radarCreationJob` 数据库迁移缺失问题未操作，TODO #14 保持待办。本次仅更新 `progress.md`。
+- 2026-09-04 17:10：本轮合并定稿取代 16:19 的轻量审查与按需修订执行方案，历史 Decisions 原文保留。普通路径为 3 个逻辑模型环节，但安全复核、供应商失败与降级仍可能产生额外调用，不保证固定请求数，亦无实测提速结论。
+- 2026-09-04 17:28：合并定稿未进行真实付费模型实测，未 commit 或部署；最终 TypeScript 检查已通过，质量残余问题仍为建议而非新增硬阻断。本次仅修改 `progress.md`，保留其他文件与改动。
+- 2026-09-04 16:48：公开背景修复只收紧公开展示数据来源与清理规则，原始数据库素材及生成管线保持不变；未进行浏览器验证，无数据迁移、提交或部署。本次仅更新 `progress.md`，未修改其他文件。
+- 2026-09-04 16:48：真实进度 UI 本轮未执行付费生成、浏览器视觉验证、部署或 commit；最终 TypeScript 检查已通过。本次仅更新 `progress.md`，未触碰或回退其他人的代码修改。
+- 2026-09-04 16:19：本轮单稿方案与历史 Pinned / Decisions 中双稿竞争要求存在时序变更，历史受保护条目原文保留，以本轮用户要求的单稿执行链为当前实现；Meme、事实、艺术及短歌标准不因调用链精简而删除。
+- 2026-09-04 16:19：单稿链未进行真实模型调用或付费端到端验证，现有质量检查残余问题仍沿用“建议、不阻断”策略，不代表强制质量全部通过；未执行迁移、部署或推送。本次记录仅更新 `progress.md`，保留此前修改。
+- 2026-09-04 15:48：风格推荐本轮未进行真实付费推荐或浏览器点击验证，未执行迁移、部署或推送；本次记录仅更新 `progress.md`，保留此前功能及记录。
+- 2026-09-04 15:35：本轮导入屏障只阻止过期异步任务覆盖新新闻，保留用户手动选择任务与当前新 workflow 的恢复能力；未执行付费生成、真实浏览器端到端验证、部署或推送。本次记录仅更新 `progress.md`，保留其他修改。
+- 2026-09-04 15:20：Open Studio 本轮未进行真实浏览器点击或付费生成验证，未执行迁移、部署或推送；新增手动入口不替代既有后台自动生成入口。本次记录仅更新 `progress.md`，保留其他修改。
+- 2026-09-04 15:00：后台创作依赖 QStash 发布令牌、签名密钥和公网 worker 地址；localhost 无隧道时明确拒绝入队。持久化与幂等设计不保证外部模型调用绝对 exactly-once；单阶段执行存在 300 秒限制。
+- 2026-09-04 15:02：本轮后台创作尚未完成浏览器或付费端到端验证，未执行迁移、部署或推送，TODO #14 仍待完成；最终 TypeScript、差异检查及 37 项测试均已通过。此前短摘要与 Hot Sheet archive 修改及记录均保留；本次记录仅更新 `progress.md`，未修改其他文件。
+- 2026-09-04 14:32：The Hot Sheet 归档沿用现有投票候选池，按 rank 排序最多 10 条，优先最近新闻但可能以旧候选补足，并非仅收录当天发表新闻。调度目标是洛杉矶 18 点，Hobby 计划只能保证小时内触发、不保证整点；未实现自动漏跑补抓。（evidence: `docs/hot-sheet-daily-archive.md`）
+- 2026-09-04 14:34：每日归档本轮尚未部署、未应用迁移、未进行浏览器验证或真实抓取；最终 `pnpm exec tsc --noEmit` 与 `git diff --check` 均以 exit 0 通过，未 commit / push。此前短摘要修改保留；本次记录仅修改 `progress.md`，不改动其他文件。
+- 2026-09-04 12:27：短摘要修复只调整公开卡片预览与后续生成要求，不改数据库全文；这是对 2026-08-24“卡片展示完整 newsSummary”表现边界的后续调整，历史 Decisions 原文保留。本轮 TypeScript 检查已以 exit 0 通过，4 个相关文件已完成 Biome 格式化；未付费调用 AI、未修改数据库、未进行浏览器截图验证、未提交或推送；本次记录操作仅更新 `progress.md`。
 - 2026-09-04 12:09：本轮仅修复显式依赖声明与锁文件，未运行完整 Next.js 生产构建，尚未确认线上 Server Components 运行时错误；修复 commit / push 尚未完成，不代表线上已修复。此前开发快照 TODO #8 未收到完成证据，暂保留原状态；本次记录操作仅更新 `progress.md`，未修改其他文件。
 - 2026-09-04 11:56：开发快照提交前状态：`pnpm exec tsc --noEmit` 已以 exit 0 通过，`git diff --cached --check` 通过；暂存包含 319 个文件变更（含大量迁移快照），无 `.env`、cache、`node_modules` 或 `.next` 暂存。commit / push 尚未完成；保留已知风险——`provider-fallback` 尚未覆盖 `other side closed` 网络错误，本轮未执行真实账户全流程测试。既有 TODO #6 仍未完成；本轮仅更新 `progress.md`，未修改其他文件。（evidence: 主流程 TypeScript 与暂存检查结果）
 - 2026-09-03 13:45：本轮 HTTP 401 只证明队列接口可达及认证边界仍有效，不代表已登录管理员队列验收成功；`agent-browser --auto-connect tab list` 返回 `No running Chrome instance found`，依照用户要求未另开空白浏览器，因此未完成真实 Chrome 登录态视觉验证。未触发付费生成、未更改歌曲数据；此前歌词供应商网络重试识别漏洞不属于本轮修复，不能据此宣称已解决。本轮记录操作只更新 `progress.md`，保留全部其他人的记录与业务代码。

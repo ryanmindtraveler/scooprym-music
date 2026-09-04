@@ -23,6 +23,31 @@ export async function GET(_request: Request, context: { params: Promise<{ runId:
     return NextResponse.json({ success: false, error: 'Workflow run not found' }, { status: 404 });
   }
 
+  // 进度轮询不传输歌词正文或模型检查点。
+  if (new URL(_request.url).searchParams.get('view') === 'progress') {
+    return NextResponse.json(
+      {
+        success: true,
+        run: {
+          id: run.id,
+          status: run.status,
+          currentStage: run.currentStage,
+          createdAt: run.createdAt,
+          updatedAt: run.updatedAt,
+          completedAt: run.completedAt,
+          steps: run.steps.map(({ stage, status, startedAt, completedAt, attempt }) => ({
+            stage,
+            status,
+            startedAt,
+            completedAt,
+            attempt,
+          })),
+        },
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   // 模型签名下载地址仅供服务端断点恢复，不发送到浏览器或本地持久化队列。
   const steps = run.steps.map((step) => {
     const { generatedAudioUrl: _privateUrl, ...metadata } = (step.outputMetadata || {}) as Record<string, unknown>;

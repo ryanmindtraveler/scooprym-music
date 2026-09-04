@@ -204,7 +204,7 @@ export function SongDetailClient({
             })()}
 
             {/* 新闻标题是页面唯一 H1，但视觉上从属于歌曲信息。 */}
-            {(song.newsSummary || song.sourceText) && (
+            {(song.newsSummary || song.sourceUrl) && (
               <article className="group/text relative mt-5 w-full max-w-lg rounded-r-2xl border-l-4 border-indigo-500/50 bg-white/40 py-4 pr-5 pl-5 text-left shadow-sm ring-1 ring-slate-200/50 backdrop-blur-2xl transition-all duration-500 hover:shadow-lg hover:ring-indigo-500/20 dark:bg-white/5 dark:shadow-black/20 dark:ring-white/10 dark:hover:shadow-black/40">
                 <div className="mb-2 flex items-center gap-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" />

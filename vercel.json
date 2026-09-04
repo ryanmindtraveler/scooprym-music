@@ -6,6 +6,14 @@
   },
   "crons": [
     {
+      "path": "/api/cron/hot-sheet?slot=pdt",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/hot-sheet?slot=pst",
+      "schedule": "0 2 * * *"
+    },
+    {
       "path": "/api/cron/editorial",
       "schedule": "0 13 * * *"
     }

@@ -1,4 +1,4 @@
-import { runDailyEditorialWorkflow } from '@/lib/editorial-workflow';
+import { publishDueSongs } from '@/lib/editorial-workflow';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 
@@ -12,7 +12,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await runDailyEditorialWorkflow();
+    // 新闻抓取改由洛杉矶 18 点的独立归档任务负责；保留歌曲发布时刻。
+    const result = await publishDueSongs();
     revalidatePath('/');
     revalidatePath('/admin/dashboard');
     revalidatePath('/admin/story-radar');

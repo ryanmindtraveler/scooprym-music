@@ -701,6 +701,9 @@
         "hideDirections": "Hide choices",
         "tagsReady": "{count} production tags ready",
         "analyzingDirection": "Analyzing the story",
+        "recommendStyle": "Recommend style",
+        "recommendingStyle": "Recommending…",
+        "recommendStyleError": "Could not recommend a style. Check the news link or source text and try again.",
         "analyzingDirectionDescription": "A suitable sound will appear when the story source is ready.",
         "recommendationExplanation": "The source is analyzed automatically. You can use this recommendation as-is or choose another clear creative direction.",
         "directions": {

@@ -23,8 +23,8 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AlertDialog,
@@ -95,6 +95,82 @@ export function CreateMusicForm({
   onReset,
 }: CreateMusicFormProps) {
   const t = useTranslations('Dashboard.admin.createStudio');
+  const locale = useLocale();
+  const hasActiveWorkflowTask = useCreateStore((state) =>
+    state.tasks.some(
+      (task) =>
+        task.id === state.musicId &&
+        !!state.workflowRunId &&
+        task.workflowRunId === state.workflowRunId &&
+        ['queued', 'processing', 'generating_cover'].includes(task.status)
+    )
+  );
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [recommendationNote, setRecommendationNote] = useState('');
+  const recommendationRequest = useRef<AbortController | null>(null);
+
+  // 输入、手动风格或生成状态改变后，旧推荐不得覆盖新上下文。
+  useEffect(() => {
+    recommendationRequest.current?.abort();
+    recommendationRequest.current = null;
+    setIsRecommending(false);
+    setRecommendationNote('');
+    return () => {
+      recommendationRequest.current?.abort();
+    };
+  }, [newsLink, newsContent, isGenerating]);
+
+  useEffect(() => {
+    if (!recommendationRequest.current) return;
+    recommendationRequest.current.abort();
+    recommendationRequest.current = null;
+    setIsRecommending(false);
+    setRecommendationNote('');
+  }, [musicPrompt]);
+
+  const recommendStyle = async () => {
+    if (recommendationRequest.current || isGenerating || (!newsLink.trim() && !newsContent.trim())) return;
+    const controller = new AbortController();
+    recommendationRequest.current = controller;
+    setIsRecommending(true);
+    setRecommendationNote('');
+    const timeout = window.setTimeout(() => controller.abort(), 120000);
+    try {
+      const response = await fetch('/api/admin/recommend-style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({ newsLink, newsContent, locale: locale === 'zh' ? 'zh' : 'en' }),
+      });
+      if (!response.ok) throw new Error('Recommendation failed');
+      const result = await response.json();
+      if (controller.signal.aborted || recommendationRequest.current !== controller) return;
+      if (
+        !VIBE_PERSONAS.some((item) => item.id === result.styleId) ||
+        !Array.isArray(result.tags) ||
+        !result.tags.length ||
+        !result.tags.every((tag: unknown) => typeof tag === 'string' && ALL_KNOWN_TAGS.has(tag))
+      ) {
+        throw new Error('Invalid recommendation');
+      }
+      setDirectionTouched(true);
+      setActivePersonaId(result.styleId);
+      setVibeTags(result.tags);
+      setCustomVibeText('');
+      setProductionVariantId(null);
+      setIsProductionVariantLocked(false);
+      syncMusicPrompt(result.tags, '');
+      setRecommendationNote(typeof result.reason === 'string' ? result.reason : '');
+    } catch {
+      if (recommendationRequest.current === controller) setRecommendationNote(t('recommendStyleError'));
+    } finally {
+      window.clearTimeout(timeout);
+      if (recommendationRequest.current === controller) {
+        recommendationRequest.current = null;
+        setIsRecommending(false);
+      }
+    }
+  };
   // Logic 1: Separate States for Independent Control
   const [activePersonaId, setActivePersonaId] = useState<string | null>(() => {
     const currentTags = musicPrompt.split(',').map((s) => s.trim());
@@ -390,8 +466,23 @@ export function CreateMusicForm({
                     {selectedPersona ? directionDescription(selectedPersona.id) : t('analyzingDirectionDescription')}
                   </p>
                 </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={recommendStyle}
+                  disabled={isRecommending || isGenerating || (!newsLink.trim() && !newsContent.trim())}
+                >
+                  {isRecommending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                  {isRecommending ? t('recommendingStyle') : t('recommendStyle')}
+                </Button>
                 <Check className="size-5 shrink-0 text-indigo-600" />
               </div>
+              {recommendationNote && (
+                <p role="status" className="mt-2 text-xs text-slate-600">
+                  {recommendationNote}
+                </p>
+              )}
             </div>
 
             {showAllDirections && (
@@ -498,10 +589,9 @@ export function CreateMusicForm({
               </Tooltip>
             </TooltipProvider>
 
-            <div className="min-w-0 flex-1">
-              {isGenerating ? (
-                <GenerationProgress className="h-11 rounded-xl px-4 shadow-none" />
-              ) : hasJustQueued ? (
+            <div className="min-w-0 flex-1 space-y-2">
+              {(isGenerating || hasActiveWorkflowTask) && <GenerationProgress className="shadow-none" />}
+              {isGenerating ? null : hasJustQueued ? (
                 <Button
                   type="button"
                   onClick={onReset}

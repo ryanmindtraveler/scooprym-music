@@ -8,6 +8,7 @@ import { CreationStage } from '@/components/create/stage/creation-stage'; // Upd
 import { useCreditBalance } from '@/hooks/billing/use-credits';
 import { authClient } from '@/lib/auth-client';
 import { fetchCreationQueue } from '@/lib/creation-queue-request';
+import { canRestoreQueueStage, canResumeCreationWorkflow } from '@/lib/creation-context-guard';
 import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
 import { useCreateStore, usePlayerStore } from '@/store';
 import type { CreationTask } from '@/store/create-store'; // Data Type
@@ -117,6 +118,7 @@ type MusicGenerationResponse = {
 type WorkflowRunResponse = {
   success?: boolean;
   run?: {
+    id: string;
     currentStage?: string;
     status?: string;
     title?: string | null;
@@ -284,6 +286,13 @@ export default function AdminCreateSongPage() {
   const workflowSubmissionRef = useRef(false);
   const musicSubmissionRef = useRef(false);
   const workflowRecoveryRef = useRef<string | null>(null);
+  const importedSourceRef = useRef(Boolean(searchParams.get('content')));
+  const pendingSource = Boolean(searchParams.get('content'));
+
+  // 在历史恢复 effect 之前建立导入屏障；清除 URL 参数后仍保留本次页面的屏障。
+  useEffect(() => {
+    if (pendingSource) importedSourceRef.current = true;
+  }, [pendingSource]);
 
   const isWorkspaceReady = isAdmin && !!currentUserId && workspaceUserId === currentUserId;
   const hasGenerationInput = !!(newsContent.trim() || newsLink.trim());
@@ -428,7 +437,7 @@ export default function AdminCreateSongPage() {
         recoveredUserRef.current = currentUserId;
 
         // 后续状态同步不能覆盖管理员正在编辑的歌词或切换播放器。
-        if (!initialRestore) return;
+        if (!canRestoreQueueStage(initialRestore, importedSourceRef.current)) return;
         const state = useCreateStore.getState();
         const selectedTask = state.tasks.find((task) => task.id === state.musicId);
         if (selectedTask) {
@@ -477,7 +486,8 @@ export default function AdminCreateSongPage() {
       // ... (Simplified re-inclusion of same logic)
       try {
         reset();
-        const decoded = decodeURIComponent(contentParam).trim();
+        // URLSearchParams 已解码，避免新闻链接中的百分号被二次解码。
+        const decoded = contentParam.trim();
         // ... parsing logic ...
         // Smart Detect: URL vs Text
         if (/^(https?:\/\/|www\.)[^ "]+$/i.test(decoded)) {
@@ -487,7 +497,9 @@ export default function AdminCreateSongPage() {
           setNewsContent(decoded);
           setNewsLink('');
         }
-        setShouldAutoGenerate(true);
+        setNewsSummary(searchParams.get('sourceTitle')?.trim() || '');
+        // 手动入口只预填新闻；保留其他入口原有的自动创作行为。
+        setShouldAutoGenerate(searchParams.get('autoGenerate') !== 'false');
         router.replace(Routes.AdminCreate);
       } catch (e) {
         router.replace(Routes.AdminCreate);
@@ -499,6 +511,7 @@ export default function AdminCreateSongPage() {
     setNewsContent,
     setNewsLink,
     setMusicPrompt,
+    setNewsSummary,
     setShouldAutoGenerate,
     isGenerating,
     isWorkspaceReady,
@@ -512,7 +525,14 @@ export default function AdminCreateSongPage() {
   useEffect(() => {
     let autoGenerateTimer: ReturnType<typeof setTimeout> | null = null;
 
-    if (isWorkspaceReady && shouldAutoGenerate && (newsContent || newsLink) && !isGenerating && !autoGenLock.current) {
+    if (
+      !pendingSource &&
+      isWorkspaceReady &&
+      shouldAutoGenerate &&
+      (newsContent || newsLink) &&
+      !isGenerating &&
+      !autoGenLock.current
+    ) {
       autoGenLock.current = true;
       setShouldAutoGenerate(false);
       autoGenerateTimer = setTimeout(() => {
@@ -523,7 +543,7 @@ export default function AdminCreateSongPage() {
     return () => {
       if (autoGenerateTimer) clearTimeout(autoGenerateTimer);
     };
-  }, [shouldAutoGenerate, newsContent, newsLink, isGenerating, isWorkspaceReady]);
+  }, [shouldAutoGenerate, newsContent, newsLink, isGenerating, isWorkspaceReady, pendingSource]);
 
   // Safety: If user edits inputs manually after queuing, cancel the "Create Another" (Reset) mode
   useEffect(() => {
@@ -1100,7 +1120,7 @@ export default function AdminCreateSongPage() {
   // 刷新或歌词接口响应中断后，从持久化工作流恢复，并自动接续音乐生成。
   // 旧数据中的 awaiting_lyrics_approval 仅用于向后兼容，不再代表需要人工批准。
   useEffect(() => {
-    if (!isWorkspaceReady || !workflowRunId || workflowRecoveryRef.current === workflowRunId) return;
+    if (!isWorkspaceReady || pendingSource || !workflowRunId || workflowRecoveryRef.current === workflowRunId) return;
 
     workflowRecoveryRef.current = workflowRunId;
     let cancelled = false;
@@ -1120,7 +1140,15 @@ export default function AdminCreateSongPage() {
           run?.currentStage === 'lyrics_review' ||
           run?.currentStage === 'awaiting_lyrics_approval';
 
-        if (cancelled || !payload.success || !run?.lyrics || !hasRecoverableLyrics) return;
+        if (
+          cancelled ||
+          !canResumeCreationWorkflow(workflowRunId, useCreateStore.getState().workflowRunId, pendingSource) ||
+          !payload.success ||
+          !run?.lyrics ||
+          run.id !== workflowRunId ||
+          !hasRecoverableLyrics
+        )
+          return;
 
         const recoveredLyrics = normalizeStructuredLyrics(run.lyrics);
         const recoveredTitle = run.title?.trim() || 'Breaking News Track';
@@ -1173,6 +1201,7 @@ export default function AdminCreateSongPage() {
     setNewsLink,
     setNewsSummary,
     workflowRunId,
+    pendingSource,
   ]);
 
   const handleRewriteLyrics = async () => {

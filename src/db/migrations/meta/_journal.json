@@ -232,6 +232,20 @@
       "when": 1788148683825,
       "tag": "0032_lethal_grandmaster",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788503269059,
+      "tag": "0033_hot_sheet_daily_archive",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788504420000,
+      "tag": "0034_radar_creation_jobs",
+      "breakpoints": true
     }
   ]
 }

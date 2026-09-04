@@ -4,6 +4,7 @@ import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
 import { formatBusinessDate } from '@/lib/business-time';
+import { getNewsCardSummary } from '@/lib/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
@@ -57,12 +58,8 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
     }
   };
 
-  // Logic to prioritize "News Content"
-  const description =
-    item.newsSummary ||
-    item.sourceText?.replace(/\[[^\]]+\]/gi, '').trim() ||
-    item.prompt ||
-    'No news content available.';
+  // 公开卡片仅展示编辑摘要，不回退到原始抓取素材或制作提示词。
+  const description = item.newsSummary ? getNewsCardSummary(item) : 'No news content available.';
 
   let formattedDate = 'Recent';
   try {

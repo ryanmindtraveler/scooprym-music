@@ -8,6 +8,7 @@ import { count, countDistinct, desc, eq, inArray, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { getLocale } from 'next-intl/server';
 import { StoryRadar, type StoryRadarCandidateView } from './story-radar';
+import { HotSheetArchive } from './hot-sheet-archive';
 import { type StorySubmissionStatus, type StorySubmissionView, StorySubmissions } from './story-submissions';
 import { type StoryVoteResultView, StoryVoteResults } from './story-vote-results';
 
@@ -22,7 +23,7 @@ function parseMatchedTerms(value: string | null) {
   }
 }
 
-export async function StoryRadarPage() {
+export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
   const locale = await getLocale();
   const dateLocale = locale === 'zh' ? zhCN : enUS;
   const db = await getDb();
@@ -185,6 +186,7 @@ export async function StoryRadarPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <HotSheetArchive day={edition} />
       <StorySubmissions submissions={serializedSubmissions} />
       <StoryVoteResults
         results={voteResults.slice(0, 10)}

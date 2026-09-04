@@ -1,6 +1,7 @@
 'use client';
 
 import { formatBusinessDate } from '@/lib/business-time';
+import { getNewsCardSummary } from '@/lib/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
@@ -33,17 +34,7 @@ function toPlayerSong(song: Song) {
 }
 
 function getNewsSummary(song: Song) {
-  return (
-    song.newsSummary
-      ?.replace(/\[[^\]]+\]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim() ||
-    song.sourceText
-      ?.replace(/\[[^\]]+\]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim() ||
-    'The internet has delivered another story too strange to ignore.'
-  );
+  return getNewsCardSummary(song);
 }
 
 function Cover({ song, priority = false, className }: { song: Song; priority?: boolean; className?: string }) {
@@ -215,7 +206,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
                   </div>
 
                   <a href={getSongUrl(featured)} target="_blank" rel="noopener noreferrer" className="mt-5 block">
-                    <p className="line-clamp-8 max-w-3xl text-[1.35rem] font-bold leading-[1.48] tracking-[-0.025em] text-[#201a29] transition-colors group-hover/hero:text-[#b90851] md:text-[1.5rem] xl:text-[1.65rem] dark:text-[#fffdf8]">
+                    <p className="line-clamp-4 max-w-3xl text-[1.35rem] font-bold leading-[1.48] tracking-[-0.025em] text-[#201a29] transition-colors group-hover/hero:text-[#b90851] md:text-[1.5rem] xl:text-[1.65rem] dark:text-[#fffdf8]">
                       {getNewsSummary(featured)}
                     </p>
                   </a>

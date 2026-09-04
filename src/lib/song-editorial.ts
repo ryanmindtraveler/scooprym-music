@@ -2,10 +2,26 @@ import type { Song } from '@/types/song';
 
 const MAX_HEADLINE_LENGTH = 84;
 
+/** 旧版长摘要仅缩短卡片预览，完整内容仍保留在歌曲数据中。 */
+export function getNewsCardSummary(song: Pick<Song, 'newsSummary' | 'sourceText'>) {
+  const text = cleanNewsText(song.newsSummary);
+  if (!text) return 'The internet has delivered another story too strange to ignore.';
+  if (text.length <= 200) return text;
+  const firstSentence = splitNewsLead(text).headline;
+  if (firstSentence.length <= 200) return firstSentence;
+  const preview = text.slice(0, 199);
+  const boundary = preview.lastIndexOf(' ');
+  return `${(boundary > 0 ? preview.slice(0, boundary) : preview).trimEnd()}…`;
+}
+
 function cleanNewsText(value?: string | null) {
   return (
     value
-      ?.replace(/\[[^\]]+\]/g, '')
+      ?.replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/https?:\/\/\S+/gi, '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\[[^\]]+\]/g, '')
       .replace(/\s+/g, ' ')
       .trim() || ''
   );
@@ -35,9 +51,8 @@ function splitNewsLead(value: string) {
  * 首页紧凑内容位默认限制标题；Archive 等阅读场景可显式保留完整标题。
  */
 export function getNewsTitle(song: Song, options: { truncate?: boolean } = {}) {
-  const sourceText = cleanNewsText(song.sourceText);
   const summary = cleanNewsText(song.newsSummary);
-  const title = splitNewsLead(summary || sourceText).headline || 'The internet did what?';
+  const title = splitNewsLead(summary).headline || 'The internet did what?';
   const shouldTruncate = options.truncate ?? true;
 
   if (!shouldTruncate || title.length <= MAX_HEADLINE_LENGTH) return title;
@@ -46,21 +61,15 @@ export function getNewsTitle(song: Song, options: { truncate?: boolean } = {}) {
 }
 
 export function getNewsDescription(song: Song) {
-  const sourceText = cleanNewsText(song.sourceText);
   const summary = cleanNewsText(song.newsSummary);
   const summaryFollowUp = splitNewsLead(summary).followUp;
 
   if (summaryFollowUp) {
-    return summaryFollowUp;
+    return getNewsCardSummary({ newsSummary: summaryFollowUp });
   }
 
-  if (sourceText && sourceText !== summary) {
-    const description =
-      summary && sourceText.startsWith(summary) ? sourceText.slice(summary.length).trim() : sourceText;
-    if (description) return description;
-  }
-
-  return 'A strange true story, distilled from the original report.';
+  // 原始抓取素材可能包含导航、广告和媒体链接，不能作为公开背景兜底。
+  return '';
 }
 
 /**
