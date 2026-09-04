@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-04 11:56_
+_Last updated: 2026-09-04 12:09_
 
 ## Pinned
 - 2026-09-04 11:56：本轮用户授权仅提交并推送开发快照至 `origin/dev`，不合并 `main`；该快照不作为稳定发布。
@@ -184,8 +184,11 @@ _Last updated: 2026-09-04 11:56_
 - [P1][OPEN][#6] 恢复真实管理员 Chrome 登录会话后，完成一次会产生实际模型费用的歌曲创建端到端验收，重点验证 `workflowRunId` 贯穿、阶段查询、音频先落库及封面失败后从 `audio_uploaded` 续跑。（2026-08-31 12:22）
 - [P1][OPEN][#7] 在已登录 Chrome 页面读取连接恢复后，完成 Admin 创作舞台“短歌名 + 完整新闻摘要”新信息层级的最终视觉快照验收。（2026-08-31 19:52）
 - [P1][DOING][#8] 完成用户授权的开发快照 commit 与 push 至 `origin/dev`；TypeScript 与暂存检查已通过，当前尚未提交或推送，不合并 `main`。（2026-09-04 11:56）
+- [P1][DOING][#9] 将 `@ai-sdk/provider` 显式依赖修复提交并推送至 `dev`，后续核验 Vercel 部署结果；本次修复提交与推送尚未完成。（2026-09-04 12:09）
 
 ## Done
+- 2026-09-04 12:09：完成 Vercel 类型检查依赖声明修复：`provider-fallback.ts` 直接导入 `@ai-sdk/provider`，但此前 `package.json` 未声明，导致 Vercel 无法解析；现已添加精确版本 `2.0.0` 并同步 `pnpm-lock.yaml` importer，无业务逻辑及其他依赖版本变更。（evidence: `package.json`、`pnpm-lock.yaml`、`provider-fallback.ts`）
+- 2026-09-04 12:09：依赖修复验证通过：`pnpm exec tsc --noEmit --incremental false`、`provider-fallback.test.ts` 全部 11 项测试、`frozen-lockfile --lockfile-only` 一致性检查；独立目录从 npm 官方 registry 安装 `@ai-sdk/provider@2.0.0` 并编译 `SharedV2ProviderOptions` 导入成功，离线尝试因缺 tarball 失败后在线重试成功。（evidence: 主流程验证输出、`F:/CodexHome/tmp/scooprym-provider-check-20260904`）
 - 2026-09-04 11:56：完成开发快照提交前扫描：297 个待提交且存在的文件中未发现常见 token 或本地 `.env` 敏感变量值匹配，未发现大于 10 MB 的文件；`git diff --check` 通过，检查时远端 `dev` 与本地 `HEAD` 一致。扫描通过不代表穷尽全部泄密模式。（evidence: 主流程提交前扫描、`git diff --check` 与远端分支核对结果）
 - 2026-09-04 11:56：完成 `pnpm exec vitest run`：33 个测试文件通过、1 个失败，207 项测试通过、5 项失败；失败均位于 `src/credits/credits.test.ts`，mock 链的 `values` / `set` / `transaction` 等不完整，本轮未修复。（evidence: 主流程 Vitest 输出、`src/credits/credits.test.ts`）
 - 2026-09-03 13:45：完成队列 `Failed to fetch` 根因定位：旧 dev session `89279` 已不存在，`Get-NetTCPConnection` 确认 3000 端口无监听；创作页 `recoverTasks` 在 fetch 失败后执行 `console.error`，触发 Next 开发环境红色覆盖层。该错误属于开发服务断连，不代表歌曲生成失败。（evidence: dev session、端口监听检查与 `recoverTasks` 错误处理）
@@ -440,6 +443,7 @@ _Last updated: 2026-09-04 11:56_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-04 12:09：本轮仅修复显式依赖声明与锁文件，未运行完整 Next.js 生产构建，尚未确认线上 Server Components 运行时错误；修复 commit / push 尚未完成，不代表线上已修复。此前开发快照 TODO #8 未收到完成证据，暂保留原状态；本次记录操作仅更新 `progress.md`，未修改其他文件。
 - 2026-09-04 11:56：开发快照提交前状态：`pnpm exec tsc --noEmit` 已以 exit 0 通过，`git diff --cached --check` 通过；暂存包含 319 个文件变更（含大量迁移快照），无 `.env`、cache、`node_modules` 或 `.next` 暂存。commit / push 尚未完成；保留已知风险——`provider-fallback` 尚未覆盖 `other side closed` 网络错误，本轮未执行真实账户全流程测试。既有 TODO #6 仍未完成；本轮仅更新 `progress.md`，未修改其他文件。（evidence: 主流程 TypeScript 与暂存检查结果）
 - 2026-09-03 13:45：本轮 HTTP 401 只证明队列接口可达及认证边界仍有效，不代表已登录管理员队列验收成功；`agent-browser --auto-connect tab list` 返回 `No running Chrome instance found`，依照用户要求未另开空白浏览器，因此未完成真实 Chrome 登录态视觉验证。未触发付费生成、未更改歌曲数据；此前歌词供应商网络重试识别漏洞不属于本轮修复，不能据此宣称已解决。本轮记录操作只更新 `progress.md`，保留全部其他人的记录与业务代码。
 - 2026-09-03 12:05：本轮真实封面调用路径：`Kinda Neighbor` 的 Qwen 网络超时后由 Gemini 出图，上传超时一次后同 key 重试成功；`The Host Next Door` 依次遇到 Qwen 网络超时、Gemini `OTHER` 与 Seedream 版权拦截，最终由既有 FLUX Schnell 兜底生成封面。此记录更新此前“两首旧歌封面未补生成”的状态，但不改变历史记录；歌曲仅恢复为可发布，尚未发布。
