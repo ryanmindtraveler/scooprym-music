@@ -36,13 +36,42 @@ describe('resolveCompetingStrategyPackages', () => {
   it('保留两组不同策略和 Hook', () => {
     const result = resolveCompetingStrategyPackages(strategies, hooks, { A: 'dialogue', B: 'reveal' });
     expect(result.A.strategy.id).toBe('dialogue');
-    expect(result.B.strategy.id).toBe('reveal');
-    expect(result.A.hook.id).not.toBe(result.B.hook.id);
+    expect(result.B?.strategy.id).toBe('reveal');
+    expect(result.A.hook.id).not.toBe(result.B?.hook.id);
   });
 
   it('无效或重复选择会回退到另一组合法策略', () => {
     const result = resolveCompetingStrategyPackages(strategies, hooks, { A: 'missing', B: 'dialogue' });
     expect(result.A.strategy.id).toBe('dialogue');
-    expect(result.B.strategy.id).toBe('reveal');
+    expect(result.B?.strategy.id).toBe('reveal');
+  });
+
+  it('只有一套有效策略也能进入单稿写作', () => {
+    const result = resolveCompetingStrategyPackages([strategies[0]], hooks, { A: 'dialogue' });
+    expect(result.A.strategy.id).toBe('dialogue');
+    expect(result.B).toBeUndefined();
+  });
+
+  it('旧检查点的第二套策略引用不存在的 Hook 不阻断单稿', () => {
+    const result = resolveCompetingStrategyPackages(
+      [strategies[0], { ...strategies[1], hookId: 'missing' }], hooks,
+      { A: 'dialogue', B: 'reveal' }
+    );
+    expect(result.A.strategy.id).toBe('dialogue');
+    expect(result.B).toBeUndefined();
+  });
+
+  it('首选无效时使用唯一有效的备选', () => {
+    const result = resolveCompetingStrategyPackages(
+      [{ ...strategies[0], hookId: 'missing' }, strategies[1]], hooks,
+      { A: 'dialogue', B: 'reveal' }
+    );
+    expect(result.A.strategy.id).toBe('reveal');
+  });
+
+  it('没有任何有效策略时仍拒绝写作，不伪造策略和 Hook', () => {
+    expect(() => resolveCompetingStrategyPackages(strategies, [], {})).toThrow(
+      'The lyric workshop did not produce a valid strategy linked to a hook'
+    );
   });
 });

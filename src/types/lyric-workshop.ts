@@ -132,15 +132,15 @@ export interface LyricWorkshop {
   comicPremises: ComicPremise[];
   selectedPremiseId: string;
   hookCandidates: MemeHookCandidate[];
-  /** 新运行会保存两个竞争稿各自使用的 Hook；旧持久化记录允许缺失。 */
+  /** 单稿使用 A；B 仅兼容旧记录中的备选 Hook。 */
   draftHookIds?: {
     A: string;
-    B: string;
+    B?: string;
   };
-  /** 新运行的两份稿件分别绑定不同的策略包；旧记录允许缺失。 */
+  /** 单稿使用 A；B 仅兼容旧记录中的备选策略。 */
   draftStrategyIds?: {
     A: string;
-    B: string;
+    B?: string;
   };
   selectedHookId: string;
   /** 旧运行记录的固定机制结构，仅用于兼容读取。 */

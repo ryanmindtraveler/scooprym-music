@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-04 20:47_
+_Last updated: 2026-09-04 21:53_
 
 ## Pinned
 - 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
@@ -183,6 +183,7 @@ _Last updated: 2026-09-04 20:47_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
+- [P1][DONE][#24] 单策略修复最终 `tsc --noEmit` 退出 0，相关 13 项测试全部通过，`git diff --check` 通过；本轮尚未推送或重试线上付费任务。（2026-09-04 21:53）
 - [P1][OPEN][#5] 在真实登录浏览器中完成 11 套编辑风格的创作页 UI 与选择交互验收；`/admin/create` 服务响应已恢复为 200。（2026-08-30 21:52）
 - [P1][OPEN][#6] 恢复真实管理员 Chrome 登录会话后，完成一次会产生实际模型费用的歌曲创建端到端验收，重点验证 `workflowRunId` 贯穿、阶段查询、音频先落库及封面失败后从 `audio_uploaded` 续跑。（2026-08-31 12:22）
 - [P1][OPEN][#7] 在已登录 Chrome 页面读取连接恢复后，完成 Admin 创作舞台“短歌名 + 完整新闻摘要”新信息层级的最终视觉快照验收。（2026-08-31 19:52）
@@ -204,6 +205,8 @@ _Last updated: 2026-09-04 20:47_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-04 21:53：修复单稿写作仍强制要求两套有效策略包的残留门禁：一套有效策略与对应 Hook 即可继续，B 改为可选并兼容旧检查点；planning schema 策略数组最少 1 项、B 可选。仍在没有任何有效策略时明确报错，后续审校保留。（evidence: `src/ai/text/lib/lyrics-strategy-packages.ts`、`generation.ts` 的策略解析与 planning schema，主流程修复结果）
+- 2026-09-04 21:53：[#24] 单策略 helper 的 6 项回归测试通过；`single-draft-pipeline`、`lyrics-meme-strategy`、`lyrics-strategy-packages` 合计 13 项测试全部通过，最终 `tsc --noEmit` 退出 0，`git diff --check` 通过。未进行线上付费重试，不能据此宣称线上已修复。（evidence: 三组测试文件、主流程测试及类型与差异检查结果）
 - 2026-09-04 20:47：修复热点雷达入队超时：用户运行于 localhost，原 `canUseQStash` 拒绝 loopback，数据库 `radar_creation_job` 无记录；generate 路由静态导入完整歌词/音乐模块且前端 15 秒中断。新增 `radar-creation-enqueue.ts` 拆分轻量入队，失败落库为 `failed`；UI 超时调整为 45 秒，超时后先查询明确结果，查询自身上限 10 秒。（evidence: `radar-creation-enqueue.ts`、generate 路由及入队 UI）
 - 2026-09-04 20:47：`queue.ts` 仅在 development 且使用本地 `QSTASH_URL` 时允许 loopback，仍验证签名。官方 QStash CLI 2.37.18 安装于 `F:/CodexHome/runtimes/qstash`，已忽略的 `.env.development.local` 仅使用本地测试凭据；`scripts/dev-with-queue.cjs` 随 `pnpm dev` 检测或启动官方本地队列，`docs/本地热点队列.md` 说明内存队列重启限制。（evidence: `queue.ts`、`scripts/dev-with-queue.cjs`、`docs/本地热点队列.md`）
 - 2026-09-04 20:47：相关 16 项测试、首轮 TypeScript 及 `git diff --check` 通过；真实 Chrome 热点页与状态 GET 均返回 200，真实签名 QStash 探针携带不存在 ID 进入 worker 并返回预期 `missing`。（evidence: 主流程测试、浏览器状态与签名探针结果）
@@ -517,6 +520,7 @@ _Last updated: 2026-09-04 20:47_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-04 21:53：此次修复落实 2026-09-04 的单稿决策，补齐此前 B 仅作备选却仍被旧 helper 强制检查的遗漏；2026-09-02 10:54 的双策略 Pinned 作为历史审计原文保留，现行单稿流程不再以缺少第二套策略阻断。未推送、未自动重试线上付费任务；本次记录仅修改 `progress.md`。
 - 2026-09-04 20:47：本地签名队列路径解决此前 localhost 无法由云端回调的开发阻塞，仅限本地 development，不放宽生产回调边界。本轮无付费生成，不能称整首歌曲端到端通过；第二轮 TypeScript 尚在收尾，未 push。
 - 2026-09-04 20:47：记录时本地开发服务 session 19591、队列 session 26912 运行；这些 session 为当前运行信息，不保证后续仍存活。本次仅更新 `progress.md`，不改动其他文件或运行服务。
 - 2026-09-04 20:17：本轮风格审查未进行试听，未提交或推送；最终 TypeScript 检查已通过，无待完成类型检查项，文档试听清单不代表已完成实测。本次仅更新 `progress.md`，不修改其他文件。

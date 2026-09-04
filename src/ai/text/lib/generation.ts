@@ -174,11 +174,11 @@ const lyricWorkshopPlanSchema = z.object({
         score: z.number().int().min(0).max(100),
       })
     )
-    .min(3)
+    .min(1)
     .max(5),
   draftStrategyIds: z.object({
     A: z.string().trim().min(1).max(24).describe('The strongest image-led event-native strategy package ID.'),
-    B: z.string().trim().min(1).max(24).describe('A different, highly contagious strategy package ID.'),
+    B: z.string().trim().min(1).max(24).optional().describe('Optional legacy alternative; not required for single-draft writing.'),
   }),
   blueprint: z.object({
     structure: z.string().trim().min(4).max(300),
@@ -396,7 +396,7 @@ Planning task:
 10. Propose exactly 3 event-native Meme strategy packages. Each package must combine one narrative form, one propagation action, and one exact Hook Lab candidate ID, then cite the source detail that makes the complete package feel inevitable rather than templated.
 11. Narrative forms: magic slogan, character dialogue, absurd escalation, deadpan narration, dramatic reversal, fake commercial, fake newscast, group-chat choir, single punchline, or organic song.
 12. Propagation actions: exact repeat, mutating repeat, call-and-response, escalating list, delayed reveal, callback, one-shot, or none.
-13. Choose the best overall strategy BEFORE writing. Store the chosen strategy in draftStrategyIds.A; B is only an unused alternative idea for legacy metadata compatibility. Never write two songs. A must balance artistic imagery, humor, singability and event-native meme potential.
+13. Choose the best overall strategy BEFORE writing. Store the chosen strategy in draftStrategyIds.A; omit B, which exists only to read legacy records. Never write two songs. A must balance artistic imagery, humor, singability and event-native meme potential.
 14. Use one-shot or none whenever repetition would cheapen the story. Do not reward repetition merely for being repetition.
 15. For each strategy, explain its source trigger, why it is native to this event, and its concrete execution rule.
 16. Build one coherent lyric blueprint for the chosen strategy. Repetition is optional; memorability is mandatory.
@@ -631,7 +631,7 @@ Execution Notes:
   const selectedPackage =
     [competingPackages.A, competingPackages.B].find(
       (item) =>
-        item.strategy.id ===
+        item?.strategy.id ===
         (legacyEditorial.success
           ? legacyEditorial.data.selectedStrategyId
           : singleCheckpoint.success
@@ -781,11 +781,11 @@ Finalization contract:
       selectedPremiseId: selectedPremise.id,
       draftHookIds: {
         A: competingPackages.A.hook.id,
-        B: competingPackages.B.hook.id,
+        ...(competingPackages.B ? { B: competingPackages.B.hook.id } : {}),
       },
       draftStrategyIds: {
         A: competingPackages.A.strategy.id,
-        B: competingPackages.B.strategy.id,
+        ...(competingPackages.B ? { B: competingPackages.B.strategy.id } : {}),
       },
       selectedHookId: finalSelectedHook.id,
       selectedMemeStrategyId: selectedMemeStrategy.id,
