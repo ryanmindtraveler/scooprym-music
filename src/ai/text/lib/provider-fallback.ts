@@ -109,6 +109,7 @@ export function shouldFallbackTextProvider(error: unknown) {
     'failed to parse',
     'did not match the schema',
     'invalid json',
+    'invalid lyric finalization',
     'response_format',
     'model not found',
     'invalid model',

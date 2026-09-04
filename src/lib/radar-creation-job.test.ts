@@ -37,6 +37,7 @@ vi.mock('@/lib/song-creation-workflow', () => ({
   completeWorkflowStage: mocks.stageComplete,
 }));
 import { dispatchRadarCreation, enqueueRadarCreation, processRadarCreation } from './radar-creation-job';
+const savedLyrics = '[Verse 1]\nOne line\nTwo lines\nThree lines\nFour lines\n[Hook]\nFive lines\nSix lines\nSeven lines\nEight lines';
 
 describe('热点后台创作队列', () => {
   beforeEach(() => {
@@ -84,14 +85,29 @@ describe('热点后台创作队列', () => {
     return { set };
   }
   it('已有歌词只提交原songId，不重新写词', async () => {
-    const { set } = workerSetup({ title: 'Title', lyrics: 'Saved lyrics', summary: 'Summary' });
+    const { set } = workerSetup({ title: 'Title', lyrics: savedLyrics, summary: 'Summary' });
     await processRadarCreation('candidate');
     expect(mocks.lyrics).not.toHaveBeenCalled();
-    expect(mocks.submit).toHaveBeenCalledWith(expect.objectContaining({ songId: 'song', lyrics: 'Saved lyrics' }), {
+    expect(mocks.submit).toHaveBeenCalledWith(expect.objectContaining({ songId: 'song', lyrics: savedLyrics }), {
       id: 'admin',
       role: 'admin',
     });
     expect(set).toHaveBeenCalledWith(expect.objectContaining({ status: 'handed_off' }));
+  });
+  it('坏的缓存和运行歌词不能绕过写作恢复', async () => {
+    workerSetup({ title: 'Bad', lyrics: '[Hook]\ncraftIssues: []', summary: 'Summary' });
+    mocks.workflow.mockResolvedValue({ title: 'Bad', summary: 'Summary', lyrics: '[Hook]\ncraftIssues: []',
+      steps: [{ stage: 'planning_lyrics', status: 'completed', outputMetadata: { plan: true } }] });
+    mocks.lyrics.mockResolvedValue({ title: 'Recovered', summary: 'Summary', lyrics: savedLyrics });
+    await processRadarCreation('candidate');
+    expect(mocks.lyrics).toHaveBeenCalledOnce();
+    expect(mocks.submit).toHaveBeenCalledWith(expect.objectContaining({ lyrics: savedLyrics, songId: 'song' }), expect.anything());
+  });
+
+  it('保留音乐入口 422 的具体错误', async () => {
+    workerSetup({ title: 'Title', lyrics: savedLyrics, summary: 'Summary' });
+    mocks.submit.mockResolvedValue(new Response(JSON.stringify({ error: 'Lyrics need at least 8 sung lines; found 4.' }), { status: 422 }));
+    await expect(processRadarCreation('candidate')).rejects.toThrow('Music submission failed (422): Lyrics need at least 8 sung lines; found 4.');
   });
   it('保存检查点后投递下一步，不把正常暂停标成失败', async () => {
     const { set } = workerSetup();

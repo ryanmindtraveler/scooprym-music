@@ -14,6 +14,7 @@ import {
   completeWorkflowStage,
 } from '@/lib/song-creation-workflow';
 import { submitMusicGeneration } from '@/lib/submit-music-generation';
+import { inspectSongLyrics } from '@/lib/song-product-check';
 import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { z } from 'zod';
 import { and, eq, isNull, lt, ne, or } from 'drizzle-orm';
@@ -61,7 +62,8 @@ export async function processRadarCreation(candidateId: string) {
   try {
     const [owner] = await db.select({ role: user.role }).from(user).where(eq(user.id, job.userId)).limit(1);
     if (owner?.role !== 'admin') throw new Error('Job owner no longer has administrator access');
-    let result = job.lyricResult;
+    // 旧任务可能缓存了已经损坏的歌词，不能跳过审校反复提交同一坏稿。
+    let result = job.lyricResult && inspectSongLyrics(job.lyricResult.lyrics).passed ? job.lyricResult : null;
     const existing = await getWorkflowRun(job.runId, job.userId);
     const savedProduction = autoProductionSchema.safeParse(
       [...(existing?.steps ?? [])]
@@ -69,7 +71,7 @@ export async function processRadarCreation(candidateId: string) {
         .find((step) => step.stage === 'source_ready' && step.status === 'completed')?.outputMetadata
     );
     let production = savedProduction.success ? savedProduction.data : undefined;
-    if (!result && existing?.lyrics && existing.title && existing.summary) {
+    if (!result && existing?.lyrics && inspectSongLyrics(existing.lyrics).passed && existing.title && existing.summary) {
       result = {
         title: existing.title,
         summary: existing.summary,
@@ -174,7 +176,11 @@ export async function processRadarCreation(candidateId: string) {
       },
       { id: job.userId, role: 'admin' }
     );
-    if (!response.ok) throw new Error(`Music submission failed (${response.status})`);
+    if (!response.ok) {
+      const details = await response.json().catch(() => null);
+      const reason = typeof details?.error === 'string' ? details.error.slice(0, 1000) : 'No error details returned';
+      throw new Error(`Music submission failed (${response.status}): ${reason}`);
+    }
     await db
       .update(radarCreationJob)
       .set({ status: 'handed_off', error: null, leaseId: null, leaseUntil: null, updatedAt: new Date() })

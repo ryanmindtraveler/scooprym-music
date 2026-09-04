@@ -15,6 +15,19 @@ const validSong = {
 };
 
 describe('inspectSongProduct', () => {
+  it('拒绝无限气场事故中的空段落与审校字段碎片', () => {
+    const result = inspectSongLyrics("[Intro]\n[Verse 1]\n[Hook]\nselections recorded for the final cut.', craft\nIssues: [], risks: [] }\n[Outro]");
+    expect(result.passed).toBe(false);
+    expect(result.issues).toContain('Lyrics contain structured response metadata instead of sung text.');
+  });
+
+  it('即使有足够歌词行数也不能夹带程序字段', () => {
+    expect(inspectSongLyrics(`${validSong.lyrics}\ncraftIssues: []`).passed).toBe(false);
+  });
+
+  it('正常歌词中的 risks 单词和呼应不误拦截', () => {
+    expect(inspectSongLyrics(`${validSong.lyrics}\nWe take risks (so high!)`).passed).toBe(true);
+  });
   it('通过完整的待发布成品', () => {
     expect(inspectSongProduct(validSong)).toMatchObject({ passed: true, issues: [] });
   });

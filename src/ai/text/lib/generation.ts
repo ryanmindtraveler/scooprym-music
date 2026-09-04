@@ -1,4 +1,5 @@
 import { MEME_CREATIVE_STANDARD } from '@/lib/music/meme-creative-standard';
+import { inspectSongLyrics } from '@/lib/song-product-check';
 /**
  * @file generation.ts
  * @description 统一的文本 AI 生成库，支持 OpenAI, Gemini, DeepSeek 和 OpenRouter。
@@ -616,10 +617,14 @@ Execution Notes:
 - Before writing, privately choose the hook, cadence family, dramatic point of view, and section-by-section energy arc.`;
 
   // 沿用旧检查点读取能力；新运行只写一份完整歌词。
-  const legacyEditorial = lyricEditorialReviewSchema.safeParse(resumeCheckpoints?.editing_lyrics);
+  // 旧检查点可能已经保存坏定稿；忽略坏稿，沿用策划和初稿重新审校。
+  const savedEditorial = resumeCheckpoints?.editing_lyrics as { lyrics?: string } | undefined;
+  const usableEditorial = typeof savedEditorial?.lyrics === 'string' && inspectSongLyrics(savedEditorial.lyrics).passed
+    ? savedEditorial : undefined;
+  const legacyEditorial = lyricEditorialReviewSchema.safeParse(usableEditorial);
   const resumedEditorial = lyricEditorialReviewSchema
     .extend({ finalizationVersion: z.literal(1), repairAttempts: z.number().optional() })
-    .safeParse(resumeCheckpoints?.editing_lyrics);
+    .safeParse(usableEditorial);
   const singleCheckpoint = z
     .object({
       draft: lyricsDraftSchema.extend({ songTitle: lyricEditorialSchema.shape.songTitle }),
@@ -684,8 +689,8 @@ ${lyricsWritingPrompt || ''}`,
         await runWithTextProviderFallback({
           provider,
           scope: 'lyrics-finalize',
-          execute: async (activeProvider, activeModel, abortSignal) =>
-            generateObject({
+          execute: async (activeProvider, activeModel, abortSignal) => {
+            const response = await generateObject({
               abortSignal,
               model: getModel(activeProvider, activeModel),
               schema: lyricEditorialReviewSchema,
@@ -728,10 +733,18 @@ Finalization contract:
 - Return the entire final lyrics and concise editorialNotes in this same response. No additional review or repair call will follow.`,
               ...getStructuredOutputSettingsWithReasoning(activeProvider, 0.35, 'medium'),
               maxOutputTokens: 6000,
-            }),
+            });
+            const integrity = inspectSongLyrics(response.object.lyrics);
+            if (!integrity.passed) {
+              throw new Error(`Invalid lyric finalization: ${integrity.issues.join(' ')}`);
+            }
+            return response;
+          },
         })
       ).object;
   const finalLyrics = normalizeGeneratedLyrics(finalDraft.lyrics);
+  const finalIntegrity = inspectSongLyrics(finalLyrics);
+  if (!finalIntegrity.passed) throw new Error(`Invalid lyric finalization: ${finalIntegrity.issues.join(' ')}`);
   const finalSongTitle = finalDraft.songTitle;
   const remainingIssues = inspectLyricsQuality(finalLyrics, {
     lockedHook: finalLockedHook,

@@ -1,7 +1,8 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-04 21:53_
+_Last updated: 2026-09-04 22:39_
 
 ## Pinned
+- 2026-09-04 22:39：用户明确要求歌曲下载取消付费会员限制，账号登录即可下载；未登录用户仍需先登录。
 - 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
 - 2026-09-04 11:56：本轮用户授权仅提交并推送开发快照至 `origin/dev`，不合并 `main`；该快照不作为稳定发布。
 - 2026-09-02 23:44：歌词质量与事实审计警告只能作为 Writers’ Room 的可选编辑建议，不得阻断正常生产；安全判定不是 `allow` 时必须由服务端直接以 HTTP 422 中止，管理员不得通过人工批准绕过安全边界。
@@ -205,6 +206,9 @@ _Last updated: 2026-09-04 21:53_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-04 22:39：共享 `useActionPermission` 移除 `useCurrentPlan` 和 `isPaidUser` 依赖，下载权限改为仅检查登录状态，未登录提示登录；新增 3 项 Hook 测试全部通过，`tsc --noEmit` 退出 0。（evidence: 主流程共享权限 Hook 修改及测试、类型检查结果）
+- 2026-09-04 22:25：修复审校坏稿覆盖好初稿并最终触发音乐入口 422 的恢复链路：新审校输出在保存检查点前使用 `inspectSongLyrics` 校验，不合格时抛出 `Invalid lyric finalization` 并进入现有供应商回退；旧坏 `editing` 检查点不再复用，保留初稿与规划用于恢复；Radar 不复用不合格的 `lyricResult` 或工作流歌词，音乐提交失败读取响应中的具体 `error`。未降低音乐提交的歌词完整性门槛。（evidence: 主流程本轮 `generation.ts`、Radar 创作任务及音乐提交错误处理修复结果）
+- 2026-09-04 22:25：本轮 422 修复相关 36 项测试全部通过，最终 `tsc --noEmit` 退出 0，`git diff --check` 通过；尚未提交、推送或执行真实付费重试，不能据此认定线上旧任务已恢复。（evidence: 主流程最终测试、类型与差异检查结果）
 - 2026-09-04 21:53：修复单稿写作仍强制要求两套有效策略包的残留门禁：一套有效策略与对应 Hook 即可继续，B 改为可选并兼容旧检查点；planning schema 策略数组最少 1 项、B 可选。仍在没有任何有效策略时明确报错，后续审校保留。（evidence: `src/ai/text/lib/lyrics-strategy-packages.ts`、`generation.ts` 的策略解析与 planning schema，主流程修复结果）
 - 2026-09-04 21:53：[#24] 单策略 helper 的 6 项回归测试通过；`single-draft-pipeline`、`lyrics-meme-strategy`、`lyrics-strategy-packages` 合计 13 项测试全部通过，最终 `tsc --noEmit` 退出 0，`git diff --check` 通过。未进行线上付费重试，不能据此宣称线上已修复。（evidence: 三组测试文件、主流程测试及类型与差异检查结果）
 - 2026-09-04 20:47：修复热点雷达入队超时：用户运行于 localhost，原 `canUseQStash` 拒绝 loopback，数据库 `radar_creation_job` 无记录；generate 路由静态导入完整歌词/音乐模块且前端 15 秒中断。新增 `radar-creation-enqueue.ts` 拆分轻量入队，失败落库为 `failed`；UI 超时调整为 45 秒，超时后先查询明确结果，查询自身上限 10 秒。（evidence: `radar-creation-enqueue.ts`、generate 路由及入队 UI）
@@ -520,6 +524,8 @@ _Last updated: 2026-09-04 21:53_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-04 22:39：当前下载没有独立服务端下载接口，前端直接 fetch 已有音频 URL；本轮调整的是共享前端操作权限，不代表对公开音频 URL 增加服务端访问控制。本次下载调整及前轮 422 修复均尚未提交、推送；本记录仅更新 `progress.md`，保留其他改动。
+- 2026-09-04 22:25：本轮将歌词内容损坏与艺术质量建议区分处理：空段落、演唱行不足等确定性完整性问题不得覆盖有效初稿或进入音乐提交，普通创作建议仍不增加人工审批门槛。历史关于质量建议不阻断的 Pinned 原文保留；本次记录仅更新 `progress.md`，未修改其他文件，也未执行归档。
 - 2026-09-04 21:53：此次修复落实 2026-09-04 的单稿决策，补齐此前 B 仅作备选却仍被旧 helper 强制检查的遗漏；2026-09-02 10:54 的双策略 Pinned 作为历史审计原文保留，现行单稿流程不再以缺少第二套策略阻断。未推送、未自动重试线上付费任务；本次记录仅修改 `progress.md`。
 - 2026-09-04 20:47：本地签名队列路径解决此前 localhost 无法由云端回调的开发阻塞，仅限本地 development，不放宽生产回调边界。本轮无付费生成，不能称整首歌曲端到端通过；第二轮 TypeScript 尚在收尾，未 push。
 - 2026-09-04 20:47：记录时本地开发服务 session 19591、队列 session 26912 运行；这些 session 为当前运行信息，不保证后续仍存活。本次仅更新 `progress.md`，不改动其他文件或运行服务。

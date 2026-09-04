@@ -4,6 +4,11 @@ import { describe, expect, it } from 'vitest';
 // 防止后续重构意外重新启用双稿与无条件整合；不替代真实模型质量验证。
 const source = readFileSync('src/ai/text/lib/generation.ts', 'utf8');
 describe('单稿管线结构约束', () => {
+  it('坏审校稿在检查点保存前拦截，旧坏定稿不用于恢复', () => {
+    expect(source).toContain('safeParse(usableEditorial)');
+    expect(source).toContain('inspectSongLyrics(response.object.lyrics)');
+    expect(source.indexOf('if (!finalIntegrity.passed)')).toBeLessThan(source.indexOf("await onCheckpoint?.('editing_lyrics'", source.indexOf('if (!finalIntegrity.passed)')));
+  });
   it('只保留单稿写作和一次审校定稿入口', () => {
     expect(source).toContain("scope: 'lyrics-single-draft'");
     expect(source).toContain("scope: 'lyrics-finalize'");
