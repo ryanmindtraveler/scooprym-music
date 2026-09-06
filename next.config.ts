@@ -40,11 +40,9 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    // https://vercel.com/docs/image-optimization/managing-image-optimization-costs#minimizing-image-optimization-costs
-    // https://nextjs.org/docs/app/api-reference/components/image#unoptimized
-    // vercel has limits on image optimization, 1000 images per month
-    unoptimized: process.env.NODE_ENV === 'development', // Only unoptimize in development
-    minimumCacheTTL: 3600,
+    formats: ['image/avif', 'image/webp'],
+    unoptimized: false,
+    minimumCacheTTL: 86400,
     remotePatterns: [
       {
         protocol: 'https',

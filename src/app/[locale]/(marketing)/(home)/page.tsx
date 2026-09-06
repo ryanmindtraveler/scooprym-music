@@ -124,44 +124,31 @@ export default async function HomePage(props: HomePageProps) {
 
   const now = new Date();
   const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const weeklyPlayRows =
+  const songIds = adminSongs.map((song) => song.id);
+  const [weeklyPlayRows, reactionRows] =
     adminSongs.length > 0
-      ? await db
-          .select({
-            songId: songPlay.songId,
-            count: count(),
-          })
-          .from(songPlay)
-          .where(
-            and(
-              inArray(
-                songPlay.songId,
-                adminSongs.map((song) => song.id)
-              ),
-              gte(songPlay.createdAt, weekStart)
-            )
-          )
-          .groupBy(songPlay.songId)
-      : [];
-  const weeklyPlaysBySong = new Map(weeklyPlayRows.map((row) => [row.songId, Number(row.count) || 0]));
+      ? await Promise.all([
+          db
+            .select({
+              songId: songPlay.songId,
+              count: count(),
+            })
+            .from(songPlay)
+            .where(and(inArray(songPlay.songId, songIds), gte(songPlay.createdAt, weekStart)))
+            .groupBy(songPlay.songId),
+          db
+            .select({
+              songId: songReaction.songId,
+              reactionType: songReaction.reactionType,
+              count: count(),
+            })
+            .from(songReaction)
+            .where(inArray(songReaction.songId, songIds))
+            .groupBy(songReaction.songId, songReaction.reactionType),
+        ])
+      : [[], []];
 
-  const reactionRows =
-    adminSongs.length > 0
-      ? await db
-          .select({
-            songId: songReaction.songId,
-            reactionType: songReaction.reactionType,
-            count: count(),
-          })
-          .from(songReaction)
-          .where(
-            inArray(
-              songReaction.songId,
-              adminSongs.map((song) => song.id)
-            )
-          )
-          .groupBy(songReaction.songId, songReaction.reactionType)
-      : [];
+  const weeklyPlaysBySong = new Map(weeklyPlayRows.map((row) => [row.songId, Number(row.count) || 0]));
 
   const topReactionBySong = new Map<string, { type: SongReactionType; count: number }>();
   for (const row of reactionRows) {
