@@ -40,11 +40,22 @@ async function main() {
         windowsHide: true,
         stdio: 'ignore',
       });
-      queue.on('error', (error) => { console.error('本地队列启动失败：', error.message); stop(1); });
-      queue.on('exit', () => { if (!stopping) { console.error('本地队列已退出，停止开发服务器。'); stop(1); } });
+      queue.on('error', (error) => {
+        console.error('本地队列启动失败：', error.message);
+        stop(1);
+      });
+      queue.on('exit', () => {
+        if (!stopping) {
+          console.error('本地队列已退出，停止开发服务器。');
+          stop(1);
+        }
+      });
       let ready = false;
       for (let attempt = 0; attempt < 20 && !stopping; attempt++) {
-        if (await queueReady(url)) { ready = true; break; }
+        if (await queueReady(url)) {
+          ready = true;
+          break;
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
       if (!ready) throw new Error('本地队列未就绪，请检查端口和本地测试凭据。');
@@ -53,9 +64,17 @@ async function main() {
   }
   if (stopping) return;
   next = spawn(process.execPath, [require.resolve('next/dist/bin/next'), 'dev', ...process.argv.slice(2)], {
-    stdio: 'inherit', windowsHide: true, env: process.env,
+    stdio: 'inherit',
+    windowsHide: true,
+    env: process.env,
   });
-  next.on('error', (error) => { console.error(error.message); stop(1); });
+  next.on('error', (error) => {
+    console.error(error.message);
+    stop(1);
+  });
   next.on('exit', (code) => stop(code ?? 1));
 }
-main().catch((error) => { console.error(error.message); stop(1); });
+main().catch((error) => {
+  console.error(error.message);
+  stop(1);
+});

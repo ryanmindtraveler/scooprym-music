@@ -7,11 +7,11 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 import { ANALYZER_MODEL, ANALYZER_OPENROUTER_MODEL, OPENAI_TEXT_MODEL } from '@/ai/config/models';
+import { ALL_KNOWN_TAGS, VIBE_PERSONAS } from '@/components/create/form/create-music-data';
+import { EDITORIAL_STYLE_PROFILES } from '@/lib/music/editorial-styles';
 import type { TextProvider } from './provider-config';
 import { getStructuredOutputSettings, runWithTextProviderFallback } from './provider-fallback';
 import { assertReaderSafeHttpUrl, extractUrlContent } from './url-content-extractor';
-import { ALL_KNOWN_TAGS, VIBE_PERSONAS } from '@/components/create/form/create-music-data';
-import { EDITORIAL_STYLE_PROFILES } from '@/lib/music/editorial-styles';
 
 const sourceAnalysisSchema = z.object({
   isValid: z

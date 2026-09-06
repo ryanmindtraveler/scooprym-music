@@ -33,13 +33,16 @@ export function rankPublicStoryCandidates<T extends RankableStoryCandidate>(
 
   return [...candidates]
     .sort((left, right) => {
-      const tierDifference = freshnessTier(left.publishedAt) - freshnessTier(right.publishedAt);
-      if (tierDifference !== 0) return tierDifference;
-
+      // 1. 管理员手动精选（shortlisted）拥有最高绝对优先级，必定置顶并优先进入投票池
       const leftIsShortlisted = left.status === 'shortlisted';
       const rightIsShortlisted = right.status === 'shortlisted';
       if (leftIsShortlisted !== rightIsShortlisted) return leftIsShortlisted ? -1 : 1;
 
+      // 2. 时间新鲜度分层
+      const tierDifference = freshnessTier(left.publishedAt) - freshnessTier(right.publishedAt);
+      if (tierDifference !== 0) return tierDifference;
+
+      // 3. 相关性分数与发布时间
       if (left.relevanceScore !== right.relevanceScore) return right.relevanceScore - left.relevanceScore;
       return (right.publishedAt?.getTime() || 0) - (left.publishedAt?.getTime() || 0);
     })

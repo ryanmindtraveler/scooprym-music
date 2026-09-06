@@ -2,10 +2,24 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useLocaleRouter } from '@/i18n/navigation';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
-import { ArrowUpRight, BarChart3, Loader2, Newspaper, Sparkles, Users, Vote } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Award,
+  BarChart3,
+  ExternalLink,
+  Flame,
+  Loader2,
+  Newspaper,
+  Sparkles,
+  Trophy,
+  Users,
+  Vote,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -39,6 +53,12 @@ const categoryKeys: Record<StoryRadarCategory, 'celebrityDrama' | 'internetChaos
   absurd_headlines: 'absurdHeadlines',
 };
 
+const categoryClasses: Record<StoryRadarCategory, string> = {
+  celebrity_drama: 'border-pink-500/20 bg-pink-500/10 text-pink-700 dark:text-pink-300',
+  internet_chaos: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300',
+  absurd_headlines: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+};
+
 export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
   const t = useTranslations('Dashboard.admin.voteResults');
   const router = useLocaleRouter();
@@ -69,121 +89,208 @@ export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
   }
 
   return (
-    <section className="mx-auto w-full max-w-[1440px] px-4 pt-8 md:px-8" aria-labelledby="vote-results-heading">
-      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1.5">
-          <h1 id="vote-results-heading" className="text-2xl font-semibold tracking-tight">
-            {t('title')}
-          </h1>
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t('description')}</p>
+    <div className="space-y-4">
+      {/* 3 个核心投票指标卡 */}
+      <div className="grid gap-3.5 sm:grid-cols-3">
+        <div className="flex items-center gap-3.5 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-pink-500/10 text-pink-600 dark:text-pink-400">
+            <Users className="size-5" />
+          </span>
+          <div>
+            <p className="text-xs font-bold text-muted-foreground">{t('uniqueVoters')}</p>
+            <p className="mt-0.5 text-2xl font-black tracking-tight tabular-nums text-foreground">{summary.voters}</p>
+          </div>
         </div>
-        <Badge variant="outline" className="w-fit px-3 py-1.5 text-xs">
-          {t('liveUpdate')}
-        </Badge>
+
+        <div className="flex items-center gap-3.5 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+            <Vote className="size-5" />
+          </span>
+          <div>
+            <p className="text-xs font-bold text-muted-foreground">{t('storySelections')}</p>
+            <p className="mt-0.5 text-2xl font-black tracking-tight tabular-nums text-foreground">
+              {summary.selections}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3.5 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+            <BarChart3 className="size-5" />
+          </span>
+          <div>
+            <p className="text-xs font-bold text-muted-foreground">{t('storiesReceivingVotes')}</p>
+            <p className="mt-0.5 text-2xl font-black tracking-tight tabular-nums text-foreground">{summary.stories}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid border-x border-b sm:grid-cols-3">
-        <div className="flex items-center gap-3 border-b p-4 sm:border-b-0 sm:border-r">
-          <Users className="size-5 text-primary" />
-          <div>
-            <p className="text-2xl font-semibold tabular-nums">{summary.voters}</p>
-            <p className="text-xs text-muted-foreground">{t('uniqueVoters')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 border-b p-4 sm:border-b-0 sm:border-r">
-          <Vote className="size-5 text-primary" />
-          <div>
-            <p className="text-2xl font-semibold tabular-nums">{summary.selections}</p>
-            <p className="text-xs text-muted-foreground">{t('storySelections')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-4">
-          <BarChart3 className="size-5 text-primary" />
-          <div>
-            <p className="text-2xl font-semibold tabular-nums">{summary.stories}</p>
-            <p className="text-xs text-muted-foreground">{t('storiesReceivingVotes')}</p>
-          </div>
-        </div>
-      </div>
-
+      {/* 投票排行榜列表 */}
       {results.length === 0 ? (
-        <div className="flex min-h-44 flex-col items-center justify-center border-x border-b bg-muted/15 px-6 text-center">
-          <Vote className="mb-3 size-7 text-muted-foreground" />
-          <h2 className="font-semibold">{t('emptyTitle')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t('emptyDescription')}</p>
-        </div>
+        <Card className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
+          <Vote className="mb-3 size-8 text-muted-foreground/60" />
+          <h3 className="text-sm font-bold text-foreground">{t('emptyTitle')}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{t('emptyDescription')}</p>
+        </Card>
       ) : (
-        <div className="grid border-x border-b lg:grid-cols-2">
-          {results.map((result, index) => (
-            <article
-              key={result.id}
-              className="relative grid min-w-0 grid-cols-[2.75rem_4.5rem_minmax(0,1fr)] items-center gap-3 border-b p-3 last:border-b-0 lg:odd:border-r xl:grid-cols-[2.75rem_4.5rem_minmax(0,1fr)_auto]"
-            >
-              <span className="text-center text-lg font-semibold tabular-nums text-muted-foreground">
-                {String(index + 1).padStart(2, '0')}
+        <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-2xs divide-y divide-border/60">
+          <div className="bg-muted/30 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="flex size-6 items-center justify-center rounded-md bg-pink-500/10 text-pink-600">
+                <Flame className="size-3.5" />
               </span>
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg bg-muted">
-                {result.sourceImageUrl ? (
-                  <img src={result.sourceImageUrl} alt="" className="size-full object-cover" loading="lazy" />
-                ) : (
-                  <Newspaper className="size-5 text-muted-foreground" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5 text-[0.68rem] font-medium text-muted-foreground">
-                  <span className="text-primary">{t(`categories.${categoryKeys[result.category]}`)}</span>
-                  <span>/</span>
-                  <span>{t(`statuses.${result.status}`)}</span>
+              <span className="text-xs font-bold text-foreground">大众投票风向榜 TOP 10</span>
+            </div>
+            <Badge variant="outline" className="text-[10px] font-bold">
+              {t('liveUpdate')}
+            </Badge>
+          </div>
+
+          {results.map((result, index) => {
+            const isTop1 = index === 0;
+            const isTop2 = index === 1;
+            const isTop3 = index === 2;
+
+            return (
+              <article
+                key={result.id}
+                className="group relative flex flex-col gap-3 p-4 transition-colors hover:bg-muted/20 lg:flex-row lg:items-center lg:justify-between"
+              >
+                {/* 排名 + 封面 + 标题信息 */}
+                <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                  {/* 排名标牌 */}
+                  <div className="flex size-8 shrink-0 items-center justify-center pt-1">
+                    {isTop1 ? (
+                      <span className="flex size-7 items-center justify-center rounded-full bg-amber-500/20 text-xs font-black text-amber-600 dark:text-amber-400">
+                        1
+                      </span>
+                    ) : isTop2 ? (
+                      <span className="flex size-7 items-center justify-center rounded-full bg-slate-500/20 text-xs font-black text-slate-700 dark:text-slate-300">
+                        2
+                      </span>
+                    ) : isTop3 ? (
+                      <span className="flex size-7 items-center justify-center rounded-full bg-orange-500/20 text-xs font-black text-orange-700 dark:text-orange-400">
+                        3
+                      </span>
+                    ) : (
+                      <span className="font-mono text-xs font-bold text-muted-foreground">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 缩略图 */}
+                  <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted shadow-2xs">
+                    {result.sourceImageUrl ? (
+                      <img
+                        src={result.sourceImageUrl}
+                        alt=""
+                        className="size-full object-cover transition-transform group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center bg-muted text-muted-foreground">
+                        <Newspaper className="size-5" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 标题 & 题材 */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <Badge variant="outline" className={`font-bold ${categoryClasses[result.category]}`}>
+                        {t(`categories.${categoryKeys[result.category]}`)}
+                      </Badge>
+                      <span className="rounded bg-muted px-1.5 py-0.5 font-bold text-muted-foreground">
+                        {t(`statuses.${result.status}`)}
+                      </span>
+                      <span className="text-muted-foreground">·</span>
+                      <span className="text-muted-foreground truncate max-w-[140px]">{result.sourceDomain}</span>
+                    </div>
+
+                    <a
+                      href={result.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 line-clamp-2 text-xs font-bold text-foreground hover:text-pink-600 hover:underline dark:hover:text-pink-400"
+                    >
+                      {result.sourceTitle}
+                    </a>
+
+                    {/* 投票分布 */}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                      <span>
+                        今日得票: <strong className="font-mono text-foreground font-black">{result.todayVotes}</strong>
+                      </span>
+                      <span>·</span>
+                      <span>
+                        近3日总票:{' '}
+                        <strong className="font-mono text-foreground font-black">{result.threeDayVotes}</strong>
+                      </span>
+                      <span>·</span>
+                      <span>
+                        独立选民:{' '}
+                        <strong className="font-mono text-foreground font-black">{result.uniqueVoters}</strong>
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <a
-                  href={result.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 line-clamp-2 block text-sm font-semibold leading-5 hover:text-primary hover:underline"
-                >
-                  {result.sourceTitle}
-                </a>
-                <p className="mt-1.5 text-[0.7rem] text-muted-foreground">
-                  {t('voteBreakdown', {
-                    today: result.todayVotes,
-                    threeDays: result.threeDayVotes,
-                    voters: result.uniqueVoters,
-                  })}
-                </p>
-              </div>
-              <div className="col-span-3 flex items-center justify-end gap-2 border-t pt-2 xl:col-span-1 xl:border-t-0 xl:pt-0 xl:pl-2">
-                <div className="text-right">
-                  <p className="text-lg font-semibold tabular-nums">{result.share}%</p>
-                  <p className="text-[0.65rem] text-muted-foreground">{t('weighted')}</p>
+
+                {/* 加权占比与操作按钮 */}
+                <div className="flex items-center justify-between gap-4 border-t border-dashed border-border/60 pt-3 lg:border-t-0 lg:pt-0 shrink-0">
+                  {/* 占比条 */}
+                  <div className="w-28 text-right">
+                    <div className="flex items-baseline justify-end gap-1">
+                      <span className="font-mono text-base font-black tabular-nums text-pink-600 dark:text-pink-400">
+                        {result.share}%
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{t('weighted')}</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-pink-500 to-violet-500"
+                        style={{ width: `${Math.max(result.share, 4)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      asChild
+                      size="icon-sm"
+                      variant="ghost"
+                      className="size-8 text-muted-foreground hover:text-foreground"
+                    >
+                      <a href={result.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label="查看原文">
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => openInStudio(result.id)}
+                      disabled={pendingId === result.id}
+                      className="h-8 px-3 text-xs font-bold bg-pink-600 text-white hover:bg-pink-700 min-w-24"
+                    >
+                      {pendingId === result.id ? (
+                        <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-1.5 size-3.5" />
+                      )}
+                      {pendingId === result.id
+                        ? t('openingStudio')
+                        : result.status === 'adopted'
+                          ? t('openStudio')
+                          : t('createSong')}
+                    </Button>
+                  </div>
                 </div>
-                <a
-                  href={result.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={t('openSource', { domain: result.sourceDomain })}
-                  className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <ArrowUpRight className="size-4" />
-                </a>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => openInStudio(result.id)}
-                  disabled={pendingId === result.id}
-                  className="min-w-28"
-                >
-                  {pendingId === result.id ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                  {pendingId === result.id
-                    ? t('openingStudio')
-                    : result.status === 'adopted'
-                      ? t('openStudio')
-                      : t('createSong')}
-                </Button>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
-    </section>
+    </div>
   );
 }

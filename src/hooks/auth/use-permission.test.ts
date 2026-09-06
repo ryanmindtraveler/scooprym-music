@@ -1,6 +1,6 @@
+import { Routes } from '@/routes';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Routes } from '@/routes';
 
 const mocks = vi.hoisted(() => ({ user: vi.fn(), push: vi.fn(), error: vi.fn() }));
 vi.mock('@/hooks/auth/use-current-user', () => ({ useCurrentUser: mocks.user }));

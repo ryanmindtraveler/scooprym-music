@@ -3,8 +3,12 @@
 import { getDb } from '@/db';
 import {
   generationAttempt,
+  hotSheetEdition,
   payment,
+  radarCreationJob,
   song,
+  songCommentReport,
+  songCreationStep,
   songEngagementEvent,
   storyCandidate,
   storyCandidateVote,
@@ -12,9 +16,49 @@ import {
 } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getBusinessDayStart, getPreviousBusinessDayKeys } from '@/lib/business-time';
+import { canUseQStash } from '@/lib/queue';
 import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
 import { getVoteDay } from '@/lib/story-voting';
-import { and, count, countDistinct, desc, eq, gt, gte, inArray, isNotNull, isNull, or, sql } from 'drizzle-orm';
+import { and, count, countDistinct, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+
+type QStashLog = {
+  state?: string;
+  time?: number;
+  responseStatus?: number;
+};
+
+async function getQStashDeliverySummary() {
+  if (!canUseQStash()) {
+    return { configured: false, reachable: false, delivered: 0, retrying: 0, failed: 0, lastDeliveryAt: null };
+  }
+
+  const baseUrl = (process.env.QSTASH_URL || 'https://qstash.upstash.io').replace(/\/$/, '');
+  const fromDate = Date.now() - 24 * 60 * 60 * 1000;
+  try {
+    const response = await fetch(`${baseUrl}/v2/logs?count=100&fromDate=${fromDate}`, {
+      headers: { Authorization: `Bearer ${process.env.QSTASH_TOKEN}` },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!response.ok) throw new Error(`QStash logs returned ${response.status}`);
+    const payload = (await response.json()) as { logs?: QStashLog[] };
+    const logs = payload.logs || [];
+    const deliveredLogs = logs.filter((log) => log.state === 'DELIVERED');
+    return {
+      configured: true,
+      reachable: true,
+      delivered: deliveredLogs.length,
+      retrying: logs.filter((log) => ['ACTIVE', 'RETRY', 'ERROR', 'IN_PROGRESS'].includes(log.state || '')).length,
+      failed: logs.filter((log) => log.state === 'FAILED').length,
+      lastDeliveryAt: deliveredLogs.length
+        ? new Date(Math.max(...deliveredLogs.map((log) => Number(log.time || 0)))).toISOString()
+        : null,
+    };
+  } catch (error) {
+    console.warn('[admin-dashboard] Unable to read QStash delivery logs.', error);
+    return { configured: true, reachable: false, delivered: 0, retrying: 0, failed: 0, lastDeliveryAt: null };
+  }
+}
 
 /**
  * Fetch Key Performance Indicators (KPIs)
@@ -350,5 +394,104 @@ export async function getEditorialOperations() {
       scheduled: Number(scheduledRows[0]?.count || 0),
       publishedToday: Number(publishedTodayRows[0]?.count || 0),
     },
+  };
+}
+
+/**
+ * 运营总览基础设施数据。
+ * 模型状态来自最近真实工作流，不通过额外生成内容制造费用；QStash 读取最近投递日志并与本地任务状态对照。
+ */
+export async function getInfrastructureOverview() {
+  const db = getDb();
+  const now = new Date();
+  const since = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const staleBefore = new Date(now.getTime() - 10 * 60 * 1000);
+
+  const [modelRows, musicQueueRows, radarQueueRows, staleMusicRows, staleRadarRows, reportRows, archiveRows, qstash] =
+    await Promise.all([
+      db
+        .select({
+          provider: songCreationStep.provider,
+          model: songCreationStep.model,
+          total: count(),
+          completed: sql<number>`count(*) filter (where ${songCreationStep.status} = 'completed')`,
+          failed: sql<number>`count(*) filter (where ${songCreationStep.status} = 'failed')`,
+          averageDurationMs: sql<number>`coalesce(avg(extract(epoch from (${songCreationStep.completedAt} - ${songCreationStep.startedAt})) * 1000) filter (where ${songCreationStep.completedAt} is not null), 0)`,
+          lastSeenAt: sql<Date>`max(${songCreationStep.startedAt})`,
+        })
+        .from(songCreationStep)
+        .where(and(gte(songCreationStep.startedAt, since), isNotNull(songCreationStep.provider)))
+        .groupBy(songCreationStep.provider, songCreationStep.model),
+      db
+        .select({ status: generationAttempt.processingStatus, total: count() })
+        .from(generationAttempt)
+        .where(inArray(generationAttempt.processingStatus, ['queued', 'processing', 'processing_queue_failed']))
+        .groupBy(generationAttempt.processingStatus),
+      db
+        .select({ status: radarCreationJob.status, total: count() })
+        .from(radarCreationJob)
+        .where(inArray(radarCreationJob.status, ['queued', 'running', 'failed']))
+        .groupBy(radarCreationJob.status),
+      db
+        .select({ total: count() })
+        .from(generationAttempt)
+        .where(
+          and(
+            inArray(generationAttempt.processingStatus, ['queued', 'processing']),
+            lt(generationAttempt.updatedAt, staleBefore)
+          )
+        ),
+      db
+        .select({ total: count() })
+        .from(radarCreationJob)
+        .where(
+          and(inArray(radarCreationJob.status, ['queued', 'running']), lt(radarCreationJob.updatedAt, staleBefore))
+        ),
+      db.select({ total: count() }).from(songCommentReport).where(eq(songCommentReport.status, 'pending')),
+      db
+        .select({ day: hotSheetEdition.day, status: hotSheetEdition.status, completedAt: hotSheetEdition.completedAt })
+        .from(hotSheetEdition)
+        .orderBy(desc(hotSheetEdition.day))
+        .limit(1),
+      getQStashDeliverySummary(),
+    ]);
+
+  const queueCount = (rows: Array<{ status: string | null; total: number }>, status: string) =>
+    Number(rows.find((row) => row.status === status)?.total || 0);
+
+  return {
+    models: modelRows.map((row) => ({
+      provider: row.provider || 'unknown',
+      model: row.model || '未记录模型',
+      total: Number(row.total || 0),
+      completed: Number(row.completed || 0),
+      failed: Number(row.failed || 0),
+      averageDurationMs: Math.round(Number(row.averageDurationMs || 0)),
+      lastSeenAt: row.lastSeenAt ? new Date(row.lastSeenAt).toISOString() : null,
+    })),
+    qstash,
+    queues: {
+      music: {
+        queued: queueCount(musicQueueRows, 'queued'),
+        processing: queueCount(musicQueueRows, 'processing'),
+        failed: queueCount(musicQueueRows, 'processing_queue_failed'),
+        stale: Number(staleMusicRows[0]?.total || 0),
+      },
+      radar: {
+        queued: queueCount(radarQueueRows, 'queued'),
+        processing: queueCount(radarQueueRows, 'running'),
+        failed: queueCount(radarQueueRows, 'failed'),
+        stale: Number(staleRadarRows[0]?.total || 0),
+      },
+    },
+    pendingReports: Number(reportRows[0]?.total || 0),
+    hotSheet: archiveRows[0]
+      ? {
+          day: archiveRows[0].day,
+          status: archiveRows[0].status,
+          completedAt: archiveRows[0].completedAt?.toISOString() || null,
+        }
+      : null,
+    costTrackingAvailable: false,
   };
 }

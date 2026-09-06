@@ -179,7 +179,13 @@ const lyricWorkshopPlanSchema = z.object({
     .max(5),
   draftStrategyIds: z.object({
     A: z.string().trim().min(1).max(24).describe('The strongest image-led event-native strategy package ID.'),
-    B: z.string().trim().min(1).max(24).optional().describe('Optional legacy alternative; not required for single-draft writing.'),
+    B: z
+      .string()
+      .trim()
+      .min(1)
+      .max(24)
+      .optional()
+      .describe('Optional legacy alternative; not required for single-draft writing.'),
   }),
   blueprint: z.object({
     structure: z.string().trim().min(4).max(300),
@@ -619,8 +625,10 @@ Execution Notes:
   // 沿用旧检查点读取能力；新运行只写一份完整歌词。
   // 旧检查点可能已经保存坏定稿；忽略坏稿，沿用策划和初稿重新审校。
   const savedEditorial = resumeCheckpoints?.editing_lyrics as { lyrics?: string } | undefined;
-  const usableEditorial = typeof savedEditorial?.lyrics === 'string' && inspectSongLyrics(savedEditorial.lyrics).passed
-    ? savedEditorial : undefined;
+  const usableEditorial =
+    typeof savedEditorial?.lyrics === 'string' && inspectSongLyrics(savedEditorial.lyrics).passed
+      ? savedEditorial
+      : undefined;
   const legacyEditorial = lyricEditorialReviewSchema.safeParse(usableEditorial);
   const resumedEditorial = lyricEditorialReviewSchema
     .extend({ finalizationVersion: z.literal(1), repairAttempts: z.number().optional() })

@@ -53,19 +53,19 @@ describe('resolveCompetingStrategyPackages', () => {
   });
 
   it('旧检查点的第二套策略引用不存在的 Hook 不阻断单稿', () => {
-    const result = resolveCompetingStrategyPackages(
-      [strategies[0], { ...strategies[1], hookId: 'missing' }], hooks,
-      { A: 'dialogue', B: 'reveal' }
-    );
+    const result = resolveCompetingStrategyPackages([strategies[0], { ...strategies[1], hookId: 'missing' }], hooks, {
+      A: 'dialogue',
+      B: 'reveal',
+    });
     expect(result.A.strategy.id).toBe('dialogue');
     expect(result.B).toBeUndefined();
   });
 
   it('首选无效时使用唯一有效的备选', () => {
-    const result = resolveCompetingStrategyPackages(
-      [{ ...strategies[0], hookId: 'missing' }, strategies[1]], hooks,
-      { A: 'dialogue', B: 'reveal' }
-    );
+    const result = resolveCompetingStrategyPackages([{ ...strategies[0], hookId: 'missing' }, strategies[1]], hooks, {
+      A: 'dialogue',
+      B: 'reveal',
+    });
     expect(result.A.strategy.id).toBe('reveal');
   });
 

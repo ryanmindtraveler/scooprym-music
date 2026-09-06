@@ -53,7 +53,11 @@ export function inspectSongLyrics(value: string | null | undefined): SongLyricsC
     issues.push(`Lyrics need at least 8 sung lines; found ${sungLines.length}.`);
   }
   // 结构化响应字段不是歌词；即使长度合格，也不能送入付费音乐模型。
-  if (/\b(?:craft\s*Issues|fact\s*Audit|editorial\s*Notes|selected\s*Draft|prosody\s*Plan|risks)\s*["']?\s*:\s*(?:\[|\{|["'])/i.test(lyrics)) {
+  if (
+    /\b(?:craft\s*Issues|fact\s*Audit|editorial\s*Notes|selected\s*Draft|prosody\s*Plan|risks)\s*["']?\s*:\s*(?:\[|\{|["'])/i.test(
+      lyrics
+    )
+  ) {
     issues.push('Lyrics contain structured response metadata instead of sung text.');
   }
   if (/(?:<br\s*\/?>|&lt;br\s*\/?&gt;)/i.test(lyrics)) {

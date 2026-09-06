@@ -1,23 +1,23 @@
 import { randomUUID } from 'node:crypto';
-import { generateLyrics, type LyricsCheckpointStage } from '@/ai/text/lib/generation';
+import { type LyricsCheckpointStage, generateLyrics } from '@/ai/text/lib/generation';
 import { prepareSourceMaterial, recommendSourceStyle } from '@/ai/text/lib/source-analysis';
 import { getDb } from '@/db';
 import { radarCreationJob, songCreationRun, user } from '@/db/schema';
-import { dispatchRadarCreation } from './radar-creation-enqueue';
+import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import {
-  startLyricsWorkflow,
+  completeLyricsWorkflow,
+  completeWorkflowStage,
+  failWorkflowStep,
   getWorkflowRun,
   recordLyricsCheckpoint,
-  completeLyricsWorkflow,
-  failWorkflowStep,
+  startLyricsWorkflow,
   startWorkflowStage,
-  completeWorkflowStage,
 } from '@/lib/song-creation-workflow';
-import { submitMusicGeneration } from '@/lib/submit-music-generation';
 import { inspectSongLyrics } from '@/lib/song-product-check';
-import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
-import { z } from 'zod';
+import { submitMusicGeneration } from '@/lib/submit-music-generation';
 import { and, eq, isNull, lt, ne, or } from 'drizzle-orm';
+import { z } from 'zod';
+import { dispatchRadarCreation } from './radar-creation-enqueue';
 
 class CheckpointSaved extends Error {}
 
@@ -71,7 +71,13 @@ export async function processRadarCreation(candidateId: string) {
         .find((step) => step.stage === 'source_ready' && step.status === 'completed')?.outputMetadata
     );
     let production = savedProduction.success ? savedProduction.data : undefined;
-    if (!result && existing?.lyrics && inspectSongLyrics(existing.lyrics).passed && existing.title && existing.summary) {
+    if (
+      !result &&
+      existing?.lyrics &&
+      inspectSongLyrics(existing.lyrics).passed &&
+      existing.title &&
+      existing.summary
+    ) {
       result = {
         title: existing.title,
         summary: existing.summary,

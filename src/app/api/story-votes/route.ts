@@ -11,7 +11,7 @@ import {
   getVoteDay,
   rankPublicStoryCandidates,
 } from '@/lib/story-voting';
-import { and, desc, eq, inArray, isNull, lte, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -44,7 +44,11 @@ async function loadTrendingCandidates(db: Awaited<ReturnType<typeof getDb>>) {
         or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now))
       )
     )
-    .orderBy(desc(storyCandidate.relevanceScore), desc(storyCandidate.publishedAt))
+    .orderBy(
+      sql`case ${storyCandidate.status} when 'shortlisted' then 0 else 1 end`,
+      desc(storyCandidate.relevanceScore),
+      desc(storyCandidate.publishedAt)
+    )
     .limit(300);
 
   const rows = rankPublicStoryCandidates(eligibleRows, now, PUBLIC_STORY_CANDIDATE_LIMIT);

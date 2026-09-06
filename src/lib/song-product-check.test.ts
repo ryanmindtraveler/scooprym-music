@@ -16,7 +16,9 @@ const validSong = {
 
 describe('inspectSongProduct', () => {
   it('拒绝无限气场事故中的空段落与审校字段碎片', () => {
-    const result = inspectSongLyrics("[Intro]\n[Verse 1]\n[Hook]\nselections recorded for the final cut.', craft\nIssues: [], risks: [] }\n[Outro]");
+    const result = inspectSongLyrics(
+      "[Intro]\n[Verse 1]\n[Hook]\nselections recorded for the final cut.', craft\nIssues: [], risks: [] }\n[Outro]"
+    );
     expect(result.passed).toBe(false);
     expect(result.issues).toContain('Lyrics contain structured response metadata instead of sung text.');
   });

@@ -1,3 +1,4 @@
+import { ADAPTIVE_ARRANGEMENT_RULE, LEGACY_PRODUCTION } from './legacy-production';
 /**
  * ScoopRYM 编辑风格层。
  *
@@ -5,7 +6,6 @@
  * “用什么新闻镜头写、笑点落在哪里、Hook 应该如何记住”。
  */
 import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
-import { ADAPTIVE_ARRANGEMENT_RULE, LEGACY_PRODUCTION } from './legacy-production';
 
 export interface EditorialStyleProfile {
   id: string;

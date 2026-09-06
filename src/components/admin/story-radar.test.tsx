@@ -1,7 +1,7 @@
+import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StoryRadar, type StoryRadarCandidateView } from './story-radar';
-import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 
 vi.mock('next-intl', () => ({ useLocale: () => 'en', useTranslations: () => (key: string) => key }));
 vi.mock('@/i18n/navigation', () => ({

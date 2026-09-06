@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatElapsed, getConfirmedProgress, type WorkflowProgress } from './generation-progress';
+import { type WorkflowProgress, formatElapsed, getConfirmedProgress } from './generation-progress';
 
 const run: WorkflowProgress = {
   id: 'test',

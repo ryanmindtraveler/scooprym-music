@@ -1,7 +1,7 @@
+import type { Song } from '@/types/song';
 import { describe, expect, it } from 'vitest';
 import { getNewsCardSummary, getNewsDescription, getNewsTitle } from './song-editorial';
 import { getSongStoryContext } from './song-seo';
-import type { Song } from '@/types/song';
 
 describe('新闻卡片短摘要', () => {
   it('保留既有短摘要全文', () => {

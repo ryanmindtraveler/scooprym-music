@@ -62,36 +62,42 @@ export async function refreshEditorialRadar(now = new Date()) {
   }
 
   const cutoff = new Date(now.getTime() - FRESH_WINDOW_MS);
-  const topCandidates = await db
+  const existingShortlisted = await db
     .select({ id: storyCandidate.id })
     .from(storyCandidate)
-    .where(
-      and(
-        inArray(storyCandidate.status, ['new', 'shortlisted']),
-        gte(storyCandidate.publishedAt, cutoff),
-        lte(storyCandidate.publishedAt, now)
+    .where(eq(storyCandidate.status, 'shortlisted'));
+
+  let shortlistedCount = existingShortlisted.length;
+
+  // 仅在当前精选数量不足且为系统初次抓取时，基于算法补充精选；绝不自动清空或降级管理员已手动精选的内容。
+  if (shortlistedCount === 0) {
+    const topCandidates = await db
+      .select({ id: storyCandidate.id })
+      .from(storyCandidate)
+      .where(
+        and(
+          eq(storyCandidate.status, 'new'),
+          gte(storyCandidate.publishedAt, cutoff),
+          lte(storyCandidate.publishedAt, now)
+        )
       )
-    )
-    .orderBy(desc(storyCandidate.relevanceScore), desc(storyCandidate.publishedAt))
-    .limit(PUBLIC_STORY_CANDIDATE_LIMIT);
+      .orderBy(desc(storyCandidate.relevanceScore), desc(storyCandidate.publishedAt))
+      .limit(PUBLIC_STORY_CANDIDATE_LIMIT);
 
-  await db
-    .update(storyCandidate)
-    .set({ status: 'new', updatedAt: now })
-    .where(and(eq(storyCandidate.status, 'shortlisted'), gte(storyCandidate.publishedAt, cutoff)));
-
-  const shortlistedIds = topCandidates.map((candidate) => candidate.id);
-  if (shortlistedIds.length > 0) {
-    await db
-      .update(storyCandidate)
-      .set({ status: 'shortlisted', updatedAt: now })
-      .where(inArray(storyCandidate.id, shortlistedIds));
+    const shortlistedIds = topCandidates.map((candidate) => candidate.id);
+    if (shortlistedIds.length > 0) {
+      await db
+        .update(storyCandidate)
+        .set({ status: 'shortlisted', updatedAt: now })
+        .where(inArray(storyCandidate.id, shortlistedIds));
+      shortlistedCount = shortlistedIds.length;
+    }
   }
 
   return {
     discovered: candidates.length,
     stored: candidates.length,
-    shortlisted: shortlistedIds.length,
+    shortlisted: shortlistedCount,
   };
 }
 

@@ -11,14 +11,20 @@ import { enqueueRadarCreation } from './radar-creation-enqueue';
 describe('热点入队与投递结果', () => {
   beforeEach(() => vi.resetAllMocks());
   function setup() {
-    const candidate = { id: 'candidate', sourceTitle: 'Raccoon steals a hot dog', sourceUrl: 'https://example.com/raccoon', status: 'shortlisted' };
+    const candidate = {
+      id: 'candidate',
+      sourceTitle: 'Raccoon steals a hot dog',
+      sourceUrl: 'https://example.com/raccoon',
+      status: 'shortlisted',
+    };
     const job = { candidateId: 'candidate', runId: 'stable-run', songId: 'stable-song', status: 'queued', sequence: 0 };
     const limit = vi.fn().mockResolvedValueOnce([candidate]).mockResolvedValueOnce([job]);
     const values = vi.fn(() => ({ onConflictDoNothing: vi.fn().mockResolvedValue(undefined) }));
     const set = vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) }));
     mocks.db.mockReturnValue({
       select: () => ({ from: () => ({ where: () => ({ limit }) }) }),
-      insert: () => ({ values }), update: () => ({ set }),
+      insert: () => ({ values }),
+      update: () => ({ set }),
     });
     return { candidate, values, set };
   }
@@ -26,10 +32,17 @@ describe('热点入队与投递结果', () => {
     const { candidate, values } = setup();
     mocks.publish.mockResolvedValue({ messageId: 'message' });
     await expect(enqueueRadarCreation('candidate', 'admin')).resolves.toEqual({
-      candidateId: 'candidate', runId: 'stable-run', songId: 'stable-song', status: 'queued',
+      candidateId: 'candidate',
+      runId: 'stable-run',
+      songId: 'stable-song',
+      status: 'queued',
     });
-    expect(values).toHaveBeenCalledWith(expect.objectContaining({ sourceUrl: candidate.sourceUrl, sourceTitle: candidate.sourceTitle }));
-    expect(mocks.publish).toHaveBeenCalledWith(expect.objectContaining({ deduplicationId: 'radar-candidate-0', body: { candidateId: 'candidate' } }));
+    expect(values).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUrl: candidate.sourceUrl, sourceTitle: candidate.sourceTitle })
+    );
+    expect(mocks.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ deduplicationId: 'radar-candidate-0', body: { candidateId: 'candidate' } })
+    );
   });
   it('队列拒绝时标记失败，不把新闻伪装成已进入制作', async () => {
     const { set } = setup();

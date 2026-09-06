@@ -9,7 +9,9 @@ import {
 
 describe('文本模型降级策略', () => {
   it('坏定稿走现有输出故障降级，不当作成功歌词', () => {
-    expect(shouldFallbackTextProvider(new Error('Invalid lyric finalization: Lyrics need at least 8 sung lines; found 4.'))).toBe(true);
+    expect(
+      shouldFallbackTextProvider(new Error('Invalid lyric finalization: Lyrics need at least 8 sung lines; found 4.'))
+    ).toBe(true);
   });
   beforeEach(() => {
     vi.spyOn(console, 'info').mockImplementation(() => undefined);

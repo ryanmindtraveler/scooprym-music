@@ -13,6 +13,9 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ success: true, job }, { status: 202 });
   } catch (error) {
     console.error('[radar-creation] enqueue failed', error);
-    return NextResponse.json({ success: false, error: 'Could not enqueue the story. Check background queue configuration and try again.' }, { status: 503 });
+    return NextResponse.json(
+      { success: false, error: 'Could not enqueue the story. Check background queue configuration and try again.' },
+      { status: 503 }
+    );
   }
 }

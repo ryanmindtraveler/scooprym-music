@@ -1,8 +1,8 @@
+import { VIBE_PERSONAS } from '@/components/create/form/create-music-data';
 import { describe, expect, it } from 'vitest';
 import zhMessages from '../../../messages/zh.json';
-import { VIBE_PERSONAS } from '@/components/create/form/create-music-data';
-import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 import { EDITORIAL_STYLE_PROFILES, resolveEditorialStyleProfile } from './editorial-styles';
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from './production-recipe';
 
 describe('恢复主分支风格并合并', () => {

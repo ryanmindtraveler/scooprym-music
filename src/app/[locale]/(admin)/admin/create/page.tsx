@@ -7,8 +7,8 @@ import { CreationStage } from '@/components/create/stage/creation-stage'; // Upd
 
 import { useCreditBalance } from '@/hooks/billing/use-credits';
 import { authClient } from '@/lib/auth-client';
-import { fetchCreationQueue } from '@/lib/creation-queue-request';
 import { canRestoreQueueStage, canResumeCreationWorkflow } from '@/lib/creation-context-guard';
+import { fetchCreationQueue } from '@/lib/creation-queue-request';
 import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
 import { useCreateStore, usePlayerStore } from '@/store';
 import type { CreationTask } from '@/store/create-store'; // Data Type

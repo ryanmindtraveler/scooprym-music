@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
-import { LEGACY_PRODUCTION } from './legacy-production';
 import { buildEditorialStyleBrief, getEditorialStyleProfileById } from './editorial-styles';
+import { LEGACY_PRODUCTION } from './legacy-production';
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from './production-recipe';
 
 describe('风格审查修正', () => {

@@ -37,7 +37,7 @@ describe('音乐制作提示词', () => {
 
     expect(prompt).toContain('Velvet-Rope Whisper');
     expect(prompt).toContain('Production variant: Flashbulb R&B');
-    expect(prompt).toContain('Foundation: sparse contemporary R&B');
+    expect(prompt).toContain('Foundation: bass-forward rhythmic R&B');
     expect(prompt).toContain('Sonic colors: pizzicato string punctuation + breathy vocal doubles');
     expect(prompt).toContain('Avoid: melismatic over-singing');
   });

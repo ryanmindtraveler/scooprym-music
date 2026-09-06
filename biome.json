@@ -17,6 +17,7 @@
       ".conductor/**",
       ".vscode/**",
       ".source/**",
+      ".cache/**",
       "node_modules/**",
       "dist/**",
       "build/**",
@@ -53,7 +54,8 @@
         "noSparseArray": "off",
         "noArrayIndexKey": "off",
         "noExplicitAny": "off",
-        "noShadowRestrictedNames": "off"
+        "noShadowRestrictedNames": "off",
+        "noMisleadingCharacterClass": "off"
       },
       "complexity": {
         "noForEach": "off"
@@ -70,7 +72,8 @@
       "a11y": {
         "useValidAnchor": "off",
         "noSvgWithoutTitle": "off",
-        "useKeyWithClickEvents": "off"
+        "useKeyWithClickEvents": "off",
+        "useSemanticElements": "off"
       }
     },
     "ignore": [

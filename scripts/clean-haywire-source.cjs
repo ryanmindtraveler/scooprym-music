@@ -3,11 +3,16 @@ require('@next/env').loadEnvConfig(process.cwd());
 const sql = require('postgres')(process.env.DATABASE_URL, { prepare: false, max: 1 });
 const id = '9daf2bb1-5d24-408e-810f-f5cf85fe7e6a';
 (async () => {
-  const rows = await sql`select s.id, s.title, t.id as story_id, t.news_summary, t.source_url, length(t.source_text) as source_length,
+  const rows =
+    await sql`select s.id, s.title, t.id as story_id, t.news_summary, t.source_url, length(t.source_text) as source_length,
     (select count(*)::int from scooprym.song x where x.story_id = t.id) as linked_songs
     from scooprym.song s join scooprym.story t on t.id = s.story_id where s.id = ${id}`;
   console.log(rows);
-  if (rows.length !== 1 || rows[0].title !== 'Haywire' || !rows[0].source_url?.includes('viral-game-makes-you-find-a-needle')) {
+  if (
+    rows.length !== 1 ||
+    rows[0].title !== 'Haywire' ||
+    !rows[0].source_url?.includes('viral-game-makes-you-find-a-needle')
+  ) {
     throw new Error('歌曲身份不匹配，停止修改');
   }
   if (process.argv.includes('--apply')) {
@@ -20,4 +25,9 @@ const id = '9daf2bb1-5d24-408e-810f-f5cf85fe7e6a';
       console.log(updated);
     });
   }
-})().catch((error) => { console.error(error.message); process.exitCode = 1; }).finally(() => sql.end());
+})()
+  .catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  })
+  .finally(() => sql.end());

@@ -9,7 +9,10 @@ export interface RadarGeneratedSong {
 export function groupRadarSongs(songs: RadarGeneratedSong[]) {
   const groups: Record<string, RadarGeneratedSong[]> = {};
   for (const song of songs) {
-    const group = (groups[song.candidateId] ??= []);
+    if (!groups[song.candidateId]) {
+      groups[song.candidateId] = [];
+    }
+    const group = groups[song.candidateId];
     if (!group.some((existing) => existing.id === song.id)) group.push(song);
   }
   return groups;

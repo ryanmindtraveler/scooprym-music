@@ -70,10 +70,11 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ success: false, error: 'Unable to create the editorial story' }, { status: 500 });
   }
 
-  if (candidate.status !== 'adopted' || candidate.storyId !== storyId) {
+  const nextStatus = candidate.status === 'shortlisted' ? 'shortlisted' : 'adopted';
+  if (candidate.status !== nextStatus || candidate.storyId !== storyId) {
     await db
       .update(storyCandidate)
-      .set({ storyId, status: 'adopted', adoptedAt: candidate.adoptedAt ?? new Date(), updatedAt: new Date() })
+      .set({ storyId, status: nextStatus, adoptedAt: candidate.adoptedAt ?? new Date(), updatedAt: new Date() })
       .where(eq(storyCandidate.id, id));
   }
 

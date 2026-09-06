@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { radarCreationJob, storyCandidate } from '@/db/schema';
-import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
-import { recommendEditorialStyleId } from '@/lib/music/production-recipe';
 import { getEditorialStyleProfileById } from '@/lib/music/editorial-styles';
+import { recommendEditorialStyleId } from '@/lib/music/production-recipe';
+import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
 import { and, eq, isNull } from 'drizzle-orm';
 
 /** 后台队列必须可达；禁止以浏览器生命周期或after长请求伪装可靠队列。 */
@@ -61,20 +61,28 @@ export async function enqueueRadarCreation(candidateId: string, userId: string) 
       await dispatchRadarCreation(candidateId, job.sequence);
     } catch (error) {
       // 保存任务不等于投递成功；只更新尚未被 Worker 领取的这一轮任务。
-      await db.update(radarCreationJob).set({
-        status: 'failed', error: 'Queue delivery failed. Retry this story.', updatedAt: new Date(),
-      }).where(and(
-        eq(radarCreationJob.candidateId, candidateId),
-        eq(radarCreationJob.status, 'queued'),
-        eq(radarCreationJob.sequence, job.sequence),
-        isNull(radarCreationJob.leaseId),
-      ));
+      await db
+        .update(radarCreationJob)
+        .set({
+          status: 'failed',
+          error: 'Queue delivery failed. Retry this story.',
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(radarCreationJob.candidateId, candidateId),
+            eq(radarCreationJob.status, 'queued'),
+            eq(radarCreationJob.sequence, job.sequence),
+            isNull(radarCreationJob.leaseId)
+          )
+        );
       throw error;
     }
   }
+  const nextStatus = candidate.status === 'shortlisted' ? 'shortlisted' : 'adopted';
   await db
     .update(storyCandidate)
-    .set({ status: 'adopted', adoptedAt: candidate.adoptedAt ?? new Date(), updatedAt: new Date() })
+    .set({ status: nextStatus, adoptedAt: candidate.adoptedAt ?? new Date(), updatedAt: new Date() })
     .where(eq(storyCandidate.id, candidateId));
   return { candidateId, runId: job.runId, songId: job.songId, status: job.status };
 }

@@ -4,7 +4,7 @@ import { hotSheetEdition, storyCandidate } from '@/db/schema';
 import { refreshEditorialRadar } from '@/lib/editorial-workflow';
 import { getHotSheetScheduledDay } from '@/lib/hot-sheet-schedule';
 import { rankPublicStoryCandidates } from '@/lib/story-voting';
-import { and, desc, eq, inArray, isNull, lt, lte, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 
 export async function archiveDailyHotSheet(now = new Date()) {
   const day = getHotSheetScheduledDay(now);
@@ -47,7 +47,11 @@ export async function archiveDailyHotSheet(now = new Date()) {
           or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now))
         )
       )
-      .orderBy(desc(storyCandidate.relevanceScore), desc(storyCandidate.publishedAt))
+      .orderBy(
+        sql`case ${storyCandidate.status} when 'shortlisted' then 0 else 1 end`,
+        desc(storyCandidate.relevanceScore),
+        desc(storyCandidate.publishedAt)
+      )
       .limit(300);
     const stories = rankPublicStoryCandidates(candidates, now, 10).map((item) => ({
       id: item.id,

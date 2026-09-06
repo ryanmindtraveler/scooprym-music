@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { getIdFromSlug } from './utils';
 import { getSongCanonicalSlug, getSongSearchHeadline, getSongSeoDescription, getSongSeoTitle } from './song-seo';
+import { getIdFromSlug } from './utils';
 
 const song = {
   id: '8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68',

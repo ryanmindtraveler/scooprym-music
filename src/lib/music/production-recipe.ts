@@ -3,8 +3,8 @@ import {
   getEditorialStyleProfileById,
   resolveEditorialStyleProfile,
 } from './editorial-styles';
-import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 import { ADAPTIVE_ARRANGEMENT_RULE, LEGACY_PRODUCTION } from './legacy-production';
+import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 
 export type StorySignal =
   | 'absurd'
