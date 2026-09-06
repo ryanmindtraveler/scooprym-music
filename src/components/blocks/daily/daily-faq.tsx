@@ -92,7 +92,7 @@ export function DailyFaqSection() {
           </div>
 
           {/* Need help contact box */}
-          <div className="rounded-[2rem] border-2 border-[#1a1523] bg-linear-to-br from-white via-pink-50/50 to-amber-50/50 p-6.5 shadow-[5px_6px_0_#1a1523] backdrop-blur-md dark:border-white/15 dark:bg-zinc-900/90 dark:from-zinc-900 dark:to-zinc-800 dark:shadow-[5px_6px_0_rgba(255,255,255,0.15)]">
+          <div className="rounded-4xl border-2 border-[#1a1523] bg-linear-to-br from-white via-pink-50/50 to-amber-50/50 p-6.5 shadow-[5px_6px_0_#1a1523] backdrop-blur-md dark:border-white/15 dark:bg-zinc-900/90 dark:from-zinc-900 dark:to-zinc-800 dark:shadow-[5px_6px_0_rgba(255,255,255,0.15)]">
             <div className="flex items-center gap-3">
               <span className="flex size-11 items-center justify-center rounded-2xl border-2 border-[#1a1523] bg-[#ffe600] text-[#1a1523] shadow-[2px_2px_0_#1a1523]">
                 <BadgeHelp className="size-6 text-[#d80d63]" />

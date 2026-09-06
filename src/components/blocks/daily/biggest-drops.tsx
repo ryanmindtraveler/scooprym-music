@@ -105,7 +105,7 @@ function DropPortraitCard({
         </LocaleLink>
 
         {/* 顶部悬浮工具栏 (类别Badge + 分享按钮) */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent p-3.5">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between bg-linear-to-b from-black/60 to-transparent p-3.5">
           <Badge className="pointer-events-auto h-6 border-0 bg-black/60 px-2.5 py-0.5 text-[11px] font-bold text-white backdrop-blur-md hover:bg-black/80">
             {song.category || 'Music'}
           </Badge>
@@ -272,8 +272,8 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
         {/* Single Row Continuous Horizontal Moving Marquee */}
         <div className="relative mt-4 overflow-hidden rounded-3xl py-4">
           {/* Edge Gradient Mask Shadows */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-16 sm:w-28 bg-gradient-to-r from-indigo-900/80 via-indigo-900/30 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 sm:w-28 bg-gradient-to-l from-cyan-600/80 via-cyan-600/30 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-16 sm:w-28 bg-linear-to-r from-indigo-900/80 via-indigo-900/30 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 sm:w-28 bg-linear-to-l from-cyan-600/80 via-cyan-600/30 to-transparent" />
 
           {denseSongs.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/40 p-10 text-center text-sm font-semibold text-white/90">

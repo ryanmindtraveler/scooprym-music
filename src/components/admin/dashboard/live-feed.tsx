@@ -86,7 +86,7 @@ export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
                         className="object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-500/20 to-violet-500/20 text-pink-600">
+                      <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-pink-500/20 to-violet-500/20 text-pink-600">
                         <Music className="size-5" />
                       </div>
                     )}
@@ -119,14 +119,14 @@ export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
                         {song.title}
                       </Link>
                       {isCurrentPlaying && (
-                        <span className="inline-flex items-end gap-[2px] h-3 shrink-0">
-                          <span className="w-[2px] h-full bg-pink-600 rounded-full animate-pulse" />
+                        <span className="inline-flex items-end gap-0.5 h-3 shrink-0">
+                          <span className="w-0.5 h-full bg-pink-600 rounded-full animate-pulse" />
                           <span
-                            className="w-[2px] h-2/3 bg-pink-600 rounded-full animate-pulse"
+                            className="w-0.5 h-2/3 bg-pink-600 rounded-full animate-pulse"
                             style={{ animationDelay: '150ms' }}
                           />
                           <span
-                            className="w-[2px] h-4/5 bg-pink-600 rounded-full animate-pulse"
+                            className="w-0.5 h-4/5 bg-pink-600 rounded-full animate-pulse"
                             style={{ animationDelay: '300ms' }}
                           />
                         </span>

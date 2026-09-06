@@ -364,14 +364,14 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
                   <article
                     key={song.id}
                     className={cn(
-                      'group grid overflow-hidden rounded-[2rem] border bg-[#fffdf9]/98 backdrop-blur-md shadow-[0_16px_40px_rgba(60,34,82,0.12)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(60,34,82,0.18)] grid-cols-[135px_1fr] sm:grid-cols-[170px_1fr] xl:grid-cols-[190px_1fr] dark:border-white/10 dark:bg-[#201a2b]/95 flex-1',
+                      'group grid overflow-hidden rounded-4xl border bg-[#fffdf9]/98 backdrop-blur-md shadow-[0_16px_40px_rgba(60,34,82,0.12)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_24px_50px_rgba(60,34,82,0.18)] grid-cols-[135px_1fr] sm:grid-cols-[170px_1fr] xl:grid-cols-[190px_1fr] dark:border-white/10 dark:bg-[#201a2b]/95 flex-1',
                       isActive(song)
                         ? 'border-[#d80d63] ring-2 ring-[#d80d63]/40'
                         : 'border-white/90 hover:border-[#d80d63]/40'
                     )}
                   >
                     {/* Media Thumbnail */}
-                    <div className="group/media relative min-h-[160px] sm:min-h-[180px] h-full">
+                    <div className="group/media relative min-h-40 sm:min-h-[180px] h-full">
                       <span className="absolute top-3 left-3 z-20 rounded-full border border-white/20 bg-[#17151f]/85 px-2.5 py-0.5 text-[0.68rem] font-black uppercase tracking-wider text-white shadow-xs backdrop-blur-md">
                         Drop #{index + 2}
                       </span>
@@ -389,7 +389,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
                       <div>
                         {/* Meta row */}
                         <div className="flex items-center justify-between gap-2 text-xs">
-                          <span className="font-black uppercase tracking-[0.1em] text-[#d80d63]">
+                          <span className="font-black uppercase tracking-widest text-[#d80d63]">
                             {formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric' })}
                           </span>
                           {song.sourceUrl && (

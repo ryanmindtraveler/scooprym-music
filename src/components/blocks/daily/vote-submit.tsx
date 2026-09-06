@@ -354,7 +354,7 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                         'group/row relative min-w-0 border-b-2 border-[#1a1523]/10 transition-all duration-200 dark:border-white/10',
                         isDraftVote &&
                           isEditingVote &&
-                          'bg-gradient-to-r from-pink-500/10 via-amber-500/10 to-transparent dark:from-pink-950/40 dark:via-amber-950/20',
+                          'bg-linear-to-r from-pink-500/10 via-amber-500/10 to-transparent dark:from-pink-950/40 dark:via-amber-950/20',
                         isSavedVote && showResults && 'bg-amber-500/10 dark:bg-amber-950/30'
                       )}
                     >
@@ -362,7 +362,7 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                       {showResults && (
                         <motion.div
                           className={cn(
-                            'pointer-events-none absolute inset-x-0 bottom-0 h-1.5 origin-left bg-gradient-to-r from-[#ffe600] via-[#ff007a] to-[#d80d63]',
+                            'pointer-events-none absolute inset-x-0 bottom-0 h-1.5 origin-left bg-linear-to-r from-[#ffe600] via-[#ff007a] to-[#d80d63]',
                             isSavedVote && 'from-[#00e5ff] to-[#ffe600]'
                           )}
                           initial={{ scaleX: 0 }}
@@ -389,11 +389,11 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                               className={cn(
                                 'flex size-10 sm:size-11 items-center justify-center rounded-xl border-2 font-mono text-base sm:text-lg font-black leading-none transition-transform group-hover/row:scale-105 select-none',
                                 index === 0 &&
-                                  'border-[#1a1523] bg-gradient-to-br from-[#ffe600] to-amber-400 text-[#1a1523] shadow-[2.5px_2.5px_0_#1a1523]',
+                                  'border-[#1a1523] bg-linear-to-br from-[#ffe600] to-amber-400 text-[#1a1523] shadow-[2.5px_2.5px_0_#1a1523]',
                                 index === 1 &&
-                                  'border-[#1a1523] bg-gradient-to-br from-[#ff007a] to-rose-500 text-white shadow-[2.5px_2.5px_0_#1a1523]',
+                                  'border-[#1a1523] bg-linear-to-br from-[#ff007a] to-rose-500 text-white shadow-[2.5px_2.5px_0_#1a1523]',
                                 index === 2 &&
-                                  'border-[#1a1523] bg-gradient-to-br from-[#00e5ff] to-cyan-500 text-[#1a1523] shadow-[2.5px_2.5px_0_#1a1523]',
+                                  'border-[#1a1523] bg-linear-to-br from-[#00e5ff] to-cyan-500 text-[#1a1523] shadow-[2.5px_2.5px_0_#1a1523]',
                                 index > 2 &&
                                   'border-slate-200/80 bg-slate-100/90 text-slate-500 dark:border-white/10 dark:bg-zinc-800/90 dark:text-slate-400 group-hover/row:border-[#d80d63] group-hover/row:text-[#d80d63]'
                               )}
@@ -410,12 +410,12 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                                   : 'border-slate-300 bg-white text-transparent dark:border-slate-700 dark:bg-zinc-800'
                               )}
                             >
-                              <Check className="size-3 stroke-[3]" />
+                              <Check className="size-3 stroke-3" />
                             </span>
                           </div>
 
                           {/* Story Thumbnail */}
-                          <div className="relative aspect-[16/11] w-22 sm:w-28 shrink-0 overflow-hidden rounded-2xl border-2 border-[#1a1523]/15 bg-slate-100 shadow-sm dark:border-white/15 dark:bg-zinc-800">
+                          <div className="relative aspect-16/11 w-22 sm:w-28 shrink-0 overflow-hidden rounded-2xl border-2 border-[#1a1523]/15 bg-slate-100 shadow-sm dark:border-white/15 dark:bg-zinc-800">
                             {candidate.sourceImageUrl ? (
                               <img
                                 src={candidate.sourceImageUrl}
@@ -539,7 +539,7 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                     type="button"
                     onClick={() => void submitVote()}
                     disabled={draftVotes.length === 0 || savingVote}
-                    className="inline-flex h-12 min-w-48 items-center justify-center gap-2 rounded-full border-2 border-[#1a1523] bg-gradient-to-r from-[#ffe600] via-[#ff007a] to-[#d80d63] px-8 text-sm font-black text-white shadow-[4px_4px_0_#1a1523] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_#1a1523] active:translate-y-0 active:shadow-[2px_2px_0_#1a1523] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:shadow-none"
+                    className="inline-flex h-12 min-w-48 items-center justify-center gap-2 rounded-full border-2 border-[#1a1523] bg-linear-to-r from-[#ffe600] via-[#ff007a] to-[#d80d63] px-8 text-sm font-black text-white shadow-[4px_4px_0_#1a1523] transition-all hover:-translate-y-1 hover:shadow-[6px_6px_0_#1a1523] active:translate-y-0 active:shadow-[2px_2px_0_#1a1523] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:shadow-none"
                   >
                     {savingVote ? (
                       <Loader2 className="size-5 animate-spin" />

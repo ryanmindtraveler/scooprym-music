@@ -449,7 +449,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex size-full items-center justify-center bg-gradient-to-br from-pink-500/10 to-violet-500/10 text-muted-foreground">
+                      <div className="flex size-full items-center justify-center bg-linear-to-br from-pink-500/10 to-violet-500/10 text-muted-foreground">
                         <Newspaper className="size-6 text-pink-500/60" />
                       </div>
                     )}

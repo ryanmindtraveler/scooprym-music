@@ -109,8 +109,8 @@ export function OperationsCommandCenter({
       <div
         className={`relative overflow-hidden rounded-xl border p-3.5 shadow-2xs backdrop-blur-xs transition-all ${
           hasAttention
-            ? 'border-amber-500/30 bg-gradient-to-r from-amber-500/8 via-amber-500/4 to-transparent dark:from-amber-950/30'
-            : 'border-emerald-500/30 bg-gradient-to-r from-emerald-500/8 via-emerald-500/4 to-transparent dark:from-emerald-950/30'
+            ? 'border-amber-500/30 bg-linear-to-r from-amber-500/8 via-amber-500/4 to-transparent dark:from-amber-950/30'
+            : 'border-emerald-500/30 bg-linear-to-r from-emerald-500/8 via-emerald-500/4 to-transparent dark:from-emerald-950/30'
         }`}
       >
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

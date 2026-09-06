@@ -224,7 +224,7 @@ export function SongDetailClient({
 
             {/* News Background Inset Card - Frosted Glass */}
             {(song.newsSummary || song.sourceUrl) && (
-              <article className="group/text relative mt-5 w-full max-w-lg rounded-2xl border border-white/90 bg-white/75 p-5 text-left shadow-[0_12px_36px_rgba(15,23,42,0.04)] ring-1 ring-slate-900/[0.04] backdrop-blur-3xl transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-white/[0.06] dark:ring-white/10">
+              <article className="group/text relative mt-5 w-full max-w-lg rounded-2xl border border-white/90 bg-white/75 p-5 text-left shadow-[0_12px_36px_rgba(15,23,42,0.04)] ring-1 ring-slate-900/4 backdrop-blur-3xl transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-white/6 dark:ring-white/10">
                 <div className="mb-2 flex items-center gap-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" style={{ color: accentColor }} />
                   <span
@@ -264,14 +264,14 @@ export function SongDetailClient({
               {/* Dynamic Progress/Glow Ring */}
               <div
                 className={cn(
-                  'absolute inset-[-30px] rounded-full blur-3xl transition-opacity duration-1000',
+                  'absolute -inset-7.5 rounded-full blur-3xl transition-opacity duration-1000',
                   isThisSongPlaying ? 'opacity-45' : 'opacity-0 group-hover:opacity-20'
                 )}
                 style={{ background: accentColor }}
               />
 
               {/* Progress Border SVG */}
-              <svg className="absolute inset-[-12px] size-[calc(100%+24px)] -rotate-90 z-10 pointer-events-none opacity-60">
+              <svg className="absolute -inset-3 size-[calc(100%+24px)] -rotate-90 z-10 pointer-events-none opacity-60">
                 <circle
                   cx="50%"
                   cy="50%"
@@ -292,7 +292,7 @@ export function SongDetailClient({
                   'relative size-[300px] md:size-[420px] lg:size-[520px] rounded-full shadow-2xl bg-neutral-950 overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.01] ring-2 ring-white/20',
                   'border-10 border-neutral-900',
                   'before:absolute before:inset-0 before:rounded-full before:bg-linear-to-tr before:from-transparent before:via-white/10 before:to-transparent before:z-20 before:pointer-events-none',
-                  'after:absolute after:inset-[12px] after:rounded-full after:border-40 after:border-neutral-900/80 after:z-10'
+                  'after:absolute after:inset-3 after:rounded-full after:border-40 after:border-neutral-900/80 after:z-10'
                 )}
                 style={{
                   animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
@@ -302,7 +302,7 @@ export function SongDetailClient({
                 }}
               >
                 {/* Album Art */}
-                <div className="absolute inset-[8px] md:inset-[12px] rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
+                <div className="absolute inset-2 md:inset-3 rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
                   <Image
                     src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
                     alt={`Cover art for ${song.title}, inspired by: ${searchHeadline}`}
