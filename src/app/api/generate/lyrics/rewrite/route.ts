@@ -1,6 +1,6 @@
 import { rewriteLyrics } from '@/ai/text/lib/generation';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 

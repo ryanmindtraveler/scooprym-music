@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   stageComplete: vi.fn(),
 }));
 vi.mock('@/db', () => ({ getDb: mocks.db }));
-vi.mock('@/lib/queue', () => ({
+vi.mock('@/lib/infrastructure/queue', () => ({
   canUseQStash: mocks.configured,
   getWorkerUrl: () => 'https://example.com/worker',
   qstash: { publishJSON: mocks.publish },
@@ -26,8 +26,8 @@ vi.mock('@/ai/text/lib/source-analysis', () => ({
   prepareSourceMaterial: mocks.source,
   recommendSourceStyle: mocks.recommend,
 }));
-vi.mock('@/lib/submit-music-generation', () => ({ submitMusicGeneration: mocks.submit }));
-vi.mock('@/lib/song-creation-workflow', () => ({
+vi.mock('@/lib/creation/submit-music-generation', () => ({ submitMusicGeneration: mocks.submit }));
+vi.mock('@/lib/creation/song-creation-workflow', () => ({
   startLyricsWorkflow: mocks.start,
   getWorkflowRun: mocks.workflow,
   recordLyricsCheckpoint: mocks.checkpoint,

@@ -1,6 +1,6 @@
-import { MAX_FILE_SIZE } from '@/lib/constants';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
+import { MAX_FILE_SIZE } from '@/lib/shared/constants';
 import { uploadFile } from '@/storage';
 import { StorageError } from '@/storage/types';
 import { type NextRequest, NextResponse } from 'next/server';

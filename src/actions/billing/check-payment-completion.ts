@@ -2,7 +2,7 @@
 
 import { getDb } from '@/db';
 import { payment } from '@/db/schema';
-import { userActionClient } from '@/lib/safe-action';
+import { userActionClient } from '@/lib/auth/safe-action';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 

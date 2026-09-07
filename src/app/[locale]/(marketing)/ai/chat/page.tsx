@@ -1,5 +1,5 @@
 import ChatBot from '@/ai/chat/components/ChatBot';
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { ZapIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';

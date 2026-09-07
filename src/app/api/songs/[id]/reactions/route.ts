@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { song, songReaction } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import {
   SONG_REACTION_ACTOR_COOKIE,
   createAnonymousReactionId,
   getSongReactionActorKey,
   isValidAnonymousReactionId,
-} from '@/lib/song-reaction-actor';
-import { type SongReactionType, createSongReactionCounts, isSongReactionType } from '@/lib/song-reactions';
+} from '@/lib/songs/song-reaction-actor';
+import { type SongReactionType, createSongReactionCounts, isSongReactionType } from '@/lib/songs/song-reactions';
 import { and, count, eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';

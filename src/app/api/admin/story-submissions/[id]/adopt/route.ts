@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db/index';
 import { storyCandidate, storySubmission } from '@/db/schema';
-import { getSession } from '@/lib/server';
-import { inferSubmissionCategory } from '@/lib/story-submissions';
+import { getSession } from '@/lib/auth/server';
+import { inferSubmissionCategory } from '@/lib/stories/story-submissions';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

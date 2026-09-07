@@ -2,8 +2,8 @@
 
 import { getDb } from '@/db';
 import { user } from '@/db/schema';
-import { isDemoWebsite } from '@/lib/demo';
-import { adminActionClient } from '@/lib/safe-action';
+import { adminActionClient } from '@/lib/auth/safe-action';
+import { isDemoWebsite } from '@/lib/shared/demo';
 import { asc, desc, ilike, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 

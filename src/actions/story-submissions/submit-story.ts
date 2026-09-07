@@ -3,10 +3,10 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db/index';
 import { storySubmission } from '@/db/schema';
-import { getStorySubmissionRateLimiter } from '@/lib/ratelimit';
-import { actionClient } from '@/lib/safe-action';
-import { getSession } from '@/lib/server';
-import { normalizeStorySubmissionUrl } from '@/lib/story-submissions';
+import { actionClient } from '@/lib/auth/safe-action';
+import { getSession } from '@/lib/auth/server';
+import { getStorySubmissionRateLimiter } from '@/lib/infrastructure/ratelimit';
+import { normalizeStorySubmissionUrl } from '@/lib/stories/story-submissions';
 import { sql } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { z } from 'zod';

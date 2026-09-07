@@ -2,9 +2,9 @@
 
 import { getDb } from '@/db';
 import { payment } from '@/db/schema';
-import type { User } from '@/lib/auth-types';
-import { Logger } from '@/lib/logger';
-import { userActionClient } from '@/lib/safe-action';
+import type { User } from '@/lib/auth/auth-types';
+import { userActionClient } from '@/lib/auth/safe-action';
+import { Logger } from '@/lib/infrastructure/logger';
 import {
   PaymentScenes,
   type PaymentStatus,

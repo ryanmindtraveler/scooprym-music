@@ -1,7 +1,7 @@
 import { getDb } from '@/db/index';
 import { storySubmission } from '@/db/schema';
-import { getSession } from '@/lib/server';
-import { enrichStorySubmissionUrl, normalizeStorySubmissionUrl } from '@/lib/story-submissions';
+import { getSession } from '@/lib/auth/server';
+import { enrichStorySubmissionUrl, normalizeStorySubmissionUrl } from '@/lib/stories/story-submissions';
 import { and, eq, ne } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

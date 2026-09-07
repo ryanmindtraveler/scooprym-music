@@ -5,7 +5,7 @@ import { song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
-import { getSongCanonicalSlug } from '@/lib/song-seo';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { and, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';

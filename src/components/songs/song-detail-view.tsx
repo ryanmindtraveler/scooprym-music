@@ -11,10 +11,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
-import { formatBusinessDate } from '@/lib/business-time';
-import { cleanLyricsForDisplay } from '@/lib/lyrics-utils';
-import { getNewsCardSummary } from '@/lib/song-editorial';
-import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
+import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
+import { formatBusinessDate } from '@/lib/shared/business-time';
+import { getNewsCardSummary } from '@/lib/songs/song-editorial';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';

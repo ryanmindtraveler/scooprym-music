@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   failActiveMusicJob: vi.fn(),
 }));
 
-vi.mock('@/lib/song-workflow', () => ({
+vi.mock('@/lib/creation/song-workflow', () => ({
   processMusicJob: mocks.processMusicJob,
   failActiveMusicJob: mocks.failActiveMusicJob,
 }));

@@ -2,8 +2,8 @@
 
 import { getDb } from '@/db';
 import { user } from '@/db/schema';
-import type { User } from '@/lib/auth-types';
-import { userActionClient } from '@/lib/safe-action';
+import type { User } from '@/lib/auth/auth-types';
+import { userActionClient } from '@/lib/auth/safe-action';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { type CreatePortalParams, createCustomerPortal } from '@/payment/server';
 import { Routes } from '@/routes';

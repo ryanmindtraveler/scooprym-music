@@ -1,5 +1,5 @@
-import { getSession } from '@/lib/server';
-import { getWorkflowRun } from '@/lib/song-creation-workflow';
+import { getSession } from '@/lib/auth/server';
+import { getWorkflowRun } from '@/lib/creation/song-creation-workflow';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 

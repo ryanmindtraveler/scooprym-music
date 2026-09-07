@@ -1,4 +1,4 @@
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import type { NextPageProps } from '@/types/next-page-props';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';

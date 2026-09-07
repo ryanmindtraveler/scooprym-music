@@ -1,6 +1,6 @@
 'use client';
 
-import { SONG_REACTION_OPTIONS, type SongReactionCounts, type SongReactionType } from '@/lib/song-reactions';
+import { SONG_REACTION_OPTIONS, type SongReactionCounts, type SongReactionType } from '@/lib/songs/song-reactions';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';

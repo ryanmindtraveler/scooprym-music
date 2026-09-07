@@ -1,6 +1,6 @@
 import { getDb } from '@/db/index';
 import { storySubmission } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

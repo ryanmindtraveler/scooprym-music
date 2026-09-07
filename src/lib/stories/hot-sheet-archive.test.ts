@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ getDb: vi.fn(), refresh: vi.fn() }));
 vi.mock('@/db', () => ({ getDb: mocks.getDb }));
-vi.mock('@/lib/editorial-workflow', () => ({ refreshEditorialRadar: mocks.refresh }));
+vi.mock('@/lib/stories/editorial-workflow', () => ({ refreshEditorialRadar: mocks.refresh }));
 import { archiveDailyHotSheet } from './hot-sheet-archive';
 
 describe('每日归档执行', () => {

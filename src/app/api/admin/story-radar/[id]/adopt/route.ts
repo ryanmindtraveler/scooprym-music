@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { getDb } from '@/db/index';
 import { story, storyCandidate } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { Routes } from '@/routes';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';

@@ -11,10 +11,10 @@ const mocks = vi.hoisted(() => ({
   recordLyricsCheckpoint: vi.fn(),
 }));
 
-vi.mock('@/lib/server', () => ({ getSession: mocks.getSession }));
-vi.mock('@/lib/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
+vi.mock('@/lib/auth/server', () => ({ getSession: mocks.getSession }));
+vi.mock('@/lib/infrastructure/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
 vi.mock('@/ai/text/lib/generation', () => ({ generateLyrics: mocks.generateLyrics }));
-vi.mock('@/lib/song-creation-workflow', () => ({
+vi.mock('@/lib/creation/song-creation-workflow', () => ({
   startLyricsWorkflow: mocks.startLyricsWorkflow,
   completeLyricsWorkflow: mocks.completeLyricsWorkflow,
   failWorkflowStep: mocks.failWorkflowStep,

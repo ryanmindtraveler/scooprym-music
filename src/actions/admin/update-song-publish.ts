@@ -3,8 +3,8 @@
 import { getDb } from '@/db';
 import { song, songCreationRun } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { auth } from '@/lib/auth';
-import { recordPublicationWorkflow } from '@/lib/song-creation-workflow';
+import { auth } from '@/lib/auth/auth';
+import { recordPublicationWorkflow } from '@/lib/creation/song-creation-workflow';
 import { Routes } from '@/routes';
 import { and, desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';

@@ -1,6 +1,6 @@
 import { getDb } from '@/db/index';
 import { storyCandidate } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { STORY_CANDIDATE_STATUSES } from '@/lib/story-radar/types';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';

@@ -1,8 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatDate } from '@/lib/formatter';
-import type { ChangelogType } from '@/lib/source';
+import type { ChangelogType } from '@/lib/docs/source';
+import { formatDate } from '@/lib/shared/formatter';
 import { CalendarIcon, TagIcon } from 'lucide-react';
 import { getMDXComponents } from '../docs/mdx-components';
 

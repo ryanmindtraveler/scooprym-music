@@ -1,6 +1,6 @@
 /** 已有音频的封面恢复工具；默认只读，显式 --execute 后才生成封面，不发布歌曲。 */
 import postgres from 'postgres';
-import { processMusicJob } from '../src/lib/song-workflow';
+import { processMusicJob } from '../src/lib/creation/song-workflow';
 
 async function main() {
   const execute = process.argv.includes('--execute');

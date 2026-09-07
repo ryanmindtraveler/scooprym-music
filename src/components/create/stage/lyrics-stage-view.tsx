@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { buildDisplaySongTitle, cleanLyricsForDisplay } from '@/lib/lyrics-utils';
+import { buildDisplaySongTitle, cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { LyricWorkshop } from '@/types/lyric-workshop';

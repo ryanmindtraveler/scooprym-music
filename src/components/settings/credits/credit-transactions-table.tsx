@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
-import { formatDate } from '@/lib/formatter';
+import { formatDate } from '@/lib/shared/formatter';
 import { CaretDownIcon, CaretUpIcon } from '@radix-ui/react-icons';
 import { IconCaretDownFilled, IconCaretUpFilled, IconSortAscending2 } from '@tabler/icons-react';
 import {

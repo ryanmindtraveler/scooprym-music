@@ -1,6 +1,6 @@
 import { getDb } from '@/db/index';
 import { song as songTable } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto';
 import { getDb } from '@/db/index';
 import { generationAttempt, songCreationRun, song as songTable } from '@/db/schema';
-import { audioInputHash, findAudioCheckpoint } from '@/lib/audio-checkpoint';
-import { planMusicRetry } from '@/lib/music-retry-policy';
-import { getSession } from '@/lib/server';
-import { completeWorkflowStage, getWorkflowRun, startWorkflowStage } from '@/lib/song-creation-workflow';
-import { dispatchMusicJob } from '@/lib/song-job-dispatch';
-import { runPersistedSongProductCheck } from '@/lib/song-workflow';
+import { getSession } from '@/lib/auth/server';
+import { audioInputHash, findAudioCheckpoint } from '@/lib/creation/audio-checkpoint';
+import { planMusicRetry } from '@/lib/creation/music-retry-policy';
+import { completeWorkflowStage, getWorkflowRun, startWorkflowStage } from '@/lib/creation/song-creation-workflow';
+import { dispatchMusicJob } from '@/lib/creation/song-job-dispatch';
+import { runPersistedSongProductCheck } from '@/lib/creation/song-workflow';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

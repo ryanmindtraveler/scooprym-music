@@ -1,8 +1,8 @@
 import { getDb } from '@/db/index';
 import { generationAttempt, song as songTable } from '@/db/schema';
-import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
-import { failWorkflowStep, getWorkflowRunBySongId, startWorkflowStage } from '@/lib/song-creation-workflow';
-import { processMusicJob } from '@/lib/song-workflow';
+import { failWorkflowStep, getWorkflowRunBySongId, startWorkflowStage } from '@/lib/creation/song-creation-workflow';
+import { processMusicJob } from '@/lib/creation/song-workflow';
+import { canUseQStash, getWorkerUrl, qstash } from '@/lib/infrastructure/queue';
 import { and, desc, eq } from 'drizzle-orm';
 import { after } from 'next/server';
 

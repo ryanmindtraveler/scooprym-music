@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { LocaleLink } from '@/i18n/navigation';
-import { formatDate } from '@/lib/formatter';
-import { type BlogType, authorSource, categorySource } from '@/lib/source';
+import { type BlogType, authorSource, categorySource } from '@/lib/docs/source';
+import { formatDate } from '@/lib/shared/formatter';
 import Image from 'next/image';
 import { PremiumBadge } from '../premium/premium-badge';
 import BlogImage from './blog-image';

@@ -1,4 +1,4 @@
-import { archiveDailyHotSheet } from '@/lib/hot-sheet-archive';
+import { archiveDailyHotSheet } from '@/lib/stories/hot-sheet-archive';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';

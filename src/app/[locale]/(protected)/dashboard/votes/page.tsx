@@ -2,8 +2,8 @@ import { RecentListeningPagination } from '@/components/dashboard/recent-listeni
 import { getDb } from '@/db';
 import { song, storyCandidate, storyCandidateVote } from '@/db/schema';
 import { LocaleLink } from '@/i18n/navigation';
-import { formatBusinessDate } from '@/lib/business-time';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { formatBusinessDate } from '@/lib/shared/business-time';
 import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';

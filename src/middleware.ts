@@ -1,7 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE_NAME, routing } from './i18n/routing';
-import { getPublicEnglishPath } from './lib/public-routing';
+import { getPublicEnglishPath } from './lib/urls/public-routing';
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
 
 const intlMiddleware = createMiddleware(routing);

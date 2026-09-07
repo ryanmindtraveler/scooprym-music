@@ -1,15 +1,15 @@
 import { OPENROUTER_TEXT_MODEL } from '@/ai/config/models';
 import { editorialSafetyError } from '@/ai/text/lib/editorial-safety';
 import { type LyricsCheckpointStage, generateLyrics } from '@/ai/text/lib/generation';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import {
   completeLyricsWorkflow,
   failWorkflowStep,
   getWorkflowRun,
   recordLyricsCheckpoint,
   startLyricsWorkflow,
-} from '@/lib/song-creation-workflow';
+} from '@/lib/creation/song-creation-workflow';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 

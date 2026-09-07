@@ -2,7 +2,7 @@
  * Simple logger utility to control output based on environment.
  *
  * Usage:
- * import { Logger } from '@/lib/logger';
+ * import { Logger } from '@/lib/infrastructure/logger';
  *
  * Logger.debug('User details', { userId: '123' }); // Only prints in development
  * Logger.info('Server started'); // Prints everywhere

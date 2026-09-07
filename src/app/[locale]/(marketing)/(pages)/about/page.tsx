@@ -2,7 +2,7 @@ import Container from '@/components/layout/container';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { websiteConfig } from '@/config/website';
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { MailIcon, Mic2, Music2, TwitterIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';

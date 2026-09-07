@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn, slugify } from '@/lib/utils';
 import { Share2 } from 'lucide-react';

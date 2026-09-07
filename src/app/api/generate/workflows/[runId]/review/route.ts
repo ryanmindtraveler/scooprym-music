@@ -1,5 +1,5 @@
-import { getSession } from '@/lib/server';
-import { resolveLyricsReview } from '@/lib/song-creation-workflow';
+import { getSession } from '@/lib/auth/server';
+import { resolveLyricsReview } from '@/lib/creation/song-creation-workflow';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 

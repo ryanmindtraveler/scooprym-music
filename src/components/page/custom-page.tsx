@@ -1,5 +1,5 @@
-import { formatDate } from '@/lib/formatter';
-import type { PagesType } from '@/lib/source';
+import type { PagesType } from '@/lib/docs/source';
+import { formatDate } from '@/lib/shared/formatter';
 import { CalendarIcon } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '../docs/mdx-components';

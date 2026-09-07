@@ -10,7 +10,7 @@ import {
   useSubscribeNewsletter,
   useUnsubscribeNewsletter,
 } from '@/hooks/newsletter/use-newsletter';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2Icon } from 'lucide-react';

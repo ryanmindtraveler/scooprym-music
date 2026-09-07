@@ -3,7 +3,7 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable, user as userTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth/auth';
 import type { SortingState } from '@tanstack/react-table';
 import { type AnyColumn, type SQL, and, asc, count, desc, eq, ilike, isNotNull, isNull, or } from 'drizzle-orm';
 

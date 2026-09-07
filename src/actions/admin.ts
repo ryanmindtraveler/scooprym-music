@@ -15,10 +15,10 @@ import {
   user,
 } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { getBusinessDayStart, getPreviousBusinessDayKeys } from '@/lib/business-time';
-import { canUseQStash } from '@/lib/queue';
-import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
-import { getVoteDay } from '@/lib/story-voting';
+import { canUseQStash } from '@/lib/infrastructure/queue';
+import { getBusinessDayStart, getPreviousBusinessDayKeys } from '@/lib/shared/business-time';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/songs/song-status';
+import { getVoteDay } from '@/lib/stories/story-voting';
 import { and, count, countDistinct, desc, eq, gt, gte, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 
 type QStashLog = {

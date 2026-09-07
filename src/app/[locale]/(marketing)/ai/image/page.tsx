@@ -1,7 +1,7 @@
 import { ImagePlayground } from '@/ai/image/components/ImagePlayground';
 import { getRandomSuggestions } from '@/ai/image/lib/suggestions';
-import { constructMetadata } from '@/lib/metadata';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { ImageIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/drawer';
 import { Separator } from '@/components/ui/separator';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
-import { formatDate } from '@/lib/formatter';
+import { formatDate } from '@/lib/shared/formatter';
 import { BanknoteIcon, ClockIcon, CoinsIcon, GemIcon, GiftIcon, HandCoinsIcon, ShoppingCartIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';

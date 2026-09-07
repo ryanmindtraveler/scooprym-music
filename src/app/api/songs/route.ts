@@ -1,11 +1,11 @@
 import { getDb } from '@/db/index';
 import { song, songCreationRun, story } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { resolveProductionRetryStage } from '@/lib/music-retry-policy';
-import { getSession } from '@/lib/server';
-import { getSongCreationPhase } from '@/lib/song-creation-workflow';
-import { getSongSourceCompatFields } from '@/lib/song-source';
-import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
+import { getSession } from '@/lib/auth/server';
+import { resolveProductionRetryStage } from '@/lib/creation/music-retry-policy';
+import { getSongCreationPhase } from '@/lib/creation/song-creation-workflow';
+import { getSongSourceCompatFields } from '@/lib/songs/song-source';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/songs/song-status';
 import { and, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 

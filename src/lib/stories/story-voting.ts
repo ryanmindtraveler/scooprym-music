@@ -1,4 +1,4 @@
-import { getBusinessDayKey, getNextBusinessDayStart, getPreviousBusinessDayKeys } from './business-time';
+import { getBusinessDayKey, getNextBusinessDayStart, getPreviousBusinessDayKeys } from '../shared/business-time';
 
 export const STORY_VOTE_WEIGHTS = [1, 0.6, 0.3] as const;
 export const MAX_DAILY_STORY_VOTES = 3;

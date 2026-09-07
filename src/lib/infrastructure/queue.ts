@@ -5,7 +5,7 @@
  */
 
 import { Client } from '@upstash/qstash';
-import { getBaseUrl } from './urls/urls';
+import { getBaseUrl } from '../urls/urls';
 
 // Initialize QStash Client
 // If tokens are missing (e.g. in development before setup), it will throw or fail gracefully depending on usage.

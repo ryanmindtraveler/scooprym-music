@@ -1,5 +1,5 @@
+import { inspectSongLyrics } from '@/lib/creation/song-product-check';
 import { MEME_CREATIVE_STANDARD } from '@/lib/music/meme-creative-standard';
-import { inspectSongLyrics } from '@/lib/song-product-check';
 /**
  * @file generation.ts
  * @description 统一的文本 AI 生成库，支持 OpenAI, Gemini, DeepSeek 和 OpenRouter。

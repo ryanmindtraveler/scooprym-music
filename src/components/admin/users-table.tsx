@@ -13,8 +13,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { User } from '@/lib/auth-types';
-import { formatDate } from '@/lib/formatter';
+import type { User } from '@/lib/auth/auth-types';
+import { formatDate } from '@/lib/shared/formatter';
 import { getStripeDashboardCustomerUrl } from '@/lib/urls/urls';
 import { IconCaretDownFilled, IconCaretUpFilled } from '@tabler/icons-react';
 import {

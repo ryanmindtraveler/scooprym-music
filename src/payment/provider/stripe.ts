@@ -6,7 +6,7 @@ import { CREDIT_TRANSACTION_TYPE } from '@/credits/types';
 import { getDb } from '@/db';
 import { payment, user } from '@/db/schema';
 import type { Payment } from '@/db/types';
-import { PAYMENT_RECORD_RETRY_ATTEMPTS, PAYMENT_RECORD_RETRY_DELAY } from '@/lib/constants';
+import { PAYMENT_RECORD_RETRY_ATTEMPTS, PAYMENT_RECORD_RETRY_DELAY } from '@/lib/shared/constants';
 import { sendNotification } from '@/notification/notification';
 import { desc, eq } from 'drizzle-orm';
 import { Stripe } from 'stripe';

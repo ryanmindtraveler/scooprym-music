@@ -2,15 +2,15 @@ import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cov
 import { getDb } from '@/db/index';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import {
   completeWorkflowStage,
   failWorkflowStep,
   getWorkflowRunBySongId,
   startWorkflowStage,
-} from '@/lib/song-creation-workflow';
-import { readImageDimensions } from '@/lib/song-product-check';
-import { runPersistedSongProductCheck } from '@/lib/song-workflow';
+} from '@/lib/creation/song-creation-workflow';
+import { readImageDimensions } from '@/lib/creation/song-product-check';
+import { runPersistedSongProductCheck } from '@/lib/creation/song-workflow';
 import { deleteFile, uploadFile } from '@/storage';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';

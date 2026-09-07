@@ -1,4 +1,4 @@
-import { failActiveMusicJob, processMusicJob } from '@/lib/song-workflow';
+import { failActiveMusicJob, processMusicJob } from '@/lib/creation/song-workflow';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 

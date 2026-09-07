@@ -6,8 +6,8 @@ const mocks = vi.hoisted(() => ({
   rewriteLyrics: vi.fn(),
 }));
 
-vi.mock('@/lib/server', () => ({ getSession: mocks.getSession }));
-vi.mock('@/lib/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
+vi.mock('@/lib/auth/server', () => ({ getSession: mocks.getSession }));
+vi.mock('@/lib/infrastructure/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
 vi.mock('@/ai/text/lib/generation', () => ({ rewriteLyrics: mocks.rewriteLyrics }));
 
 import { POST } from './route';

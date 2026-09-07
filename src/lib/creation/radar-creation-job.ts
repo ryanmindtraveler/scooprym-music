@@ -3,7 +3,6 @@ import { type LyricsCheckpointStage, generateLyrics } from '@/ai/text/lib/genera
 import { prepareSourceMaterial, recommendSourceStyle } from '@/ai/text/lib/source-analysis';
 import { getDb } from '@/db';
 import { radarCreationJob, songCreationRun, user } from '@/db/schema';
-import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import {
   completeLyricsWorkflow,
   completeWorkflowStage,
@@ -12,9 +11,10 @@ import {
   recordLyricsCheckpoint,
   startLyricsWorkflow,
   startWorkflowStage,
-} from '@/lib/song-creation-workflow';
-import { inspectSongLyrics } from '@/lib/song-product-check';
-import { submitMusicGeneration } from '@/lib/submit-music-generation';
+} from '@/lib/creation/song-creation-workflow';
+import { inspectSongLyrics } from '@/lib/creation/song-product-check';
+import { submitMusicGeneration } from '@/lib/creation/submit-music-generation';
+import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { and, eq, isNull, lt, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { dispatchRadarCreation } from './radar-creation-enqueue';

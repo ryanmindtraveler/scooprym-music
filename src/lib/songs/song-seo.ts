@@ -1,6 +1,6 @@
 import type { Song } from '@/types/song';
+import { slugify } from '../utils';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
-import { slugify } from './utils';
 
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'>;
 

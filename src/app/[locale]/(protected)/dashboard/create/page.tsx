@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { Routes } from '@/routes';
 import { redirect } from 'next/navigation';
 

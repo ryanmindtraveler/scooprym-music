@@ -2,7 +2,7 @@
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
 import { LocaleLink } from '@/i18n/navigation';
-import { getWeeklyBiggestDrops } from '@/lib/song-editorial';
+import { getWeeklyBiggestDrops } from '@/lib/songs/song-editorial';
 import type { Song } from '@/types/song';
 import { ArrowRight } from 'lucide-react';
 

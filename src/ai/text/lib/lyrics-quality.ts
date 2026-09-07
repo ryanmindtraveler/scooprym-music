@@ -1,4 +1,4 @@
-import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
+import { normalizeStructuredLyrics } from '@/lib/music/lyrics-utils';
 import type { MemePropagationAction } from '@/types/lyric-workshop';
 
 /** ScoopRYM 默认作品是紧凑但完整的 meme 单曲，而不是几句口号或传统三分钟长歌。 */

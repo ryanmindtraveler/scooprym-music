@@ -1,6 +1,6 @@
 'use client';
 
-import { getFailedProductionLabel } from '@/lib/music-retry-policy';
+import { getFailedProductionLabel } from '@/lib/creation/music-retry-policy';
 import { cn } from '@/lib/utils';
 import { useCreateStore, usePlayerStore } from '@/store';
 import type { CreationTask } from '@/store/create-store';

@@ -156,7 +156,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-07-21 15:25：The ScoopRYM Desk 确定移除突兀的 `#111019` 整段黑色背景，改用浅米色基底叠加青、黄、粉柔和模糊色块，标题与正文统一为深色。
 - 2026-07-21 15:25：投票区与 “Send a tip” 确定改为半透明白色圆角面板，配合浅色边框和柔和阴影；投票选中态使用黄色背景，CTA 保留黄色并增加深色 hover 状态。
 - 2026-07-21 11:02：首页内容区确定采用新闻优先的信息层级：新闻标题、简介和来源为主，播放与详情操作降为次级。
-- 2026-07-21 11:02：新闻标题统一限制为最多 84 个字符，标题与描述处理集中由 `src/lib/song-editorial.ts` 管理。
+- 2026-07-21 11:02：新闻标题统一限制为最多 84 个字符，标题与描述处理集中由 `src/lib/songs/song-editorial.ts` 管理。
 - 2026-07-21 11:02：首页主体内容最大宽度统一为 1500px。
 - 2026-07-21 11:17：Hero 确定保留糖果渐变、警戒带与可拖拽表情，定位文案调整为 “Daily Meme Songs for Internet Chaos”，主 CTA 使用 “Play Today’s Drop” 并指向 `#today`。
 - 2026-07-21 11:17：Hero 高度统一为移动端 `70dvh`、桌面端 `72dvh`；Logo 改用深色海报式字标与彩色错位阴影。
@@ -211,7 +211,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-09-04 23:59：完成公开路径统一英文的实现，保留 admin、dashboard、auth 的中文支持；middleware 合并 www 域名与 zh 路径跳转，关闭公开页面 hreflang，metadata 使用英文 canonical。（evidence: 主流程公开路由、middleware 与 metadata 修改记录）
 - 2026-09-04 23:59：完成 sitemap 修复：移除 zh、pricing、waitlist、changelog，新增 songs 目录，移除虚假 lastmod，对齐歌曲详情失败状态过滤，数据库查询失败时抛错而非静默返回不完整结果。（evidence: 主流程 sitemap 修改记录）
 - 2026-09-04 23:59：新增 public-routing 与 middleware 测试，本轮相关 24 项测试通过；TypeScript 前一轮检查通过，最终格式化后复查仍在进行中。歌曲 slug 修复的最终 `pnpm exec tsc --noEmit` 已退出 0，`git diff --check` 通过。（evidence: 主流程测试、类型与差异检查结果）
-- 2026-09-04 23:35：完成歌曲规范链接修复：`src/lib/song-seo.ts` 对生成的 slug 增加 Unicode 字母、数字与连字符白名单，防止 `60+` 等符号导致线上自循环；旧 URL 仍按末尾 UUID 识别，由既有歌曲页面重定向至规范链接。新增 `src/lib/song-seo.test.ts`，9 项测试已通过。（evidence: `src/lib/song-seo.ts`、`src/lib/song-seo.test.ts`、主流程测试结果）
+- 2026-09-04 23:35：完成歌曲规范链接修复：`src/lib/songs/song-seo.ts` 对生成的 slug 增加 Unicode 字母、数字与连字符白名单，防止 `60+` 等符号导致线上自循环；旧 URL 仍按末尾 UUID 识别，由既有歌曲页面重定向至规范链接。新增 `src/lib/songs/song-seo.test.ts`，9 项测试已通过。（evidence: `src/lib/songs/song-seo.ts`、`src/lib/songs/song-seo.test.ts`、主流程测试结果）
 - 2026-09-04 23:04：按用户授权，对当前 `DATABASE_URL` 定点执行 0033，创建 `scooprym.hot_sheet_edition`；执行采用事务、advisory lock 与 `to_regclass` 检查，未推进 Drizzle 迁移游标，避免把其他尚未执行的迁移误标为完成。现有新闻、歌曲数据未修改。（evidence: 主流程数据库迁移执行结果、0033 migration）
 - 2026-09-04 23:04：归档表 8 个字段验证通过；事务内 insert / update / select 探针成功并故意回滚，未留下测试归档，当前 editions 数量为 0。hot-sheet schedule / archive 相关 8 项测试通过；未补造过去的每日快照。（evidence: 主流程数据库探针与测试输出）
 - 2026-09-04 22:39：共享 `useActionPermission` 移除 `useCurrentPlan` 和 `isPaidUser` 依赖，下载权限改为仅检查登录状态，未登录提示登录；新增 3 项 Hook 测试全部通过，`tsc --noEmit` 退出 0。（evidence: 主流程共享权限 Hook 修改及测试、类型检查结果）
@@ -255,7 +255,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-09-04 16:48：公开背景修复的 `song-editorial` 7 项与 `song-seo` 3 项测试共 10 项通过，TypeScript 与 `git diff --check` 通过。（evidence: 主流程测试、类型与差异检查输出）
 - 2026-09-04 16:43：完成真实生成进度展示：删除 `generation-progress.tsx` 全部定时模拟百分比与虚假 `Mastering Audio`，改为每 4 秒读取经过用户归属校验的 `/api/generate/workflows/[runId]?view=progress` 状态，展示真实阶段、含排队重试的运行总耗时、距最近阶段更新时间、真实 running 步骤耗时及 attempt；已完成歌词检查点明确标为 done 并等待下一阶段，未知阶段不编造进度。（evidence: `generation-progress.tsx`、工作流 progress 查询）
 - 2026-09-04 16:43：进度组件按 `runId` 重挂载，使用 `AbortController` 实现 10 秒请求超时及取消，防止旧请求污染新任务；网络失败显示同步问题而非生成失败。`create-music-form` 在当前任务为 `queued` / `processing` / `generating_cover` 时继续展示进度，同时保留 `createAnother`。（evidence: 进度组件、`create-music-form`）
-- 2026-09-04 16:48：[#15] 新增 `src/lib/generation-progress.ts`，其 4 项单元测试及进度组件 3 项测试全部通过，原 single-draft 的 4 项测试亦通过；最终 TypeScript 复查已通过。（evidence: `src/lib/generation-progress.ts`、主流程测试与类型检查输出）
+- 2026-09-04 16:48：[#15] 新增 `src/lib/creation/generation-progress.ts`，其 4 项单元测试及进度组件 3 项测试全部通过，原 single-draft 的 4 项测试亦通过；最终 TypeScript 复查已通过。（evidence: `src/lib/creation/generation-progress.ts`、主流程测试与类型检查输出）
 - 2026-09-04 16:19：完成单稿歌词管线：使用 `lyrics-single-draft` 生成完整歌曲，`lyrics-single-audit` 独立轻量审查仅返回 `factAudit` 与 `craftIssues`、不复述歌词；删除双稿 `Promise.all` 与 `lyrics-editorial-pass` 无条件整合，仅在存在具体结构、事实或艺术问题时修订一次。正文与修订 `maxOutputTokens=6000`，审查为 3000；单稿 reasoning 为 medium，审查为 low。（evidence: 歌词管线 `lyrics-single-draft` / `lyrics-single-audit`）
 - 2026-09-04 16:19：完成单稿兼容及恢复支持：旧规划 `draftStrategyIds` 的 A 为主方案、B 仅作元数据备选，新 `workshop.drafts` 仅含 1 项；editing 检查点保存 `craftIssues`，避免续跑漏掉修订。新单稿界面显示 `Song draft`，不再显示 `Competing` / `editor pick`，旧 A/B 记录维持原显示与恢复兼容。（evidence: 歌词检查点、workshop 数据与单稿界面）
 - 2026-09-04 16:19：单稿调整相关 15 项测试通过，包括 4 项结构回归、5 项队列及 6 项歌词路由测试；TypeScript 检查退出 0，`git diff --check` 通过。（evidence: 主流程测试、类型及差异检查输出）
@@ -281,7 +281,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-09-04 11:56：完成开发快照提交前扫描：297 个待提交且存在的文件中未发现常见 token 或本地 `.env` 敏感变量值匹配，未发现大于 10 MB 的文件；`git diff --check` 通过，检查时远端 `dev` 与本地 `HEAD` 一致。扫描通过不代表穷尽全部泄密模式。（evidence: 主流程提交前扫描、`git diff --check` 与远端分支核对结果）
 - 2026-09-04 11:56：完成 `pnpm exec vitest run`：33 个测试文件通过、1 个失败，207 项测试通过、5 项失败；失败均位于 `src/credits/credits.test.ts`，mock 链的 `values` / `set` / `transaction` 等不完整，本轮未修复。（evidence: 主流程 Vitest 输出、`src/credits/credits.test.ts`）
 - 2026-09-03 13:45：完成队列 `Failed to fetch` 根因定位：旧 dev session `89279` 已不存在，`Get-NetTCPConnection` 确认 3000 端口无监听；创作页 `recoverTasks` 在 fetch 失败后执行 `console.error`，触发 Next 开发环境红色覆盖层。该错误属于开发服务断连，不代表歌曲生成失败。（evidence: dev session、端口监听检查与 `recoverTasks` 错误处理）
-- 2026-09-03 13:45：完成队列只读请求与断网恢复：新增 `src/lib/creation-queue-request.ts`，提供 45 秒 AbortController 超时、父 signal 取消，并将 HTTP/网络失败转换为判别结果而不抛错；创作页后台恢复断连时保留本地任务、仅记录 warn 摘要、不修改歌曲状态，采用 30/60/120 秒退避，offline 不请求，online/focus 恢复，失败后即使本地没有 failed 任务仍继续重试，卸载后不应用响应。（evidence: `creation-queue-request.ts` 与 Admin Create 恢复请求逻辑）
+- 2026-09-03 13:45：完成队列只读请求与断网恢复：新增 `src/lib/creation/creation-queue-request.ts`，提供 45 秒 AbortController 超时、父 signal 取消，并将 HTTP/网络失败转换为判别结果而不抛错；创作页后台恢复断连时保留本地任务、仅记录 warn 摘要、不修改歌曲状态，采用 30/60/120 秒退避，offline 不请求，online/focus 恢复，失败后即使本地没有 failed 任务仍继续重试，卸载后不应用响应。（evidence: `creation-queue-request.ts` 与 Admin Create 恢复请求逻辑）
 - 2026-09-03 13:45：完成本轮队列请求验证：新增 6 项测试，连同 store/API 共 17 项测试通过，TypeScript 与 3 个文件的 Biome 检查通过。（evidence: 请求 helper、store/API 回归测试与质量检查结果）
 - 2026-09-03 13:45：完成本地开发服务恢复：通过隐藏后台 `Start-Process` 启动 `node next dev`，3000 端口进程 PID 为 `15492`（启动父进程 `14836`），日志位于 `F:/CodexHome/logs/scooprym-dev-20260903-1345.out.log` 与 `.err.log`；未认证 `GET /api/songs` 返回 HTTP 401 `Unauthorized`，确认接口可连接且仍要求认证。（evidence: 端口进程、后台服务日志与本地 HTTP 检查）
 - 2026-09-03 12:05：完成两首存量歌曲封面真实恢复：通过 `scripts/repair-saved-song-covers.ts --execute` 仅补生成 `Kinda Neighbor`（`1d0e596e-73bf-47eb-8cad-f7defd96a8b1`）与 `The Host Next Door`（`a02d8fa6-297e-459c-ba55-f840f0c34bc6`）的缺失封面；两首现均为 `completed/publish_ready`、`last_error=null`，两张公开封面 HEAD 均返回 200（PNG/WebP），`is_published` 仍为 false。脚本验证恢复前后 `audio_url` / `audio_key` 完全一致，未重新生成歌词或音乐。（evidence: 恢复脚本执行、数据库回读、音频字段对比与封面 HEAD 检查）
@@ -308,7 +308,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-09-02 23:21：完成修复歌曲的全链路只读复核：开发服务器 `localhost:3000` 正常；歌曲 `c05a5994-87c6-4675-9cc9-b15d95b394de` 的 generation attempt 为 `completed`，工作流为 `completed/publish_ready`，歌词含 14 个演唱行及 `[Intro]`、`[Verse 1]`、`[Verse 2]`、`[Bridge]`、`[Hook]`，无 HTML 换行残留，统一 Product Check 全部通过。（evidence: 开发服务、数据库状态、统一歌词检查与 Product Check 回读）
 - 2026-09-02 23:21：完成歌曲资产与来源复核：音频及封面 HEAD 均返回 200，内容类型分别为 `audio/mpeg` 与 `image/png`，对应存储 key 与新闻来源均存在；历史步骤缺少修复成功审计记录的问题已补齐，新增 `checking_product` attempt 2 `completed` 与 `publish_ready` `completed` 记录。（evidence: 远程资产 HEAD、数据库存储字段、来源记录与工作流步骤）
 - 2026-09-02 23:21：完成本轮复核质量验证：相关 43 项测试、Biome 与 TypeScript `tsc` 全部通过。（evidence: 定向测试、Biome 与 TypeScript 检查结果）
-- 2026-09-02 23:05：完成结构化输出压平歌词的无损恢复修复：读取歌曲 `c05a5994-87c6-4675-9cc9-b15d95b394de` 后确认数据库歌词仅识别 4 个演唱行，根因是段落内换行被结构化输出压平且 `[Final Hook]` 未被识别；`lyrics-utils` 新增 `Final Hook` / `Final Chorus` 别名与 `restoreCollapsedLyricLines`，仅恢复换行而不增删歌词字符。（evidence: `src/lib/lyrics-utils.ts` 与真实歌曲歌词检查）
+- 2026-09-02 23:05：完成结构化输出压平歌词的无损恢复修复：读取歌曲 `c05a5994-87c6-4675-9cc9-b15d95b394de` 后确认数据库歌词仅识别 4 个演唱行，根因是段落内换行被结构化输出压平且 `[Final Hook]` 未被识别；`lyrics-utils` 新增 `Final Hook` / `Final Chorus` 别名与 `restoreCollapsedLyricLines`，仅恢复换行而不增删歌词字符。（evidence: `src/lib/music/lyrics-utils.ts` 与真实歌曲歌词检查）
 - 2026-09-02 23:05：完成真实存量歌词及工作流无损修复：目标歌曲由 4 个演唱行恢复为 14 行，验证 `charactersPreserved=true`；事务内将歌曲恢复为 `completed`、关联工作流恢复为 `publish_ready`，原音频与封面均保留，未调用任何生成模型。（evidence: 歌曲 `c05a5994-87c6-4675-9cc9-b15d95b394de` 及关联工作流数据库状态）
 - 2026-09-02 23:05：完成本轮压平歌词恢复验证：相关 38 项测试、TypeScript `tsc` 与 Biome 6 个文件检查全部通过。（evidence: 定向测试、TypeScript 与 Biome 检查结果）
 - 2026-09-02 18:17：完成歌词成品门禁误杀的进一步修复：新增统一预检 `inspectSongLyrics`，将可恢复的 `<br>` 与转义换行先规范化后检查，不再将其直接判为不可发布；`runPersistedSongProductCheck` 会规范化并回写旧歌词，使存量歌曲可通过同一成品检查边界自动恢复。（evidence: `inspectSongLyrics`、`runPersistedSongProductCheck` 及相关测试）
@@ -316,7 +316,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-09-02 18:17：完成本轮门禁与重试分流验证：相关 4 个测试文件共 37 项测试全部通过，Biome 检查 5 个文件通过，TypeScript `tsc --noEmit` 通过。（evidence: 定向测试、Biome 与 TypeScript 检查结果）
 - 2026-09-02 17:33：完成 Admin 侧边栏账户菜单 Hydration 修复：`SidebarUser` 使用 `useMounted`，SSR 与客户端首帧渲染同尺寸静态账户按钮，组件挂载后才启用 Radix `DropdownMenu`，从源头避免 `DropdownMenuTrigger asChild` 在服务端与客户端生成不同 `useId`；未使用 `suppressHydrationWarning` 掩盖差异。（evidence: `SidebarUser` 实现及 Radix UI issue #3700）
 - 2026-09-02 17:33：完成 Hydration 修复质量验证：TypeScript、Biome 与 `git diff --check` 均通过。（evidence: TypeScript、Biome、git diff check 结果）
-- 2026-09-02 17:04：完成结构化歌词格式化逻辑统一：新增 `src/lib/lyrics-utils.ts` 的 `normalizeStructuredLyrics`，并接入 AI 结果、Admin 创作页、MiniMax 提交前与成品检查四个边界；统一支持官方结构标签、HTML/字面量换行，以及冒号、长横线、普通短横线形式的标签说明，同时拆分 `[Verse 1 - vocal note]正文` 等标签与正文粘连输入。（evidence: `src/lib/lyrics-utils.ts`、AI 结果处理、Admin 创作页、MiniMax 提交边界与 Product Check 调用点）
+- 2026-09-02 17:04：完成结构化歌词格式化逻辑统一：新增 `src/lib/music/lyrics-utils.ts` 的 `normalizeStructuredLyrics`，并接入 AI 结果、Admin 创作页、MiniMax 提交前与成品检查四个边界；统一支持官方结构标签、HTML/字面量换行，以及冒号、长横线、普通短横线形式的标签说明，同时拆分 `[Verse 1 - vocal note]正文` 等标签与正文粘连输入。（evidence: `src/lib/music/lyrics-utils.ts`、AI 结果处理、Admin 创作页、MiniMax 提交边界与 Product Check 调用点）
 - 2026-09-02 17:04：完成歌词规范化回归验证与存量数据修复：新增相关回归测试，36 项定向测试、Biome、TypeScript `tsc` 全部通过；已无损修复歌曲 `f53525f9-d264-491e-9c6c-9cb7f4c4a6a2` 及关联工作流，成品检查通过并恢复为 `publish_ready`。本次未重新调用音乐模型，未产生新的音乐生成费用。（evidence: 回归测试与质量检查结果、歌曲及关联工作流数据库状态）
 - 2026-09-02 16:02：完成 MiniMax 默认模型统一切换：`MINIMAX_MUSIC_MODEL` 已设为 `music-2.0`，歌曲工作流阶段记录、实际 API 请求、制作提示词与管理后台显示均读取同一配置，消除 `music-2.6` 分散硬编码造成的运行与展示不一致。（evidence: `src/ai/config/models.ts` 及歌曲工作流、MiniMax 请求、制作提示词、管理后台相关调用点）
 - 2026-09-02 16:02：完成默认模型切换验证，相关 18 项测试与 Biome 检查全部通过。（evidence: 定向测试与 Biome 检查结果）
@@ -379,9 +379,9 @@ _Last updated: 2026-09-04 23:59_
 - 2026-08-30 20:25：新增 ScoopRYM 专属编辑风格层，以 11 套具有平台辨识度的风格替换创作页旧的低质或泛化 persona 命名；每套风格明确绑定适用新闻、叙事镜头、歌词技法与制作签名。（evidence: 创作页编辑风格配置与选择组件）
 - 2026-08-30 20:25：完成编辑风格端到端贯通：选定风格进入两遍歌词生成、AI 音乐提示词增强及 fallback，且未修改既有五层底层标签 schema。（evidence: 歌词生成与音乐提示词链路）
 - 2026-08-30 20:25：完成编辑风格相关自动化验证，12 项测试与 TypeScript `tsc` 均通过。（evidence: 测试与类型检查输出）
-- 2026-08-30 11:57：完成读者投稿输入规则：公开链接与事件描述均可单独提交，服务端统一执行“至少一项有内容”的校验，并保持每日投稿限制。（evidence: `src/lib/story-submissions.ts`、投稿 API 与首页投稿表单）
+- 2026-08-30 11:57：完成读者投稿输入规则：公开链接与事件描述均可单独提交，服务端统一执行“至少一项有内容”的校验，并保持每日投稿限制。（evidence: `src/lib/stories/story-submissions.ts`、投稿 API 与首页投稿表单）
 - 2026-08-30 11:57：完成 Admin `Public submissions` 审核工作台：支持编辑来源与摘要、保存并检查、恢复/拒绝、填写拒绝原因、查看审核人审计，以及仅将具备公开来源的投稿送入 Story Radar。（evidence: `src/components/admin/story-submissions.tsx`、`src/components/admin/story-radar-page.tsx`、`src/app/api/admin/story-submissions/`）
-- 2026-08-30 11:57：完成安全来源元数据抓取及重复投稿治理：先规范化 URL 与查重，再抓取标题、描述、图片和发布时间；重复项通过管理员显式合并并原子累加 `submissionCount`，来源记录保留合并原因。（evidence: `src/ai/text/lib/url-content-extractor.ts`、`src/lib/story-submissions.ts`、`src/app/api/admin/story-submissions/[id]/merge/route.ts`）
+- 2026-08-30 11:57：完成安全来源元数据抓取及重复投稿治理：先规范化 URL 与查重，再抓取标题、描述、图片和发布时间；重复项通过管理员显式合并并原子累加 `submissionCount`，来源记录保留合并原因。（evidence: `src/ai/text/lib/url-content-extractor.ts`、`src/lib/stories/story-submissions.ts`、`src/app/api/admin/story-submissions/[id]/merge/route.ts`）
 - 2026-08-30 11:57：完成投稿审核数据结构扩展与迁移 `0030_brave_wendell_vaughn.sql`，新增来源元数据、拒绝原因及相关校验，并已在本地数据库应用迁移。（evidence: `src/db/schema.ts`、`src/db/migrations/0030_brave_wendell_vaughn.sql`）
 - 2026-08-30 11:57：完成投稿审核闭环质量验证：TypeScript 类型检查通过，并在已登录 Chrome 中完成投稿、元数据抓取、查重、显式合并、审计信息与送入 Radar 边界的端到端验证；验证产生的测试数据已清理。（evidence: `tsc --noEmit`、已登录 Chrome 端到端验收）
 - 2026-08-28 16:37：完成 Dashboard `Saved Songs` 页面：基于当前用户真实 `song_favorite` 关系查询已发布且生成成功的歌曲，每页展示 10 首；Dashboard Sidebar 新增 `Saved Songs` 入口。（evidence: Dashboard Saved Songs 页面、Dashboard Sidebar、`song_favorite` 查询）
@@ -402,7 +402,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-08-28 14:21：完成最终增量质量验证：TypeScript 类型检查、Biome 检查及 `player-store` 3 项测试全部通过。（evidence: `pnpm exec tsc --noEmit`、Biome、`src/store/player-store.test.ts`）
 - 2026-08-28 12:41：完成管理员热点采纳到内容生产的闭环：Story Radar 候选可被管理员幂等采纳并关联或创建正式 Story，随后进入管理员创作页继续歌曲生成，并复用既有发布流程；已采纳候选保留关联状态且不可误恢复。（evidence: `src/app/api/admin/story-radar/[id]/adopt/route.ts`、`src/components/admin/story-radar.tsx`、`src/components/admin/story-vote-results.tsx`、`src/app/api/generate/music/route.ts`）
 - 2026-08-28 12:41：完成全站连续播放与持久播放器：播放器状态新增队列、上一首、下一首及播完自动续播；Today、月度榜、Gallery 与歌曲卡片均注入可播放队列；全局布局新增固定播放器，支持封面、进度、切歌、分享与关闭。（evidence: `src/store/player-store.ts`、`src/components/player/global-player.tsx`、`src/components/player/persistent-player.tsx`、`src/app/[locale]/layout.tsx`）
-- 2026-08-28 12:41：完成匿名与登录用户统一的消费漏斗统计：记录详情浏览、开始播放、有效播放、完整播放及分享事件，使用匿名行为键与会话事件去重；管理员 Dashboard 新增最近 30 天 Listener Funnel。（evidence: `src/db/schema.ts`、`src/app/api/songs/[id]/engagement/route.ts`、`src/lib/song-engagement-client.ts`、`src/actions/admin.ts`、`src/components/admin/dashboard/engagement-funnel.tsx`）
+- 2026-08-28 12:41：完成匿名与登录用户统一的消费漏斗统计：记录详情浏览、开始播放、有效播放、完整播放及分享事件，使用匿名行为键与会话事件去重；管理员 Dashboard 新增最近 30 天 Listener Funnel。（evidence: `src/db/schema.ts`、`src/app/api/songs/[id]/engagement/route.ts`、`src/lib/songs/song-engagement-client.ts`、`src/actions/admin.ts`、`src/components/admin/dashboard/engagement-funnel.tsx`）
 - 2026-08-28 12:41：完成评论治理与管理员处置闭环：保留既有 280 字限制、链接/邮箱/域名/混淆链接/广告拦截、频率限制、冷却与重复评论防护；新增登录用户举报、本人评论不可举报、重复举报幂等，以及管理员保留或隐藏评论的处置页与侧栏入口。（evidence: `src/db/schema.ts`、`src/app/api/songs/[id]/comments/[commentId]/report/route.ts`、`src/app/api/admin/comment-reports/[id]/route.ts`、`src/components/songs/song-comments.tsx`、`src/app/[locale]/(admin)/admin/comments/page.tsx`）
 - 2026-08-28 12:41：完成数据库结构落地：迁移 `0025_flaky_reaper.sql` 建立热点候选与 Story 的采纳关联，迁移 `0026_bitter_betty_brant.sql` 建立消费事件与评论举报数据结构；两项迁移均已成功应用。（evidence: `src/db/migrations/0025_flaky_reaper.sql`、`src/db/migrations/0026_bitter_betty_brant.sql`、数据库迁移执行结果）
 - 2026-08-28 12:41：完成本阶段代码级验证：播放器、评论治理、热点投票、雷达分类、歌曲工作流与 Mureka 生成的 38 项关键测试全部通过，TypeScript 类型检查与生产构建通过；完整 Vitest 共 79 项通过，只有既有 `src/credits/credits.test.ts` 因测试 mock 与当前积分实现不一致而失败 5 项，本次功能未引入新的测试失败。（evidence: targeted Vitest、`pnpm exec tsc --noEmit --pretty false`、`pnpm build`、full Vitest）
@@ -447,15 +447,15 @@ _Last updated: 2026-09-04 23:59_
 - 2026-08-23 14:20：完成迁移后结构核验：`song` 中旧的新闻来源字段与生成过程/状态字段已全部移除，现有 212 首歌曲均有 Story 与 Generation Attempt 关联，三表数据边界与非空关系生效。（evidence: 当前数据库 schema 与关联完整性只读查询）
 - 2026-08-23 11:52：完成 `story`、`song`、`generation_attempt` 三表 schema 改造，并为外键、来源唯一性、任务状态与时间查询补齐索引；未引入 `song_version` 或其他推测字段。（evidence: `src/db/schema.ts`）
 - 2026-08-23 11:52：完成数据安全回填迁移 `0016_split_story_song_generation_attempt.sql`：按来源 URL 归并新闻、无 URL 记录独立建 Story，为既有歌曲建立 Story 关联及 Generation Attempt，再收紧非空约束并移除 `song` 中已迁出的来源与生成过程字段。（evidence: `src/db/migrations/0016_split_story_song_generation_attempt.sql`、`src/db/migrations/meta/0016_snapshot.json`）
-- 2026-08-23 11:52：完成三表架构在完整业务链路中的迁移：音乐生成、Worker 原子认领与状态推进、歌曲删除、封面重试，以及首页、Gallery、歌曲详情、后台、My Songs、收藏、最近歌曲与状态查询等读取链路均改为读取 Story 与最新 Generation Attempt，同时保持原有 API/页面 DTO 兼容。（evidence: `src/app/api/generate/music/route.ts`、`src/lib/song-workflow.ts`、`src/app/api/songs/`、`src/app/api/generate/cover/retry/route.ts`、首页/营销页/后台相关读取模块）
+- 2026-08-23 11:52：完成三表架构在完整业务链路中的迁移：音乐生成、Worker 原子认领与状态推进、歌曲删除、封面重试，以及首页、Gallery、歌曲详情、后台、My Songs、收藏、最近歌曲与状态查询等读取链路均改为读取 Story 与最新 Generation Attempt，同时保持原有 API/页面 DTO 兼容。（evidence: `src/app/api/generate/music/route.ts`、`src/lib/creation/song-workflow.ts`、`src/app/api/songs/`、`src/app/api/generate/cover/retry/route.ts`、首页/营销页/后台相关读取模块）
 - 2026-08-23 11:52：完成本轮数据结构改造质量验证：TypeScript 类型检查、Biome、Drizzle schema check 通过，13 个歌曲生成与工作流核心测试全部通过。（evidence: `pnpm exec tsc --noEmit`、Biome、Drizzle check、核心测试命令结果）
 - 2026-08-22 22:17：完成 Mureka V9 音乐生成真实连通性验证：配置检查与单元测试通过；真实请求固定 `n=1`，约 51.7 秒完成，返回 `audio/mpeg`（3,544,755 bytes），MP3 文件签名校验通过；全程未触发备用模型，且未输出 API Key 或音频 URL。（evidence: Mureka V9 实际 API 冒烟测试及 `src/ai/music/lib/generation.test.ts`）
-- 2026-08-22 16:09：完成管理员音乐生成链路加固：生成、歌词、重写、封面重试及工作流入口统一收紧管理员权限，并移除开发环境无 Cookie 时冒用最近数据库会话的调试后门；非管理员不再能通过直接调用 API 绕过界面限制。（evidence: `src/lib/server.ts`、`src/app/api/generate/lyrics/route.ts`、`src/app/api/generate/lyrics/rewrite/route.ts`、`src/app/api/generate/music/route.ts`、`src/app/api/generate/cover/retry/route.ts`）
+- 2026-08-22 16:09：完成管理员音乐生成链路加固：生成、歌词、重写、封面重试及工作流入口统一收紧管理员权限，并移除开发环境无 Cookie 时冒用最近数据库会话的调试后门；非管理员不再能通过直接调用 API 绕过界面限制。（evidence: `src/lib/auth/server.ts`、`src/app/api/generate/lyrics/route.ts`、`src/app/api/generate/lyrics/rewrite/route.ts`、`src/app/api/generate/music/route.ts`、`src/app/api/generate/cover/retry/route.ts`）
 - 2026-08-22 16:09：完成歌词与新闻来源链路加固：真实抓取并规范化新闻正文，加入 URL 安全校验与结构化请求验证，保留实际风格提示，并把提取正文及来源元数据作为快照贯穿歌词响应、前端任务和歌曲持久化。（evidence: `src/ai/text/lib/url-content-extractor.ts`、`src/ai/text/lib/source-analysis.ts`、`src/ai/text/lib/generation.ts`、`src/app/api/generate/lyrics/route.ts`、`src/app/[locale]/(protected)/create/page.tsx`）
-- 2026-08-22 16:09：完成异步任务幂等与恢复能力：新增 `queued` 状态、客户端 UUID 唯一恢复键和原子 `queued → processing` 认领，QStash 仅传 `songId` 并使用去重标识；工作器从数据库读取可信输入，避免重复模型调用、重复上传及并发状态覆盖。（evidence: `src/db/schema.ts`、`src/db/migrations/0015_friendly_shatterstar.sql`、`src/lib/song-workflow.ts`、`src/lib/queue.ts`、`src/app/api/generate/music/route.ts`、`src/app/api/worker/generate-music/route.ts`）
+- 2026-08-22 16:09：完成异步任务幂等与恢复能力：新增 `queued` 状态、客户端 UUID 唯一恢复键和原子 `queued → processing` 认领，QStash 仅传 `songId` 并使用去重标识；工作器从数据库读取可信输入，避免重复模型调用、重复上传及并发状态覆盖。（evidence: `src/db/schema.ts`、`src/db/migrations/0015_friendly_shatterstar.sql`、`src/lib/creation/song-workflow.ts`、`src/lib/infrastructure/queue.ts`、`src/app/api/generate/music/route.ts`、`src/app/api/worker/generate-music/route.ts`）
 - 2026-08-22 16:09：完成前端任务恢复与入口收敛：任务在请求前写入本地队列，按当前用户隔离，支持 UUID/服务端歌曲 ID 对齐、刷新恢复与完整任务窗口轮询；重复 Dashboard 创作页改为跳转真实 `/create`，侧栏仅向管理员展示创作入口。（evidence: `src/app/[locale]/(protected)/create/page.tsx`、`src/store/create-store.ts`、`src/app/[locale]/(protected)/dashboard/create/page.tsx`、`src/config/sidebar-config.tsx`、`src/app/api/songs/[id]/processing-status/route.ts`）
 - 2026-08-22 16:09：完成本轮自动化质量验证：43 项测试全部通过，TypeScript 类型检查通过，目标变更文件 Biome 检查通过。（evidence: 测试、TypeScript、Biome 命令结果）
-- 2026-08-22 11:10：完成 Dashboard 音乐生成链路只读审查，覆盖前端入口、新闻与歌词处理、音乐/封面生成、QStash 工作流、歌曲状态、积分账本与权限边界；确认真实可用入口为 `/create`，而 `/dashboard/create` 仅为无提交逻辑的静态重复页面。本轮未修改任何业务代码。（evidence: `src/app/[locale]/(protected)/create/page.tsx`、`src/app/[locale]/(protected)/dashboard/create/page.tsx`、`src/app/api/generate/`、`src/lib/song-workflow.ts`）
+- 2026-08-22 11:10：完成 Dashboard 音乐生成链路只读审查，覆盖前端入口、新闻与歌词处理、音乐/封面生成、QStash 工作流、歌曲状态、积分账本与权限边界；确认真实可用入口为 `/create`，而 `/dashboard/create` 仅为无提交逻辑的静态重复页面。本轮未修改任何业务代码。（evidence: `src/app/[locale]/(protected)/create/page.tsx`、`src/app/[locale]/(protected)/dashboard/create/page.tsx`、`src/app/api/generate/`、`src/lib/creation/song-workflow.ts`）
 - 2026-08-21 15:38：修复首页独立波浪分隔器占据文档流高度而在 Hero 底部产生空白色带的问题：分隔器改为 `h-0` 覆盖式波浪，不再额外撑高模块；Today、Biggest、Gallery 与 Submit 统一为横向渐变方向，移除 Biggest 多余顶部边框，并取消分隔器翻转以避免渐变方向错位。（evidence: 首页波浪分隔器及相关内容模块）
 - 2026-08-21 15:38：完成统一波浪边界实机与质量验收：在当前 Chrome 中逐一检查 Hero→Today、Today→Biggest、Biggest→Vote、Vote→Gallery、Gallery→Submit、Submit→FAQ 六个边界，过渡均正常；目标文件 Biome 检查与 `pnpm exec tsc --noEmit` 均通过。（evidence: 当前 Chrome 本地首页验收；Biome/tsc）
 - 2026-08-21 15:13：完成首页模块统一波浪分隔改造：新增可复用 `SectionWaveDivider`，并在 `page.tsx` 集中为 Hero→Today、Today→Biggest、Biggest→Vote、Vote→Gallery、Gallery→Submit、Submit→FAQ 六个内容边界插入波浪分隔，避免由各模块自行管理边界造成重复或衔接不一致。（evidence: `src/components/blocks/daily/section-wave-frame.tsx`、`src/app/[locale]/(marketing)/(home)/page.tsx`）
@@ -494,7 +494,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-07-21 16:29：完成本轮整体 UI 重设计，覆盖歌曲详情页、“The Internet’s Verdict” 反应条、Hero、Today/Biggest、Gallery 标题区以及 Vote/Submit；各区统一为互联网小报编辑部视觉，并以克制的 meme 反应控制装饰和动效强度。
 - 2026-07-21 16:29：完成业务能力保真检查：重设计后继续使用真实 reactions API 与真实计数/选择语义，保留播放器、分享、下载及来源链接，新闻内容层级优先于歌曲操作。
 - 2026-07-21 16:29：完成已登录且安装 Codex 插件的真实 Chrome 验收，覆盖桌面端、移动端、浅色与深色模式，页面无横向溢出；Biome、`pnpm exec tsc --noEmit` 与 `git diff --check` 均通过。（evidence: 真实 Chrome 桌面/移动/明暗模式验收；Biome/tsc/git diff check）
-- 2026-07-21 15:52：完成真实歌曲反应数据层：新增 `song_reaction` 表、反应类型约束、歌曲与参与者唯一索引、歌曲与反应类型聚合索引及迁移；迁移已成功应用。登录用户以用户身份记录，匿名用户以 HttpOnly Cookie 标识，同一参与者在单首歌曲上仅保留一个当前反应。（evidence: `src/db/schema.ts`、`src/db/migrations/0014_furry_victor_mancha.sql`、`src/app/api/songs/[id]/reactions/route.ts`、`src/lib/song-reaction-actor.ts`）
+- 2026-07-21 15:52：完成真实歌曲反应数据层：新增 `song_reaction` 表、反应类型约束、歌曲与参与者唯一索引、歌曲与反应类型聚合索引及迁移；迁移已成功应用。登录用户以用户身份记录，匿名用户以 HttpOnly Cookie 标识，同一参与者在单首歌曲上仅保留一个当前反应。（evidence: `src/db/schema.ts`、`src/db/migrations/0014_furry_victor_mancha.sql`、`src/app/api/songs/[id]/reactions/route.ts`、`src/lib/songs/song-reaction-actor.ts`）
 - 2026-07-21 15:52：完成歌曲详情互动组件：上线五种表情反馈、乐观更新、取消/切换反应、真实计数，以及短促表情粒子和英文印章动效；首页同步展示各歌曲真实 top reaction，Vote 区增加本机保存的 “LOCKED IN” 反馈。（evidence: `src/components/songs/song-reaction-dock.tsx`、`src/app/[locale]/(marketing)/songs/[slug]/page.tsx`、`src/components/songs/song-detail-client.tsx`、`src/components/blocks/daily/daily-home.tsx`、`src/components/blocks/daily/vote-submit.tsx`）
 - 2026-07-21 15:52：完成歌曲互动第一阶段验证：数据库迁移成功，Biome、`pnpm exec tsc --noEmit` 与 `git diff --check` 通过；在已登录且安装 Codex 插件的 Chrome 中验证桌面端、390px 手机端、明暗主题，以及真实反应写入、取消和动效反馈。（evidence: 数据库迁移与登录 Chrome 实机验证；Biome/tsc/git diff check）
 - 2026-07-21 15:25：完成 The ScoopRYM Desk 浅色视觉调整：以浅米色基底和青/黄/粉柔和模糊色块替代 `#111019` 黑色整段背景，标题与正文切换为深色；投票区和 “Send a tip” 更新为半透明白色圆角面板、浅边框与柔和阴影，投票选中态使用黄色背景，黄色 CTA 增加深色 hover，交互业务保持不变。（evidence: Biome、`pnpm exec tsc --noEmit`、`git diff --check` 通过；Chrome 确认与 Footer 及上方内容衔接正常）
@@ -509,7 +509,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-07-21 12:05：完成 Hero 桌面端与 433px 移动端实机验证：桌面 `h1` 为两行、128px，移动端为三行、48px；CTA 与 Today’s Drops 均处于合理位置，页面无横向溢出；可处理文件的 Biome 检查、`pnpm exec tsc --noEmit` 与 `git diff --check` 均通过。（evidence: 桌面端与 433px 移动端实机验证；Biome/tsc/git diff check）
 - 2026-07-21 11:54：完成新闻优先排版优化，范围覆盖 Today 主卡、今日三条、Daily Mix、`#gallery` 与歌曲详情页；新闻标题由 `font-black` 紧行距调整为已加载的 Noto Serif 400，并通过字号与留白建立信息层级，摘要统一为正常字重。
 - 2026-07-21 11:54：完成歌曲详情页内容层级重构：新闻标题提升为主内容 `h1`，歌曲名称降为 “The meme song” 次级 `h2`。
-- 2026-07-21 11:54：增强新闻摘要生成逻辑，`src/lib/song-editorial.ts` 支持拆分新闻首句与后续句，并规避 `E.R.`、`U.S.`、`Dr.` 等缩写误切；真实新闻使用后续句作为摘要，fallback 文案不再直接强调听歌。（evidence: `src/lib/song-editorial.ts`）
+- 2026-07-21 11:54：增强新闻摘要生成逻辑，`src/lib/songs/song-editorial.ts` 支持拆分新闻首句与后续句，并规避 `E.R.`、`U.S.`、`Dr.` 等缩写误切；真实新闻使用后续句作为摘要，fallback 文案不再直接强调听歌。（evidence: `src/lib/songs/song-editorial.ts`）
 - 2026-07-21 11:54：完成详情页移动端排版优化，标题字号降为 36px；390px 级视口下标题保持四行且无横向溢出。
 - 2026-07-21 11:54：完成桌面端与移动端 Chrome 实机验证：首页主新闻示例标题与 “Robots find their feelings.” 摘要正确分离，Gallery 仍保留 18 张卡片；4 个变更文件的 Biome 检查、`pnpm exec tsc --noEmit` 与 `git diff --check` 均通过。（evidence: Chrome 实机验证；Biome/tsc/git diff check）
 - 2026-07-21 11:37：完成首页 Gallery 内容扩容：管理员已发布歌曲查询上限调整为 24，PublicGallery 展示上限调整为 18，并维持 Today/Daily Mix 前 5 首与 Gallery 第 6 首起的去重边界。
@@ -527,7 +527,7 @@ _Last updated: 2026-09-04 23:59_
 - 2026-07-21 11:02：完成 Daily Mix 新闻标题列表化改造。（evidence: `src/components/blocks/daily/daily-home.tsx`）
 - 2026-07-21 11:02：完成 Archive 去重与卡片统一；归档内容排除当日歌曲及混合列表前 5 条，卡片统一为图片与文字分离结构。（evidence: `src/components/blocks/daily/public-gallery.tsx`）
 - 2026-07-21 11:02：完成 Vote/Submit 深色编辑部互动区改造。（evidence: `src/components/blocks/daily/vote-submit.tsx`）
-- 2026-07-21 11:02：新增统一的新闻标题与描述处理模块，落实标题 84 字符限制。（evidence: `src/lib/song-editorial.ts`）
+- 2026-07-21 11:02：新增统一的新闻标题与描述处理模块，落实标题 84 字符限制。（evidence: `src/lib/songs/song-editorial.ts`）
 - 2026-07-21 11:02：完成首页 1500px 内容宽度布局调整，同时保留原 Hero。（evidence: `src/app/[locale]/(marketing)/(home)/page.tsx`）
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
@@ -681,3 +681,10 @@ _Last updated: 2026-09-04 23:59_
 
 - 2026-08-22：修复 `song-workflow` 在非生产 Clash/Mihomo 环境中，因 Mureka 音频 CDN 域名解析至 `198.18.0.0/15` Fake-IP 而被误判为 SSRF 的问题。兼容规则仅允许域名且其全部解析结果均位于该网段；生产环境、IP 字面量、混合私网解析及重定向仍严格拒绝。
 - 2026-08-22：验证通过：`song-workflow` 9 项测试、Biome、TypeScript (`tsc`) 均通过；使用已登录真实账户的 Chrome 完成管理员端到端测试，Mureka V9（`n=1`）成功生成 2:32 音频，封面生成、对象存储、数据库落库、My Songs 展示与播放均成功；管理员积分保持 96，未扣减。
+
+## 2026-09-07：整理 src/lib 目录
+
+- 将根目录的 67 个实现与测试文件按认证、创作流程、歌曲、新闻、基础设施、共享工具、SEO、URL、文档及音乐职责归档；根目录仅保留 README.md 和 utils.ts。
+- 同步更新调用方、动态导入、测试模拟、维护脚本和文档引用；测试与实现继续同目录，不增加聚合导出或旧路径兼容文件。
+- src/lib/README.md 已记录目录职责、业务流程、客户端与服务端边界和新增模块归属规则。保留现有业务逻辑与 API 行为。
+- 验证：234 个相关代码文件通过 Biome；全量测试 309 项通过、8 项失败。修改前代码副本复测同样存在这 8 项失败，分别属于积分模拟（5 项）、雷达界面断言（2 项）、无日期新闻排序（1 项）。

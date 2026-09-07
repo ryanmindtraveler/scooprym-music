@@ -1,7 +1,7 @@
 'use server';
 
-import { validateTurnstileToken } from '@/lib/captcha';
-import { actionClient } from '@/lib/safe-action';
+import { validateTurnstileToken } from '@/lib/auth/captcha';
+import { actionClient } from '@/lib/auth/safe-action';
 import { z } from 'zod';
 
 // Captcha validation schema

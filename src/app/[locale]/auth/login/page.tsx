@@ -1,6 +1,6 @@
 import { LoginForm } from '@/components/auth/login-form';
 import { LocaleLink } from '@/i18n/navigation';
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { Routes } from '@/routes';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';

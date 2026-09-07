@@ -1,5 +1,5 @@
-import { refreshEditorialRadar } from '@/lib/editorial-workflow';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { refreshEditorialRadar } from '@/lib/stories/editorial-workflow';
 import { NextResponse } from 'next/server';
 
 export async function POST() {

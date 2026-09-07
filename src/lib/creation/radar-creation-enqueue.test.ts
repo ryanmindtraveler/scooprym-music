@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ db: vi.fn(), publish: vi.fn() }));
 vi.mock('@/db', () => ({ getDb: mocks.db }));
-vi.mock('@/lib/queue', () => ({
+vi.mock('@/lib/infrastructure/queue', () => ({
   canUseQStash: () => true,
   getWorkerUrl: () => 'http://localhost:3000/api/worker/radar-creation',
   qstash: { publishJSON: mocks.publish },

@@ -8,7 +8,7 @@ let searchAPI: ReturnType<typeof createI18nSearchAPI> | undefined;
 
 async function getSearchAPI() {
   if (!searchAPI) {
-    const { source } = await import('@/lib/source');
+    const { source } = await import('@/lib/docs/source');
 
     searchAPI = createI18nSearchAPI('advanced', {
       // Pass the i18n config for proper language detection

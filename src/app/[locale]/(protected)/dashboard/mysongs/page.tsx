@@ -1,7 +1,7 @@
 import { getDb } from '@/db/index';
 import { songFavorite, songPlay, song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { and, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
 
 import { SongsPageClient } from './songs-client';

@@ -2,7 +2,7 @@ import { type CommentHistoryItem, CommentHistoryList } from '@/components/dashbo
 import { RecentListeningPagination } from '@/components/dashboard/recent-listening-pagination';
 import { getDb } from '@/db';
 import { song, songComment, story } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { Routes } from '@/routes';
 import { and, count, desc, eq } from 'drizzle-orm';
 import { MessageSquareText } from 'lucide-react';

@@ -1,5 +1,5 @@
 import { checkPaymentCompletionAction } from '@/actions/billing/check-payment-completion';
-import { PAYMENT_POLL_INTERVAL } from '@/lib/constants';
+import { PAYMENT_POLL_INTERVAL } from '@/lib/shared/constants';
 import { useQuery } from '@tanstack/react-query';
 
 // Query keys for payment completion

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { songComment, songCommentReport } from '@/db/schema';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

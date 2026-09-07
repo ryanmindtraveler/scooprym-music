@@ -3,7 +3,7 @@
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePaymentCompletion } from '@/hooks/billing/use-payment-completion';
 import { useLocaleRouter } from '@/i18n/navigation';
-import { PAYMENT_MAX_POLL_TIME, PAYMENT_POLL_INTERVAL } from '@/lib/constants';
+import { PAYMENT_MAX_POLL_TIME, PAYMENT_POLL_INTERVAL } from '@/lib/shared/constants';
 import { Routes } from '@/routes';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircleIcon, CheckCircleIcon, RefreshCwIcon, XCircleIcon } from 'lucide-react';

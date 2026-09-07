@@ -1,6 +1,6 @@
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
-import { submitMusicGeneration } from '@/lib/submit-music-generation';
+import { getSession } from '@/lib/auth/server';
+import { submitMusicGeneration } from '@/lib/creation/submit-music-generation';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 300;

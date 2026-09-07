@@ -4,15 +4,15 @@ import { getDb } from '@/db';
 import { songComment, songFavorite, song as songTable, story as storyTable, user } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { routing } from '@/i18n/routing';
-import { constructMetadata } from '@/lib/metadata';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { constructMetadata } from '@/lib/seo/metadata';
 import {
   getSongCanonicalSlug,
   getSongSearchHeadline,
   getSongSeoDescription,
   getSongSeoTitle,
   getSongStoryContext,
-} from '@/lib/song-seo';
+} from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';

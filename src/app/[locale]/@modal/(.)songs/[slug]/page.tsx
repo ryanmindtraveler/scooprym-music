@@ -1,7 +1,7 @@
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { getIdFromSlug } from '@/lib/utils';
 import { and, eq } from 'drizzle-orm';
 import type { Locale } from 'next-intl';

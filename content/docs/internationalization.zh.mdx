@@ -142,7 +142,7 @@ export default async function Layout({
 
 ```tsx title="/app/[lang]/docs/layout.tsx" tab="Docs Layout"
 import type { ReactNode } from 'react';
-import { source } from '@/lib/source';
+import { source } from '@/lib/docs/source';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/app/layout.config';
 
@@ -164,7 +164,7 @@ export default async function Layout({
 ```
 
 ```ts title="page.tsx" tab="Docs Page"
-import { source } from '@/lib/source';
+import { source } from '@/lib/docs/source';
 
 export default async function Page({
   params,

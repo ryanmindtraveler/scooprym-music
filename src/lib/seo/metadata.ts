@@ -3,9 +3,9 @@ import { defaultMessages } from '@/i18n/messages';
 import { routing } from '@/i18n/routing';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
+import { getPublicEnglishPath } from '../urls/public-routing';
+import { getCanonicalBaseUrl, getImageUrl, getUrlWithLocale } from '../urls/urls';
 import { generateAlternates, getCurrentHreflang } from './hreflang';
-import { getPublicEnglishPath } from './public-routing';
-import { getCanonicalBaseUrl, getImageUrl, getUrlWithLocale } from './urls/urls';
 
 /**
  * Construct the metadata object for the current page (in docs/guides)

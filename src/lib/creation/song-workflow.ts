@@ -10,15 +10,15 @@ import { MINIMAX_MUSIC_MODEL } from '@/ai/config/models';
 import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { getDb } from '@/db/index';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
-import { audioInputHash, findAudioCheckpoint } from '@/lib/audio-checkpoint';
-import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
+import { audioInputHash, findAudioCheckpoint } from '@/lib/creation/audio-checkpoint';
 import {
   completeWorkflowStage,
   failWorkflowStep,
   getWorkflowRunBySongId,
   startWorkflowStage,
-} from '@/lib/song-creation-workflow';
-import { inspectSongProduct, readImageDimensions } from '@/lib/song-product-check';
+} from '@/lib/creation/song-creation-workflow';
+import { inspectSongProduct, readImageDimensions } from '@/lib/creation/song-product-check';
+import { normalizeStructuredLyrics } from '@/lib/music/lyrics-utils';
 import { deleteFile, uploadFile } from '@/storage';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { performance } from 'perf_hooks';

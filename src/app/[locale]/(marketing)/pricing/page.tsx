@@ -3,7 +3,7 @@ import Container from '@/components/layout/container';
 import { PricingTable } from '@/components/pricing/pricing-table';
 import { Zap } from 'lucide-react';
 
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';

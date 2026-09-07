@@ -13,7 +13,7 @@ import {
   getCommentLength,
   truncateCommentContent,
   validateCommentContent,
-} from '@/lib/comment-moderation';
+} from '@/lib/songs/comment-moderation';
 import { Routes } from '@/routes';
 import { formatDistanceToNow } from 'date-fns';
 import { Flag, LoaderCircle, MessageCircle, Send, Trash2 } from 'lucide-react';

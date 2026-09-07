@@ -1,7 +1,7 @@
 import { adminClient, inferAdditionalFields } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
+import { getBaseUrl } from '../urls/urls';
 import type { auth } from './auth';
-import { getBaseUrl } from './urls/urls';
 
 /**
  * https://www.better-auth.com/docs/installation#create-client-instance

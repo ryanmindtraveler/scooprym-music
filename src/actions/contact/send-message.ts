@@ -1,7 +1,7 @@
 'use server';
 
 import { websiteConfig } from '@/config/website';
-import { actionClient } from '@/lib/safe-action';
+import { actionClient } from '@/lib/auth/safe-action';
 import { sendEmail } from '@/mail';
 import { getLocale } from 'next-intl/server';
 import { z } from 'zod';

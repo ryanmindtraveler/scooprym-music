@@ -1,5 +1,5 @@
-import { enqueueRadarCreation } from '@/lib/radar-creation-enqueue';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { enqueueRadarCreation } from '@/lib/creation/radar-creation-enqueue';
 import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;

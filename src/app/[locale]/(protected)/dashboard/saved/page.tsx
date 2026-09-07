@@ -3,8 +3,8 @@ import { RecentListeningPagination } from '@/components/dashboard/recent-listeni
 import { getDb } from '@/db';
 import { song, songFavorite, story } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { getSession } from '@/lib/server';
-import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
+import { getSession } from '@/lib/auth/server';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/songs/song-status';
 import { Routes } from '@/routes';
 import { and, count, desc, eq, notInArray } from 'drizzle-orm';
 import { Heart } from 'lucide-react';

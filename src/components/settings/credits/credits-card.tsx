@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { websiteConfig } from '@/config/website';
 import { useCreditBalance, useCreditStats } from '@/hooks/billing/use-credits';
 import { useMounted } from '@/hooks/ui/use-mounted';
-import { CREDITS_EXPIRATION_DAYS } from '@/lib/constants';
+import { CREDITS_EXPIRATION_DAYS } from '@/lib/shared/constants';
 import { cn } from '@/lib/utils';
 import { RefreshCwIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';

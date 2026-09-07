@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ session: vi.fn(), limit: vi.fn(), recommend: vi.fn() }));
-vi.mock('@/lib/server', () => ({ getSession: mocks.session }));
-vi.mock('@/lib/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
+vi.mock('@/lib/auth/server', () => ({ getSession: mocks.session }));
+vi.mock('@/lib/infrastructure/ratelimit', () => ({ getRateLimiter: () => ({ limit: mocks.limit }) }));
 vi.mock('@/ai/text/lib/source-analysis', () => ({ recommendSourceStyle: mocks.recommend }));
 import { POST } from './route';
 const request = (body: unknown) =>

@@ -1,4 +1,4 @@
-import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
+import { normalizeStructuredLyrics } from '@/lib/music/lyrics-utils';
 
 export interface SongProductCheckInput {
   title?: string | null;

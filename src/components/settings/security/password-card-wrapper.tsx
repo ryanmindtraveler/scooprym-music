@@ -5,7 +5,7 @@ import { UpdatePasswordCard } from '@/components/settings/security/update-passwo
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useHasCredentialProvider } from '@/hooks/auth/use-auth';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 

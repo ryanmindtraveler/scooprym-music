@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { song, songPlay } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

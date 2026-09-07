@@ -1,6 +1,6 @@
-import type { User } from '@/lib/auth-types';
+import type { User } from '@/lib/auth/auth-types';
 import { createSafeActionClient } from 'next-safe-action';
-import { isDemoWebsite } from './demo';
+import { isDemoWebsite } from '../shared/demo';
 import { getSession } from './server';
 
 // -----------------------------------------------------------------------------

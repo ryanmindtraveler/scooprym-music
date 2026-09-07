@@ -19,7 +19,7 @@ import {
 import { useNavbarLinks } from '@/config/navbar-config';
 import { useScroll } from '@/hooks/ui/use-scroll';
 import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { cn } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { ArrowUpRightIcon } from 'lucide-react';

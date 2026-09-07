@@ -1,5 +1,5 @@
 import { PROVIDERS, type ProviderKey } from '@/ai/image/lib/provider-config';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { createFal } from '@ai-sdk/fal';
 import { fireworks } from '@ai-sdk/fireworks';
 import { google } from '@ai-sdk/google';

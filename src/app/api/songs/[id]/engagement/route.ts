@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { song, songEngagementEvent } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import {
   SONG_REACTION_ACTOR_COOKIE,
   createAnonymousReactionId,
   getSongReactionActorKey,
   isValidAnonymousReactionId,
-} from '@/lib/song-reaction-actor';
+} from '@/lib/songs/song-reaction-actor';
 import { eq } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';

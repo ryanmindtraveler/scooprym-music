@@ -1,4 +1,4 @@
-import { publishDueSongs } from '@/lib/editorial-workflow';
+import { publishDueSongs } from '@/lib/stories/editorial-workflow';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 

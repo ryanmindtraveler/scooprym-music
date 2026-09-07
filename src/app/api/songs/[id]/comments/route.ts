@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { song, songComment, user } from '@/db/schema';
-import { COMMENT_MAX_LENGTH, validateCommentContent } from '@/lib/comment-moderation';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
+import { COMMENT_MAX_LENGTH, validateCommentContent } from '@/lib/songs/comment-moderation';
 import { and, count, desc, eq, gte } from 'drizzle-orm';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';

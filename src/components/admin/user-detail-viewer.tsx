@@ -17,9 +17,9 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useBanUser, useUnbanUser } from '@/hooks/admin/use-users';
 import { useIsMobile } from '@/hooks/ui/use-mobile';
-import type { User } from '@/lib/auth-types';
-import { isDemoWebsite } from '@/lib/demo';
-import { formatDate } from '@/lib/formatter';
+import type { User } from '@/lib/auth/auth-types';
+import { isDemoWebsite } from '@/lib/shared/demo';
+import { formatDate } from '@/lib/shared/formatter';
 import { getStripeDashboardCustomerUrl } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
 import {

@@ -3,9 +3,9 @@
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
-import { formatBusinessDate } from '@/lib/business-time';
-import { getNewsCardSummary } from '@/lib/song-editorial';
-import { getSongCanonicalSlug } from '@/lib/song-seo';
+import { formatBusinessDate } from '@/lib/shared/business-time';
+import { getNewsCardSummary } from '@/lib/songs/song-editorial';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { motion } from 'framer-motion';

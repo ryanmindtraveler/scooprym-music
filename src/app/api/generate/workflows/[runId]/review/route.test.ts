@@ -5,8 +5,8 @@ const mocks = vi.hoisted(() => ({
   resolveLyricsReview: vi.fn(),
 }));
 
-vi.mock('@/lib/server', () => ({ getSession: mocks.getSession }));
-vi.mock('@/lib/song-creation-workflow', () => ({ resolveLyricsReview: mocks.resolveLyricsReview }));
+vi.mock('@/lib/auth/server', () => ({ getSession: mocks.getSession }));
+vi.mock('@/lib/creation/song-creation-workflow', () => ({ resolveLyricsReview: mocks.resolveLyricsReview }));
 
 import { POST } from './route';
 

@@ -9,16 +9,16 @@ import {
   song as songTable,
   story as storyTable,
 } from '@/db/schema';
-import { mapGenerationError } from '@/lib/music/error-handler';
-import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from '@/lib/music/production-recipe';
-import { dispatchMusicJob, markMusicQueueFailure } from '@/lib/song-job-dispatch';
-import { inspectSongLyrics } from '@/lib/song-product-check';
+import { dispatchMusicJob, markMusicQueueFailure } from '@/lib/creation/song-job-dispatch';
+import { inspectSongLyrics } from '@/lib/creation/song-product-check';
 import {
   type MusicGenerationRequest,
   createMusicRequestFingerprint,
   musicGenerationRequestSchema,
   prepareMiniMaxLyricsForGeneration,
-} from '@/lib/song-workflow';
+} from '@/lib/creation/song-workflow';
+import { mapGenerationError } from '@/lib/music/error-handler';
+import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

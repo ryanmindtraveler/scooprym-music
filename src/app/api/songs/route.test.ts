@@ -4,12 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ getDb: vi.fn(), getSession: vi.fn() }));
 vi.mock('@/db/index', () => ({ getDb: mocks.getDb }));
-vi.mock('@/lib/server', () => ({ getSession: mocks.getSession }));
+vi.mock('@/lib/auth/server', () => ({ getSession: mocks.getSession }));
 vi.mock('@/db/song-query', async () => {
   const { generationAttempt } = await import('@/db/schema');
   return { createLatestGenerationAttemptQuery: () => ({ ...generationAttempt, rowNumber: generationAttempt.id }) };
 });
-vi.mock('@/lib/song-creation-workflow', () => ({ getSongCreationPhase: () => 'product_check' }));
+vi.mock('@/lib/creation/song-creation-workflow', () => ({ getSongCreationPhase: () => 'product_check' }));
 
 import { GET } from './route';
 

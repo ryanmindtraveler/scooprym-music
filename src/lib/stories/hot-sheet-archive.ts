@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { hotSheetEdition, storyCandidate } from '@/db/schema';
-import { refreshEditorialRadar } from '@/lib/editorial-workflow';
-import { getHotSheetScheduledDay } from '@/lib/hot-sheet-schedule';
-import { rankPublicStoryCandidates } from '@/lib/story-voting';
+import { refreshEditorialRadar } from '@/lib/stories/editorial-workflow';
+import { getHotSheetScheduledDay } from '@/lib/stories/hot-sheet-schedule';
+import { rankPublicStoryCandidates } from '@/lib/stories/story-voting';
 import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 
 export async function archiveDailyHotSheet(now = new Date()) {

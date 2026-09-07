@@ -1,6 +1,6 @@
 import { getDb } from '@/db';
 import { radarCreationJob, songCreationRun } from '@/db/schema';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { getRadarGeneratedSongs } from '@/lib/story-radar/generated-songs';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';

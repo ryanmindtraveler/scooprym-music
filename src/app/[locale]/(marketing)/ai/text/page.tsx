@@ -1,5 +1,5 @@
 import { WebContentAnalyzer } from '@/ai/text/components/web-content-analyzer';
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { BotIcon, FileTextIcon, GlobeIcon, ZapIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';

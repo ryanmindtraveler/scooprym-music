@@ -6,10 +6,10 @@ import { CreateMusicForm } from '@/components/create/form/create-music-form';
 import { CreationStage } from '@/components/create/stage/creation-stage'; // Updated Import
 
 import { useCreditBalance } from '@/hooks/billing/use-credits';
-import { authClient } from '@/lib/auth-client';
-import { canRestoreQueueStage, canResumeCreationWorkflow } from '@/lib/creation-context-guard';
-import { fetchCreationQueue } from '@/lib/creation-queue-request';
-import { normalizeStructuredLyrics } from '@/lib/lyrics-utils';
+import { authClient } from '@/lib/auth/auth-client';
+import { canRestoreQueueStage, canResumeCreationWorkflow } from '@/lib/creation/creation-context-guard';
+import { fetchCreationQueue } from '@/lib/creation/creation-queue-request';
+import { normalizeStructuredLyrics } from '@/lib/music/lyrics-utils';
 import { useCreateStore, usePlayerStore } from '@/store';
 import type { CreationTask } from '@/store/create-store'; // Data Type
 import type { LyricWorkshop } from '@/types/lyric-workshop';

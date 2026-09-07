@@ -1,9 +1,9 @@
 import { getDb } from '@/db';
 import { songReaction, song as songTable, story as storyTable, user } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { constructMetadata } from '@/lib/metadata';
-import { isMissingPublishFlagError } from '@/lib/song-publish';
-import { type SongReactionType, isSongReactionType } from '@/lib/song-reactions';
+import { constructMetadata } from '@/lib/seo/metadata';
+import { isMissingPublishFlagError } from '@/lib/songs/song-publish';
+import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
 import type { Song } from '@/types/song';
 import { and, count, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import type { Metadata } from 'next';

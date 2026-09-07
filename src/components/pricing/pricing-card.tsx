@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useMounted } from '@/hooks/ui/use-mounted';
 import { useLocalePathname } from '@/i18n/navigation';
-import { formatPrice } from '@/lib/formatter';
+import { formatPrice } from '@/lib/shared/formatter';
 import { cn } from '@/lib/utils';
 import {
   type PaymentType,

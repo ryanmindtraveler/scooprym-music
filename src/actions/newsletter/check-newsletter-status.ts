@@ -1,6 +1,6 @@
 'use server';
 
-import { userActionClient } from '@/lib/safe-action';
+import { userActionClient } from '@/lib/auth/safe-action';
 import { isSubscribed } from '@/newsletter';
 import { z } from 'zod';
 

@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   findAudioCheckpoint: vi.fn(),
 }));
 
-vi.mock('@/lib/audio-checkpoint', async (importOriginal) => ({
+vi.mock('@/lib/creation/audio-checkpoint', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./audio-checkpoint')>()),
   findAudioCheckpoint: mocks.findAudioCheckpoint,
 }));
@@ -36,7 +36,7 @@ vi.mock('@/storage', () => ({
   uploadFile: mocks.uploadFile,
   deleteFile: mocks.deleteFile,
 }));
-vi.mock('@/lib/song-creation-workflow', () => ({
+vi.mock('@/lib/creation/song-creation-workflow', () => ({
   getWorkflowRunBySongId: mocks.getWorkflowRunBySongId,
   startWorkflowStage: mocks.startWorkflowStage,
   completeWorkflowStage: mocks.completeWorkflowStage,

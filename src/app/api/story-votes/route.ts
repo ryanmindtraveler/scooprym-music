@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { storyCandidate, storyCandidateVote } from '@/db/schema';
-import { getRateLimiter } from '@/lib/ratelimit';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
+import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import {
   MAX_DAILY_STORY_VOTES,
   PUBLIC_STORY_CANDIDATE_LIMIT,
@@ -10,7 +10,7 @@ import {
   getRecentVoteDays,
   getVoteDay,
   rankPublicStoryCandidates,
-} from '@/lib/story-voting';
+} from '@/lib/stories/story-voting';
 import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';

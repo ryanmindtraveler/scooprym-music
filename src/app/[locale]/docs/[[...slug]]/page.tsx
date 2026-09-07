@@ -1,4 +1,4 @@
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
 import { radarCreationJob, storyCandidate } from '@/db/schema';
+import { canUseQStash, getWorkerUrl, qstash } from '@/lib/infrastructure/queue';
 import { getEditorialStyleProfileById } from '@/lib/music/editorial-styles';
 import { recommendEditorialStyleId } from '@/lib/music/production-recipe';
-import { canUseQStash, getWorkerUrl, qstash } from '@/lib/queue';
 import { and, eq, isNull } from 'drizzle-orm';
 
 /** 后台队列必须可达；禁止以浏览器生命周期或after长请求伪装可靠队列。 */

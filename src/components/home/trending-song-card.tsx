@@ -3,7 +3,7 @@
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
-import { formatBusinessDate } from '@/lib/business-time';
+import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';

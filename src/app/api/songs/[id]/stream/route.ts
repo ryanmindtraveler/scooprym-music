@@ -1,4 +1,4 @@
-import { getStreamResponse } from '@/lib/stream-cache';
+import { getStreamResponse } from '@/lib/infrastructure/stream-cache';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function GET(

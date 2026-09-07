@@ -1,6 +1,6 @@
 import { getMDXComponents } from '@/components/docs/mdx-components';
-import { constructMetadata } from '@/lib/metadata';
-import { pagesSource } from '@/lib/source';
+import { pagesSource } from '@/lib/docs/source';
+import { constructMetadata } from '@/lib/seo/metadata';
 import type { NextPageProps } from '@/types/next-page-props';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page';
 import type { Metadata } from 'next';

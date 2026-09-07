@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@upstash/qstash', () => ({ Client: class {} }));
-vi.mock('./urls/urls', () => ({ getBaseUrl: () => 'http://localhost:3000' }));
+vi.mock('../urls/urls', () => ({ getBaseUrl: () => 'http://localhost:3000' }));
 import { canUseQStash } from './queue';
 
 afterEach(() => vi.unstubAllEnvs());

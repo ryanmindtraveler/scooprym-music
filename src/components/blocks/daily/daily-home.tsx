@@ -1,8 +1,8 @@
 'use client';
 
-import { formatBusinessDate } from '@/lib/business-time';
-import { getNewsCardSummary, getNewsDescription } from '@/lib/song-editorial';
-import { getSongCanonicalSlug } from '@/lib/song-seo';
+import { formatBusinessDate } from '@/lib/shared/business-time';
+import { getNewsCardSummary, getNewsDescription } from '@/lib/songs/song-editorial';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';

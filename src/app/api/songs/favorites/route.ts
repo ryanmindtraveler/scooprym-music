@@ -1,9 +1,9 @@
 import { getDb } from '@/db';
 import { song, songFavorite, story } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { getSession } from '@/lib/server';
-import { getSongSourceCompatFields } from '@/lib/song-source';
-import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/song-status';
+import { getSession } from '@/lib/auth/server';
+import { getSongSourceCompatFields } from '@/lib/songs/song-source';
+import { SONG_FAILURE_PROCESSING_STATUSES } from '@/lib/songs/song-status';
 import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 

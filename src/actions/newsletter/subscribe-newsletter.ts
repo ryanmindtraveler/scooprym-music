@@ -1,6 +1,6 @@
 'use server';
 
-import { actionClient } from '@/lib/safe-action';
+import { actionClient } from '@/lib/auth/safe-action';
 import { sendEmail } from '@/mail';
 import { subscribe } from '@/newsletter';
 import { getLocale } from 'next-intl/server';

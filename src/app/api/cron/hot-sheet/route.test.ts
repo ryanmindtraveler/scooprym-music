@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 const archive = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/hot-sheet-archive', () => ({ archiveDailyHotSheet: archive }));
+vi.mock('@/lib/stories/hot-sheet-archive', () => ({ archiveDailyHotSheet: archive }));
 import { GET } from './route';
 
 describe('归档定时接口认证', () => {

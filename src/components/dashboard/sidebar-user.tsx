@@ -17,7 +17,7 @@ import { websiteConfig } from '@/config/website';
 import { useMounted } from '@/hooks/ui/use-mounted';
 import { LocaleLink, useLocalePathname, useLocaleRouter } from '@/i18n/navigation';
 import { LOCALES, routing } from '@/i18n/routing';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { Routes } from '@/routes';
 import { useLocaleStore } from '@/store';
 import type { User } from 'better-auth';

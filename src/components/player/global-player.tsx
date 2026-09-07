@@ -1,6 +1,6 @@
 'use client';
 
-import { createEngagementSessionId, recordSongEngagement } from '@/lib/song-engagement-client';
+import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { usePlayerStore } from '@/store';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';

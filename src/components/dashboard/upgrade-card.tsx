@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { websiteConfig } from '@/config/website';
 import { useCurrentPlan } from '@/hooks/billing/use-payment';
 import { LocaleLink } from '@/i18n/navigation';
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { Routes } from '@/routes';
 import { Crown, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';

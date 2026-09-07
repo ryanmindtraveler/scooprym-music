@@ -1,6 +1,6 @@
 'use client';
 
-import { type WorkflowProgress, formatElapsed, getConfirmedProgress } from '@/lib/generation-progress';
+import { type WorkflowProgress, formatElapsed, getConfirmedProgress } from '@/lib/creation/generation-progress';
 import { cn } from '@/lib/utils';
 import { useCreateStore } from '@/store';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';

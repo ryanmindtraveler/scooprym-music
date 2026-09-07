@@ -1,6 +1,6 @@
 import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
-import { constructMetadata } from '@/lib/metadata';
-import { blogSource } from '@/lib/source';
+import { blogSource } from '@/lib/docs/source';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
 import type { Metadata } from 'next';

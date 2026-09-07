@@ -2,7 +2,7 @@ import { BreadcrumbJsonLd, FaqJsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
 import { featuresContent } from '@/config/features';
 import { LOCALES } from '@/i18n/routing';
-import { constructMetadata } from '@/lib/metadata';
+import { constructMetadata } from '@/lib/seo/metadata';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import {
   ActivityIcon,

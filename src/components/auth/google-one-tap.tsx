@@ -1,6 +1,6 @@
 'use client';
 
-import { authClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth/auth-client';
 import { Routes } from '@/routes';
 import { usePathname, useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -21,7 +21,7 @@ interface GoogleCredentialResponse {
  * This component triggers the Better Auth One Tap login prompt.
  * It does not render any UI elements.
  *
- * One Tap logic is handled by the better-auth oneTapClient plugin configured in src/lib/auth-client.ts.
+ * One Tap logic is handled by the better-auth oneTapClient plugin configured in src/lib/auth/auth-client.ts.
  */
 export function GoogleOneTap() {
   const router = useRouter();

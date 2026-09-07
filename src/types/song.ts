@@ -21,7 +21,7 @@ export interface Song {
   category?: string | null;
   style?: string | null;
   topReaction?: {
-    type: import('@/lib/song-reactions').SongReactionType;
+    type: import('@/lib/songs/song-reactions').SongReactionType;
     count: number;
   } | null;
 }

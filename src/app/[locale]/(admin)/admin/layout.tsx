@@ -1,7 +1,7 @@
 import { AdminHeader } from '@/components/admin/admin-header';
 import { AdminSidebar } from '@/components/admin/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { getSession } from '@/lib/server';
+import { getSession } from '@/lib/auth/server';
 import { Routes } from '@/routes';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';

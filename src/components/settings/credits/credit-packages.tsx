@@ -6,7 +6,7 @@ import { useCreditPackages } from '@/config/credits-config';
 import { websiteConfig } from '@/config/website';
 import { useCurrentUser } from '@/hooks/auth/use-current-user';
 import { useCurrentPlan } from '@/hooks/billing/use-payment';
-import { formatPrice } from '@/lib/formatter';
+import { formatPrice } from '@/lib/shared/formatter';
 import { cn } from '@/lib/utils';
 import { CircleCheckBigIcon, CoinsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
