@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDb } from '@/db/index';
 import { storyCandidate, storyCandidateVote, storySubmission, user } from '@/db/schema';
+import { getRadarCandidatePage, getRadarTotals } from '@/lib/story-radar/browse';
+import { type RadarBrowseParams, parseRadarBrowseParams } from '@/lib/story-radar/browse-params';
 import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import { getRadarGeneratedSongs } from '@/lib/story-radar/generated-songs';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
@@ -43,7 +45,10 @@ function parseMatchedTerms(value: string | null) {
   }
 }
 
-export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
+export async function StoryRadarPage({
+  edition,
+  browseParams = parseRadarBrowseParams({}),
+}: { edition?: string; browseParams?: RadarBrowseParams } = {}) {
   const locale = await getLocale();
   const dateLocale = locale === 'zh' ? zhCN : enUS;
   const isZh = locale === 'zh';
@@ -53,16 +58,8 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
   const voteDays = recentVoteDays.map(({ day }) => day);
   const voteWeights = new Map(recentVoteDays.map(({ day, weight }) => [day, weight]));
 
-  const [candidates, submissions, groupedVotes, candidateVoters, voteSummary] = await Promise.all([
-    db
-      .select()
-      .from(storyCandidate)
-      .orderBy(
-        sql`case ${storyCandidate.status} when 'adopted' then 0 when 'shortlisted' then 1 when 'new' then 2 else 3 end`,
-        desc(storyCandidate.publishedAt),
-        desc(storyCandidate.relevanceScore)
-      )
-      .limit(300),
+  const [candidatePage, submissions, groupedVotes, candidateVoters, voteSummary] = await Promise.all([
+    getRadarCandidatePage(browseParams),
     db
       .select({
         id: storySubmission.id,
@@ -133,6 +130,8 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
       .where(inArray(storyCandidateVote.voteDay, voteDays)),
   ]);
 
+  const { candidates, ...browse } = candidatePage;
+  const candidateTotal = await getRadarTotals();
   const generatedSongs = groupRadarSongs(await getRadarGeneratedSongs(candidates.map((candidate) => candidate.id)));
 
   // 计算投票统计并建立候选映射
@@ -224,13 +223,9 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
 
   const summary = voteSummary[0] ?? { selections: 0, voters: 0, stories: 0 };
   const pendingSubmissionsCount = serializedSubmissions.filter((s) => s.status === 'pending').length;
-  const shortlistedCandidatesCount = serializedCandidates.filter((c) => c.status === 'shortlisted').length;
-  const generatedCandidatesCount = serializedCandidates.filter(
-    (c) => c.generatedSongs && c.generatedSongs.length > 0
-  ).length;
-  const inProductionCount = serializedCandidates.filter(
-    (c) => c.status === 'adopted' || (c.generatedSongs && c.generatedSongs.length > 0)
-  ).length;
+  const shortlistedCandidatesCount = candidateTotal.shortlisted;
+  const generatedCandidatesCount = candidateTotal.generated;
+  const inProductionCount = candidateTotal.producing + candidateTotal.generated;
 
   return (
     <div className="mx-auto flex w-full max-w-[2160px] flex-col gap-6 pb-12">
@@ -283,7 +278,7 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
             </span>
             <div>
               <p className="text-xs font-bold text-muted-foreground">{isZh ? '雷达候选总池' : 'Radar Candidates'}</p>
-              <p className="mt-0.5 text-2xl font-black tabular-nums text-foreground">{serializedCandidates.length}</p>
+              <p className="mt-0.5 text-2xl font-black tabular-nums text-foreground">{candidateTotal.count}</p>
             </div>
           </div>
           <div className="text-right">
@@ -367,7 +362,7 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
               <Newspaper className="size-3.5 text-cyan-600" />
               {isZh ? '热点雷达候选池' : 'Radar Candidates'}
               <Badge variant="secondary" className="ml-0.5 h-4.5 px-1.5 text-[10px] font-bold">
-                {serializedCandidates.length}
+                {candidateTotal.count}
               </Badge>
             </TabsTrigger>
 
@@ -411,7 +406,7 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
 
         {/* Tab 1: 热点雷达候选池 */}
         <TabsContent value="radar" className="m-0 outline-none">
-          <StoryRadar candidates={serializedCandidates} />
+          <StoryRadar key={JSON.stringify(browse.params)} candidates={serializedCandidates} browse={browse} />
         </TabsContent>
 
         {/* Tab 2: 大众投票风向标 */}

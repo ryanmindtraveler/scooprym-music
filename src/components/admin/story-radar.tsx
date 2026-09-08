@@ -4,11 +4,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LocaleLink, useLocaleRouter } from '@/i18n/navigation';
+import { type RadarBrowseView, radarBrowseSearch } from '@/lib/story-radar/browse-params';
 import { type RadarGeneratedSong, groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { cn } from '@/lib/utils';
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Flame,
   Globe,
@@ -26,7 +29,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 
 export interface StoryRadarCandidateView {
@@ -77,39 +80,39 @@ const statusFilters: Array<{ id: 'all' | 'generated' | StoryCandidateStatus; lab
   { id: 'dismissed', labelZh: '🗑️ 已忽略', labelEn: 'Dismissed' },
 ];
 
-export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView[] }) {
+const generatePagination = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 3) {
+    return [1, 2, 3, '...', totalPages - 1, totalPages];
+  }
+  if (currentPage >= totalPages - 2) {
+    return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+};
+
+export function StoryRadar({ candidates, browse }: { candidates: StoryRadarCandidateView[]; browse: RadarBrowseView }) {
   const t = useTranslations('Dashboard.admin.storyRadar');
   const router = useLocaleRouter();
+  const [isNavigating, startNavigation] = useTransition();
   const zh = useLocale() === 'zh';
   const submitting = useRef(new Set<string>());
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
   const [jobs, setJobs] = useState<Record<string, { status: string; workflowStatus?: string; stage?: string }>>({});
   const [generated, setGenerated] = useState<Record<string, RadarGeneratedSong[]> | null>(null);
 
-  const [activeStatus, setActiveStatus] = useState<'all' | 'generated' | StoryCandidateStatus>('all');
-  const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeStatus, setActiveStatus] = useState<'all' | 'generated' | StoryCandidateStatus>(browse.params.status);
+  const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>(
+    browse.params.category as 'all' | StoryRadarCategory
+  );
+  const [searchQuery, setSearchQuery] = useState(browse.params.q);
   const [isScanning, setIsScanning] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   const songsByCandidate =
     generated ?? Object.fromEntries(candidates.map((candidate) => [candidate.id, candidate.generatedSongs ?? []]));
-  const isCandidateGenerated = (c: StoryRadarCandidateView) => (songsByCandidate[c.id]?.length ?? 0) > 0;
-
-  const matchesStatus = (candidate: StoryRadarCandidateView, status: typeof activeStatus) => {
-    if (status === 'all') return true;
-    if (status === 'generated') return isCandidateGenerated(candidate);
-    if (status === 'shortlisted') return candidate.status === 'shortlisted';
-    if (status === 'new') return candidate.status === 'new';
-    if (status === 'adopted') {
-      // 制作中：仅包含正在制作中或失败的新闻；已成功生成音乐的新闻不在“制作中”重复显示
-      if (isCandidateGenerated(candidate)) return false;
-      return candidate.status === 'adopted' || !!jobs[candidate.id];
-    }
-    if (status === 'dismissed') return candidate.status === 'dismissed';
-    return candidate.status === status;
-  };
-
   const refreshJobs = async (signal?: AbortSignal) => {
     try {
       const timeout = AbortSignal.timeout(10_000);
@@ -143,35 +146,34 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
     };
   }, []);
 
-  const filteredCandidates = useMemo(
-    () =>
-      candidates.filter((candidate) => {
-        const matchesCategory = activeCategory === 'all' || candidate.category === activeCategory;
-        if (!matchesCategory || !matchesStatus(candidate, activeStatus)) return false;
-        if (!searchQuery.trim()) return true;
-        const query = searchQuery.toLowerCase().trim();
-        return (
-          candidate.sourceTitle.toLowerCase().includes(query) ||
-          candidate.sourceDomain.toLowerCase().includes(query) ||
-          candidate.matchedTerms.some((term) => term.toLowerCase().includes(query))
-        );
-      }),
-    [activeCategory, activeStatus, candidates, generated, jobs, searchQuery]
-  );
-
-  // 状态计数动态联动当前所选类别，制作中排查已生成，精选由管理员决定
-  const counts = useMemo(() => {
-    const categoryMatched = candidates.filter((c) => activeCategory === 'all' || c.category === activeCategory);
-    return {
-      all: categoryMatched.length,
-      new: categoryMatched.filter((c) => c.status === 'new').length,
-      shortlisted: categoryMatched.filter((c) => c.status === 'shortlisted').length,
-      adopted: categoryMatched.filter((c) => !isCandidateGenerated(c) && (c.status === 'adopted' || !!jobs[c.id]))
-        .length,
-      dismissed: categoryMatched.filter((c) => c.status === 'dismissed').length,
-      generated: categoryMatched.filter((c) => isCandidateGenerated(c)).length,
+  const [currentPage, setCurrentPage] = useState(browse.params.page);
+  const [pageSize, setPageSize] = useState(browse.params.size);
+  useEffect(() => {
+    const changed =
+      activeStatus !== browse.params.status ||
+      activeCategory !== browse.params.category ||
+      searchQuery.trim() !== browse.params.q ||
+      pageSize !== browse.params.size;
+    const next = {
+      ...browse.params,
+      status: activeStatus,
+      category: activeCategory,
+      q: searchQuery.trim(),
+      size: pageSize,
+      page: changed ? 1 : currentPage,
     };
-  }, [activeCategory, candidates, generated, jobs]);
+    if (radarBrowseSearch(next) === radarBrowseSearch(browse.params)) return;
+    const timer = setTimeout(
+      () => startNavigation(() => router.push(`/admin/story-radar?${radarBrowseSearch(next)}`)),
+      searchQuery.trim() !== browse.params.q ? 350 : 0
+    );
+    return () => clearTimeout(timer);
+  }, [activeStatus, activeCategory, searchQuery, pageSize, currentPage, browse, router]);
+  const filteredCandidates = candidates;
+  const counts = browse.counts;
+  const totalItems = browse.total;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = browse.params.page;
 
   async function scanLatestStories() {
     setIsScanning(true);
@@ -831,6 +833,104 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
               </article>
             );
           })}
+        </div>
+      )}
+      {/* 分页控制栏 */}
+      {filteredCandidates.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 pb-1 px-1">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground font-medium">
+            <span>
+              {`Showing ${(safeCurrentPage - 1) * pageSize + 1}-${Math.min(safeCurrentPage * pageSize, totalItems)} of ${totalItems} stories`}
+            </span>
+            <div className="flex items-center gap-1 ml-1">
+              <span className="text-muted-foreground/50">|</span>
+              <span className="text-[11px] ml-1">Per page:</span>
+              {[10, 20, 50].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[11px] font-bold transition-colors cursor-pointer',
+                    pageSize === size
+                      ? 'bg-foreground text-background dark:bg-foreground dark:text-background'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isNavigating || safeCurrentPage <= 1}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                <ChevronLeft className="size-3.5 mr-0.5" />
+                Prev
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {generatePagination(safeCurrentPage, totalPages).map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-muted-foreground">
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(item);
+                  const isCurrent = pageNum === safeCurrentPage;
+                  return (
+                    <Button
+                      key={`page-${pageNum}`}
+                      type="button"
+                      variant={isCurrent ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={cn(
+                        'h-8 min-w-8 px-2 text-xs font-bold',
+                        isCurrent && 'bg-pink-600 text-white hover:bg-pink-700'
+                      )}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isNavigating || safeCurrentPage >= totalPages}
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                Next
+                <ChevronRight className="size-3.5 ml-0.5" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
