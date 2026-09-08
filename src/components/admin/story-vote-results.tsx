@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocaleRouter } from '@/i18n/navigation';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
+import { cn } from '@/lib/utils';
 import {
   ArrowUpRight,
   Award,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Flame,
   Loader2,
@@ -18,9 +21,9 @@ import {
   Users,
   Vote,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export interface StoryVoteResultView {
@@ -59,10 +62,36 @@ const categoryClasses: Record<StoryRadarCategory, string> = {
   absurd_headlines: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
 };
 
+const generatePagination = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 3) {
+    return [1, 2, 3, '...', totalPages - 1, totalPages];
+  }
+  if (currentPage >= totalPages - 2) {
+    return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+};
+
 export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
   const t = useTranslations('Dashboard.admin.voteResults');
   const router = useLocaleRouter();
+  const zh = useLocale() === 'zh';
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalItems = results.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedResults = useMemo(
+    () => results.slice((safeCurrentPage - 1) * pageSize, safeCurrentPage * pageSize),
+    [results, safeCurrentPage, pageSize]
+  );
 
   async function openInStudio(candidateId: string) {
     setPendingId(candidateId);
@@ -146,10 +175,11 @@ export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
             </Badge>
           </div>
 
-          {results.map((result, index) => {
-            const isTop1 = index === 0;
-            const isTop2 = index === 1;
-            const isTop3 = index === 2;
+          {paginatedResults.map((result, index) => {
+            const globalIndex = (safeCurrentPage - 1) * pageSize + index;
+            const isTop1 = globalIndex === 0;
+            const isTop2 = globalIndex === 1;
+            const isTop3 = globalIndex === 2;
 
             return (
               <article
@@ -174,7 +204,7 @@ export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
                       </span>
                     ) : (
                       <span className="font-mono text-xs font-bold text-muted-foreground">
-                        {String(index + 1).padStart(2, '0')}
+                        {String(globalIndex + 1).padStart(2, '0')}
                       </span>
                     )}
                   </div>
@@ -289,6 +319,107 @@ export function StoryVoteResults({ results, summary }: StoryVoteResultsProps) {
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* 分页控制栏 */}
+      {results.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 pb-1 px-1">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground font-medium">
+            <span>
+              {zh
+                ? `显示第 ${(safeCurrentPage - 1) * pageSize + 1} - ${Math.min(safeCurrentPage * pageSize, totalItems)} 条 · 共 ${totalItems} 条`
+                : `Showing ${(safeCurrentPage - 1) * pageSize + 1}-${Math.min(safeCurrentPage * pageSize, totalItems)} of ${totalItems} results`}
+            </span>
+            <div className="flex items-center gap-1 ml-1">
+              <span className="text-muted-foreground/50">|</span>
+              <span className="text-[11px] ml-1">{zh ? '每页' : 'Per page'}:</span>
+              {[10, 20, 50].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[11px] font-bold transition-colors cursor-pointer',
+                    pageSize === size
+                      ? 'bg-foreground text-background dark:bg-foreground dark:text-background'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                <ChevronLeft className="size-3.5 mr-0.5" />
+                {zh ? '上一页' : 'Prev'}
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {generatePagination(safeCurrentPage, totalPages).map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-muted-foreground">
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(item);
+                  const isCurrent = pageNum === safeCurrentPage;
+                  return (
+                    <Button
+                      key={`page-${pageNum}`}
+                      type="button"
+                      variant={isCurrent ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={cn(
+                        'h-8 min-w-8 px-2 text-xs font-bold',
+                        isCurrent && 'bg-pink-600 text-white hover:bg-pink-700'
+                      )}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                {zh ? '下一页' : 'Next'}
+                <ChevronRight className="size-3.5 ml-0.5" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

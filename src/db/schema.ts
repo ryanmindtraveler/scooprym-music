@@ -213,6 +213,22 @@ export const story = scooprymSchema.table(
  * 后台新闻雷达抓取到的候选内容。
  * 候选内容与正式 story 分离，管理员完成筛选前不会进入音乐生产流程。
  */
+/** 扫描记录同时保存渠道健康情况，部分失败和全失败也必须可追踪。 */
+export const storyRadarScan = scooprymSchema.table('story_radar_scan', {
+  id: text('id').primaryKey(),
+  status: text('status').notNull().default('running'),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  discovered: integer('discovered').notNull().default(0),
+  inserted: integer('inserted').notNull().default(0),
+  updated: integer('updated').notNull().default(0),
+  sources: jsonb('sources').$type<import('@/lib/story-radar/types').RadarSourceReport[]>().notNull().default([]),
+  error: text('error'),
+}, (table) => ({
+  scanStartedIdx: index('story_radar_scan_started_idx').on(table.startedAt),
+  singleRunningScan: uniqueIndex('story_radar_scan_running_unique').on(table.status).where(sql`${table.status} = 'running'`),
+}));
+
 export const storyCandidate = scooprymSchema.table(
   'story_candidate',
   {
@@ -224,6 +240,8 @@ export const storyCandidate = scooprymSchema.table(
     sourceImageUrl: text('source_image_url'),
     category: text('category').notNull(),
     matchedTerms: text('matched_terms'),
+    aiScreening: jsonb('ai_screening').$type<import('@/lib/story-radar/screening-state').ScreeningState>(),
+    trendSignals: jsonb('trend_signals').$type<import('@/lib/story-radar/types').GoogleTrendSignal[]>(),
     relevanceScore: integer('relevance_score').notNull().default(0),
     status: text('status').notNull().default('new'),
     storyId: text('story_id').references(() => story.id, { onDelete: 'set null' }),
@@ -647,3 +665,14 @@ export const songCommentReport = scooprymSchema.table(
     ),
   })
 );
+
+// 封面恢复点不进入公开歌曲或工作流响应，歌曲删除时一并清理。
+export const coverAssetCheckpoint = scooprymSchema.table('cover_asset_checkpoint', {
+  id: text('id').primaryKey(),
+  songId: text('song_id').notNull().references(() => song.id, { onDelete: 'cascade' }),
+  imageSource: text('image_source'),
+  uploadedAsset: jsonb('uploaded_asset').$type<{ url: string; key: string; dimensions: { width: number; height: number } | null }>(),
+  leaseToken: text('lease_token'),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

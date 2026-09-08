@@ -5,6 +5,7 @@ import { z } from 'zod';
 const workerPayloadSchema = z
   .object({
     songId: z.string().uuid(),
+    attemptId: z.string().uuid().optional(),
   })
   .strict();
 
@@ -26,9 +27,12 @@ export async function handleGenerateMusicWorker(req: NextRequest) {
   }
 
   try {
-    const result = await processMusicJob(parsed.data.songId);
+    const result = await processMusicJob(parsed.data.songId, {
+      stageBoundary: true,
+      expectedAttemptId: parsed.data.attemptId,
+    });
 
-    // 只有领取任务前的数据库故障允许队列重试；此时尚未调用任何付费模型。
+    // 领取失败或已保存恢复点后的投递失败允许重试；不能重做已成功的付费生成。
     if (result.retryable) {
       return NextResponse.json({ status: 'retry', error: result.error }, { status: 503 });
     }
@@ -40,7 +44,7 @@ export async function handleGenerateMusicWorker(req: NextRequest) {
     });
   } catch (error) {
     console.error('[generate-music-worker] Unexpected post-claim exception:', error);
-    await failActiveMusicJob(parsed.data.songId, error);
+    await failActiveMusicJob(parsed.data.songId, error, parsed.data.attemptId);
     return NextResponse.json({ status: 'failed', error: 'Worker terminated with an internal error' });
   }
 }

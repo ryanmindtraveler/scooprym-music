@@ -150,6 +150,7 @@ function normalizeTaskStatus(status: string | null | undefined, song?: ServerSon
   if (
     normalized === 'processing' ||
     normalized === 'generating_audio' ||
+    normalized === 'audio_generated' ||
     normalized === 'uploading_audio' ||
     normalized === 'finalizing'
   )

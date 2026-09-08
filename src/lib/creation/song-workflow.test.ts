@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
   generateMusic: vi.fn(),
-  generateCoverWithRetry: vi.fn(),
-  dataUrlToImageBuffer: vi.fn(),
+  prepareCoverAsset: vi.fn(),
   uploadFile: vi.fn(),
   deleteFile: vi.fn(),
   getWorkflowRunBySongId: vi.fn(),
@@ -12,7 +11,10 @@ const mocks = vi.hoisted(() => ({
   completeWorkflowStage: vi.fn(),
   failWorkflowStep: vi.fn(),
   findAudioCheckpoint: vi.fn(),
+  enqueueMusicContinuation: vi.fn(),
 }));
+
+vi.mock('@/lib/creation/music-continuation', () => ({ enqueueMusicContinuation: mocks.enqueueMusicContinuation }));
 
 vi.mock('@/lib/creation/audio-checkpoint', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./audio-checkpoint')>()),
@@ -28,10 +30,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 vi.mock('@/db/index', () => ({ getDb: mocks.getDb }));
 vi.mock('@/ai/music/lib/generation', () => ({ generateMusic: mocks.generateMusic }));
-vi.mock('@/ai/image/lib/cover-generation', () => ({
-  generateCoverWithRetry: mocks.generateCoverWithRetry,
-  dataUrlToImageBuffer: mocks.dataUrlToImageBuffer,
-}));
+vi.mock('@/lib/creation/cover-asset', () => ({ prepareCoverAsset: mocks.prepareCoverAsset }));
 vi.mock('@/storage', () => ({
   uploadFile: mocks.uploadFile,
   deleteFile: mocks.deleteFile,
@@ -290,6 +289,7 @@ describe('processMusicJob', () => {
     mocks.getWorkflowRunBySongId.mockResolvedValue(undefined);
     mocks.findAudioCheckpoint.mockResolvedValue(null);
     mocks.failWorkflowStep.mockResolvedValue(undefined);
+    mocks.enqueueMusicContinuation.mockReset().mockResolvedValue({ messageId: 'next-stage' });
     process.env.MINIMAXI_API_KEY = 'test-api-key';
   });
 
@@ -307,7 +307,23 @@ describe('processMusicJob', () => {
     expect(result.skipped).toBe(true);
     expect(update).not.toHaveBeenCalled();
     expect(mocks.generateMusic).not.toHaveBeenCalled();
-    expect(mocks.generateCoverWithRetry).not.toHaveBeenCalled();
+    expect(mocks.prepareCoverAsset).not.toHaveBeenCalled();
+  });
+
+  it('旧尝试的延迟消息不能领取新尝试', async () => {
+    const chain: any = {
+      from: () => chain,
+      innerJoin: () => chain,
+      where: () => chain,
+      orderBy: () => chain,
+      limit: async () => [{ attemptId: 'new-attempt', processingStatus: 'queued' }],
+    };
+    const update = vi.fn();
+    mocks.getDb.mockReturnValue({ select: () => chain, update });
+    const result = await processMusicJob(songId, { expectedAttemptId: 'old-attempt', stageBoundary: true });
+    expect(result.skipped).toBe(true);
+    expect(update).not.toHaveBeenCalled();
+    expect(mocks.generateMusic).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -315,14 +331,20 @@ describe('processMusicJob', () => {
     'resume_url',
     'fresh_url',
     'checkpoint_read_failure',
+    'checkpoint_run_failure',
     'checkpoint_write_failure',
     'cover_generation_failure',
     'cover_upload_failure',
+    'stage_generate',
+    'stage_upload',
+    'stage_dispatch_failure',
+    'stage_missing_checkpoint',
   ])('通过 CAS 与恢复点避免重复付费：%s', async (mode) => {
     if (mode !== 'fresh_hex') {
       mocks.getWorkflowRunBySongId.mockResolvedValue({ id: 'run-1' });
       mocks.startWorkflowStage.mockResolvedValue('step-1');
-      if (mode === 'resume_url') mocks.findAudioCheckpoint.mockResolvedValue('https://audio.example.com/song.mp3');
+      if (mode === 'resume_url' || mode === 'stage_upload')
+        mocks.findAudioCheckpoint.mockResolvedValue('https://audio.example.com/song.mp3');
       vi.stubGlobal(
         'fetch',
         vi.fn(
@@ -350,7 +372,12 @@ describe('processMusicJob', () => {
       generationBillingMode: 'internal_admin',
     };
     const selectResults = [
-      [{ attemptId: songId }],
+      [
+        {
+          attemptId: songId,
+          processingStatus: ['stage_upload', 'stage_missing_checkpoint'].includes(mode) ? 'audio_generated' : 'queued',
+        },
+      ],
       [
         {
           id: trustedJob.id,
@@ -408,6 +435,7 @@ describe('processMusicJob', () => {
                     },
                   ];
                 }
+                if (mode.startsWith('stage_')) return [{ id: songId }];
                 if (currentUpdate === 5) return [{ id: songId }];
                 if (currentUpdate === 6) return [{ id: songId }];
                 if (currentUpdate === 7) return [];
@@ -432,33 +460,47 @@ describe('processMusicJob', () => {
     db.transaction = vi.fn(async (callback: (tx: typeof db) => unknown) => callback(db));
     mocks.getDb.mockReturnValue(db);
     mocks.generateMusic.mockResolvedValue(
-      mode === 'fresh_url'
+      mode === 'fresh_url' || mode.startsWith('stage_')
         ? { success: true, audioContent: 'https://audio.example.com/song.mp3', outputFormat: 'url' }
         : { success: true, audioContent: validShortMp3Hex() }
     );
-    mocks.generateCoverWithRetry.mockResolvedValue('data:image/png;base64,cover');
-    const coverBuffer = Buffer.alloc(24);
-    coverBuffer.write('IHDR', 12, 'ascii');
-    coverBuffer.writeUInt32BE(1024, 16);
-    coverBuffer.writeUInt32BE(1024, 20);
-    mocks.dataUrlToImageBuffer.mockResolvedValue({ buffer: coverBuffer, mime: 'image/png', extension: 'png' });
-    mocks.uploadFile
-      .mockResolvedValueOnce({ url: 'https://cdn.example.com/song.mp3', key: 'songs/admin/song.mp3' })
-      .mockResolvedValueOnce({ url: 'https://cdn.example.com/cover.png', key: 'song-covers/admin/cover.png' });
+    mocks.prepareCoverAsset.mockResolvedValue({
+      url: 'https://cdn.example.com/cover.png',
+      key: 'song-covers/admin/cover.png',
+      dimensions: { width: 1024, height: 1024 },
+    });
+    mocks.uploadFile.mockResolvedValueOnce({ url: 'https://cdn.example.com/song.mp3', key: 'songs/admin/song.mp3' });
 
     if (mode === 'checkpoint_read_failure')
       mocks.findAudioCheckpoint.mockRejectedValueOnce(new Error('DB unavailable'));
+    if (mode === 'checkpoint_run_failure')
+      mocks.getWorkflowRunBySongId.mockRejectedValueOnce(new Error('DB unavailable'));
     if (mode === 'checkpoint_write_failure')
       mocks.completeWorkflowStage.mockRejectedValueOnce(new Error('DB unavailable'));
     if (mode === 'cover_generation_failure')
-      mocks.generateCoverWithRetry.mockRejectedValueOnce(new Error('Image provider unavailable'));
+      mocks.prepareCoverAsset.mockRejectedValueOnce(new Error('Cover generation failed: Image provider unavailable'));
     if (mode === 'cover_upload_failure') {
-      mocks.uploadFile.mockReset();
-      mocks.uploadFile
-        .mockResolvedValueOnce({ url: 'https://cdn.example.com/song.mp3', key: 'songs/admin/song.mp3' })
-        .mockRejectedValueOnce(new Error('fetch failed'));
+      mocks.prepareCoverAsset.mockRejectedValueOnce(new Error('Cover upload failed: fetch failed'));
     }
-    const first = await processMusicJob(songId);
+    if (mode === 'stage_dispatch_failure')
+      mocks.enqueueMusicContinuation.mockRejectedValueOnce(new Error('Queue unavailable'));
+    const first = await processMusicJob(songId, { stageBoundary: mode.startsWith('stage_') });
+    if (mode.startsWith('stage_')) {
+      expect(mocks.prepareCoverAsset).not.toHaveBeenCalled();
+      if (mode === 'stage_missing_checkpoint') {
+        expect(first).toMatchObject({ success: false, processingStatus: 'failed_audio_upload' });
+        expect(mocks.generateMusic).not.toHaveBeenCalled();
+        expect(mocks.enqueueMusicContinuation).not.toHaveBeenCalled();
+        return;
+      }
+      const stage = mode === 'stage_upload' ? 'audio_uploaded' : 'audio_generated';
+      expect(first).toMatchObject({ success: mode !== 'stage_dispatch_failure', processingStatus: stage });
+      if (mode === 'stage_dispatch_failure') expect(first.retryable).toBe(true);
+      expect(mocks.enqueueMusicContinuation).toHaveBeenCalledWith(songId, songId, stage);
+      expect(mocks.generateMusic).toHaveBeenCalledTimes(mode === 'stage_upload' ? 0 : 1);
+      expect(mocks.uploadFile).toHaveBeenCalledTimes(mode === 'stage_upload' ? 1 : 0);
+      return;
+    }
     if (mode.startsWith('cover_')) {
       expect(first).toMatchObject({ success: false, processingStatus: 'failed_cover' });
       expect(first.error).toContain('Audio is saved. Cover');
@@ -475,7 +517,7 @@ describe('processMusicJob', () => {
     }
     if (mode.startsWith('checkpoint_')) {
       expect(first).toMatchObject({ success: false, processingStatus: 'failed_audio_upload' });
-      expect(mocks.generateMusic).toHaveBeenCalledTimes(mode === 'checkpoint_read_failure' ? 0 : 1);
+      expect(mocks.generateMusic).toHaveBeenCalledTimes(mode === 'checkpoint_write_failure' ? 1 : 0);
       expect(mocks.uploadFile).not.toHaveBeenCalled();
       return;
     }
@@ -491,7 +533,8 @@ describe('processMusicJob', () => {
           prompt: trustedJob.generationPrompt,
         })
       );
-    expect(mocks.uploadFile).toHaveBeenCalledTimes(2);
+    expect(mocks.uploadFile).toHaveBeenCalledTimes(1);
+    expect(mocks.prepareCoverAsset).toHaveBeenCalledTimes(1);
     if (mode === 'fresh_url')
       expect(mocks.completeWorkflowStage).toHaveBeenCalledWith(
         'run-1',

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ getDb: vi.fn(), refresh: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getDb: vi.fn(), refresh: vi.fn(), recent: vi.fn() }));
 vi.mock('@/db', () => ({ getDb: mocks.getDb }));
 vi.mock('@/lib/stories/editorial-workflow', () => ({ refreshEditorialRadar: mocks.refresh }));
+vi.mock('@/lib/story-radar/scan', () => ({ getRecentSuccessfulRadarScan: mocks.recent }));
 import { archiveDailyHotSheet } from './hot-sheet-archive';
 
 describe('每日归档执行', () => {
@@ -57,6 +58,12 @@ describe('每日归档执行', () => {
     const { set } = setup(true, 3);
     await archiveDailyHotSheet(now);
     expect(set).toHaveBeenCalledWith(expect.objectContaining({ status: 'partial' }));
+  });
+  it('日报使用近期增量库存，不再重新抓取所有渠道', async () => {
+    setup();
+    mocks.recent.mockResolvedValue({ status: 'completed', discovered: 20 });
+    expect(await archiveDailyHotSheet(now)).toMatchObject({ count: 10 });
+    expect(mocks.refresh).not.toHaveBeenCalled();
   });
   it('抓取零结果记录失败而不归档旧池为成功', async () => {
     const { set } = setup();

@@ -1,7 +1,7 @@
 import { websiteConfig } from '@/config/website';
 import { storageConfig } from './config/storage-config';
 import { S3Provider } from './provider/s3';
-import type { StorageConfig, StorageProvider, UploadFileResult } from './types';
+import type { StorageConfig, StorageProvider, UploadFileParams, UploadFileResult } from './types';
 
 /**
  * Default storage configuration
@@ -53,10 +53,11 @@ export const uploadFile = async (
   file: Buffer | Blob,
   filename: string,
   contentType: string,
-  folder?: string
+  folder?: string,
+  options?: Pick<UploadFileParams, 'objectKey' | 'requestTimeoutMs'>
 ): Promise<UploadFileResult> => {
   const provider = getStorageProvider();
-  return provider.uploadFile({ file, filename, contentType, folder });
+  return provider.uploadFile({ file, filename, contentType, folder, ...options });
 };
 
 /**

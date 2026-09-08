@@ -25,7 +25,7 @@ export async function getRadarGeneratedSongs(candidateIds?: string[]) {
         // 必须检查最新制作结果，不能把已写歌词、音频中间产物或失败任务当成完成。
         sql`coalesce((select ${generationAttempt.processingStatus} from ${generationAttempt}
         where ${generationAttempt.songId} = ${song.id}
-        order by ${generationAttempt.createdAt} desc limit 1),
+        order by ${generationAttempt.createdAt} desc, ${generationAttempt.id} desc limit 1),
         case when ${song.isPublished} then 'completed' else '' end) = 'completed'`
       )
     )

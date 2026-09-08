@@ -3,7 +3,7 @@ import { generationAttempt, song as songTable } from '@/db/schema';
 import { failWorkflowStep, getWorkflowRunBySongId, startWorkflowStage } from '@/lib/creation/song-creation-workflow';
 import { processMusicJob } from '@/lib/creation/song-workflow';
 import { canUseQStash, getWorkerUrl, qstash } from '@/lib/infrastructure/queue';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { after } from 'next/server';
 
 export async function markMusicQueueFailure(songId: string, userId: string, error: unknown) {
@@ -24,7 +24,12 @@ export async function markMusicQueueFailure(songId: string, userId: string, erro
   await db
     .update(generationAttempt)
     .set({ processingStatus: 'processing_queue_failed', processingError: message, updatedAt: new Date() })
-    .where(and(eq(generationAttempt.id, attempt.id), eq(generationAttempt.processingStatus, 'queued')));
+    .where(
+      and(
+        eq(generationAttempt.id, attempt.id),
+        inArray(generationAttempt.processingStatus, ['queued', 'audio_generated', 'audio_uploaded'])
+      )
+    );
 
   const run = await getWorkflowRunBySongId(songId).catch(() => undefined);
   if (run) {
@@ -33,7 +38,7 @@ export async function markMusicQueueFailure(songId: string, userId: string, erro
   }
 }
 
-/** QStash 优先，Next.js after() 降级；创建与重试入口共用同一分发规则。 */
+/** 生产环境必须使用持久队列；after() 仅供本地开发降级。 */
 export async function dispatchMusicJob(songId: string, userId: string) {
   const db = await getDb();
   const [attempt] = await db
@@ -49,7 +54,7 @@ export async function dispatchMusicJob(songId: string, userId: string) {
     try {
       const response = await qstash.publishJSON({
         url: getWorkerUrl('/api/worker/generate-music'),
-        body: { songId },
+        body: { songId, attemptId: attempt.id },
         // 同一尝试的重复提交必须去重；显式重试会创建新的 attempt，因此仍能正常入队。
         deduplicationId: `scooprym-music-${attempt.id}`,
         flowControl: { key: 'scooprym-music-production', parallelism: 2 },
@@ -58,8 +63,18 @@ export async function dispatchMusicJob(songId: string, userId: string) {
       console.log(`[generate-music] Queued ${songId} in QStash (${response.messageId})`);
       return 'qstash';
     } catch (error) {
+      if (process.env.NODE_ENV === 'production') {
+        await markMusicQueueFailure(songId, userId, error);
+        throw error;
+      }
       console.error(`[generate-music] QStash publish failed for ${songId}; using Next.js after().`, error);
     }
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    const error = new Error('Persistent music queue is not configured. Please check QStash settings and retry.');
+    await markMusicQueueFailure(songId, userId, error);
+    throw error;
   }
 
   try {

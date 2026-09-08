@@ -20,6 +20,7 @@ export interface CoverGenerationOptions {
   lyrics?: string;
   sourceText?: string;
   artPrompt?: string;
+  signal?: AbortSignal;
 }
 
 type ImageSourceInput =
@@ -29,36 +30,40 @@ type ImageSourceInput =
       toString?: () => string;
     };
 
-async function fetchRemoteImageWithRetry(imageUrl: string, retries = 3) {
+async function fetchRemoteImageWithRetry(imageUrl: string, signal?: AbortSignal, retries = 3) {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= retries; attempt += 1) {
+    signal?.throwIfAborted();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45_000);
 
     try {
       const response = await fetch(imageUrl, {
-        signal: controller.signal,
+        signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
         headers: {
           Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
           'User-Agent': 'ScoopRYM-CoverFetcher/1.0',
         },
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         throw new Error(`Failed to fetch image source: ${response.status}`);
       }
 
-      return response;
+      // 下载正文也必须处于超时保护之内。
+      const arrayBuffer = await response.arrayBuffer();
+      return { arrayBuffer, mime: response.headers.get('content-type') || 'image/webp' };
     } catch (error) {
       clearTimeout(timeoutId);
       lastError = error;
+      signal?.throwIfAborted();
       console.warn(`[image-service] Cover fetch attempt ${attempt}/${retries} failed for ${imageUrl}`, error);
       if (attempt < retries) {
         await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
       }
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -68,11 +73,15 @@ async function fetchRemoteImageWithRetry(imageUrl: string, retries = 3) {
 /**
  * 1. Convert a data URL or remote URL to Buffer
  */
-export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promise<{
+export async function dataUrlToImageBuffer(
+  imageSource: ImageSourceInput,
+  signal?: AbortSignal
+): Promise<{
   buffer: Buffer;
   mime: string;
   extension: string;
 }> {
+  signal?.throwIfAborted();
   const resolvedImageSource =
     typeof imageSource === 'string'
       ? imageSource
@@ -101,10 +110,7 @@ export async function dataUrlToImageBuffer(imageSource: ImageSourceInput): Promi
     return { buffer, mime, extension };
   }
 
-  const response = await fetchRemoteImageWithRetry(resolvedImageSource);
-
-  const mime = response.headers.get('content-type') || 'image/webp';
-  const arrayBuffer = await response.arrayBuffer();
+  const { mime, arrayBuffer } = await fetchRemoteImageWithRetry(resolvedImageSource, signal);
   const buffer = Buffer.from(arrayBuffer);
 
   let extension = 'png';
@@ -156,7 +162,8 @@ interface OpenRouterImageResponse {
   };
 }
 
-async function generateOpenRouterCover(modelId: string, prompt: string): Promise<string | null> {
+async function generateOpenRouterCover(modelId: string, prompt: string, signal?: AbortSignal): Promise<string | null> {
+  signal?.throwIfAborted();
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return null;
@@ -171,7 +178,7 @@ async function generateOpenRouterCover(modelId: string, prompt: string): Promise
   try {
     const response = await fetch(OPENROUTER_IMAGE_ENDPOINT, {
       method: 'POST',
-      signal: controller.signal,
+      signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -199,6 +206,7 @@ async function generateOpenRouterCover(modelId: string, prompt: string): Promise
 
     return `data:${image.media_type || 'image/png'};base64,${image.b64_json}`;
   } catch (error) {
+    signal?.throwIfAborted();
     console.warn(`[image-service] OpenRouter cover model ${modelId} failed.`, error);
     return null;
   } finally {
@@ -206,7 +214,8 @@ async function generateOpenRouterCover(modelId: string, prompt: string): Promise
   }
 }
 
-async function generateReplicateCover(prompt: string): Promise<string | null> {
+async function generateReplicateCover(prompt: string, signal?: AbortSignal): Promise<string | null> {
+  signal?.throwIfAborted();
   const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
     return null;
@@ -216,6 +225,7 @@ async function generateReplicateCover(prompt: string): Promise<string | null> {
 
   try {
     const output = await replicate.run(IMAGE_FALLBACK_MODEL, {
+      signal,
       input: {
         prompt,
         go_fast: true,
@@ -252,6 +262,7 @@ async function generateReplicateCover(prompt: string): Promise<string | null> {
 
     return imageUrl;
   } catch (error) {
+    signal?.throwIfAborted();
     console.warn('[image-service] FLUX fallback failed.', error);
     return null;
   }
@@ -266,26 +277,26 @@ export async function generateCoverImageDataUrl(options: CoverGenerationOptions)
   if (!process.env.OPENROUTER_API_KEY) {
     console.warn('[image-service] Missing OPENROUTER_API_KEY; using FLUX fallback.');
   } else {
-    const qwenImage = await generateOpenRouterCover(QWEN_IMAGE_PRO_MODEL, prompt);
+    const qwenImage = await generateOpenRouterCover(QWEN_IMAGE_PRO_MODEL, prompt, options.signal);
     if (qwenImage) {
       console.info(`[image-service] Cover generated with ${QWEN_IMAGE_PRO_MODEL}.`);
       return qwenImage;
     }
 
-    const geminiImage = await generateOpenRouterCover(NANO_BANANA_IMAGE_MODEL, prompt);
+    const geminiImage = await generateOpenRouterCover(NANO_BANANA_IMAGE_MODEL, prompt, options.signal);
     if (geminiImage) {
       console.info(`[image-service] Cover generated with ${NANO_BANANA_IMAGE_MODEL}.`);
       return geminiImage;
     }
 
-    const seedreamImage = await generateOpenRouterCover(SEEDREAM_IMAGE_PRO_MODEL, prompt);
+    const seedreamImage = await generateOpenRouterCover(SEEDREAM_IMAGE_PRO_MODEL, prompt, options.signal);
     if (seedreamImage) {
       console.info(`[image-service] Cover generated with ${SEEDREAM_IMAGE_PRO_MODEL}.`);
       return seedreamImage;
     }
   }
 
-  const fallbackImage = await generateReplicateCover(prompt);
+  const fallbackImage = await generateReplicateCover(prompt, options.signal);
   if (fallbackImage) {
     console.info(`[image-service] Cover generated with ${IMAGE_FALLBACK_MODEL}.`);
   }
@@ -304,6 +315,7 @@ export async function generateCoverWithRetry(options: CoverGenerationOptions, re
   console.warn('[image-service] Retrying cover generation with the ScoopRYM Gallery fallback direction.');
   return generateCoverImageDataUrl({
     title: options.title,
+    signal: options.signal,
     artPrompt:
       'Full-bleed surreal entertainment-news scene in ScoopRYM Gallery house style: dynamic character action, a funny visual punchline, layered neon city or backstage environment, comic editorial linework, story props, cinematic depth, saturated magenta-cyan-violet palette, no plain background, no text.',
   });

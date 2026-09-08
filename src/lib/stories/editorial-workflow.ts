@@ -2,7 +2,7 @@ import { getDb } from '@/db';
 import { song, storyCandidate } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { PUBLIC_STORY_CANDIDATE_LIMIT } from '@/lib/stories/story-voting';
-import { collectStoryRadarCandidates } from '@/lib/story-radar';
+import { scanAndStoreRadar } from '@/lib/story-radar/scan';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 
 const FRESH_WINDOW_MS = 72 * 60 * 60 * 1_000;
@@ -25,41 +25,8 @@ export interface EditorialWorkflowResult {
  */
 export async function refreshEditorialRadar(now = new Date()) {
   const db = await getDb();
-  const candidates = await collectStoryRadarCandidates();
-
-  if (candidates.length > 0) {
-    await db
-      .insert(storyCandidate)
-      .values(
-        candidates.map((candidate) => ({
-          id: crypto.randomUUID(),
-          provider: candidate.provider,
-          sourceUrl: candidate.sourceUrl,
-          sourceTitle: candidate.sourceTitle,
-          sourceDomain: candidate.sourceDomain,
-          sourceImageUrl: candidate.sourceImageUrl,
-          category: candidate.category,
-          matchedTerms: JSON.stringify(candidate.matchedTerms),
-          relevanceScore: candidate.relevanceScore,
-          publishedAt: candidate.publishedAt,
-          updatedAt: now,
-        }))
-      )
-      .onConflictDoUpdate({
-        target: storyCandidate.sourceUrl,
-        set: {
-          provider: sql`excluded.provider`,
-          sourceTitle: sql`excluded.source_title`,
-          sourceDomain: sql`excluded.source_domain`,
-          sourceImageUrl: sql`excluded.source_image_url`,
-          category: sql`excluded.category`,
-          matchedTerms: sql`excluded.matched_terms`,
-          relevanceScore: sql`excluded.relevance_score`,
-          publishedAt: sql`excluded.published_at`,
-          updatedAt: now,
-        },
-      });
-  }
+  const scan = await scanAndStoreRadar(now);
+  if (scan.status === 'failed') return { ...scan, shortlisted: 0 };
 
   const cutoff = new Date(now.getTime() - FRESH_WINDOW_MS);
   const existingShortlisted = await db
@@ -77,6 +44,8 @@ export async function refreshEditorialRadar(now = new Date()) {
       .where(
         and(
           eq(storyCandidate.status, 'new'),
+          sql`${storyCandidate.matchedTerms} <> '[]'`,
+          sql`${storyCandidate.relevanceScore} > 0`,
           gte(storyCandidate.publishedAt, cutoff),
           lte(storyCandidate.publishedAt, now)
         )
@@ -95,8 +64,7 @@ export async function refreshEditorialRadar(now = new Date()) {
   }
 
   return {
-    discovered: candidates.length,
-    stored: candidates.length,
+    ...scan,
     shortlisted: shortlistedCount,
   };
 }

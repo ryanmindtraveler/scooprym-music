@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ putObject: vi.fn() }));
+const mocks = vi.hoisted(() => ({ putObject: vi.fn(), config: vi.fn() }));
 vi.mock('s3mini', () => ({
   s3mini: class {
+    constructor(config: unknown) {
+      mocks.config(config);
+    }
     putObject = mocks.putObject;
   },
 }));
@@ -65,5 +68,20 @@ describe('存储上传重试', () => {
     await vi.advanceTimersByTimeAsync(500);
     await expect(pending).resolves.toHaveProperty('key');
     expect(mocks.putObject).toHaveBeenCalledTimes(2);
+  });
+  it('跨请求恢复使用同一对象标识和独立超时', async () => {
+    mocks.putObject.mockResolvedValue(new Response('', { status: 200 }));
+    const options = { ...params, objectKey: 'song-covers/admin/checkpoint.png', requestTimeoutMs: 20_000 };
+    expect((await provider().uploadFile(options)).key).toBe(options.objectKey);
+    expect((await provider().uploadFile(options)).key).toBe(options.objectKey);
+    expect(mocks.config).toHaveBeenLastCalledWith(expect.objectContaining({ requestAbortTimeout: 20_000 }));
+  });
+  it('保留安全的底层网络错误码', async () => {
+    mocks.putObject.mockRejectedValue(
+      new TypeError('fetch failed', { cause: { code: 'UND_ERR_CONNECT_TIMEOUT', message: 'sensitive URL' } })
+    );
+    const pending = expect(provider().uploadFile(params)).rejects.toThrow('fetch failed (UND_ERR_CONNECT_TIMEOUT)');
+    await vi.advanceTimersByTimeAsync(1500);
+    await pending;
   });
 });

@@ -4,6 +4,9 @@ import { hotSheetEdition, storyCandidate } from '@/db/schema';
 import { refreshEditorialRadar } from '@/lib/stories/editorial-workflow';
 import { getHotSheetScheduledDay } from '@/lib/stories/hot-sheet-schedule';
 import { rankPublicStoryCandidates } from '@/lib/stories/story-voting';
+import { groupSimilarCoverage } from '@/lib/story-radar/coverage';
+import { publicRadarEligibility } from '@/lib/story-radar/public-candidates';
+import { getRecentSuccessfulRadarScan } from '@/lib/story-radar/scan';
 import { and, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 
 export async function archiveDailyHotSheet(now = new Date()) {
@@ -36,37 +39,41 @@ export async function archiveDailyHotSheet(now = new Date()) {
   if (!claimed.length) return { skipped: true, reason: 'already_claimed', day };
   const ownsClaim = and(eq(hotSheetEdition.day, day), eq(hotSheetEdition.attemptId, attemptId));
   try {
-    const radar = await refreshEditorialRadar(now);
-    if (radar.discovered === 0) throw new Error('No stories were collected. Please inspect the news sources.');
+    // 日报优先使用增量采集库存，仅在最近一小时没有可用扫描时补抓。
+    const recentScan = await getRecentSuccessfulRadarScan(now);
+    const radar = recentScan ?? (await refreshEditorialRadar(now));
+    if (radar.status === 'failed' || (!recentScan && radar.discovered === 0)) {
+      throw new Error('No stories were collected. Please inspect the news sources.');
+    }
     const candidates = await db
       .select()
       .from(storyCandidate)
       .where(
-        and(
-          inArray(storyCandidate.status, ['new', 'shortlisted']),
-          or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now))
-        )
+        and(publicRadarEligibility(now), or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now)))
       )
       .orderBy(
         sql`case ${storyCandidate.status} when 'shortlisted' then 0 else 1 end`,
-        desc(storyCandidate.relevanceScore),
-        desc(storyCandidate.publishedAt)
+        sql`${storyCandidate.publishedAt} desc nulls last`,
+        desc(storyCandidate.relevanceScore)
       )
       .limit(300);
-    const stories = rankPublicStoryCandidates(candidates, now, 10).map((item) => ({
-      id: item.id,
-      sourceTitle: item.sourceTitle,
-      sourceUrl: item.sourceUrl,
-      category: item.category,
-      sourceDomain: item.sourceDomain,
-      publishedAt: item.publishedAt?.toISOString() ?? null,
-    }));
+    const ranked = rankPublicStoryCandidates(candidates, now, candidates.length);
+    const stories = groupSimilarCoverage(ranked)
+      .slice(0, 10)
+      .map(({ primary: item }) => ({
+        id: item.id,
+        sourceTitle: item.sourceTitle,
+        sourceUrl: item.sourceUrl,
+        category: item.category,
+        sourceDomain: item.sourceDomain,
+        publishedAt: item.publishedAt?.toISOString() ?? null,
+      }));
     await db
       .update(hotSheetEdition)
       .set({
         stories,
         discovered: radar.discovered,
-        status: stories.length === 10 ? 'completed' : 'partial',
+        status: stories.length === 10 && radar.status !== 'partial' ? 'completed' : 'partial',
         completedAt: new Date(),
       })
       .where(ownsClaim);

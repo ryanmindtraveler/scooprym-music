@@ -4,8 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDb } from '@/db/index';
 import { storyCandidate, storyCandidateVote, storySubmission, user } from '@/db/schema';
 import { getRecentVoteDays } from '@/lib/stories/story-voting';
+import { getRadarCandidatePage, getRadarTotals } from '@/lib/story-radar/browse';
+import { type RadarBrowseParams, parseRadarBrowseParams } from '@/lib/story-radar/browse-params';
 import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import { getRadarGeneratedSongs } from '@/lib/story-radar/generated-songs';
+import { getLatestRadarScan } from '@/lib/story-radar/scan';
 import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { Routes } from '@/routes';
 import { formatDistanceToNowStrict } from 'date-fns';
@@ -28,6 +31,7 @@ import {
 import { getLocale, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { HotSheetArchive } from './hot-sheet-archive';
+import { RadarSourceHealth } from './radar-source-health';
 import { StoryRadar, type StoryRadarCandidateView } from './story-radar';
 import { type StorySubmissionStatus, type StorySubmissionView, StorySubmissions } from './story-submissions';
 import { type StoryVoteResultView, StoryVoteResults } from './story-vote-results';
@@ -43,7 +47,10 @@ function parseMatchedTerms(value: string | null) {
   }
 }
 
-export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
+export async function StoryRadarPage({
+  edition,
+  browseParams = parseRadarBrowseParams({}),
+}: { edition?: string; browseParams?: RadarBrowseParams } = {}) {
   const locale = await getLocale();
   const dateLocale = locale === 'zh' ? zhCN : enUS;
   const isZh = locale === 'zh';
@@ -53,16 +60,8 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
   const voteDays = recentVoteDays.map(({ day }) => day);
   const voteWeights = new Map(recentVoteDays.map(({ day, weight }) => [day, weight]));
 
-  const [candidates, submissions, groupedVotes, candidateVoters, voteSummary] = await Promise.all([
-    db
-      .select()
-      .from(storyCandidate)
-      .orderBy(
-        sql`case ${storyCandidate.status} when 'adopted' then 0 when 'shortlisted' then 1 when 'new' then 2 else 3 end`,
-        desc(storyCandidate.publishedAt),
-        desc(storyCandidate.relevanceScore)
-      )
-      .limit(300),
+  const [candidatePage, submissions, groupedVotes, candidateVoters, voteSummary] = await Promise.all([
+    getRadarCandidatePage(browseParams),
     db
       .select({
         id: storySubmission.id,
@@ -133,7 +132,13 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
       .where(inArray(storyCandidateVote.voteDay, voteDays)),
   ]);
 
-  const generatedSongs = groupRadarSongs(await getRadarGeneratedSongs(candidates.map((candidate) => candidate.id)));
+  const { candidates, ...browse } = candidatePage;
+  const [songRows, latestScan, candidateTotal] = await Promise.all([
+    getRadarGeneratedSongs(candidates.map((candidate) => candidate.id)),
+    getLatestRadarScan(),
+    getRadarTotals(),
+  ]);
+  const generatedSongs = groupRadarSongs(songRows);
 
   // 计算投票统计并建立候选映射
   const voteResultsByCandidate = new Map<string, StoryVoteResultView>();
@@ -194,6 +199,8 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
     sourceImageUrl: candidate.sourceImageUrl,
     category: candidate.category as StoryRadarCategory,
     matchedTerms: parseMatchedTerms(candidate.matchedTerms),
+    trendSignals: candidate.trendSignals,
+    aiScreening: candidate.aiScreening,
     relevanceScore: candidate.relevanceScore,
     status: candidate.status as StoryCandidateStatus,
     publishedAt: candidate.publishedAt?.toISOString() ?? null,
@@ -224,13 +231,9 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
 
   const summary = voteSummary[0] ?? { selections: 0, voters: 0, stories: 0 };
   const pendingSubmissionsCount = serializedSubmissions.filter((s) => s.status === 'pending').length;
-  const shortlistedCandidatesCount = serializedCandidates.filter((c) => c.status === 'shortlisted').length;
-  const generatedCandidatesCount = serializedCandidates.filter(
-    (c) => c.generatedSongs && c.generatedSongs.length > 0
-  ).length;
-  const inProductionCount = serializedCandidates.filter(
-    (c) => c.status === 'adopted' || (c.generatedSongs && c.generatedSongs.length > 0)
-  ).length;
+  const shortlistedCandidatesCount = candidateTotal.shortlisted;
+  const generatedCandidatesCount = candidateTotal.generated;
+  const inProductionCount = candidateTotal.producing;
 
   return (
     <div className="mx-auto flex w-full max-w-[2160px] flex-col gap-6 pb-12">
@@ -283,12 +286,12 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
             </span>
             <div>
               <p className="text-xs font-bold text-muted-foreground">{isZh ? '雷达候选总池' : 'Radar Candidates'}</p>
-              <p className="mt-0.5 text-2xl font-black tabular-nums text-foreground">{serializedCandidates.length}</p>
+              <p className="mt-0.5 text-2xl font-black tabular-nums text-foreground">{candidateTotal.count}</p>
             </div>
           </div>
           <div className="text-right">
             <span className="rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-700 dark:text-cyan-300">
-              {shortlistedCandidatesCount} 条已精选
+              {shortlistedCandidatesCount} shortlisted in total
             </span>
           </div>
         </div>
@@ -342,9 +345,7 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
               <Music2 className="size-5" />
             </span>
             <div>
-              <p className="text-xs font-bold text-muted-foreground">
-                {isZh ? '已采纳与生成' : 'In Production / Done'}
-              </p>
+              <p className="text-xs font-bold text-muted-foreground">In Production</p>
               <p className="mt-0.5 text-2xl font-black tabular-nums text-foreground">{inProductionCount}</p>
             </div>
           </div>
@@ -357,9 +358,10 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
       </div>
 
       {/* 现代工作区 Tabs 切换 */}
+      <RadarSourceHealth scan={latestScan} />
       <Tabs defaultValue="radar" className="w-full space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-2">
-          <TabsList className="h-10 bg-muted/60 p-1 rounded-xl">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-muted/60 p-1 rounded-xl sm:flex sm:w-fit">
             <TabsTrigger
               value="radar"
               className="gap-2 px-3.5 text-xs font-bold rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
@@ -411,7 +413,7 @@ export async function StoryRadarPage({ edition }: { edition?: string } = {}) {
 
         {/* Tab 1: 热点雷达候选池 */}
         <TabsContent value="radar" className="m-0 outline-none">
-          <StoryRadar candidates={serializedCandidates} />
+          <StoryRadar key={JSON.stringify(browse.params)} candidates={serializedCandidates} browse={browse} />
         </TabsContent>
 
         {/* Tab 2: 大众投票风向标 */}

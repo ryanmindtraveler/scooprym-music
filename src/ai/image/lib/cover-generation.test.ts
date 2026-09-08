@@ -14,6 +14,20 @@ vi.mock('replicate', () => ({
 import { buildCoverPrompt, generateCoverImageDataUrl } from './cover-generation';
 
 describe('cover generation', () => {
+  it('总预算耗尽后停止后备模型，避免继续发起付费请求', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'configured');
+    vi.stubEnv('REPLICATE_API_TOKEN', 'configured');
+    const controller = new AbortController();
+    mocks.fetch.mockImplementationOnce(async () => {
+      controller.abort(new Error('Cover budget exhausted'));
+      throw controller.signal.reason;
+    });
+    await expect(generateCoverImageDataUrl({ title: 'Test', signal: controller.signal })).rejects.toThrow(
+      'Cover budget exhausted'
+    );
+    expect(mocks.fetch).toHaveBeenCalledOnce();
+    expect(mocks.replicateRun).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();

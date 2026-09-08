@@ -40,8 +40,8 @@ export class S3Provider implements StorageProvider {
   /**
    * Get the S3 client instance
    */
-  private getS3Client(): s3mini {
-    if (this.s3Client) {
+  private getS3Client(requestTimeoutMs?: number): s3mini {
+    if (this.s3Client && !requestTimeoutMs) {
       return this.s3Client;
     }
 
@@ -67,15 +67,16 @@ export class S3Provider implements StorageProvider {
     // The bucket name needs to be included in the endpoint URL for s3mini
     const endpointWithBucket = `${endpoint.replace(/\/$/, '')}/${bucketName}`;
 
-    this.s3Client = new s3mini({
+    const client = new s3mini({
       accessKeyId,
       secretAccessKey,
       endpoint: endpointWithBucket,
       region,
-      requestAbortTimeout: 120_000,
+      requestAbortTimeout: requestTimeoutMs ?? 120_000,
     });
 
-    return this.s3Client;
+    if (!requestTimeoutMs) this.s3Client = client;
+    return client;
   }
 
   /**
@@ -93,11 +94,11 @@ export class S3Provider implements StorageProvider {
   public async uploadFile(params: UploadFileParams): Promise<UploadFileResult> {
     try {
       const { file, filename, contentType, folder } = params;
-      const s3 = this.getS3Client();
+      const s3 = this.getS3Client(params.requestTimeoutMs);
       const { bucketName } = this.config;
 
       const uniqueFilename = this.generateUniqueFilename(filename);
-      const key = folder ? `${folder}/${uniqueFilename}` : uniqueFilename;
+      const key = params.objectKey || (folder ? `${folder}/${uniqueFilename}` : uniqueFilename);
 
       // Convert Blob to Buffer if needed
       let fileContent: Buffer | string;
@@ -143,7 +144,7 @@ export class S3Provider implements StorageProvider {
         // For s3mini, we construct the URL manually
         // Since bucket is included in endpoint, we just append the key
         const baseUrl = this.config.endpoint?.replace(/\/$/, '') || '';
-        url = `${baseUrl}/${key}`;
+        url = `${baseUrl}/${bucketName}/${key}`;
         // console.log('uploadFile, constructed url', url);
       }
 
@@ -155,8 +156,11 @@ export class S3Provider implements StorageProvider {
       }
 
       const message = error instanceof Error ? error.message : 'Unknown error occurred during file upload';
-      console.error('uploadFile, error', message);
-      throw new UploadError(message);
+      const cause = error as { cause?: { code?: unknown }; code?: unknown };
+      const code = cause.cause?.code ?? cause.code;
+      const diagnostic = typeof code === 'string' && /^[A-Z0-9_]+$/.test(code) ? ` (${code})` : '';
+      console.error('uploadFile, error', message + diagnostic);
+      throw new UploadError(message + diagnostic);
     }
   }
 

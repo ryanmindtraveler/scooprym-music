@@ -1,20 +1,21 @@
-import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { getDb } from '@/db/index';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getSession } from '@/lib/auth/server';
+import { prepareCoverAsset } from '@/lib/creation/cover-asset';
 import {
   completeWorkflowStage,
   failWorkflowStep,
   getWorkflowRunBySongId,
   startWorkflowStage,
 } from '@/lib/creation/song-creation-workflow';
-import { readImageDimensions } from '@/lib/creation/song-product-check';
 import { runPersistedSongProductCheck } from '@/lib/creation/song-workflow';
-import { deleteFile, uploadFile } from '@/storage';
+import { deleteFile } from '@/storage';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+
+export const maxDuration = 300;
 
 const retryCoverSchema = z.object({
   songId: z.string().uuid(),
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
         coverImageKey: songTable.coverImageKey,
         sourceText: storyTable.sourceText,
         newsSummary: storyTable.newsSummary,
-        prompt: latestAttempt.prompt,
+        coverArtPrompt: latestAttempt.coverArtPrompt,
         processingStatus: latestAttempt.processingStatus,
       })
       .from(songTable)
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
         'queued',
         'processing',
         'generating_audio',
+        'audio_generated',
         'uploading_audio',
         'audio_uploaded',
         'generating_cover',
@@ -97,27 +99,17 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // 4. Generate New Cover
-    // 封面首先表现新闻故事；音乐风格只作为没有来源正文时的降级上下文。
-    const coverImageUrl = await generateCoverWithRetry({
+    // 首次生成和手动恢复共用恢复点，上传失败时重用已有图片。
+    const uploadResult = await prepareCoverAsset({
+      songId,
+      userId,
       title: song.title || 'Untitled Track',
       lyrics: song.lyrics || '',
-      sourceText: song.sourceText?.trim() || song.newsSummary?.trim() || song.prompt?.trim() || '',
+      sourceText: song.sourceText?.trim() || song.newsSummary?.trim() || song.title || 'Untitled Track',
+      artPrompt: song.coverArtPrompt || undefined,
+      previousCoverKey: song.coverImageKey,
     });
-
-    if (!coverImageUrl) {
-      throw new Error('Failed to generate cover image');
-    }
-
-    // 5. Upload to Storage
-    const { buffer, mime, extension } = await dataUrlToImageBuffer(coverImageUrl);
-    const coverDimensions = readImageDimensions(buffer, mime);
-    const uploadResult = await uploadFile(
-      buffer,
-      `song-cover-retry-${Date.now()}.${extension}`,
-      mime,
-      `song-covers/${userId}`
-    );
+    const coverDimensions = uploadResult.dimensions;
 
     // 6. Update Database
     const expectedCoverKey = song.coverImageKey
@@ -143,6 +135,7 @@ export async function POST(req: NextRequest) {
                 'queued',
                 'processing',
                 'generating_audio',
+                'audio_generated',
                 'uploading_audio',
                 'audio_uploaded',
                 'generating_cover',
@@ -154,14 +147,15 @@ export async function POST(req: NextRequest) {
       .returning({ id: songTable.id });
 
     if (updatedRows.length === 0) {
-      await deleteFile(uploadResult.key).catch((error) => {
-        console.error('[Cover Retry] Failed to remove unclaimed upload:', error);
-      });
+      // 固定对象可能已被并发恢复引用，冲突时不能删除共享恢复资产。
       if (workflowStep) {
         await failWorkflowStep(workflowStep.runId, workflowStep.stepId, 'Song changed while the cover was generating');
         workflowStep = undefined;
       }
-      return NextResponse.json({ success: false, error: 'Song no longer exists' }, { status: 409 });
+      return NextResponse.json(
+        { success: false, error: 'Song changed while the cover was being restored. Refresh and try again.' },
+        { status: 409 }
+      );
     }
 
     if (song.coverImageKey && song.coverImageKey !== uploadResult.key) {
@@ -194,6 +188,9 @@ export async function POST(req: NextRequest) {
         console.error('[Cover Retry] Failed to persist workflow error:', persistenceError);
       });
     }
-    return NextResponse.json({ success: false, error: 'Failed to regenerate cover image' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : 'Failed to restore cover image' },
+      { status: 500 }
+    );
   }
 }

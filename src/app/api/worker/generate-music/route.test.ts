@@ -63,6 +63,6 @@ describe('generate music worker contract', () => {
     const response = await handleGenerateMusicWorker(createRequest({ songId }));
 
     expect(response.status).toBe(200);
-    expect(mocks.failActiveMusicJob).toHaveBeenCalledWith(songId, expect.any(Error));
+    expect(mocks.failActiveMusicJob).toHaveBeenCalledWith(songId, expect.any(Error), undefined);
   });
 });

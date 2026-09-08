@@ -1,10 +1,10 @@
 import { canonicalizeStoryUrl, classifyStoryHeadline, normalizeStoryDomain, scoreStoryCandidate } from './classifier';
 import { STORY_RADAR_CATEGORY_CONFIG } from './config';
-import type { StoryRadarCandidate } from './types';
+import { describeFeedError, requestFeed } from './feed-request';
+import type { RadarSourceBatch, StoryRadarCandidate } from './types';
 
 const GDELT_DOC_ENDPOINT = 'https://api.gdeltproject.org/api/v2/doc/doc';
 const FETCH_TIMEOUT_MS = 15_000;
-const RATE_LIMIT_RETRY_MS = 6_000;
 const MAX_REQUEST_ATTEMPTS = 3;
 
 interface GdeltArticle {
@@ -40,12 +40,12 @@ function parsePublishedAt(value: unknown) {
 }
 
 function toCandidate(article: GdeltArticle): StoryRadarCandidate | null {
+  if (!article || typeof article !== 'object') return null;
   if (typeof article.url !== 'string' || typeof article.title !== 'string') return null;
   const title = article.title.replace(/\s+/g, ' ').trim();
-  if (title.length < 24) return null;
+  if (title.length < 5) return null;
 
   const categoryMatch = classifyStoryHeadline(title);
-  if (!categoryMatch) return null;
 
   let sourceUrl: string;
   try {
@@ -67,19 +67,22 @@ function toCandidate(article: GdeltArticle): StoryRadarCandidate | null {
     sourceTitle: title.slice(0, 500),
     sourceDomain: parsedDomain,
     sourceImageUrl: imageUrl,
-    category: categoryMatch.category,
-    matchedTerms: categoryMatch.matchedTerms,
-    relevanceScore: scoreStoryCandidate({
-      domain: parsedDomain,
-      imageUrl,
-      matchedTerms: categoryMatch.matchedTerms,
-      publishedAt,
-    }),
+    category: categoryMatch?.category ?? 'internet_chaos',
+    matchedTerms: categoryMatch?.matchedTerms ?? [],
+    relevanceScore: categoryMatch
+      ? scoreStoryCandidate({
+          domain: parsedDomain,
+          imageUrl,
+          matchedTerms: categoryMatch.matchedTerms,
+          publishedAt,
+        })
+      : 0,
     publishedAt,
   };
 }
 
-export async function fetchStoryRadarCandidates(): Promise<StoryRadarCandidate[]> {
+export async function fetchGdeltBatch(): Promise<RadarSourceBatch> {
+  const started = Date.now();
   const url = new URL(GDELT_DOC_ENDPOINT);
   url.searchParams.set('query', buildGdeltQuery());
   url.searchParams.set('mode', 'ArtList');
@@ -88,35 +91,25 @@ export async function fetchStoryRadarCandidates(): Promise<StoryRadarCandidate[]
   url.searchParams.set('sort', 'datedesc');
   url.searchParams.set('timespan', '48h');
 
-  let response: Response | null = null;
-
-  for (let attempt = 1; attempt <= MAX_REQUEST_ATTEMPTS; attempt += 1) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(new Error('Story radar request timed out')), FETCH_TIMEOUT_MS);
-
-    try {
-      response = await fetch(url, {
-        headers: { 'User-Agent': 'ScoopRYM-Story-Radar/1.0' },
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (response.status !== 429 || attempt === MAX_REQUEST_ATTEMPTS) break;
-    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_RETRY_MS));
-  }
-
-  if (!response?.ok) {
-    throw new Error(`GDELT request failed with ${response?.status ?? 'no response'}`);
-  }
-
+  const report: RadarSourceBatch['report'] = {
+    name: 'GDELT',
+    url: GDELT_DOC_ENDPOINT,
+    status: 'disabled',
+    fetched: 0,
+    accepted: 0,
+    needsReview: 0,
+    older: 0,
+    invalid: 0,
+    latestPublishedAt: null,
+    durationMs: 0,
+  };
+  if (process.env.STORY_RADAR_GDELT_ENABLED !== 'true') return { candidates: [], report };
   try {
-    const payload = (await response.json()) as GdeltResponse;
+    const response = await requestFeed(url.toString(), FETCH_TIMEOUT_MS, MAX_REQUEST_ATTEMPTS, 6000);
+    const payload = JSON.parse(response.text) as GdeltResponse;
+    if (!Array.isArray(payload.articles)) throw new Error('Missing GDELT article list');
     const deduplicated = new Map<string, StoryRadarCandidate>();
-
-    for (const article of payload.articles ?? []) {
+    for (const article of payload.articles) {
       const candidate = toCandidate(article);
       if (!candidate) continue;
 
@@ -126,8 +119,29 @@ export async function fetchStoryRadarCandidates(): Promise<StoryRadarCandidate[]
       }
     }
 
-    return [...deduplicated.values()].sort((a, b) => b.relevanceScore - a.relevanceScore).slice(0, 80);
+    const candidates = [...deduplicated.values()];
+    const dates = candidates
+      .flatMap((candidate) => (candidate.publishedAt ? [candidate.publishedAt.toISOString()] : []))
+      .sort();
+    return {
+      candidates,
+      report: {
+        ...report,
+        status: candidates.length ? 'ok' : payload.articles.length ? 'failed' : 'empty',
+        httpStatus: response.status,
+        fetched: payload.articles.length,
+        accepted: candidates.length,
+        invalid: payload.articles.length - candidates.length,
+        needsReview: candidates.filter((candidate) => candidate.matchedTerms.length === 0).length,
+        latestPublishedAt: dates.at(-1) ?? null,
+        durationMs: Date.now() - started,
+      },
+    };
   } catch (error) {
-    throw new Error('GDELT returned an invalid response', { cause: error });
+    console.warn('[story-radar] GDELT unavailable', describeFeedError(error));
+    return {
+      candidates: [],
+      report: { ...report, status: 'failed', durationMs: Date.now() - started, ...describeFeedError(error) },
+    };
   }
 }

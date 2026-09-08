@@ -11,6 +11,8 @@ import {
   getVoteDay,
   rankPublicStoryCandidates,
 } from '@/lib/stories/story-voting';
+import { groupSimilarCoverage } from '@/lib/story-radar/coverage';
+import { publicRadarEligibility } from '@/lib/story-radar/public-candidates';
 import { and, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -39,19 +41,18 @@ async function loadTrendingCandidates(db: Awaited<ReturnType<typeof getDb>>) {
     })
     .from(storyCandidate)
     .where(
-      and(
-        inArray(storyCandidate.status, ['new', 'shortlisted']),
-        or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now))
-      )
+      and(publicRadarEligibility(now), or(isNull(storyCandidate.publishedAt), lte(storyCandidate.publishedAt, now)))
     )
     .orderBy(
       sql`case ${storyCandidate.status} when 'shortlisted' then 0 else 1 end`,
-      desc(storyCandidate.relevanceScore),
-      desc(storyCandidate.publishedAt)
+      sql`${storyCandidate.publishedAt} desc nulls last`,
+      desc(storyCandidate.relevanceScore)
     )
     .limit(300);
 
-  const rows = rankPublicStoryCandidates(eligibleRows, now, PUBLIC_STORY_CANDIDATE_LIMIT);
+  const rows = groupSimilarCoverage(rankPublicStoryCandidates(eligibleRows, now, eligibleRows.length))
+    .slice(0, PUBLIC_STORY_CANDIDATE_LIMIT)
+    .map((group) => group.primary);
 
   if (rows.length === 0) return [];
 

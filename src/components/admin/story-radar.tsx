@@ -4,11 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LocaleLink, useLocaleRouter } from '@/i18n/navigation';
+import { type RadarBrowseView, radarBrowseSearch } from '@/lib/story-radar/browse-params';
+import { getStoryFreshness } from '@/lib/story-radar/classifier';
+import { groupSimilarCoverage } from '@/lib/story-radar/coverage';
 import { type RadarGeneratedSong, groupRadarSongs } from '@/lib/story-radar/generated-song-view';
-import type { StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
+import type { GoogleTrendSignal, StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { cn } from '@/lib/utils';
 import {
   Check,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Flame,
   Globe,
@@ -26,10 +31,12 @@ import {
   X,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 
 export interface StoryRadarCandidateView {
+  aiScreening?: import('@/lib/story-radar/screening-state').ScreeningState | null;
+  trendSignals?: GoogleTrendSignal[] | null;
   generatedSongs?: RadarGeneratedSong[];
   id: string;
   sourceUrl: string;
@@ -77,20 +84,48 @@ const statusFilters: Array<{ id: 'all' | 'generated' | StoryCandidateStatus; lab
   { id: 'dismissed', labelZh: '🗑️ 已忽略', labelEn: 'Dismissed' },
 ];
 
-export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView[] }) {
+const generatePagination = (currentPage: number, totalPages: number) => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (currentPage <= 3) {
+    return [1, 2, 3, '...', totalPages - 1, totalPages];
+  }
+  if (currentPage >= totalPages - 2) {
+    return [1, 2, '...', totalPages - 2, totalPages - 1, totalPages];
+  }
+  return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+};
+
+export function StoryRadar({
+  candidates,
+  browse,
+}: { candidates: StoryRadarCandidateView[]; browse?: RadarBrowseView }) {
   const t = useTranslations('Dashboard.admin.storyRadar');
   const router = useLocaleRouter();
+  const [isNavigating, startNavigation] = useTransition();
   const zh = useLocale() === 'zh';
   const submitting = useRef(new Set<string>());
   const [submittingIds, setSubmittingIds] = useState<Set<string>>(new Set());
-  const [jobs, setJobs] = useState<Record<string, { status: string; workflowStatus?: string; stage?: string }>>({});
+  const [jobs, setJobs] = useState<
+    Record<string, { status: string; workflowStatus?: string; stage?: string; error?: string; songId?: string }>
+  >({});
   const [generated, setGenerated] = useState<Record<string, RadarGeneratedSong[]> | null>(null);
 
-  const [activeStatus, setActiveStatus] = useState<'all' | 'generated' | StoryCandidateStatus>('all');
-  const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeStatus, setActiveStatus] = useState<'all' | 'generated' | StoryCandidateStatus>(
+    browse?.params.status ?? 'all'
+  );
+  const [activeCategory, setActiveCategory] = useState<'all' | StoryRadarCategory>(
+    (browse?.params.category ?? 'all') as 'all' | StoryRadarCategory
+  );
+  const [searchQuery, setSearchQuery] = useState(browse?.params.q ?? '');
   const [isScanning, setIsScanning] = useState(false);
+  const [groupCoverage, setGroupCoverage] = useState(true);
+  const [reviewOnly, setReviewOnly] = useState(browse?.params.review ?? false);
   const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(browse?.params.page ?? 1);
+  const [pageSize, setPageSize] = useState(browse?.params.size ?? 10);
 
   const songsByCandidate =
     generated ?? Object.fromEntries(candidates.map((candidate) => [candidate.id, candidate.generatedSongs ?? []]));
@@ -113,17 +148,20 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
   const refreshJobs = async (signal?: AbortSignal) => {
     try {
       const timeout = AbortSignal.timeout(10_000);
-      const response = await fetch('/api/admin/story-radar/jobs', {
-        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-        cache: 'no-store',
-      });
+      const response = await fetch(
+        `/api/admin/story-radar/jobs?ids=${candidates.map((candidate) => candidate.id).join(',')}`,
+        {
+          signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+          cache: 'no-store',
+        }
+      );
       if (!response.ok) return;
       const data = await response.json();
       if (signal?.aborted) return;
       if (Array.isArray(data.generatedSongs)) setGenerated(groupRadarSongs(data.generatedSongs));
       if (Array.isArray(data.jobs))
         setJobs(Object.fromEntries(data.jobs.map((job: { candidateId: string }) => [job.candidateId, job])));
-      return data.jobs as Array<{ candidateId: string; status: string }> | undefined;
+      return data.jobs as Array<{ candidateId: string; status: string; workflowStatus?: string }> | undefined;
     } catch {
       /* 临时网络中断保留当前队列状态。 */
     }
@@ -133,34 +171,109 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
-      await refreshJobs(controller.signal);
-      if (!controller.signal.aborted) timer = setTimeout(poll, 10_000);
+      const currentJobs = document.visibilityState !== 'hidden' ? await refreshJobs(controller.signal) : undefined;
+      const active = currentJobs?.some(
+        (job) => job.status !== 'failed' && !['completed', 'failed'].includes(job.workflowStatus || '')
+      );
+      if (!controller.signal.aborted) timer = setTimeout(poll, active ? 3_000 : 15_000);
     };
     void poll();
     return () => {
       controller.abort();
       clearTimeout(timer);
     };
-  }, []);
+  }, [candidates]);
 
-  const filteredCandidates = useMemo(
+  const [hideLowScore, setHideLowScore] = useState(browse?.params.hideLow ?? false);
+  useEffect(() => {
+    if (!browse) return;
+    const changed =
+      activeStatus !== browse.params.status ||
+      activeCategory !== browse.params.category ||
+      searchQuery.trim() !== browse.params.q ||
+      reviewOnly !== browse.params.review ||
+      hideLowScore !== browse.params.hideLow ||
+      pageSize !== browse.params.size;
+    const next = {
+      page: changed ? 1 : currentPage,
+      size: pageSize,
+      status: activeStatus,
+      category: activeCategory,
+      q: searchQuery.trim(),
+      review: reviewOnly,
+      hideLow: hideLowScore,
+    };
+    if (radarBrowseSearch(next) === radarBrowseSearch(browse.params)) return;
+    const timer = setTimeout(
+      () => startNavigation(() => router.push(`/admin/story-radar?${radarBrowseSearch(next)}`)),
+      searchQuery.trim() !== browse.params.q ? 350 : 0
+    );
+    return () => clearTimeout(timer);
+  }, [activeStatus, activeCategory, searchQuery, reviewOnly, hideLowScore, currentPage, pageSize, browse, router]);
+  const [isAiScreening, setIsAiScreening] = useState(false);
+
+  const filteredCandidates = useMemo(() => {
+    if (browse) return candidates;
+    const filtered = candidates.filter((candidate) => {
+      if (hideLowScore && activeStatus !== 'dismissed' && candidate.relevanceScore <= 20) return false;
+      if (reviewOnly && (candidate.status !== 'new' || candidate.matchedTerms.length > 0)) return false;
+      const matchesCategory = activeCategory === 'all' || candidate.category === activeCategory;
+      if (!matchesCategory || !matchesStatus(candidate, activeStatus)) return false;
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase().trim();
+      return (
+        candidate.sourceTitle.toLowerCase().includes(query) ||
+        candidate.sourceDomain.toLowerCase().includes(query) ||
+        candidate.matchedTerms.some((term) => term.toLowerCase().includes(query)) ||
+        candidate.trendSignals?.some((signal) => signal.term.toLowerCase().includes(query))
+      );
+    });
+
+    // 严格按照匹配分数从大到小降序排列；若分数相同，按发布时间最新优先
+    return filtered.sort((a, b) => {
+      if (b.relevanceScore !== a.relevanceScore) {
+        return b.relevanceScore - a.relevanceScore;
+      }
+      const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [browse, activeCategory, activeStatus, candidates, generated, jobs, searchQuery, reviewOnly, hideLowScore]);
+
+  const coverageGroups = useMemo(() => {
+    const groups = groupCoverage
+      ? groupSimilarCoverage(filteredCandidates)
+      : filteredCandidates.map((candidate) => ({ primary: candidate, articles: [candidate] }));
+
+    // 确保分组卡片列表也严格按照 primary.relevanceScore 从大到小降序排列
+    return groups.sort((a, b) => {
+      if (b.primary.relevanceScore !== a.primary.relevanceScore) {
+        return b.primary.relevanceScore - a.primary.relevanceScore;
+      }
+      const timeA = a.primary.publishedAt ? new Date(a.primary.publishedAt).getTime() : 0;
+      const timeB = b.primary.publishedAt ? new Date(b.primary.publishedAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [filteredCandidates, groupCoverage]);
+
+  // 状态或筛选条件切换时，自动重置回第一页
+  useEffect(() => {
+    if (!browse) setCurrentPage(1);
+  }, [activeStatus, activeCategory, searchQuery, reviewOnly, groupCoverage, hideLowScore]);
+
+  const totalItems = browse?.total ?? coverageGroups.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safeCurrentPage = browse ? browse.params.page : Math.min(currentPage, totalPages);
+
+  const paginatedGroups = useMemo(
     () =>
-      candidates.filter((candidate) => {
-        const matchesCategory = activeCategory === 'all' || candidate.category === activeCategory;
-        if (!matchesCategory || !matchesStatus(candidate, activeStatus)) return false;
-        if (!searchQuery.trim()) return true;
-        const query = searchQuery.toLowerCase().trim();
-        return (
-          candidate.sourceTitle.toLowerCase().includes(query) ||
-          candidate.sourceDomain.toLowerCase().includes(query) ||
-          candidate.matchedTerms.some((term) => term.toLowerCase().includes(query))
-        );
-      }),
-    [activeCategory, activeStatus, candidates, generated, jobs, searchQuery]
+      browse ? coverageGroups : coverageGroups.slice((safeCurrentPage - 1) * pageSize, safeCurrentPage * pageSize),
+    [browse, coverageGroups, safeCurrentPage, pageSize]
   );
 
   // 状态计数动态联动当前所选类别，制作中排查已生成，精选由管理员决定
   const counts = useMemo(() => {
+    if (browse) return browse.counts;
     const categoryMatched = candidates.filter((c) => activeCategory === 'all' || c.category === activeCategory);
     return {
       all: categoryMatched.length,
@@ -171,7 +284,7 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
       dismissed: categoryMatched.filter((c) => c.status === 'dismissed').length,
       generated: categoryMatched.filter((c) => isCandidateGenerated(c)).length,
     };
-  }, [activeCategory, candidates, generated, jobs]);
+  }, [browse, activeCategory, candidates, generated, jobs]);
 
   async function scanLatestStories() {
     setIsScanning(true);
@@ -181,29 +294,52 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
         success: boolean;
         discovered?: number;
         stored?: number;
+        inserted?: number;
+        updated?: number;
+        status?: string;
         shortlisted?: number;
         error?: string;
       };
       if (!response.ok || !result.success) throw new Error(result.error || 'Scan failed');
 
       const countDiscovered = result.discovered ?? 0;
-      const countStored = result.stored ?? countDiscovered;
-      const countShortlisted = result.shortlisted ?? 0;
-
-      if (countDiscovered > 0 || countStored > 0) {
-        toast.success(
-          zh
-            ? `全网扫描完成：发现 ${countDiscovered} 条新闻，入库 ${countStored} 条，精选 ${countShortlisted} 条。`
-            : `Scan complete: ${countDiscovered} discovered, ${countStored} stored, ${countShortlisted} shortlisted.`
-        );
-      } else {
-        toast.info(zh ? '全网扫描完成，暂无新的匹配新闻。' : 'Scan complete. No new matching stories found.');
-      }
+      const summary = `${result.inserted ?? 0} new articles, ${result.updated ?? 0} existing articles refreshed. ${countDiscovered} collected.`;
+      if (result.status === 'partial')
+        toast.warning(`Partial scan: ${summary} Some sources failed. See source health.`);
+      else if (countDiscovered > 0) toast.success(summary);
+      else toast.info('Sources responded, but returned no valid articles. See source health.');
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not refresh Story Radar');
+      router.refresh();
     } finally {
       setIsScanning(false);
+    }
+  }
+
+  async function runAiScreening(retryFailed = false) {
+    setIsAiScreening(true);
+    const toastId = toast.loading('AI is evaluating stories for meme-song fit...');
+    try {
+      const response = await fetch('/api/admin/story-radar/ai-screen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoDismiss: true, limit: 40, retryFailed }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'AI screening failed');
+      }
+
+      (data.partial ? toast.warning : toast.success)(
+        `AI screening: ${data.processedCount} saved, ${data.failedCount ?? 0} failed, ${data.skippedCount ?? 0} skipped. ${data.dismissedCount} dismissed, ${data.highMatchCount} high-fit topics.`,
+        { id: toastId }
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'AI screening failed', { id: toastId });
+    } finally {
+      setIsAiScreening(false);
+      router.refresh();
     }
   }
 
@@ -239,6 +375,11 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
   }
 
   async function openInStudio(id: string) {
+    const existingJob = jobs[id];
+    if (existingJob?.workflowStatus === 'failed' && existingJob.songId) {
+      router.push(`/admin/create?songId=${encodeURIComponent(existingJob.songId)}`);
+      return;
+    }
     if (submitting.current.has(id)) return;
     submitting.current.add(id);
     setSubmittingIds(new Set(submitting.current));
@@ -360,9 +501,27 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
             <Button
               type="button"
               size="sm"
+              onClick={() => runAiScreening()}
+              disabled={isAiScreening}
+              className="h-8 bg-linear-to-r from-violet-600 to-pink-600 text-xs font-bold text-white hover:opacity-90 shadow-2xs"
+              title={
+                zh
+                  ? '使用 AI 智能判断待精选新闻的主题契合度并自动过滤无关内容'
+                  : 'AI screens and filters stories by meme fit'
+              }
+            >
+              <Sparkles className={cn('mr-1.5 size-3.5', isAiScreening && 'animate-spin')} />
+              {isAiScreening ? 'Screening...' : 'AI Screen'}
+            </Button>
+            <Button size="sm" variant="outline" disabled={isAiScreening} onClick={() => runAiScreening(true)}>
+              Retry failed screening
+            </Button>
+            <Button
+              type="button"
+              size="sm"
               onClick={scanLatestStories}
               disabled={isScanning}
-              className="h-8 bg-pink-600 text-xs font-bold text-white hover:bg-pink-700 min-w-32 shadow-2xs"
+              className="h-8 bg-pink-600 text-xs font-bold text-white hover:bg-pink-700 min-w-28 shadow-2xs"
             >
               <RefreshCw className={cn('mr-1.5 size-3.5', isScanning && 'animate-spin')} />
               {isScanning ? t('scanning') : t('scan')}
@@ -399,6 +558,30 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-5 text-xs text-muted-foreground">
+        {isNavigating && (
+          <span role="status" className="flex items-center gap-1">
+            <Loader2 className="size-3 animate-spin" />
+            Loading stories…
+          </span>
+        )}
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" checked={groupCoverage} onChange={(event) => setGroupCoverage(event.target.checked)} />
+          {browse ? 'Group similar coverage on this page' : zh ? '相似报道聚合' : 'Group similar coverage'}
+        </label>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" checked={hideLowScore} onChange={(event) => setHideLowScore(event.target.checked)} />
+          {zh ? '仅看契合主题 (分数 > 20)' : 'Hide Low-Score / Noise'}
+        </label>
+        <label className="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" checked={reviewOnly} onChange={(event) => setReviewOnly(event.target.checked)} />
+          {zh ? '仅看需人工复审' : 'Needs editorial review only'}
+        </label>
+        <span>
+          {filteredCandidates.length} {zh ? '篇新闻' : 'articles'} · {coverageGroups.length} {zh ? '个分组' : 'groups'}{' '}
+          ({zh ? '已按匹配分数从大到小排列' : 'Sorted by match score desc'})
+        </span>
+      </div>
       {/* 候选新闻列表 */}
       {filteredCandidates.length === 0 ? (
         <Card className="flex min-h-60 flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center">
@@ -414,15 +597,16 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
         </Card>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-2xs divide-y divide-border/60">
-          {filteredCandidates.map((candidate) => {
+          {paginatedGroups.map(({ primary: candidate, articles }) => {
             const category = categoryDetails[candidate.category];
             const isPending = pendingId === candidate.id || submittingIds.has(candidate.id);
             const job = jobs[candidate.id];
             const completedSongs = songsByCandidate[candidate.id] ?? [];
             const latestSong = completedSongs[0];
-            const studioHref = latestSong
-              ? `/admin/create?songId=${encodeURIComponent(latestSong.id)}`
-              : `/admin/create?${new URLSearchParams({ content: candidate.sourceUrl, sourceTitle: candidate.sourceTitle, autoGenerate: 'false' })}`;
+            const studioHref =
+              latestSong || job?.songId
+                ? `/admin/create?songId=${encodeURIComponent(latestSong?.id || job?.songId || '')}`
+                : `/admin/create?${new URLSearchParams({ content: candidate.sourceUrl, sourceTitle: candidate.sourceTitle, autoGenerate: 'false' })}`;
 
             const isShortlisted = candidate.status === 'shortlisted';
             const isJobFailed = job?.status === 'failed' || job?.workflowStatus === 'failed';
@@ -457,6 +641,64 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
 
                   {/* 详情与标签 */}
                   <div className="min-w-0 flex-1 space-y-1.5">
+                    {candidate.aiScreening?.status === 'failed' && (
+                      <p className="text-xs text-destructive break-words">
+                        AI screening failed · original score retained. {candidate.aiScreening.error}
+                      </p>
+                    )}
+                    {candidate.aiScreening?.status === 'completed' && (
+                      <p className="text-xs text-muted-foreground">AI assessed · {candidate.aiScreening.reason}</p>
+                    )}
+                    {isJobFailed && (
+                      <div
+                        className="rounded-md border border-destructive/20 bg-destructive/5 p-2 text-xs text-destructive"
+                        role="status"
+                      >
+                        <p className="break-words">
+                          {job?.error || 'Production stopped. Open Studio to inspect and retry the failed stage.'}
+                        </p>
+                        <LocaleLink
+                          href={studioHref}
+                          className="mt-1 inline-block font-medium underline underline-offset-2"
+                        >
+                          Review and retry in Studio
+                        </LocaleLink>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {candidate.status === 'new' && candidate.matchedTerms.length === 0 && (
+                        <Badge variant="outline">Needs review · suggested topic</Badge>
+                      )}
+                      {getStoryFreshness(candidate.publishedAt) === 'older' && (
+                        <Badge variant="outline">Older than 3 days</Badge>
+                      )}
+                      {getStoryFreshness(candidate.publishedAt) === 'unknown' && (
+                        <Badge variant="outline">Date unknown</Badge>
+                      )}
+                      {getStoryFreshness(candidate.publishedAt) === 'future' && (
+                        <Badge variant="outline">Check publication date</Badge>
+                      )}
+                    </div>
+                    {articles.length > 1 && (
+                      <details className="text-xs text-muted-foreground">
+                        <summary className="cursor-pointer">{articles.length} similar reports · view sources</summary>
+                        <ul className="mt-2 space-y-1">
+                          {articles.map((article) => (
+                            <li key={article.id}>
+                              <a
+                                href={article.sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline underline-offset-2"
+                              >
+                                {article.sourceDomain}: {article.sourceTitle}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="mt-2">Turn off grouping to review or shortlist each article separately.</p>
+                      </details>
+                    )}
                     <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
                       {/* 已生成歌曲 */}
                       {latestSong && (
@@ -596,10 +838,58 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
                       {candidate.sourceTitle}
                     </a>
 
+                    {!!candidate.trendSignals?.length && (
+                      <div
+                        className="space-y-1 rounded-md border border-cyan-500/20 bg-cyan-500/5 px-2 py-1.5 text-xs"
+                        aria-label="Google Trends context"
+                      >
+                        {candidate.trendSignals.map((signal) => (
+                          <p key={`${signal.region}:${signal.term}`}>
+                            <strong>Google Trends · {signal.region}</strong> · {signal.term}
+                            {signal.approximateTraffic && ` · ${signal.approximateTraffic} searches (approx.)`}
+                            <span className="block text-[10px] text-muted-foreground">
+                              Observed {signal.observedAt.replace('T', ' ').slice(0, 16)} UTC
+                              {signal.startedAt &&
+                                ` · Trend started ${signal.startedAt.replace('T', ' ').slice(0, 16)} UTC`}
+                            </span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                      <span className="rounded bg-muted px-1.5 py-0.2 font-mono font-bold text-foreground">
-                        {t('matchScore', { score: candidate.relevanceScore })}
-                      </span>
+                      {candidate.relevanceScore >= 80 ? (
+                        <Badge
+                          variant="outline"
+                          className="border-emerald-500/30 bg-emerald-500/10 font-bold text-emerald-700 dark:text-emerald-300"
+                        >
+                          🔥{' '}
+                          {zh
+                            ? `匹配分: ${candidate.relevanceScore} (绝佳题材)`
+                            : `Score: ${candidate.relevanceScore} (Top Match)`}
+                        </Badge>
+                      ) : candidate.relevanceScore >= 50 ? (
+                        <Badge
+                          variant="outline"
+                          className="border-pink-500/30 bg-pink-500/10 font-bold text-pink-700 dark:text-pink-300"
+                        >
+                          ✨{' '}
+                          {zh ? `匹配分: ${candidate.relevanceScore} (娱乐八卦)` : `Score: ${candidate.relevanceScore}`}
+                        </Badge>
+                      ) : candidate.relevanceScore > 0 ? (
+                        <Badge
+                          variant="outline"
+                          className="border-border bg-muted/60 font-medium text-muted-foreground"
+                        >
+                          {zh ? `匹配分: ${candidate.relevanceScore}` : `Score: ${candidate.relevanceScore}`}
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="border-amber-500/30 bg-amber-500/10 font-medium text-amber-700 dark:text-amber-400"
+                        >
+                          ⚠️ {zh ? '匹配分: 0 (待审/不符)' : 'Score: 0 (Unmatched)'}
+                        </Badge>
+                      )}
                       {candidate.matchedTerms.length > 0 && (
                         <span className="truncate text-muted-foreground">
                           {t('matched', { terms: candidate.matchedTerms.join(', ') })}
@@ -831,6 +1121,107 @@ export function StoryRadar({ candidates }: { candidates: StoryRadarCandidateView
               </article>
             );
           })}
+        </div>
+      )}
+
+      {/* 分页控制栏 */}
+      {filteredCandidates.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 pb-1 px-1">
+          <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground font-medium">
+            <span>
+              {zh
+                ? `显示第 ${(safeCurrentPage - 1) * pageSize + 1} - ${Math.min(safeCurrentPage * pageSize, totalItems)} 条 · 共 ${totalItems} 条`
+                : `Showing ${(safeCurrentPage - 1) * pageSize + 1}-${Math.min(safeCurrentPage * pageSize, totalItems)} of ${totalItems} stories`}
+            </span>
+            <div className="flex items-center gap-1 ml-1">
+              <span className="text-muted-foreground/50">|</span>
+              <span className="text-[11px] ml-1">{zh ? '每页' : 'Per page'}:</span>
+              {[10, 20, 50].map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[11px] font-bold transition-colors cursor-pointer',
+                    pageSize === size
+                      ? 'bg-foreground text-background dark:bg-foreground dark:text-background'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                <ChevronLeft className="size-3.5 mr-0.5" />
+                {zh ? '上一页' : 'Prev'}
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {generatePagination(safeCurrentPage, totalPages).map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-muted-foreground">
+                        …
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(item);
+                  const isCurrent = pageNum === safeCurrentPage;
+                  return (
+                    <Button
+                      key={`page-${pageNum}`}
+                      type="button"
+                      variant={isCurrent ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={cn(
+                        'h-8 min-w-8 px-2 text-xs font-bold',
+                        isCurrent && 'bg-pink-600 text-white hover:bg-pink-700'
+                      )}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="h-8 px-2.5 text-xs font-bold"
+              >
+                {zh ? '下一页' : 'Next'}
+                <ChevronRight className="size-3.5 ml-0.5" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

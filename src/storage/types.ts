@@ -43,6 +43,9 @@ export interface UploadFileParams {
   filename: string;
   contentType: string;
   folder?: string;
+  /** 服务端恢复上传使用固定对象标识。 */
+  objectKey?: string;
+  requestTimeoutMs?: number;
 }
 
 /**

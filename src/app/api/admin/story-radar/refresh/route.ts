@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth/server';
 import { refreshEditorialRadar } from '@/lib/stories/editorial-workflow';
+import { RadarScanInProgressError } from '@/lib/story-radar/scan';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -13,15 +14,25 @@ export async function POST() {
 
   try {
     const result = await refreshEditorialRadar();
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json(
+      {
+        success: result.status !== 'failed',
+        ...result,
+        ...(result.status === 'failed'
+          ? { error: 'All enabled news sources failed. See source health for details.' }
+          : {}),
+      },
+      { status: result.status === 'failed' ? 502 : 200 }
+    );
   } catch (error) {
     console.error('Story radar refresh failed:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Story radar refresh failed',
+        error:
+          error instanceof RadarScanInProgressError ? error.message : 'Story radar refresh failed. Check server logs.',
       },
-      { status: 502 }
+      { status: error instanceof RadarScanInProgressError ? 409 : 502 }
     );
   }
 }

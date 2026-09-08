@@ -1,5 +1,5 @@
 import { getDb } from '@/db/index';
-import { generationAttempt, songCreationRun, song as songTable, story as storyTable } from '@/db/schema';
+import { songCreationRun, song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { buildStoryBrief } from '@/features/full-songs/services/full-songs-helpers';
 import { getSession } from '@/lib/auth/server';
@@ -11,7 +11,6 @@ import { and, desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-const STALE_PROCESSING_TIMEOUT_MINUTES = 45;
 const songIdSchema = z.string().uuid();
 
 export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
@@ -64,49 +63,11 @@ export async function GET(_req: Request, props: { params: Promise<{ id: string }
       return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });
     }
 
-    let currentSong = selectedSong;
-    const now = new Date();
-    const createdAt = new Date(currentSong.createdAt);
-    const lastProgressAt = currentSong.updatedAt ? new Date(currentSong.updatedAt) : createdAt;
-    const minutesSinceCreation = (now.getTime() - createdAt.getTime()) / 60_000;
-    const minutesSinceLastProgress = (now.getTime() - lastProgressAt.getTime()) / 60_000;
-    const activeStatus = [
-      'queued',
-      'processing',
-      'generating_audio',
-      'uploading_audio',
-      'audio_uploaded',
-      'generating_cover',
-      'finalizing',
-    ].includes(currentSong.processingStatus || '');
-
-    if (activeStatus && minutesSinceLastProgress > STALE_PROCESSING_TIMEOUT_MINUTES) {
-      const timeoutMessage = `Processing stalled for more than ${STALE_PROCESSING_TIMEOUT_MINUTES} minutes`;
-      const [timedOut] = await db
-        .update(generationAttempt)
-        .set({
-          processingStatus: 'failed_generation',
-          processingError: timeoutMessage,
-          updatedAt: now,
-        })
-        .where(
-          and(
-            eq(generationAttempt.id, currentSong.attemptId),
-            eq(generationAttempt.songId, currentSong.id),
-            eq(generationAttempt.processingStatus, currentSong.processingStatus!)
-          )
-        )
-        .returning({ id: generationAttempt.id });
-
-      if (timedOut) {
-        currentSong = {
-          ...currentSong,
-          processingStatus: 'failed_generation',
-          processingError: timeoutMessage,
-          updatedAt: now,
-        };
-      }
-    }
+    // 状态读取不再修改任务；独立巡检负责识别中断和安全接续。
+    const currentSong = selectedSong;
+    const minutesSinceCreation = (Date.now() - new Date(currentSong.createdAt).getTime()) / 60_000;
+    const minutesSinceLastProgress =
+      (Date.now() - new Date(currentSong.updatedAt || currentSong.createdAt).getTime()) / 60_000;
 
     const sourceSummary = getSongSourceSummary(currentSong) || '';
     const presentation = getSongStatusPresentation({

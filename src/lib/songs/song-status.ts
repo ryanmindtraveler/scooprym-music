@@ -2,12 +2,15 @@ export type SongProcessingStatus =
   | 'queued'
   | 'processing'
   | 'generating_audio'
+  | 'audio_generated'
   | 'uploading_audio'
   | 'audio_uploaded'
   | 'generating_cover'
   | 'finalizing'
   | 'completed'
   | 'failed_generation'
+  | 'failed_interrupted'
+  | 'failed_cover'
   | 'processing_queue_failed'
   | 'failed_audio_upload'
   | 'failed_quality_check'
@@ -19,6 +22,8 @@ export type SongClientStatus = 'processing' | 'generating_cover' | 'completed' |
 
 export const SONG_FAILURE_PROCESSING_STATUSES: SongProcessingStatus[] = [
   'failed_generation',
+  'failed_interrupted',
+  'failed_cover',
   'processing_queue_failed',
   'failed_audio_upload',
   'failed_quality_check',
@@ -58,6 +63,7 @@ export function getSongStatusPresentation({
         musicStatus: 'processing',
         coverStatus: 'processing',
       };
+    case 'audio_generated':
     case 'uploading_audio':
       return {
         status: 'processing',
@@ -92,6 +98,8 @@ export function getSongStatusPresentation({
     case 'failed_quality_check':
     case 'failed_credit_deduction':
     case 'failed_generation':
+    case 'failed_interrupted':
+    case 'failed_cover':
     case 'failed_internal_error':
     case 'processing_queue_failed':
       return {

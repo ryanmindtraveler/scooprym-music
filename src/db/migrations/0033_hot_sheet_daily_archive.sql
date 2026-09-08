@@ -1,4 +1,4 @@
-CREATE TABLE "scooprym"."hot_sheet_edition" (
+CREATE TABLE IF NOT EXISTS "scooprym"."hot_sheet_edition" (
 	"day" text PRIMARY KEY NOT NULL,
 	"status" text NOT NULL,
 	"attempt_id" text NOT NULL,

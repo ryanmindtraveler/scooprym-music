@@ -246,6 +246,34 @@
       "when": 1788504420000,
       "tag": "0034_radar_creation_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788758400000,
+      "tag": "0035_story_radar_scans",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788762000000,
+      "tag": "0036_google_trend_signals",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1788800400000,
+      "tag": "0037_radar_ai_screening",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1788804000000,
+      "tag": "0038_cover_asset_checkpoint",
+      "breakpoints": true
     }
   ]
 }

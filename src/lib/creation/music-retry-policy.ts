@@ -2,6 +2,7 @@ const ACTIVE_STATUSES = new Set([
   'queued',
   'processing',
   'generating_audio',
+  'audio_generated',
   'uploading_audio',
   'audio_uploaded',
   'generating_cover',
@@ -33,10 +34,10 @@ export function planMusicRetry(status: string | null, hasStoredAudio: boolean, h
   if (ACTIVE_STATUSES.has(status || '')) return { error: 'This music stage is already running' } as const;
   if (status === 'completed') return { error: 'This song is already complete. No retry is needed.' } as const;
   if (hasStoredAudio) return { resumeStatus: 'audio_uploaded' } as const;
-  if (status === 'failed_audio_upload' && !hasCheckpoint) {
+  if ((status === 'failed_audio_upload' || status === 'failed_interrupted') && !hasCheckpoint) {
     return {
       error:
-        'The old audio transfer failed without a saved download checkpoint. Automatic regeneration is disabled to avoid another music charge. Create a new version explicitly if needed.',
+        'The previous music result cannot be recovered from a saved checkpoint. Automatic regeneration is disabled to avoid another music charge. Check the provider result, then create a new version explicitly if needed.',
     } as const;
   }
   return { resumeStatus: 'queued' } as const;
