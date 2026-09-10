@@ -27,7 +27,7 @@
 
 部署前执行 `pnpm db:migrate`，并配置 `CRON_SECRET`。0035 新增扫描记录表和运行中扫描的部分唯一索引。0033 兼容已经手工建好日报表的环境；本次本地已核对现有表结构并完成迁移。
 
-Vercel 的半小时任务需要 Pro 或支持该频率的套餐；Hobby 只支持每日任务，不能直接部署此半小时配置。使用外部定时服务时，移除 `vercel.json` 中对应的半小时条目，由调度器每 30 分钟 GET 此接口，并在 Authorization 中发送 `Bearer <CRON_SECRET>`。不要把密钥放在 URL 中。参考 [Vercel Cron 定价与限制](https://vercel.com/docs/cron-jobs/usage-and-pricing)。
+生产项目保留 Vercel Hobby，仅将每日任务留在 `vercel.json`。2026-09-10 起由现有 QStash 每小时第 15、45 分钟签名 POST 此接口，校验有效期、正文和目标地址；GET 仍保留 `CRON_SECRET` 校验。首次上线后须单独同步调度，步骤见 [Hobby 调度说明](./hobby-scheduling.md)。参考 [Vercel Cron 定价与限制](https://vercel.com/docs/cron-jobs/usage-and-pricing)。
 
 本地 `pnpm dev` 不会自动执行 Vercel Cron，使用后台扫描按钮验证。代码尚未部署时，线上采集频率不会发生变化。
 
