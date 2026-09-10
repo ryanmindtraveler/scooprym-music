@@ -369,7 +369,7 @@ export async function StoryRadarPage({
               <Newspaper className="size-3.5 text-cyan-600" />
               {isZh ? '热点雷达候选池' : 'Radar Candidates'}
               <Badge variant="secondary" className="ml-0.5 h-4.5 px-1.5 text-[10px] font-bold">
-                {serializedCandidates.length}
+                {candidateTotal.count}
               </Badge>
             </TabsTrigger>
 

@@ -1163,7 +1163,7 @@ export function StoryRadar({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={safeCurrentPage <= 1}
+                disabled={isNavigating || safeCurrentPage <= 1}
                 onClick={() => {
                   setCurrentPage((p) => Math.max(1, p - 1));
                   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1210,7 +1210,7 @@ export function StoryRadar({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={safeCurrentPage >= totalPages}
+                disabled={isNavigating || safeCurrentPage >= totalPages}
                 onClick={() => {
                   setCurrentPage((p) => Math.min(totalPages, p + 1));
                   window.scrollTo({ top: 0, behavior: 'smooth' });

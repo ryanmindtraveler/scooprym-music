@@ -1,4 +1,4 @@
-import { parseRadarBrowseParams } from '@/lib/story-radar/browse-params';
+import { RADAR_STATUSES, parseRadarBrowseParams } from '@/lib/story-radar/browse-params';
 import { groupRadarSongs } from '@/lib/story-radar/generated-song-view';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -41,19 +41,57 @@ const base: StoryRadarCandidateView = {
 };
 afterEach(() => {
   cleanup();
+  vi.clearAllMocks();
   vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
-function setup() {
+function setup(server = false) {
   vi.stubGlobal(
     'fetch',
     vi.fn(() => new Promise(() => {}))
   );
   return render(
-    <StoryRadar candidates={[base, { ...base, id: 'two', sourceTitle: 'Pending news', generatedSongs: [] }]} />
+    <StoryRadar
+      browse={
+        server
+          ? {
+              params: parseRadarBrowseParams({ page: 2 }),
+              total: 194,
+              counts: { all: 194, new: 99, shortlisted: 14, adopted: 4, generated: 16, dismissed: 73 },
+            }
+          : undefined
+      }
+      candidates={[base, { ...base, id: 'two', sourceTitle: 'Pending news', generatedSongs: [] }]}
+    />
   );
 }
 describe('热点雷达已生成入口', () => {
+  it.each(RADAR_STATUSES.filter((status) => status !== 'all'))(
+    '从第二页切换到 %s 时重置页码并保留筛选',
+    async (status) => {
+      setup(true);
+      const names = {
+        new: /New Inbox/,
+        shortlisted: /Shortlisted/,
+        adopted: /In Production/,
+        generated: /Generated/,
+        dismissed: /Dismissed/,
+      };
+      fireEvent.click(screen.getByRole('button', { name: names[status] }));
+      await waitFor(() => expect(router.push).toHaveBeenCalled());
+      const params = new URLSearchParams(router.push.mock.calls.at(-1)![0].split('?')[1]);
+      expect(params.get('page')).toBe('1');
+      expect(params.get('status')).toBe(status);
+    }
+  );
+  it('下一页使用服务端总数并推进页码', async () => {
+    vi.stubGlobal('scrollTo', vi.fn());
+    setup(true);
+    expect(screen.getByText('Showing 21-40 of 194 stories')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(router.push).toHaveBeenCalled());
+    expect(router.push.mock.calls.at(-1)![0]).toContain('page=3');
+  });
   it('失败筛选重试入口只请求失败记录，并显示失败原因', async () => {
     const fetchMock = vi.fn((url: string) =>
       url === '/api/admin/story-radar/ai-screen'
