@@ -23,11 +23,11 @@
 - Trends 的 RSS 日期属于热搜，不能视作报道发表日期。只有 Trends 提供的报道保持 `publishedAt=null`，不会据此自动进入首页；编辑可人工精选。
 - Google Trends RSS 是当前热点的有限快照，不代表所有 Google 搜索趋势或完整历史。官方导出说明见 [Google Trends 帮助](https://support.google.com/trends/answer/3076011?hl=en)。
 
-`/api/cron/story-radar` 每小时第 15、45 分钟补充库存，不生成音乐。日报仍在洛杉矶 18 点出刊，优先使用最近一小时的可用扫描；没有可用记录时补抓。音乐定时发布维持原计划。
+`/api/cron/story-radar` 每 12 小时补充库存，不生成音乐。日报仍在洛杉矶 18 点出刊，优先使用最近一小时的可用扫描；没有可用记录时补抓。音乐定时发布维持原计划。
 
 部署前执行 `pnpm db:migrate`，并配置 `CRON_SECRET`。0035 新增扫描记录表和运行中扫描的部分唯一索引。0033 兼容已经手工建好日报表的环境；本次本地已核对现有表结构并完成迁移。
 
-生产项目保留 Vercel Hobby，仅将每日任务留在 `vercel.json`。2026-09-10 起由现有 QStash 每小时第 15、45 分钟签名 POST 此接口，校验有效期、正文和目标地址；GET 仍保留 `CRON_SECRET` 校验。首次上线后须单独同步调度，步骤见 [Hobby 调度说明](./hobby-scheduling.md)。参考 [Vercel Cron 定价与限制](https://vercel.com/docs/cron-jobs/usage-and-pricing)。
+生产项目保留 Vercel Hobby，仅将每日任务留在 `vercel.json`。2026-09-10 起由现有 QStash 每 12 小时签名 POST 此接口，校验有效期、正文和目标地址；GET 仍保留 `CRON_SECRET` 校验。首次上线后须单独同步调度，步骤见 [Hobby 调度说明](./hobby-scheduling.md)。参考 [Vercel Cron 定价与限制](https://vercel.com/docs/cron-jobs/usage-and-pricing)。
 
 本地 `pnpm dev` 不会自动执行 Vercel Cron，使用后台扫描按钮验证。代码尚未部署时，线上采集频率不会发生变化。
 

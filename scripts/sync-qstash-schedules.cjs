@@ -1,8 +1,8 @@
 const { Client } = require('@upstash/qstash');
 
 const definitions = [
-  { scheduleId: 'scooprym-music-recovery', path: '/api/cron/music-recovery', cron: '*/10 * * * *' },
-  { scheduleId: 'scooprym-story-radar', path: '/api/cron/story-radar', cron: '15,45 * * * *' },
+  { scheduleId: 'scooprym-music-recovery', path: '/api/cron/music-recovery', cron: '0 */12 * * *' },
+  { scheduleId: 'scooprym-story-radar', path: '/api/cron/story-radar', cron: '0 */12 * * *' },
 ];
 
 /** 复用已有 ID，避免重复运行迁移脚本后同一任务被多次调度。 */

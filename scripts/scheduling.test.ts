@@ -21,8 +21,8 @@ describe('部署调度边界', () => {
       { scheduleId: 'unrelated', destination: 'https://example.com/task' },
     ]);
     expect(plans).toHaveLength(2);
-    expect(plans[0]).toMatchObject({ scheduleId: 'existing-id', method: 'POST', cron: '*/10 * * * *' });
-    expect(plans[1]).toMatchObject({ cron: '15,45 * * * *' });
+    expect(plans[0]).toMatchObject({ scheduleId: 'existing-id', method: 'POST', cron: '0 */12 * * *' });
+    expect(plans[1]).toMatchObject({ cron: '0 */12 * * *' });
   });
   it('同地址重复调度或 ID 被其他地址占用时停止', () => {
     expect(() =>

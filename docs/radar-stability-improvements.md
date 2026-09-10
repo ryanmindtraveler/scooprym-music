@@ -33,7 +33,7 @@
 
 ### 中断任务
 
-- 新增 `/api/cron/music-recovery`。2026-09-10 起改为 QStash 每 10 分钟签名 POST 触发，GET 仍使用已有 `CRON_SECRET` 验证；最多处理 10 个超过 15 分钟未更新的管理员内部制作任务。迁移步骤见 [Hobby 调度说明](./hobby-scheduling.md)。
+- 新增 `/api/cron/music-recovery`。2026-09-10 起改为 QStash 每 12 小时签名 POST 触发，GET 仍使用已有 `CRON_SECRET` 验证；最多处理 10 个超过 15 分钟未更新的管理员内部制作任务。迁移步骤见 [Hobby 调度说明](./hobby-scheduling.md)。
 - 仅检查歌曲最新生成尝试。写入时再次检查尝试 ID、状态、数据库原始更新时间，防止巡检覆盖刚恢复的任务或较新的尝试。
 - `audio_generated` 和 `audio_uploaded` 是可自动接续的持久化等待边界。投递失败返回 502，保留恢复状态，下一轮可补投。
 - `generating_audio` 等模型结果不明的执行阶段标为 `failed_interrupted`；有匹配恢复点才允许从旧音频接续。没有恢复点时提示检查提供商结果，禁止静默再次生成音乐。
