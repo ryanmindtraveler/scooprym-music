@@ -1233,8 +1233,10 @@ export default function AdminCreateSongPage() {
   ]);
 
   const handleRewriteLyrics = async () => {
-    // ... same logic ...
-    if (!selectionRange || !lyrics) return;
+    if (!selectionRange || !lyrics || isRewriting) return;
+    const originalLyrics = lyrics;
+    const originalSongId = musicId;
+    const originalWorkflowRunId = workflowRunId;
     setIsRewriting(true);
     try {
       const { start, end } = selectionRange;
@@ -1242,17 +1244,35 @@ export default function AdminCreateSongPage() {
       const res = await fetch('/api/generate/lyrics/rewrite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectedText, context: lyrics, style: musicPrompt }),
+        body: JSON.stringify({
+          selectedText,
+          context: originalLyrics,
+          style: musicPrompt,
+          workflowRunId: originalWorkflowRunId || undefined,
+          selectionStart: start,
+        }),
       });
       const data = await res.json();
+      if (!res.ok || !data.success || typeof data.rewrittenText !== 'string' || !data.rewrittenText.trim()) {
+        throw new Error(data.error || 'Rewrite failed');
+      }
+      const current = useCreateStore.getState();
+      if (
+        current.lyrics !== originalLyrics ||
+        current.musicId !== originalSongId ||
+        current.workflowRunId !== originalWorkflowRunId
+      ) {
+        toast.info('Lyrics changed while rewriting. Your current edits were kept.');
+        return;
+      }
       if (data.success) {
-        const newLyrics = lyrics.substring(0, start) + data.rewrittenText + lyrics.substring(end);
-        setLyrics(normalizeStructuredLyrics(newLyrics));
+        const newLyrics = originalLyrics.substring(0, start) + data.rewrittenText + originalLyrics.substring(end);
+        setLyrics(newLyrics);
         setSelectionRange(null);
         toast.success('Rewritten!');
       }
     } catch (e) {
-      toast.error('Rewrite failed');
+      toast.error(e instanceof Error ? e.message : 'Rewrite failed');
     } finally {
       setIsRewriting(false);
     }

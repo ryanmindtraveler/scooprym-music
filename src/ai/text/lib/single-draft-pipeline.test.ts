@@ -26,10 +26,12 @@ describe('单稿管线结构约束', () => {
   });
   it('保存完整定稿，通过版本区分旧版检查结果', () => {
     expect(source).toContain("onCheckpoint?.('drafting_lyrics', { draft,");
-    expect(source).toContain('finalizationVersion: z.literal(1)');
+    expect(source).toContain('finalizationVersion: z.literal(2)');
     expect(source).toContain('lyrics: finalLyrics,');
-    expect(source).toContain('finalizationVersion: 1,');
-    expect(source).toContain('legacyCheckpoint.success');
+    expect(source).toContain('finalizationVersion: 2,');
+    expect(source).not.toContain('legacyCheckpoint');
+    expect(source).not.toContain('draftB');
+    expect(source).not.toContain('hybrid');
   });
   it('不收紧歌词长度来规避输出上限', () => {
     expect(source).toMatch(/maxOutputTokens: 6_?000/);

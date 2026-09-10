@@ -441,11 +441,16 @@ function WritersRoomPanel({
 
         {workshop.qualityGate?.passed === false && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-relaxed text-amber-900 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100">
-            <p className="font-black uppercase tracking-[0.12em]">Editorial notes</p>
+            <p className="font-black uppercase tracking-[0.12em]">
+              {workshop.qualityGate.reviewStatus === 'stale' ? 'Edited · not re-reviewed' : 'Editorial notes'}
+            </p>
             <p className="mt-1">
               {workshop.qualityGate.deterministicIssues[0] ||
                 workshop.qualityGate.factualIssues[0] ||
-                'The lyric has optional editorial improvements.'}
+                workshop.qualityGate.craftIssues?.[0] ||
+                (workshop.qualityGate.reviewStatus === 'stale'
+                  ? 'Local checks updated. These edits have not been reviewed by the model.'
+                  : 'The lyric has optional editorial improvements.')}
             </p>
             <p className="mt-2 text-[10px] opacity-70">These notes do not block music production.</p>
             <p className="mt-2 text-[10px] opacity-70">
@@ -484,7 +489,9 @@ function WritersRoomPanel({
         <section>
           <div className="flex items-center justify-between">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Hook lab</p>
-            <span className="text-[9px] font-bold text-slate-400">{workshop.hookCandidates.length} tested</span>
+            <span className="text-[9px] font-bold text-slate-400">
+              {workshop.hookCandidates.length} candidates · model estimates
+            </span>
           </div>
           <div className="mt-2 grid gap-2">
             {workshop.hookCandidates.slice(0, 6).map((hook) => {
@@ -525,30 +532,21 @@ function WritersRoomPanel({
         </section>
 
         <section>
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-            {workshop.drafts.length === 1 ? 'Song draft' : 'Competing drafts'}
-          </p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Song draft</p>
           <div className="mt-2 grid gap-3">
-            {workshop.drafts.map((draft) => (
+            {workshop.drafts.slice(0, 1).map((draft) => (
               <div
                 key={draft.id}
                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-white/8 dark:bg-white/5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-black text-slate-950 dark:text-white">
-                      {workshop.drafts.length === 1 ? draft.label : `Draft ${draft.id} · ${draft.label}`}
-                    </p>
+                    <p className="text-sm font-black text-slate-950 dark:text-white">{draft.label}</p>
                     <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{draft.focus}</p>
                     <p className="mt-2 border-l-2 border-pink-400 pl-2 font-serif text-sm font-black leading-snug text-slate-900 dark:text-white">
                       “{draft.hook}”
                     </p>
                   </div>
-                  {workshop.drafts.length > 1 && workshop.editorialDecision === draft.id && (
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-700">
-                      editor pick
-                    </span>
-                  )}
                 </div>
                 <Button
                   type="button"
@@ -564,7 +562,9 @@ function WritersRoomPanel({
         </section>
 
         <section className="rounded-2xl bg-slate-100/80 p-4 dark:bg-white/5">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Editor notes</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+            {workshop.qualityGate?.reviewStatus === 'stale' ? 'Previous editor notes' : 'Editor notes'}
+          </p>
           <ul className="mt-2 space-y-2">
             {workshop.editorialNotes.map((note) => (
               <li

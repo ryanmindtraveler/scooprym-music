@@ -82,9 +82,9 @@ describe('歌词质量工具', () => {
     expect(inspectLyricsQuality(GOOD_LYRICS)).toEqual([]);
   });
 
-  it('识别缺少复现副歌和过度稀疏的草稿', () => {
+  it('不根据副歌标签误报，但仍识别过度稀疏的草稿', () => {
     const issues = inspectLyricsQuality('[Verse 1]\nOne line\n[Chorus]\nOnly once');
-    expect(issues).toContain('The chorus or hook must return at least twice for replay value.');
+    expect(issues).not.toContain('The chorus or hook must return at least twice for replay value.');
     expect(issues.some((issue) => issue.includes('14-24 sung lines'))).toBe(true);
   });
 
@@ -115,7 +115,9 @@ Screenshot season, keep group chat breathing
 Blue light turns whispers into weather
 Every quiet statement gets a caption by dawn`;
 
-    expect(inspectLyricsQuality(adaptiveLyrics, { lockedHook: 'Screenshot season' })).toEqual([]);
+    expect(
+      inspectLyricsQuality(adaptiveLyrics, { lockedHook: 'Screenshot season', propagationAction: 'exact_repeat' })
+    ).toEqual([]);
   });
 
   it('无显式传播机制时不强迫副歌或 Hook 重复', () => {
@@ -153,5 +155,33 @@ Every quiet statement gets a caption by dawn`;
     expect(repeatedIssues).toContain(
       'Protect the delayed reveal or one-shot punchline for exactly one lyrical appearance.'
     );
+  });
+});
+
+describe('策略感知检查', () => {
+  it.each(['callback', 'mutating_repeat', 'call_response', 'escalating_list'] as const)(
+    '允许 %s 的语义变化且不强制副歌',
+    (propagationAction) => {
+      const issues = inspectLyricsQuality(
+        GOOD_LYRICS.replaceAll('[Hook]', '[Verse 1]').replaceAll('[Chorus]', '[Verse 2]'),
+        { lockedHook: 'A different image', propagationAction }
+      );
+      expect(issues).toEqual([]);
+    }
+  );
+  it('原句复现可以发生在主歌内', () => {
+    expect(
+      inspectLyricsQuality(GOOD_LYRICS.replaceAll('[Hook]', '[Verse 1]').replaceAll('[Chorus]', '[Verse 2]'), {
+        lockedHook: 'Smile for the fallout',
+        propagationAction: 'exact_repeat',
+      })
+    ).toEqual([]);
+  });
+  it('结尾同一行重复两次包袱也被识别', () => {
+    const issues = inspectLyricsQuality('[Verse 1]\nSet up the joke\n[Outro]\nCouch king, couch king!', {
+      lockedHook: 'couch king',
+      propagationAction: 'one_shot',
+    });
+    expect(issues).toContain('Protect the delayed reveal or one-shot punchline for exactly one lyrical appearance.');
   });
 });

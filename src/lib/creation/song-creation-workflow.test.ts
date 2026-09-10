@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSongCreationPhase } from './song-creation-workflow';
+import { getFailedGenerationStage, getSongCreationPhase } from './song-creation-workflow';
 
 describe('getSongCreationPhase', () => {
   it.each([
@@ -11,5 +11,14 @@ describe('getSongCreationPhase', () => {
     ['published', 'publish_ready'],
   ])('将细粒度步骤 %s 折叠为 %s', (stage, phase) => {
     expect(getSongCreationPhase(stage)).toBe(phase);
+  });
+});
+
+describe('歌词失败阶段', () => {
+  it('保留写作和定稿故障，而不是笼统回退到生成歌词', () => {
+    expect(getFailedGenerationStage({ generationStage: 'drafting_lyrics' })).toBe('drafting_lyrics');
+    expect(getFailedGenerationStage({ generationStage: 'editing_lyrics' })).toBe('editing_lyrics');
+    expect(getFailedGenerationStage({ generationStage: 'published' })).toBeUndefined();
+    expect(getFailedGenerationStage(null)).toBeUndefined();
   });
 });

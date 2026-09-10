@@ -11,7 +11,8 @@ describe('Meme 创作标准', () => {
   });
   it('策划、写作和音乐提示词复用同一标准，审校按所选特点检查', () => {
     const source = readFileSync('src/ai/text/lib/generation.ts', 'utf8');
-    expect(source.split('${MEME_CREATIVE_STANDARD}')).toHaveLength(4);
+    // 局部歌词重写也必须使用同一创作标准。
+    expect(source.split('${MEME_CREATIVE_STANDARD}')).toHaveLength(5);
     expect(source).toContain('Review whether the chosen subset');
     expect(source).not.toContain('Use rhyme as texture rather than');
     expect(source).not.toContain('and restrained backing vocals');

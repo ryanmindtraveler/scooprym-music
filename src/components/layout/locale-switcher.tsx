@@ -33,10 +33,6 @@ export default function LocaleSwitcher() {
     setMounted(true);
   }, []);
 
-  if (!showLocaleSwitch) {
-    return null;
-  }
-
   const router = useLocaleRouter();
   const pathname = useLocalePathname();
   const params = useParams();
@@ -62,6 +58,9 @@ export default function LocaleSwitcher() {
       );
     });
   };
+
+  // 中文仅用于 admin，其他位置即使复用此组件也不显示语言入口。
+  if (!showLocaleSwitch || !/^\/admin(?:\/|$)/.test(pathname)) return null;
 
   if (!mounted) {
     return (

@@ -6,6 +6,8 @@ import createNextIntlPlugin from 'next-intl/plugin';
  * https://nextjs.org/docs/app/api-reference/config/next-config-js
  */
 const nextConfig: NextConfig = {
+  // 等待 metadata 完成路由判定，避免歌曲 404/永久跳转被提前发送的 200 响应掩盖。
+  htmlLimitedBots: /.*/,
   // Docker standalone output
   ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
 

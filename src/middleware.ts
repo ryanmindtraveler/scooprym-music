@@ -113,12 +113,12 @@ export default async function middleware(req: NextRequest) {
       target.pathname = publicPath;
       return NextResponse.redirect(target, 308);
     }
-    return songIntlMiddleware(req);
+    // 规范语言后继续执行认证检查，不能提前放行用户受保护页面。
   }
 
   // Handle internal docs link redirection for internationalization
   // Check if this is a docs page without locale prefix
-  if (nextUrl.pathname.startsWith('/docs/') || nextUrl.pathname === '/docs') {
+  if (publicPath === null && (nextUrl.pathname.startsWith('/docs/') || nextUrl.pathname === '/docs')) {
     // Get the user's preferred locale from cookie
     const localeCookie = req.cookies.get(LOCALE_COOKIE_NAME);
     const preferredLocale = localeCookie?.value;
@@ -181,7 +181,7 @@ export default async function middleware(req: NextRequest) {
 
   // Apply intlMiddleware for all routes
   console.log('<< middleware end, applying intlMiddleware');
-  return pathnameWithoutLocale.startsWith('/songs/') ? songIntlMiddleware(req) : intlMiddleware(req);
+  return publicPath !== null ? songIntlMiddleware(req) : intlMiddleware(req);
 }
 
 /**

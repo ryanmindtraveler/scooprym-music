@@ -87,7 +87,10 @@ export interface LyricsWorkflowOutput {
 }
 
 function trimError(error: unknown) {
-  return (error instanceof Error ? error.message : String(error || 'Unknown workflow error')).slice(0, 4000);
+  const message = error instanceof Error ? error.message : String(error || 'Unknown workflow error');
+  return /api.?key|authentication|unauthorized/i.test(message)
+    ? 'Provider authentication failed. Check the configured credentials.'
+    : message.slice(0, 4000);
 }
 
 function inputHash(input: StartLyricsWorkflowInput) {
@@ -211,6 +214,14 @@ export async function recordLyricsCheckpoint(
   const db = await getDb();
   const attempt = await nextAttempt(runId, stage);
   const now = new Date();
+  const executionStart = (metadata as { execution?: { startedAt?: unknown } } | null)?.execution?.startedAt;
+  const startedAt =
+    typeof executionStart === 'number' &&
+    Number.isFinite(executionStart) &&
+    executionStart > 0 &&
+    executionStart <= now.getTime()
+      ? new Date(executionStart)
+      : now;
   await db.transaction(async (tx) => {
     await tx.insert(songCreationStep).values({
       id: randomUUID(),
@@ -221,6 +232,7 @@ export async function recordLyricsCheckpoint(
       provider: options.provider,
       model: options.model,
       outputMetadata: metadata,
+      startedAt,
       completedAt: now,
     });
     await tx
@@ -247,7 +259,12 @@ export async function failWorkflowStep(runId: string, stepId: string, error: unk
     await tx
       .update(songCreationRun)
       // 保留真正失败的阶段，刷新后才能只重试这一段，而不是退回整条流水线。
-      .set({ status: 'failed', currentStage: step?.stage || 'failed', lastError: message, updatedAt: now })
+      .set({
+        status: 'failed',
+        currentStage: getFailedGenerationStage(error) || step?.stage || 'failed',
+        lastError: message,
+        updatedAt: now,
+      })
       .where(eq(songCreationRun.id, runId));
   });
 }
@@ -359,7 +376,10 @@ export async function getWorkflowRun(runId: string, userId: string) {
   return {
     ...run,
     phase: getSongCreationPhase(run.currentStage),
-    retryableStage: run.status === 'failed' ? latestFailedStep?.stage || run.currentStage : null,
+    retryableStage:
+      run.status === 'failed'
+        ? getFailedGenerationStage({ generationStage: run.currentStage }) || latestFailedStep?.stage || run.currentStage
+        : null,
     steps,
   };
 }
@@ -440,4 +460,10 @@ export async function resolveLyricsReview({
     lyrics: lyrics?.trim() || run.lyrics,
     lyricWorkshop: workshop,
   };
+}
+
+/** 模型失败保留真实歌词阶段，不退回笼统的 generating_lyrics。 */
+export function getFailedGenerationStage(error: unknown): SongCreationStage | undefined {
+  const stage = (error as { generationStage?: unknown } | null)?.generationStage;
+  return stage === 'planning_lyrics' || stage === 'drafting_lyrics' || stage === 'editing_lyrics' ? stage : undefined;
 }

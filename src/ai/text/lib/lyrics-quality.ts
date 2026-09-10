@@ -1,5 +1,6 @@
 import { normalizeStructuredLyrics } from '@/lib/music/lyrics-utils';
 import type { MemePropagationAction } from '@/types/lyric-workshop';
+import { MEME_EXECUTION_POLICIES, countAnchorOccurrences } from './lyrics-meme-strategy';
 
 /** ScoopRYM 默认作品是紧凑但完整的 meme 单曲，而不是几句口号或传统三分钟长歌。 */
 export const SHORT_FORM_LYRIC_LIMITS = {
@@ -13,7 +14,7 @@ export const SHORT_FORM_LYRIC_LIMITS = {
 
 /**
  * 用演唱词数、标点停顿与段落切换估算实际演唱时长。
- * 它不是音频裁剪器，只用于在提交音乐模型前拦截明显过长的歌词。
+ * 只用于编辑参考，不代表实际音频时长，也不阻断生产。
  */
 export function estimateLyricDurationSeconds(lyrics: string) {
   const lines = lyrics.split('\n').filter(Boolean);
@@ -50,7 +51,7 @@ function sectionCounts(lyrics: string) {
 }
 
 /**
- * 对短篇新闻歌曲做轻量质量检查；不自动篡改文案，只决定是否需要编辑模型再润色一次。
+ * 对短篇新闻歌曲做轻量检查；只报告可确定的问题，不强制额外调用。
  */
 export function inspectLyricsQuality(
   lyrics: string,
@@ -67,20 +68,7 @@ export function inspectLyricsQuality(
   );
   if (verseCount < 1) issues.push('Use at least one verse to carry the scene and factual details.');
 
-  const hookSectionCount = (counts.get('Chorus') || 0) + (counts.get('Hook') || 0);
-  const propagationAction = options?.propagationAction || 'exact_repeat';
-  const requiresHookReturn = [
-    'exact_repeat',
-    'mutating_repeat',
-    'call_response',
-    'escalating_list',
-    'callback',
-  ].includes(propagationAction);
-  const protectsSingleReveal = propagationAction === 'delayed_reveal' || propagationAction === 'one_shot';
-
-  if (requiresHookReturn && hookSectionCount < 2) {
-    issues.push('The chorus or hook must return at least twice for replay value.');
-  }
+  const policy = MEME_EXECUTION_POLICIES[options?.propagationAction || 'none'];
 
   if (
     sungLines.length < SHORT_FORM_LYRIC_LIMITS.minSungLines ||
@@ -113,26 +101,20 @@ export function inspectLyricsQuality(
     issues.push('Remove generic opening filler and start with a distinctive image or action.');
   }
 
-  const lockedHook = options?.lockedHook?.trim().toLocaleLowerCase();
-  if (lockedHook && propagationAction !== 'none') {
-    const normalizedLines = sungLines.map((line) => line.toLocaleLowerCase());
-    const hookAppearances = normalizedLines.filter((line) => line.includes(lockedHook)).length;
-    if (requiresHookReturn && hookAppearances < 2) {
+  const lockedHook = options?.lockedHook?.trim();
+  if (lockedHook && policy.exactOccurrences) {
+    const count = countAnchorOccurrences(sungLines.join(' '), lockedHook);
+    const { min, max } = policy.exactOccurrences;
+    if (max === 1 && count !== 1) {
+      issues.push('Protect the delayed reveal or one-shot punchline for exactly one lyrical appearance.');
+    } else if (count < min) {
       issues.push('Repeat the locked hook phrase at least twice without paraphrasing it away.');
     }
-    if (requiresHookReturn && !normalizedLines.slice(0, 4).some((line) => line.includes(lockedHook))) {
+    if (policy.opening && !countAnchorOccurrences(sungLines.slice(0, 4).join(' '), lockedHook)) {
       issues.push('Bring the locked hook into the first four sung lines for a faster social-media payoff.');
     }
-    if (propagationAction === 'callback' && !normalizedLines.slice(-4).some((line) => line.includes(lockedHook))) {
-      issues.push('Return to the callback phrase within the final four sung lines.');
-    }
-    if (protectsSingleReveal) {
-      if (hookAppearances !== 1) {
-        issues.push('Protect the delayed reveal or one-shot punchline for exactly one lyrical appearance.');
-      }
-      if (!normalizedLines.slice(-4).some((line) => line.includes(lockedHook))) {
-        issues.push('Land the delayed reveal or one-shot punchline within the final four sung lines.');
-      }
+    if (policy.ending && !countAnchorOccurrences(sungLines.slice(-4).join(' '), lockedHook)) {
+      issues.push('Land the delayed reveal or one-shot punchline within the final four sung lines.');
     }
   }
 

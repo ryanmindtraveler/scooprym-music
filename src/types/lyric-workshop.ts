@@ -49,9 +49,13 @@ export interface MemeStrategyCandidate {
 }
 
 export interface LyricQualityGate {
+  /** 模型审查对应的歌词快照；编辑后的本地检查不能冒充模型复核。 */
+  reviewedLyrics?: string;
+  reviewStatus?: 'current' | 'stale';
   passed: boolean;
   deterministicIssues: string[];
   factualIssues: string[];
+  craftIssues?: string[];
   estimatedDurationSeconds: number;
   repairAttempts: number;
 }
@@ -109,7 +113,7 @@ export interface LyricBlueprint {
 }
 
 export interface LyricDraftCandidate {
-  id: 'A' | 'B';
+  id: 'A';
   label: string;
   focus: string;
   hook: string;
@@ -132,16 +136,6 @@ export interface LyricWorkshop {
   comicPremises: ComicPremise[];
   selectedPremiseId: string;
   hookCandidates: MemeHookCandidate[];
-  /** 单稿使用 A；B 仅兼容旧记录中的备选 Hook。 */
-  draftHookIds?: {
-    A: string;
-    B?: string;
-  };
-  /** 单稿使用 A；B 仅兼容旧记录中的备选策略。 */
-  draftStrategyIds?: {
-    A: string;
-    B?: string;
-  };
   selectedHookId: string;
   /** 旧运行记录的固定机制结构，仅用于兼容读取。 */
   memeMechanic?: MemeMechanic;
@@ -150,8 +144,7 @@ export interface LyricWorkshop {
   selectedMemeStrategyId?: string;
   blueprint: LyricBlueprint;
   productionRecipe?: string;
-  drafts: LyricDraftCandidate[];
-  editorialDecision: 'A' | 'B' | 'hybrid';
+  drafts: [LyricDraftCandidate];
   editorialNotes: string[];
   qualityGate?: LyricQualityGate;
   reviewOutcome?: LyricReviewOutcome;

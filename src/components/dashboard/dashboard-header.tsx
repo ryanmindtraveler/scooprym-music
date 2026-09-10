@@ -11,7 +11,6 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { LocaleLink } from '@/i18n/navigation';
 import React, { type ReactNode } from 'react';
-import LocaleSwitcher from '../layout/locale-switcher';
 import { ModeSwitcher } from '../layout/mode-switcher';
 
 interface DashboardBreadcrumbItem {
@@ -68,7 +67,6 @@ export function DashboardHeader({ breadcrumbs, actions }: DashboardHeaderProps) 
           {actions}
 
           <ModeSwitcher />
-          <LocaleSwitcher />
         </div>
       </div>
     </header>

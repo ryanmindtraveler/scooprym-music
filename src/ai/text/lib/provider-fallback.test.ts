@@ -65,6 +65,67 @@ describe('文本模型降级策略', () => {
     expect(warning).toHaveBeenCalledOnce();
   });
 
+  it('连接被对端关闭时切换模型，而不是直接失败', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'configured');
+    const execute = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Cannot connect to API: other side closed'))
+      .mockResolvedValueOnce('ok');
+    await expect(runWithTextProviderFallback({ execute, scope: 'test' })).resolves.toBe('ok');
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it('账户鉴权失败不在同一账户继续换模型', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'configured');
+    vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'configured');
+    const execute = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error('Unauthorized'), { statusCode: 401 }))
+      .mockResolvedValueOnce('ok');
+    await expect(runWithTextProviderFallback({ execute, scope: 'test' })).resolves.toBe('ok');
+    expect(execute).toHaveBeenNthCalledWith(2, 'google', undefined, expect.any(AbortSignal));
+  });
+
+  it('多个阶段共用截止时间，后续阶段不重新获得完整预算', async () => {
+    vi.useFakeTimers();
+    vi.stubEnv('OPENROUTER_API_KEY', 'configured');
+    const deadlineAt = Date.now() + 150;
+    const first = runWithTextProviderFallback({
+      execute: () => new Promise((resolve) => setTimeout(() => resolve('first'), 100)),
+      scope: 'first',
+      deadlineAt,
+    });
+    await vi.advanceTimersByTimeAsync(100);
+    await expect(first).resolves.toBe('first');
+    const execute = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const second = runWithTextProviderFallback({ execute, scope: 'second', deadlineAt });
+    const assertion = expect(second).rejects.toThrow('Text generation timed out in second');
+    await vi.advanceTimersByTimeAsync(50);
+    await assertion;
+    expect(execute).toHaveBeenCalledOnce();
+    expect(execute.mock.calls[0][2].aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('默认卡死请求在 75 秒后切换，不等待三分钟', async () => {
+    vi.useFakeTimers();
+    vi.stubEnv('OPENROUTER_API_KEY', 'configured');
+    const execute = vi
+      .fn()
+      .mockImplementationOnce(() => new Promise(() => {}))
+      .mockResolvedValueOnce('ok');
+    const pending = runWithTextProviderFallback({ execute, scope: 'test' });
+    await vi.advanceTimersByTimeAsync(75000);
+    await expect(pending).resolves.toBe('ok');
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it('日志不保留供应商回显的密钥片段', () => {
+    expect(
+      JSON.stringify(summarizeProviderError(new Error('Incorrect API key provided: sk-private-value')))
+    ).not.toContain('sk-private-value');
+  });
+
   it('业务输入错误不会盲目切换提供商', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'configured');
     vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'configured');
@@ -96,7 +157,7 @@ describe('文本模型降级策略', () => {
     vi.useFakeTimers();
     vi.stubEnv('OPENROUTER_API_KEY', 'configured');
     vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'configured');
-    const execute = vi.fn(() => new Promise(() => {}));
+    const execute = vi.fn().mockImplementation(() => new Promise(() => {}));
     const pending = runWithTextProviderFallback({
       execute,
       scope: 'lyrics-workshop-plan',

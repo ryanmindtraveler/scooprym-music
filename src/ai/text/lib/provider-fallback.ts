@@ -47,7 +47,9 @@ export function summarizeProviderError(error: unknown): ProviderErrorSummary[] {
       ...(item.finishReason ? { finishReason: item.finishReason } : {}),
       message: /JSONParse|TypeValidation/.test(item.name || '')
         ? 'Structured response is incomplete or invalid.'
-        : (item.message || 'Unknown provider error').replace(/\s+/g, ' ').slice(0, 240),
+        : /api.?key|authentication|unauthorized/i.test(item.message || '')
+          ? 'Provider authentication failed.'
+          : (item.message || 'Unknown provider error').replace(/\s+/g, ' ').slice(0, 240),
     }))
     .filter(
       (item, index, all) =>
@@ -105,6 +107,8 @@ export function shouldFallbackTextProvider(error: unknown) {
     'authentication',
     'unauthorized',
     'no object generated',
+    'ai_noobjectgeneratederror',
+    'provider returned error',
     'could not parse the response',
     'failed to parse',
     'did not match the schema',
@@ -119,6 +123,11 @@ export function shouldFallbackTextProvider(error: unknown) {
     'timeout',
     'econnreset',
     'socket hang up',
+    'other side closed',
+    'und_err_socket',
+    'econnrefused',
+    'enotfound',
+    'no endpoints found',
   ].some((fragment) => diagnostic.includes(fragment));
 }
 
@@ -178,21 +187,36 @@ export function getStructuredOutputSettingsWithReasoning(
   return { maxRetries: 0, temperature };
 }
 
-export async function runWithTextProviderFallback<T>({
-  provider,
-  execute,
-  scope,
-  attemptTimeoutMs = 180_000,
-  totalTimeoutMs = 360_000,
-  maxAttempts = 3,
-}: {
+export interface TextGenerationOptions<T> {
   provider?: TextProvider;
   execute: (activeProvider: TextProvider, activeModel: string | undefined, signal: AbortSignal) => Promise<T>;
   scope: string;
   attemptTimeoutMs?: number;
   totalTimeoutMs?: number;
   maxAttempts?: number;
-}) {
+  /** 歌词各阶段共用请求截止时间，避免每阶段重新获得完整等待预算。 */
+  deadlineAt?: number;
+}
+
+export function textGenerationTimeout(scope: string) {
+  return Object.assign(
+    new Error(`Text generation timed out in ${scope}. Resume the saved workflow to retry this step.`),
+    {
+      name: 'TextGenerationTimeoutError',
+      statusCode: 504,
+    }
+  );
+}
+
+export async function runWithTextProviderFallback<T>({
+  provider,
+  execute,
+  scope,
+  attemptTimeoutMs = 75_000,
+  totalTimeoutMs = 180_000,
+  maxAttempts = 3,
+  deadlineAt,
+}: TextGenerationOptions<T>) {
   const providerOrder = getConfiguredTextProviderOrder(provider);
   let lastError: unknown;
   const startedAt = Date.now();
@@ -207,8 +231,12 @@ export async function runWithTextProviderFallback<T>({
       activeProvider === 'openrouter' ? [OPENROUTER_TEXT_MODEL, ...OPENROUTER_TEXT_FALLBACK_MODELS] : [undefined];
 
     for (const activeModel of modelOrder) {
-      const remainingMs = totalTimeoutMs - (Date.now() - startedAt);
-      if (attempts >= maxAttempts || remainingMs <= 0) break;
+      const remainingMs = Math.min(
+        totalTimeoutMs - (Date.now() - startedAt),
+        deadlineAt === undefined ? Number.POSITIVE_INFINITY : deadlineAt - Date.now()
+      );
+      if (remainingMs <= 0) throw textGenerationTimeout(scope);
+      if (attempts >= maxAttempts) break;
       attempts += 1;
       const controller = new AbortController();
       const timeoutMs = Math.min(attemptTimeoutMs, remainingMs);
@@ -224,10 +252,7 @@ export async function runWithTextProviderFallback<T>({
           Promise.resolve().then(() => execute(activeProvider, activeModel, controller.signal)),
           new Promise<never>((_, reject) => {
             timer = setTimeout(() => {
-              const error = Object.assign(
-                new Error(`Text generation timed out in ${scope}. Resume the saved workflow to retry this step.`),
-                { name: 'TextGenerationTimeoutError', statusCode: 504 }
-              );
+              const error = textGenerationTimeout(scope);
               controller.abort(error);
               reject(error);
             }, timeoutMs);
@@ -250,6 +275,7 @@ export async function runWithTextProviderFallback<T>({
           attempt: attempts,
           errors: summarizeProviderError(error),
         });
+        if (collectProviderErrors(error).some((item) => item.statusCode === 401 || item.statusCode === 402)) break;
       } finally {
         if (timer) clearTimeout(timer);
       }

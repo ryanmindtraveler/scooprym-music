@@ -19,7 +19,6 @@ import type { Song } from '@/types/song';
 import { and, count, desc, eq, notInArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
 import { notFound, permanentRedirect } from 'next/navigation';
 import type { MusicRecording, WithContext } from 'schema-dts';
 import { SongDetailClient } from './song-detail-client';
@@ -33,9 +32,8 @@ interface SongDetailPageProps {
 
 export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const { slug, locale } = resolvedParams;
+  const { slug } = resolvedParams;
   const id = getIdFromSlug(slug);
-  const t = await getTranslations({ locale, namespace: 'NotFoundPage' });
 
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);
@@ -65,11 +63,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     .limit(1);
 
   if (!row) {
-    return constructMetadata({
-      title: t('title'),
-      description: t('message'),
-      locale,
-    });
+    notFound();
   }
   const song = {
     ...row.song,
@@ -81,6 +75,11 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   };
 
   const canonicalSlug = getSongCanonicalSlug(song);
+
+  // 在响应头发送前处理旧 slug，保证搜索引擎收到真实的永久跳转。
+  if (slug !== canonicalSlug) {
+    permanentRedirect(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale));
+  }
 
   return constructMetadata({
     title: getSongSeoTitle(song),

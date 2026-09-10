@@ -1,6 +1,8 @@
 import { rewriteLyrics } from '@/ai/text/lib/generation';
 import { getSession } from '@/lib/auth/server';
+import { getWorkflowRun } from '@/lib/creation/song-creation-workflow';
 import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
+import type { LyricWorkshop } from '@/types/lyric-workshop';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -8,8 +10,14 @@ const emptyStringToUndefined = (value: unknown) =>
   typeof value === 'string' && value.trim().length === 0 ? undefined : value;
 
 const rewriteRequestSchema = z.object({
-  selectedText: z.string().trim().min(1).max(6_000),
-  context: z.preprocess(emptyStringToUndefined, z.string().trim().min(1).max(12_000).optional()),
+  selectedText: z
+    .string()
+    .min(1)
+    .max(6_000)
+    .refine((value) => value.trim().length > 0),
+  workflowRunId: z.string().min(1).max(128).optional(),
+  selectionStart: z.number().int().min(0).optional(),
+  context: z.preprocess(emptyStringToUndefined, z.string().min(1).max(12_000).optional()),
   style: z.preprocess(emptyStringToUndefined, z.string().trim().min(1).max(2_000).optional()),
   modelProvider: z.enum(['openai', 'google', 'anthropic', 'deepseek', 'openrouter']).optional(),
 });
@@ -56,12 +64,25 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { selectedText, context, style, modelProvider } = parsedBody.data;
+    const { selectedText, context, style, modelProvider, workflowRunId, selectionStart } = parsedBody.data;
+    if (
+      selectionStart !== undefined &&
+      (!context || context.slice(selectionStart, selectionStart + selectedText.length) !== selectedText)
+    ) {
+      return NextResponse.json({ success: false, error: 'The selected lyrics have changed.' }, { status: 409 });
+    }
+    const run = workflowRunId ? await getWorkflowRun(workflowRunId, session.user.id) : undefined;
+    if (workflowRunId && !run) {
+      return NextResponse.json({ success: false, error: 'Lyric workflow not found.' }, { status: 404 });
+    }
     const rewrittenText = await rewriteLyrics({
       selectedText,
       context,
       style,
       provider: modelProvider,
+      workshop: run?.lyricWorkshop as LyricWorkshop | undefined,
+      sourceText: run?.sourceText,
+      selectionStart,
     });
 
     return NextResponse.json({ success: true, rewrittenText });

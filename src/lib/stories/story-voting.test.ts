@@ -29,6 +29,13 @@ describe('story voting calendar', () => {
 });
 
 describe('public story candidate ranking', () => {
+  it('管理员精选优先于日期排序', () => {
+    const ranked = rankPublicStoryCandidates([
+      { id: 'selected', status: 'shortlisted', relevanceScore: 1, publishedAt: null },
+      { id: 'fresh', status: 'new', relevanceScore: 100, publishedAt: new Date() },
+    ]);
+    expect(ranked.map((candidate) => candidate.id)).toEqual(['selected', 'fresh']);
+  });
   it('fills the public ballot to ten with older eligible stories after fresh stories', () => {
     const now = new Date('2026-08-31T12:00:00.000Z');
     const candidates = Array.from({ length: 14 }, (_, index) => ({
@@ -59,7 +66,7 @@ describe('public story candidate ranking', () => {
     const now = new Date('2026-08-31T12:00:00.000Z');
     const ranked = rankPublicStoryCandidates(
       [
-        { id: 'unknown', status: 'shortlisted', relevanceScore: 100, publishedAt: null },
+        { id: 'unknown', status: 'new', relevanceScore: 100, publishedAt: null },
         { id: 'old', status: 'new', relevanceScore: 1, publishedAt: new Date('2026-01-01T00:00:00.000Z') },
       ],
       now

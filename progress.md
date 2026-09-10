@@ -756,3 +756,68 @@ _Last updated: 2026-09-04 23:59_
 - 验证：TypeScript 通过；存储、制作流程、图片生成 40 项测试通过；真实 PostgreSQL 恢复点集成 3 项通过（模型/存储模拟、事务回滚）。
 - 实施说明：docs/cover-upload-recovery.md。代码尚未部署，其他环境需应用 0038 迁移。
 - 浏览器验证：已登录 Chrome 管理后台重新加载后，Crayon Combat 显示真实封面，仍为 Hidden。
+
+
+## 2026-09-08 热点雷达分页独立发布
+
+- 用户明确要求将六状态分页单独提交部署。生产原提交为 87209fb，master 的 5b6cfd8 因 Hobby 不支持 10/30 分钟 Cron 被拒绝，GitHub Vercel 状态为 failure，错误链接指向 Cron 套餐限制。
+- 在 F:/CodexHome/worktrees/scooprym-pagination 从 87209fb 创建 codex/radar-pagination-only，仅提取分页相关 7 个文件；未改数据库结构与 vercel.json。提交：619f8e1（功能）、ee4be1c（测试），已推送。master 原有工作未回退。
+- 服务端先按状态、分类、搜索筛选，再聚合计数并 LIMIT/OFFSET；10/20/50 条每页，条件变化回第一页，越界页码夹至末页。保留线上卡片业务逻辑。
+- 验证：TypeScript、7 文件 Biome、git diff --check 通过；组件和参数 10 项测试通过。预览 9Xv7z1qzhQz1keLQfxT5dEgLcAGs 已 Ready。
+- 已按用户授权执行 Promote to Production，生产部署 9iwsT1JXg92qSDmxBXp8oJpAP554 正在构建。Chrome 已通过既有 Google 会话登录 scooprym.app 后台，等待上线后验证分页。
+- 发布完成：生产部署 9iwsT1JXg92qSDmxBXp8oJpAP554 于 2026-09-08 11:54（Asia/Shanghai）Ready，耗时 2m51s，已绑定 scooprym.app，提交 ee4be1c。
+- 已登录 Chrome 真实验证：全部第一页 1-20/194、点击 Next 后 21-40/194；从第二页切换待精选恢复 1-20/99；精选 1-14/14、制作中 1-4/4、已生成 1-16/16、已忽略 1-20/73 均正确；已忽略切每页 10 条后 URL size=10 且显示 1-10/73。未操作生成、筛选采集或修改新闻数据。
+- 后续注意：生产现来自 codex/radar-pagination-only，master 保留尚未上线的完整版本；以后部署 master 仍须先解决高频 Cron 的 Hobby 限制，不能误以为完整版本已经上线。
+
+## 2026-09-09 Supabase 公开表安全告警修复
+- 实查截图对应项目 hghikrislbvfvcxcbokk：public.viral_short 未开启 RLS，anon/authenticated 拥有 SELECT/INSERT/UPDATE/DELETE/TRUNCATE 等权限，无 RLS policies。当前源码无该表引用；scooprym 业务表无 anon/authenticated 表访问权限。
+- 已针对该表执行事务：开启 RLS，撤销 PUBLIC、anon、authenticated 的全部表权限；保留 postgres 和 service_role。未读出业务记录，未修改删除数据，未执行其他待迁移项。
+- 验证：anon/authenticated 的 SELECT LIMIT 0 均返回 42501；RLS=true，匿名/普通用户权限=false，service_role SELECT=true；服务端对 viral_short、story_candidate 的查询正常。public 未开启 RLS 的普通表剩余 0。
+- 新增 0039_viral_short_rls_lockdown.sql 并登记迁移日志，可幂等重跑；本轮仅定向执行该 SQL，未写入 Drizzle 已执行迁移记录，后续迁移可再次安全执行。尚未提交代码或重新部署应用。
+
+
+## 2026-09-10 歌词单稿流程清理
+- 按用户要求移除 B 草稿、hybrid 定稿选择、双稿检查点恢复与未使用的双 Hook 选择器。
+- 策划使用唯一 selectedStrategyId；页面仅展示单稿，定稿检查点升级为版本 2。旧策划无法解析时重新策划，不混用旧初稿或定稿；不删除数据库历史作品。
+- 验证：策略选择、单稿流程与歌词 API 共 16 项测试通过。
+
+## 2026-09-10 歌词创作衔接优化
+- 保持“策划 → 单稿 → 一次定稿”的三个主要模型调用及现有安全边界，不新增质量审批或 Hook 调整工作流。
+- 写作提示词与本地检查共享策略规则：原句重复、结尾揭晓检查字面次数和位置；问答、变体、递进及首尾呼应交给现有定稿判断语义，不强制两个副歌。
+- 局部重写按管理员所属工作流读取事实、视角、蓝图和 Hook；保护选区外文字及锚句，拒绝将异步旧结果覆盖当前歌词或其他作品。
+- 所有歌词编辑刷新本地建议，将旧模型审核标记为过期；定稿增加 Hook 自然重音、铺垫和落点检查，未解决问题显示为建议。
+- 更新歌曲生成工作流文档；50 项相关测试通过，未调用付费模型或进行真实音频听评。
+
+## 2026-09-10 歌词失败与超长等待排查
+- 只读查询工作流与队列：历史 48 条歌词失败尝试包含同一安全拒绝 18 次、旧双策略规则失败 9 次、供应商错误和连接中断；一次定稿耗时 360 秒，与 Worker 300 秒执行窗口冲突。失败尝试数不等于失败歌曲数。
+- 只读凭据检查：OpenRouter 200、OpenAI 备用 401；三个 OpenRouter 配置模型均列于官方目录并支持 structured_outputs。未改密钥、未重投历史任务、未调用付费生成。
+- 收紧模型尝试为默认 75 秒/阶段 180 秒，歌词同一请求共用 240 秒预算；补齐对端断连与供应商错误降级，账户鉴权失败跳过同账户其他模型。
+- QStash 对不可恢复的 422/403 返回 489 非重试响应；供应商临时故障继续检查点恢复。记录真实模型阶段时间，并保留真实歌词失败阶段。
+- 验证：49 项相关回归测试、全项目 TypeScript 与本轮文件 Biome 检查通过；真实生成耗时仍需后续创作验证。
+
+### 2026-09-10 后台模型价格展示
+- 仪表盘新增 Model pricing：展示主备模型、近期工作流模型的官方单价、单位、币种、来源和核验时间。
+- OpenRouter 并行只读获取文本及图像端点报价，各请求 5 秒超时，独立加载，失败显示不可用；区分图像 token 与图片计费和分辨率。
+- MiniMax Music 2.0 保留官方历史价及下线说明；Replicate FLUX 显示人工核验参考价，并修正原矩阵供应商名称。
+- 实际逐次费用尚未采集，明确标记，不按工作流次数伪造账单。没有改动生成流程或数据库。
+- 3 项测试、TypeScript 和 Biome 通过；已登录 Chrome 验证本地真实价格及视觉布局。首次开发编译出现 intl context 错误，刷新恢复；已有封面资源超时不影响价格表。
+- 仅本地完成，未发布生产。
+
+### 2026-09-10 索引修复补漏：HTTP 状态与歌曲 canonical
+- GSC 9/4 报告，9/5 开始验证；重定向错误 6 待查、0 失败。线上抽查发现缺失歌曲内容 404 但 HTTP 200，metadata 错把首页当 canonical；旧标题流式跳转也先发 200。
+- 歌曲 metadata 找不到记录直接 notFound，旧 slug 提前 permanentRedirect；htmlLimitedBots 全匹配等待 metadata。仅此仍返回 200，实测定位到 locale 全局 loading 边界，移除后才得到真实状态。其他路由自有 loading 保留；全站首次响应现在等待 metadata，属于 SEO 正确性与首包时间的取舍。
+- 增加 scripts/verify-song-http-seo.mjs 只读回归：缺失歌曲 404 且 noindex 无 canonical；旧标题 308；规范页 200、自引用 canonical、无 noindex；中文别名 308。四项本地 HTTP 回归通过，已登录 Chrome 确认 404 页面。
+- middleware 与歌曲 SEO 共 12 项测试通过，TypeScript 通过。未部署线上，也未重新发起 Google 验证；线上必须发布后再复测。
+
+### 2026-09-10 语言边界：只有 admin 允许中文
+- 用户明确：中文仅限 admin 管理，其余页面全部英文。对外单语言，内部文档和代码注释仍中文。
+- getPublicEnglishPath 改为 admin 例外规则，覆盖认证、用户账户、文档及未知历史中文路径；API/框架路径除外。非 admin 中文 URL 永久跳转英文，英文页面不受中文 cookie 影响，也不输出中文 alternate。
+- 中间件语言规范化后继续认证检查，避免扩大规则后提前放行受保护页面。admin 中文路径仍保留登录保护。
+- 桌面导航、用户仪表盘、移动导航移除语言入口；共享 LocaleSwitcher 限 admin 使用，修正条件返回导致的 Hook 顺序风险。
+- 9 项中间件测试、类型检查、7 文件 Biome 通过。实际 HTTP：中文登录、用户页、文档 308 到英文；匿名中文 admin 307 到登录并保留返回路径。未部署线上。
+
+### 2026-09-10 GitHub 提交前全量检查
+- 全量测试发现并修正 10 项过时测试/mock：用户页面英文边界、歌词重写共用标准、管理员精选与普通新闻排序、积分交易余额与数据库链式 mock；未修改积分或新闻排序业务规则。
+- 增补精选优先与交易余额纠偏回归。全量 411 通过、8 项显式数据库集成测试跳过；mock 整理后积分 8 项复测通过。
+- 45 个改动代码文件 Biome 与 git diff --check 通过；pnpm build 完整生产构建通过（含类型检查及页面生成）。
+- 本次提交涵盖歌词单稿及稳定性、模型报价、SEO HTTP 状态、仅 admin 中文边界。独立 0039 数据库权限迁移及 journal 留在工作区，不纳入本次提交。

@@ -10,13 +10,13 @@ describe('公开英文路由', () => {
     ['/songs/example', '/songs/example'],
     ['/zh/about', '/about'],
     ['/zh/docs', '/docs'],
+    ['/zh/dashboard', '/dashboard'],
+    ['/zh/auth/login', '/auth/login'],
+    ['/songsmith', '/songsmith'],
   ])('%s 统一到 %s', (input, output) => {
     expect(getPublicEnglishPath(input)).toBe(output);
   });
-  it.each(['/zh/admin/create', '/zh/dashboard', '/zh/auth/login', '/api/songs', '/songsmith'])(
-    '%s 不改变后台与非公开路径',
-    (path) => {
-      expect(getPublicEnglishPath(path)).toBeNull();
-    }
-  );
+  it.each(['/zh/admin/create', '/api/songs'])('%s 不改变后台与非公开路径', (path) => {
+    expect(getPublicEnglishPath(path)).toBeNull();
+  });
 });

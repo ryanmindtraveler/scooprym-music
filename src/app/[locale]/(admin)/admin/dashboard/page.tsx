@@ -10,9 +10,11 @@ import { EditorialOperations } from '@/components/admin/dashboard/editorial-oper
 import { EngagementFunnel } from '@/components/admin/dashboard/engagement-funnel';
 import { InfrastructureHealth } from '@/components/admin/dashboard/infrastructure-health';
 import { LiveSongFeed } from '@/components/admin/dashboard/live-feed';
+import { ModelPricing } from '@/components/admin/dashboard/model-pricing';
 import { OperationsCommandCenter } from '@/components/admin/dashboard/operations-command-center';
 import { OverviewChart } from '@/components/admin/dashboard/overview-chart';
 import { getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +49,14 @@ export default async function AdminDashboardPage() {
 
       {/* 核心运营 KPI 与流水线状态总览 */}
       <OperationsCommandCenter editorial={editorialOperations} infrastructure={infrastructure} />
+
+      <Suspense
+        fallback={
+          <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground">Loading model prices…</div>
+        }
+      >
+        <ModelPricing observed={infrastructure.models} />
+      </Suspense>
 
       {/* 双栏响应式现代工作台布局 */}
       <div className="grid items-start gap-5 lg:grid-cols-12">

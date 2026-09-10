@@ -177,7 +177,7 @@ export function InfrastructureHealth({ data }: { data: InfrastructureOverview })
     { use: '歌曲专辑封面', route: '主通道', provider: 'OpenRouter', id: QWEN_IMAGE_PRO_MODEL },
     { use: '歌曲专辑封面', route: '备用 1', provider: 'OpenRouter', id: NANO_BANANA_IMAGE_MODEL },
     { use: '歌曲专辑封面', route: '备用 2', provider: 'OpenRouter', id: SEEDREAM_IMAGE_PRO_MODEL },
-    { use: '歌曲专辑封面', route: '最终备用', provider: 'OpenRouter', id: IMAGE_FALLBACK_MODEL },
+    { use: '歌曲专辑封面', route: '最终备用', provider: 'Replicate', id: IMAGE_FALLBACK_MODEL },
     { use: 'AI 音乐生成', route: '官方直连', provider: 'MiniMax', id: MINIMAX_MUSIC_MODEL },
   ];
   const configuredIds = new Set(configuredModels.map((model) => model.id));

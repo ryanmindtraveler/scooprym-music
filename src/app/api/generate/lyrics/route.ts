@@ -13,6 +13,8 @@ import { getRateLimiter } from '@/lib/infrastructure/ratelimit';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+export const maxDuration = 300;
+
 const textProviderSchema = z.enum(['openai', 'google', 'anthropic', 'deepseek', 'openrouter']);
 
 const PROVIDER_CONFIGURATION_ERROR =

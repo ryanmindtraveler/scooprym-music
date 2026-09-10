@@ -1,3 +1,4 @@
+import { refreshEditedLyricsReview } from '@/ai/text/lib/lyrics-review-state';
 import { DEFAULT_CUSTOM_VIBE_PROMPT } from '@/components/create/form/create-music-data';
 import type { LyricWorkshop } from '@/types/lyric-workshop';
 import { create } from 'zustand';
@@ -236,9 +237,26 @@ export const useCreateStore = create<CreateState>()(
       setMusicTitle: (musicTitle) => set({ musicTitle: safeString(musicTitle) }),
 
       lyrics: '',
-      setLyrics: (lyrics) => set({ lyrics: safeString(lyrics) }),
+      setLyrics: (lyrics) =>
+        set((state) => {
+          const nextLyrics = safeString(lyrics);
+          if (nextLyrics === state.lyrics) return {};
+          return {
+            lyrics: nextLyrics,
+            lyricWorkshop: refreshEditedLyricsReview(state.lyricWorkshop, nextLyrics),
+            hasUnsavedLyricsChanges:
+              !!state.musicLyricsSnapshot && nextLyrics.trim() !== state.musicLyricsSnapshot.trim(),
+          };
+        }),
       lyricWorkshop: null,
-      setLyricWorkshop: (lyricWorkshop) => set({ lyricWorkshop }),
+      setLyricWorkshop: (lyricWorkshop) =>
+        set((state) => ({
+          lyricWorkshop:
+            lyricWorkshop?.qualityGate?.reviewedLyrics !== undefined &&
+            lyricWorkshop.qualityGate.reviewedLyrics !== state.lyrics
+              ? refreshEditedLyricsReview(lyricWorkshop, state.lyrics)
+              : lyricWorkshop,
+        })),
       musicLyricsSnapshot: null,
       setMusicLyricsSnapshot: (musicLyricsSnapshot) =>
         set({ musicLyricsSnapshot: safeNullableString(musicLyricsSnapshot) }),

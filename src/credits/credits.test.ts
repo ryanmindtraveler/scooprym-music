@@ -22,8 +22,14 @@ describe('Credit System', () => {
     vi.clearAllMocks();
     // Reset chainable mocks
     mockDb.select.mockReturnThis();
+    mockDb.update.mockReturnThis();
+    mockDb.insert.mockReturnThis();
+    mockDb.transaction = vi.fn((callback) => callback(mockDb));
+    mockDb.spendableRows = [];
     mockDb.from = vi.fn().mockReturnThis();
-    mockDb.where = vi.fn().mockReturnThis();
+    mockDb.where = vi.fn(() =>
+      Object.assign(Promise.resolve(mockDb.spendableRows), { limit: mockDb.limit, orderBy: mockDb.orderBy })
+    );
     mockDb.limit = vi.fn().mockReturnThis();
     mockDb.orderBy = vi.fn().mockReturnThis();
     mockDb.set = vi.fn().mockReturnThis();
@@ -31,6 +37,12 @@ describe('Credit System', () => {
   });
 
   describe('getUserCredits', () => {
+    it('按可用交易余额纠正旧余额缓存', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ currentCredits: 100 }]);
+      mockDb.spendableRows = [{ remainingAmount: 20 }, { remainingAmount: 5 }];
+      expect(await getUserCredits(userId)).toBe(25);
+      expect(mockDb.set).toHaveBeenCalledWith(expect.objectContaining({ currentCredits: 25 }));
+    });
     it('should return 0 if user has no record', async () => {
       // Mock empty result
       mockDb.limit.mockResolvedValueOnce([]);
@@ -40,6 +52,7 @@ describe('Credit System', () => {
 
     it('should return correct balance', async () => {
       mockDb.limit.mockResolvedValueOnce([{ currentCredits: 100 }]);
+      mockDb.spendableRows = [{ remainingAmount: 100 }];
       const credits = await getUserCredits(userId);
       expect(credits).toBe(100);
     });
@@ -48,12 +61,14 @@ describe('Credit System', () => {
   describe('hasEnoughCredits', () => {
     it('should return true if balance >= required', async () => {
       mockDb.limit.mockResolvedValueOnce([{ currentCredits: 10 }]);
+      mockDb.spendableRows = [{ remainingAmount: 10 }];
       const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
       expect(result).toBe(true);
     });
 
     it('should return false if balance < required', async () => {
       mockDb.limit.mockResolvedValueOnce([{ currentCredits: 3 }]);
+      mockDb.spendableRows = [{ remainingAmount: 3 }];
       const result = await hasEnoughCredits({ userId, requiredCredits: 5 });
       expect(result).toBe(false);
     });

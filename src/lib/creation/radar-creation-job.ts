@@ -18,6 +18,7 @@ import { buildDynamicProductionRecipe } from '@/lib/music/production-recipe';
 import { and, eq, isNull, lt, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { dispatchRadarCreation } from './radar-creation-enqueue';
+import { isTerminalRadarCreationError } from './radar-creation-errors';
 
 class CheckpointSaved extends Error {}
 
@@ -61,7 +62,8 @@ export async function processRadarCreation(candidateId: string) {
   let workflow: { runId: string; stepId: string } | undefined;
   try {
     const [owner] = await db.select({ role: user.role }).from(user).where(eq(user.id, job.userId)).limit(1);
-    if (owner?.role !== 'admin') throw new Error('Job owner no longer has administrator access');
+    if (owner?.role !== 'admin')
+      throw Object.assign(new Error('Job owner no longer has administrator access'), { statusCode: 403 });
     // 旧任务可能缓存了已经损坏的歌词，不能跳过审校反复提交同一坏稿。
     let result = job.lyricResult && inspectSongLyrics(job.lyricResult.lyrics).passed ? job.lyricResult : null;
     const existing = await getWorkflowRun(job.runId, job.userId);
@@ -185,7 +187,9 @@ export async function processRadarCreation(candidateId: string) {
     if (!response.ok) {
       const details = await response.json().catch(() => null);
       const reason = typeof details?.error === 'string' ? details.error.slice(0, 1000) : 'No error details returned';
-      throw new Error(`Music submission failed (${response.status}): ${reason}`);
+      throw Object.assign(new Error(`Music submission failed (${response.status}): ${reason}`), {
+        statusCode: response.status,
+      });
     }
     await db
       .update(radarCreationJob)
@@ -206,7 +210,10 @@ export async function processRadarCreation(candidateId: string) {
       .update(radarCreationJob)
       .set({
         status: 'failed',
-        error: 'Generation failed. Check the saved workflow and worker logs.',
+        error:
+          isTerminalRadarCreationError(error) && error instanceof Error
+            ? error.message.slice(0, 1000)
+            : 'Generation failed. Check the saved workflow and worker logs.',
         leaseId: null,
         leaseUntil: null,
         updatedAt: new Date(),

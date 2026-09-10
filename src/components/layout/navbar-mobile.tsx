@@ -1,6 +1,5 @@
 'use client';
 
-import LocaleSelector from '@/components/layout/locale-selector';
 import { Logo } from '@/components/layout/logo';
 import { ModeSwitcherHorizontal } from '@/components/layout/mode-switcher-horizontal';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -323,7 +322,6 @@ function MainMobileMenu({ userLoggedIn, isAdmin, onLinkClicked }: MainMobileMenu
 
         {/* bottom buttons */}
         <div className="flex w-full items-center justify-between gap-4 border-t border-border/50 p-4">
-          <LocaleSelector />
           <ModeSwitcherHorizontal />
         </div>
       </div>
