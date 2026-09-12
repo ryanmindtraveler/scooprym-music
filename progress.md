@@ -851,3 +851,8 @@ _Last updated: 2026-09-04 23:59_
 - 评论读取/新增、表情、参与事件、播放和新增收藏拒绝未公开歌曲；允许清除已有收藏。弹窗 notFound 不再被通用 catch 吞掉。
 - 发布、下架及排期统一使国际化 layout 和 sitemap 缓存失效。首页/Gallery/发现列表按发布时间倒序、缺失时用创建时间，不使用维护时间；没有当天新歌显示 Latest Drops。
 - 10 项 Vitest 回归、TypeScript 和变更文件 Biome 检查通过。未修改生产歌曲状态；localhost:3001 已在登录管理员的浏览器验收首页正常加载，Latest Drops 与 Gallery 新歌优先。用户确认提交远程主分支，部署结果另行验收。
+
+### 2026-09-12 Vercel 用量排查与图片优化
+- Chrome 团队近 30 天 CPU 明细：scooprym-music 1h36m（38.8%）、china-care-atlas 1h52m（45.2%）、god-of-war-laufey-us 36m24s（14.6%）、magic-circle-altar 3m25s（1.4%）；团队合计超过共享 4h，项目未满不代表团队充足。未修改其他项目或套餐。
+- 图片统一 WebP，minimumCacheTTL 从 1 天延长至 7 天；封面更新须使用新资源地址。修正周榜固定 300/330px 尺寸、Gallery 手机单列尺寸及兜底图 sizes，详情模糊背景只取小图。Gallery 保留每页 20 条，仅当前页渲染，取消首页下方首排 priority；周榜 marquee repeat 从 4 减为 2，卡片详情链接关闭自动预取。
+- Biome、TypeScript、diff 检查通过。开发服务已自动重启；浏览器复验连续 CDP 超时，未声称视觉验收或线上节省已验证。未新增歌曲数据缓存，保留发布门禁与失效规则。用户已授权提交远程主分支；部署结果尚未验收。

@@ -209,6 +209,7 @@ export function SongDetailView({
               src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
               alt="bg"
               fill
+              sizes="330px"
               className="object-cover opacity-10 blur-[120px] scale-125 saturate-150"
             />
           </div>
@@ -276,6 +277,7 @@ export function SongDetailView({
                       src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
                       alt="Cover"
                       fill
+                      sizes="(min-width: 640px) 330px, 280px"
                       className="object-cover z-10 scale-110"
                     />
                     {!song.coverImageUrl && (

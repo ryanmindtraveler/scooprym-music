@@ -88,12 +88,11 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             key={safeCurrentPage}
             className="mt-12 grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           >
-            {pageItems.map((item, index) => (
+            {pageItems.map((item) => (
               <GallerySongCard
                 key={item.id}
                 item={item}
                 onSelect={(song) => setSelectedSong(song)}
-                priority={safeCurrentPage === 1 && index < 5}
                 queue={displayItems}
               />
             ))}

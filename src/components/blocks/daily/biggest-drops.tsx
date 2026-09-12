@@ -78,13 +78,18 @@ function DropPortraitCard({
     >
       {/* 顶部正方形大封面区域 */}
       <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-zinc-100 dark:bg-zinc-800">
-        <LocaleLink href={songUrl} scroll={false} className="relative block size-full cursor-pointer overflow-hidden">
+        <LocaleLink
+          prefetch={false}
+          href={songUrl}
+          scroll={false}
+          className="relative block size-full cursor-pointer overflow-hidden"
+        >
           {song.coverImageUrl ? (
             <Image
               src={song.coverImageUrl}
               alt={song.title}
               fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              sizes="(min-width: 640px) 330px, 300px"
               className="object-cover transition-transform duration-700 group-hover/card:scale-105"
             />
           ) : (
@@ -93,6 +98,7 @@ function DropPortraitCard({
                 src="/images/funny-censored-fallback.png"
                 alt="Censored"
                 fill
+                sizes="(min-width: 640px) 330px, 300px"
                 className="object-cover opacity-80"
               />
               <div className="absolute inset-0 flex items-center justify-center p-4">
@@ -147,6 +153,7 @@ function DropPortraitCard({
       <div className="relative flex flex-1 flex-col px-4 pt-3.5 pb-4">
         {/* 新闻描述引语气泡框 */}
         <LocaleLink
+          prefetch={false}
           href={songUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -161,7 +168,12 @@ function DropPortraitCard({
 
         {/* 歌曲标题 */}
         <div className="mb-2">
-          <LocaleLink href={songUrl} scroll={false} className="group/title block w-full text-left focus:outline-none">
+          <LocaleLink
+            prefetch={false}
+            href={songUrl}
+            scroll={false}
+            className="group/title block w-full text-left focus:outline-none"
+          >
             <div className="flex items-start gap-1.5">
               <Music2 className="mt-0.5 size-3.5 shrink-0 text-pink-500" aria-hidden="true" />
               <h3 className="line-clamp-1 text-[13.5px] font-bold leading-tight tracking-tight text-slate-900 transition-colors group-hover/title:text-pink-600 dark:text-slate-100">
@@ -281,7 +293,7 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
               This week’s chart is waiting for its first plays.
             </div>
           ) : (
-            <Marquee pauseOnHover repeat={4} className="py-2 [--duration:55s] [--gap:1.75rem]">
+            <Marquee pauseOnHover repeat={2} className="py-2 [--duration:55s] [--gap:1.75rem]">
               {denseSongs.map((song, idx) => (
                 <DropPortraitCard
                   key={`biggest-single-${song.id}-${idx}`}

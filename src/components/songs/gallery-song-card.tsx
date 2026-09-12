@@ -79,6 +79,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
         <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-zinc-100 dark:bg-zinc-800">
           {/* Use div with onClick if onSelect is present, otherwise Link */}
           <LocaleLink
+            prefetch={false}
             href={songUrl}
             scroll={false}
             onClick={(e) => {
@@ -96,7 +97,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
                 alt={item.title}
                 fill
                 priority={priority}
-                sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                sizes="(min-width: 2040px) 360px, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105 z-10"
               />
             ) : (
@@ -105,6 +106,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
                   src="/images/funny-censored-fallback.png"
                   alt="Censored"
                   fill
+                  sizes="(min-width: 2040px) 360px, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover opacity-80"
                 />
                 <div className="absolute inset-0 flex items-center justify-center p-4">
@@ -158,6 +160,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
         <div className="relative flex flex-1 flex-col px-4 pb-3.5 pt-3">
           {/* News Snippet - Editorial Quote Style */}
           <LocaleLink
+            prefetch={false}
             href={songUrl}
             target="_blank"
             rel="noopener noreferrer"
@@ -173,6 +176,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
           {/* Song information */}
           <div className="mb-1">
             <LocaleLink
+              prefetch={false}
               href={songUrl}
               scroll={false}
               onClick={(e) => {

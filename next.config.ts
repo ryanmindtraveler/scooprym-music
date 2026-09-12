@@ -42,9 +42,10 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    formats: ['image/avif', 'image/webp'],
+    // 统一输出 WebP，减少同一封面的格式变体和首次转换开销。
+    formats: ['image/webp'],
     unoptimized: false,
-    minimumCacheTTL: 86400,
+    minimumCacheTTL: 604800,
     remotePatterns: [
       {
         protocol: 'https',
