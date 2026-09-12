@@ -274,6 +274,13 @@
       "when": 1788804000000,
       "tag": "0038_cover_asset_checkpoint",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1788912000000,
+      "tag": "0039_viral_short_rls_lockdown",
+      "breakpoints": true
     }
   ]
 }
