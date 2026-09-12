@@ -73,6 +73,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
     // Revalidate paths to reflect changes immediately
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.Dashboard);
+    revalidatePath('/sitemap.xml');
 
     return {
       success: true,
@@ -135,6 +136,7 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
     }).catch((error) => console.error('Unable to record publication workflow:', error));
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.AdminDashboard);
+    revalidatePath('/sitemap.xml');
     return { success: true };
   } catch (error) {
     console.error('scheduleSongPublishAction error:', error);

@@ -14,6 +14,9 @@ import { getCanonicalBaseUrl } from '../lib/urls/urls';
 
 type Href = Parameters<typeof getLocalePathname>[0]['href'];
 
+// 发布状态可能通过迁移修复，站点地图不能永久停留在上次构建的快照。
+export const revalidate = 3600;
+
 /**
  * static routes for sitemap, you may change the routes for your own
  */

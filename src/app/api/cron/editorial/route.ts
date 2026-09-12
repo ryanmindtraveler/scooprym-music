@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     revalidatePath('/admin/dashboard');
     revalidatePath('/admin/story-radar');
     revalidatePath('/admin/songs');
+    revalidatePath('/sitemap.xml');
     return NextResponse.json({ success: true, result, executedAt: new Date().toISOString() });
   } catch (error) {
     console.error('Editorial cron failed:', error);
