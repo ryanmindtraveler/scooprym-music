@@ -31,6 +31,7 @@ export async function GET(request: Request) {
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
+          eq(song.isPublished, true),
           eq(songFavorite.userId, userId),
           notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
         )
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
+          eq(song.isPublished, true),
           eq(songFavorite.userId, userId),
           notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
         )

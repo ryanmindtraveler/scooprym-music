@@ -2,10 +2,9 @@ import { getDb } from '@/db';
 import { songReaction, song as songTable, story as storyTable, user } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { constructMetadata } from '@/lib/seo/metadata';
-import { isMissingPublishFlagError } from '@/lib/songs/song-publish';
 import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, ne, notInArray, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { SongsClientWrapper } from './songs-client-wrapper';
@@ -57,55 +56,29 @@ export default async function SongsPage({ params }: SongsPageProps) {
     processingStatus: string | null;
   }> = [];
 
-  try {
-    adminSongRows = await db
-      .select({
-        song: songTable,
-        story: storyTable,
-        prompt: latestAttempt.prompt,
-        processingStatus: latestAttempt.processingStatus,
-      })
-      .from(songTable)
-      .innerJoin(user, eq(songTable.userId, user.id))
-      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(
-        and(
-          eq(user.role, 'admin'),
-          eq(songTable.isPublished, true),
-          ne(songTable.audioUrl, 'pending-stream'),
-          ne(songTable.audioUrl, ''),
-          notInArray(latestAttempt.processingStatus, failedStatuses)
-        )
+  adminSongRows = await db
+    .select({
+      song: songTable,
+      story: storyTable,
+      prompt: latestAttempt.prompt,
+      processingStatus: latestAttempt.processingStatus,
+    })
+    .from(songTable)
+    .innerJoin(user, eq(songTable.userId, user.id))
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+    .where(
+      and(
+        eq(user.role, 'admin'),
+        eq(songTable.isPublished, true),
+        ne(songTable.audioUrl, 'pending-stream'),
+        ne(songTable.audioUrl, ''),
+        notInArray(latestAttempt.processingStatus, failedStatuses)
       )
-      .orderBy(desc(songTable.createdAt))
-      .limit(50);
-  } catch (error) {
-    if (!isMissingPublishFlagError(error)) throw error;
-
-    console.warn('[marketing/songs] is_published column missing, fallback query enabled');
-    adminSongRows = await db
-      .select({
-        song: songTable,
-        story: storyTable,
-        prompt: latestAttempt.prompt,
-        processingStatus: latestAttempt.processingStatus,
-      })
-      .from(songTable)
-      .innerJoin(user, eq(songTable.userId, user.id))
-      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(
-        and(
-          eq(user.role, 'admin'),
-          ne(songTable.audioUrl, 'pending-stream'),
-          ne(songTable.audioUrl, ''),
-          notInArray(latestAttempt.processingStatus, failedStatuses)
-        )
-      )
-      .orderBy(desc(songTable.createdAt))
-      .limit(50);
-  }
+    )
+    // 与首页 Gallery 一致：按发布/创建时间排序，维护旧数据不影响新旧顺序。
+    .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
+    .limit(50);
 
   const adminSongs = adminSongRows.map((row) => ({
     ...row.song,

@@ -38,7 +38,7 @@ export default async function DashboardPage({
       .from(songPlay)
       .innerJoin(song, eq(song.id, songPlay.songId))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(songPlay.userId, userId), visibleAttempt));
+      .where(and(eq(song.isPublished, true), eq(songPlay.userId, userId), visibleAttempt));
 
     listeningCount = Number(countRow?.count ?? 0);
     totalPages = Math.max(1, Math.ceil(listeningCount / RECENT_LISTENING_LIMIT));
@@ -64,7 +64,7 @@ export default async function DashboardPage({
       .innerJoin(song, eq(song.id, songPlay.songId))
       .innerJoin(story, eq(story.id, song.storyId))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(songPlay.userId, userId), visibleAttempt))
+      .where(and(eq(song.isPublished, true), eq(songPlay.userId, userId), visibleAttempt))
       .groupBy(song.id, story.id, latestAttempt.prompt)
       .orderBy(desc(lastPlayedAt))
       .limit(RECENT_LISTENING_LIMIT)

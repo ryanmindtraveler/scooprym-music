@@ -83,7 +83,7 @@ export default async function MySongsPage() {
         .from(songTable)
         .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
         .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-        .where(and(inArray(songTable.id, recentSongIdsOrdered), visibleAttempt));
+        .where(and(eq(songTable.isPublished, true), inArray(songTable.id, recentSongIdsOrdered), visibleAttempt));
 
       const byId = new Map(recentSongRows.map((r) => [r.id, r]));
 
@@ -127,7 +127,7 @@ export default async function MySongsPage() {
         .from(songTable)
         .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
         .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-        .where(and(inArray(songTable.id, favoriteSongIdsOrdered), visibleAttempt));
+        .where(and(eq(songTable.isPublished, true), inArray(songTable.id, favoriteSongIdsOrdered), visibleAttempt));
 
       const byId = new Map(favoriteSongRows.map((r) => [r.id, r]));
 
@@ -171,7 +171,7 @@ export default async function MySongsPage() {
       .from(songFavorite)
       .innerJoin(songTable, eq(songFavorite.songId, songTable.id))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(songFavorite.userId, userId), visibleAttempt));
+      .where(and(eq(songTable.isPublished, true), eq(songFavorite.userId, userId), visibleAttempt));
     favoritesCount = Number(fCount?.count || 0);
 
     const [rCount] = await db
@@ -179,7 +179,7 @@ export default async function MySongsPage() {
       .from(songPlay)
       .innerJoin(songTable, eq(songPlay.songId, songTable.id))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(songPlay.userId, userId), visibleAttempt));
+      .where(and(eq(songTable.isPublished, true), eq(songPlay.userId, userId), visibleAttempt));
     recentCount = Number(rCount?.count || 0);
   }
 

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 interface DailyHomeProps {
   songs: Song[];
   freshnessLabel?: string;
+  hasNewToday?: boolean;
 }
 
 function getSongUrl(song: Song) {
@@ -123,7 +124,7 @@ function CoverPlayOverlay({
   );
 }
 
-export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeProps) {
+export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday = false }: DailyHomeProps) {
   const { currentSong, isPlaying, play, pause } = usePlayerStore();
   const featured = songs[0];
   // 首页今日区固定为 1 首左侧主打加 3 首右侧内容。
@@ -178,7 +179,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
           <div className="mb-7 flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between md:mb-10">
             <div className="flex flex-wrap items-center gap-3.5">
               <h1 className="text-4xl font-black tracking-tight drop-shadow-xs sm:text-5xl md:text-6xl">
-                Today’s Drops
+                {hasNewToday ? 'Today’s Drops' : 'Latest Drops'}
               </h1>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/20 px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-widest text-white shadow-xs backdrop-blur-md">
                 <span className="relative flex size-2.5">
@@ -218,7 +219,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
                 <Cover song={featured} priority className="absolute inset-0" />
                 <CoverPlayOverlay
                   active={isActive(featured)}
-                  label={isActive(featured) ? 'Pause today’s main story' : 'Play today’s main story'}
+                  label={isActive(featured) ? 'Pause featured story' : 'Play featured story'}
                   onClick={() => toggleSong(featured)}
                   size="large"
                 />
@@ -390,7 +391,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops' }: DailyHomeP
                         {/* Meta row */}
                         <div className="flex items-center justify-between gap-2 text-xs">
                           <span className="font-black uppercase tracking-widest text-[#d80d63]">
-                            {formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric' })}
+                            {formatBusinessDate(song.publishedAt || song.createdAt, { month: 'short', day: 'numeric' })}
                           </span>
                           {song.sourceUrl && (
                             <a

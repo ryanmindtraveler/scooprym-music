@@ -20,6 +20,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const requestedPage = Number.parseInt(request.nextUrl.searchParams.get('page') || '1', 10);
     const page = Number.isFinite(requestedPage) ? Math.max(1, requestedPage) : 1;
     const db = await getDb();
+    const [publishedSong] = await db
+      .select({ id: song.id })
+      .from(song)
+      .where(and(eq(song.id, songId), eq(song.isPublished, true)))
+      .limit(1);
+    if (!publishedSong) return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });
     const session = await getSession();
     const viewerId = session?.user?.id;
     const isAdmin = session?.user?.role === 'admin';
@@ -104,7 +110,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const db = await getDb();
-    const [existingSong] = await db.select({ id: song.id }).from(song).where(eq(song.id, songId)).limit(1);
+    const [existingSong] = await db
+      .select({ id: song.id })
+      .from(song)
+      .where(and(eq(song.id, songId), eq(song.isPublished, true)))
+      .limit(1);
     if (!existingSong) {
       return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });
     }

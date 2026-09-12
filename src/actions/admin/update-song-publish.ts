@@ -1,5 +1,7 @@
 'use server';
 
+import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
+
 import { getDb } from '@/db';
 import { song, songCreationRun } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
@@ -73,7 +75,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
     // Revalidate paths to reflect changes immediately
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.Dashboard);
-    revalidatePath('/sitemap.xml');
+    revalidatePublicSongs();
 
     return {
       success: true,
@@ -136,7 +138,7 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
     }).catch((error) => console.error('Unable to record publication workflow:', error));
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.AdminDashboard);
-    revalidatePath('/sitemap.xml');
+    revalidatePublicSongs();
     return { success: true };
   } catch (error) {
     console.error('scheduleSongPublishAction error:', error);

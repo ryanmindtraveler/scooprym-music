@@ -39,7 +39,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const db = await getDb();
-    const [existingSong] = await db.select({ id: song.id }).from(song).where(eq(song.id, songId)).limit(1);
+    const [existingSong] = await db
+      .select({ id: song.id })
+      .from(song)
+      .where(and(eq(song.id, songId), eq(song.isPublished, true)))
+      .limit(1);
 
     if (!existingSong) {
       return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });

@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
       .innerJoin(song, eq(songPlay.songId, song.id))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
-        and(eq(songPlay.userId, userId), notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
+        and(
+          eq(song.isPublished, true),
+          eq(songPlay.userId, userId),
+          notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
+        )
       );
     const total = Number(totalRes?.count || 0);
 
@@ -57,7 +61,11 @@ export async function GET(request: NextRequest) {
       .innerJoin(story, eq(story.id, song.storyId))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
       .where(
-        and(eq(songPlay.userId, userId), notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES))
+        and(
+          eq(song.isPublished, true),
+          eq(songPlay.userId, userId),
+          notInArray(latestAttempt.processingStatus, SONG_FAILURE_PROCESSING_STATUSES)
+        )
       )
       .groupBy(song.id, story.id, latestAttempt.prompt)
       .orderBy(desc(lastPlayedAtExpr))

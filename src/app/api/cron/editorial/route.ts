@@ -1,3 +1,4 @@
+import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
 import { publishDueSongs } from '@/lib/stories/editorial-workflow';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
@@ -18,7 +19,7 @@ export async function GET(request: Request) {
     revalidatePath('/admin/dashboard');
     revalidatePath('/admin/story-radar');
     revalidatePath('/admin/songs');
-    revalidatePath('/sitemap.xml');
+    revalidatePublicSongs();
     return NextResponse.json({ success: true, result, executedAt: new Date().toISOString() });
   } catch (error) {
     console.error('Editorial cron failed:', error);

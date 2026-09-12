@@ -12,7 +12,6 @@ import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { routing } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { getBusinessDayStart } from '@/lib/shared/business-time';
-import { isMissingPublishFlagError } from '@/lib/songs/song-publish';
 import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
@@ -71,48 +70,28 @@ export default async function HomePage(props: HomePageProps) {
     prompt: string | null;
     processingStatus: string | null;
   }> = [];
-  try {
-    adminSongRows = await db
-      .select({
-        song: songTable,
-        story: storyTable,
-        prompt: latestAttempt.prompt,
-        processingStatus: latestAttempt.processingStatus,
-      })
-      .from(songTable)
-      .innerJoin(user, eq(songTable.userId, user.id))
-      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(
-        and(
-          eq(user.role, 'admin'),
-          eq(songTable.isPublished, true),
-          notInArray(latestAttempt.processingStatus, failedStatuses)
-        )
+  adminSongRows = await db
+    .select({
+      song: songTable,
+      story: storyTable,
+      prompt: latestAttempt.prompt,
+      processingStatus: latestAttempt.processingStatus,
+    })
+    .from(songTable)
+    .innerJoin(user, eq(songTable.userId, user.id))
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+    .where(
+      and(
+        eq(user.role, 'admin'),
+        eq(songTable.isPublished, true),
+        notInArray(latestAttempt.processingStatus, failedStatuses)
       )
-      .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.updatedAt}, ${songTable.createdAt})`))
-      .limit(100);
-  } catch (error) {
-    if (!isMissingPublishFlagError(error)) {
-      throw error;
-    }
+    )
+    // 数据维护时间不能把历史歌曲推到最新发布之前。
+    .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
+    .limit(100);
 
-    console.warn('[marketing/home] is_published column missing, fallback query enabled');
-    adminSongRows = await db
-      .select({
-        song: songTable,
-        story: storyTable,
-        prompt: latestAttempt.prompt,
-        processingStatus: latestAttempt.processingStatus,
-      })
-      .from(songTable)
-      .innerJoin(user, eq(songTable.userId, user.id))
-      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(user.role, 'admin'), notInArray(latestAttempt.processingStatus, failedStatuses)))
-      .orderBy(desc(songTable.createdAt))
-      .limit(100);
-  }
   const adminSongs = adminSongRows.map((row) => ({
     ...row.song,
     prompt: row.prompt,
@@ -176,7 +155,7 @@ export default async function HomePage(props: HomePageProps) {
   const businessDayStart = getBusinessDayStart(now);
   const freshTodaySongs = uniqueStorySongs.filter((song) => {
     const publishedAt = song.publishedAt ? new Date(song.publishedAt) : null;
-    return Boolean(publishedAt && publishedAt >= businessDayStart);
+    return Boolean(publishedAt && publishedAt >= businessDayStart && publishedAt <= now);
   });
   const freshSongIds = new Set(freshTodaySongs.map((song) => song.id));
   const dailySongs = [...freshTodaySongs, ...uniqueStorySongs.filter((song) => !freshSongIds.has(song.id))].slice(0, 4);
@@ -218,7 +197,7 @@ export default async function HomePage(props: HomePageProps) {
       <div className="flex flex-col">
         <HeroSection featuredSong={serializedSongs[0]} songs={serializedSongs} />
         <SectionWaveDivider from="hero" to="today" />
-        <DailyHome songs={dailySongs} freshnessLabel={freshnessLabel} />
+        <DailyHome songs={dailySongs} freshnessLabel={freshnessLabel} hasNewToday={freshTodaySongs.length > 0} />
         <SectionWaveDivider from="today" to="biggest" />
         <BiggestDrops songs={serializedSongs} />
         <SectionWaveDivider from="biggest" to="paper" />

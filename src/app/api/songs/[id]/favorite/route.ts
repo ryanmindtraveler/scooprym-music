@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
-import { songFavorite } from '@/db/schema';
+import { song, songFavorite } from '@/db/schema';
 import { getSession } from '@/lib/auth/server';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
@@ -32,6 +32,13 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         data: { isFavorite: false },
       });
     }
+
+    const [publishedSong] = await db
+      .select({ id: song.id })
+      .from(song)
+      .where(and(eq(song.id, id), eq(song.isPublished, true)))
+      .limit(1);
+    if (!publishedSong) return NextResponse.json({ success: false, error: 'Song not found' }, { status: 404 });
 
     await db.insert(songFavorite).values({
       id: randomUUID(),
