@@ -426,6 +426,8 @@ export function SongDetailClient({
                 <ShareButton
                   songId={song.id}
                   songTitle={song.title}
+                  newsSummary={song.newsSummary}
+                  sourceText={song.sourceText}
                   className="size-10 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:scale-110 active:scale-95 transition-all duration-300"
                 />
               </div>

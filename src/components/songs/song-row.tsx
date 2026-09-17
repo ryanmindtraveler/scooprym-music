@@ -162,7 +162,13 @@ function SongRowBase({
         {!hideDefaultActions && (
           <div className="flex items-center gap-1 sm:gap-2">
             <LikeButton songId={item.id} initialIsLiked={isLiked} className="size-8 sm:size-9" />
-            <ShareButton songId={item.id} songTitle={item.title} className="size-8 sm:size-9" />
+            <ShareButton
+              songId={item.id}
+              songTitle={item.title}
+              newsSummary={item.newsSummary}
+              sourceText={item.sourceText}
+              className="size-8 sm:size-9"
+            />
             <DownloadButton audioUrl={item.audioUrl} title={item.title} className="size-8 sm:size-9" />
           </div>
         )}

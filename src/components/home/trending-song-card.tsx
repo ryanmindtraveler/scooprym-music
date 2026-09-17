@@ -120,6 +120,8 @@ export function TrendingSongCard({
           <ShareButton
             songId={song.id}
             songTitle={song.title}
+            newsSummary={song.newsSummary}
+            sourceText={song.sourceText}
             className="bg-black/20 backdrop-blur-xl border border-white/10 text-white hover:bg-blue-500 hover:border-blue-500 hover:text-white size-8 rounded-full shadow-lg"
           />
           {song.audioUrl && (

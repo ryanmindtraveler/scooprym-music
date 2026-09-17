@@ -119,6 +119,8 @@ function DropPortraitCard({
             <ShareButton
               songId={song.id}
               songTitle={song.title}
+              newsSummary={song.newsSummary}
+              sourceText={song.sourceText}
               className="size-8.5 rounded-full border-0 bg-black/40 text-white backdrop-blur-md hover:bg-black/60"
             />
           </div>

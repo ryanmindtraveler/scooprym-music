@@ -129,6 +129,8 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
               <ShareButton
                 songId={item.id}
                 songTitle={item.title}
+                newsSummary={item.newsSummary}
+                sourceText={item.sourceText}
                 className="size-8 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md rounded-full border-0"
               />
             </div>

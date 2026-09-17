@@ -15,8 +15,8 @@ import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
 import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary } from '@/lib/songs/song-editorial';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
-import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import {
@@ -121,15 +121,7 @@ export function SongDetailView({
   };
 
   const handleShare = () => {
-    // Determine current locale from pathname to create accurate share link
-    const path = window.location.pathname;
-    const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/);
-    const locale = localeMatch ? localeMatch[1] : '';
-    const localePrefix = locale ? `/${locale}` : '';
-
-    // Generate strict canonical URL for sharing
-    const titleSlug = slugify(song.title || 'song');
-    const url = `${getCanonicalBaseUrl()}${localePrefix}/songs/${titleSlug}-${song.id}`;
+    const url = `${getCanonicalBaseUrl()}/songs/${getSongCanonicalSlug(song)}`;
 
     // Copy to clipboard
     navigator.clipboard.writeText(url);
@@ -248,6 +240,8 @@ export function SongDetailView({
             <ShareButton
               songId={song.id}
               songTitle={song.title}
+              newsSummary={song.newsSummary}
+              sourceText={song.sourceText}
               className={cn(
                 'rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white hover:scale-110 transition-all h-10 w-10 border-none',
                 isClean && 'bg-black/5 hover:bg-black/10 text-black/60 hover:text-black'

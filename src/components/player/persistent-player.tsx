@@ -98,6 +98,8 @@ export function PersistentPlayer() {
         <ShareButton
           songId={currentSong.id}
           songTitle={currentSong.title}
+          newsSummary={currentSong.newsSummary}
+          sourceText={currentSong.newsContent}
           className="hidden size-8 border-0 text-white/65 hover:bg-white/10 hover:text-white sm:inline-flex"
         />
         <button
