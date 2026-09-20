@@ -6,6 +6,7 @@ import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
+import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
   getSongCanonicalSlug,
@@ -18,7 +19,7 @@ import { getSourceUrl } from '@/lib/urls/source-url';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, notInArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import Link from 'next/link';
@@ -149,7 +150,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const userId = session?.user?.id;
 
   const isAdmin = session?.user?.role === 'admin';
-  const [favoriteRows, commentCountRows, commentRows] = await Promise.all([
+  const [favoriteRows, commentCountRows, commentRows, relatedRows] = await Promise.all([
     userId
       ? db
           .select({ id: songFavorite.id })
@@ -175,7 +176,24 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       .where(and(eq(songComment.songId, id), eq(songComment.status, 'visible')))
       .orderBy(desc(songComment.createdAt))
       .limit(12),
+    // 仅同一新闻下已公开、已完成且有音频的作品；每次请求读取发布状态。
+    db
+      .select({ id: songTable.id, title: songTable.title })
+      .from(songTable)
+      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+      .where(
+        and(
+          eq(songTable.storyId, song.storyId),
+          ne(songTable.id, id),
+          eq(songTable.isPublished, true),
+          inArray(latestAttempt.processingStatus, ['completed', 'completed_without_cover']),
+          ne(songTable.audioUrl, ''),
+          ne(songTable.audioUrl, 'pending-stream')
+        )
+      )
+      .orderBy(desc(songTable.publishedAt), desc(songTable.createdAt), desc(songTable.id)),
   ]);
+  const relatedSongs = selectRelatedSongs(song, relatedRows);
   const isFavorite = favoriteRows.length > 0;
   const commentTotal = Number(commentCountRows[0]?.total ?? 0);
   const initialComments: SongCommentItem[] = commentRows.map((comment) => ({
@@ -269,6 +287,26 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
             : null
         }
       />
+      {relatedSongs.length > 0 && (
+        <section aria-labelledby="related-songs-heading" className="mx-auto max-w-5xl px-6 py-12">
+          <h2 id="related-songs-heading" className="text-2xl font-bold">
+            More songs from this story
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {relatedSongs.map((related) => (
+              <li key={related.id}>
+                <Link
+                  href={`/songs/${getSongCanonicalSlug({ ...related, newsSummary: song.newsSummary, sourceText: null })}`}
+                  prefetch={false}
+                  className="block rounded-xl border border-slate-200 p-5 font-semibold underline underline-offset-4 hover:border-pink-500 dark:border-zinc-700"
+                >
+                  {related.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

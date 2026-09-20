@@ -59,7 +59,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
   };
 
   // 公开卡片仅展示编辑摘要，不回退到原始抓取素材或制作提示词。
-  const description = item.newsSummary ? getNewsCardSummary(item) : 'No news content available.';
+  const description = item.newsSummary?.trim() ? getNewsCardSummary(item) : item.title;
 
   let formattedDate = 'Recent';
   try {

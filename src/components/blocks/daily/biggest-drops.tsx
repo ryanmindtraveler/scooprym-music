@@ -48,7 +48,7 @@ function DropPortraitCard({
   onToggle: (song: Song) => void;
 }) {
   const songUrl = getSongUrl(song);
-  const description = song.newsSummary ? getNewsCardSummary(song) : 'No news content available.';
+  const description = song.newsSummary?.trim() ? getNewsCardSummary(song) : song.title;
 
   let formattedDate = 'Recent';
   try {
