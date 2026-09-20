@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-20 16:18_
+_Last updated: 2026-09-20 16:35_
 
 ## Pinned
 - 2026-09-20 15:10：用户明确选择套餐页“保留套餐购买，仅限制登录访问并禁止索引”；不得以旧路由退出为由停用套餐支付。
@@ -217,6 +217,9 @@ _Last updated: 2026-09-20 16:18_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-20 16:35：GA 任务最终部署状态：代码 `df696b8` 已推送，Vercel `dpl_G6cZGh1UwDAZpPJs8dcVH6YpQLB4` 已 READY 并绑定 `scooprym.app`。生产 `/songs` 浏览器确认 Ryan Gong 已登录、Admin 入口可见，DOM 无 googletagmanager/google-analytics 脚本，管理员流量排除验证通过。两个 GA 关键事件及 song_id 维度已保存；普通访客生产事件实际入库尚未验证，不能宣称 GA 接收已完成验收。20 项测试与构建通过，本地 3100 服务已停止。本次仅更新本地记录，提交推送由主流程处理。（evidence: 主流程部署状态、生产浏览器及 GA 配置回读）
+- 2026-09-20 16:32：GA 公众听歌统计修复已提交并推送 master `df696b8cbaa6793c1df007bf7433d30a80c33cf9`；20 项测试、11 文件 Biome 与 pnpm build（含类型检查）通过。GA 仅在真实生产 origin、身份确认非 admin 且非 admin 路径加载，已加载标签使用 ga-disable 停用；管理员访问公开页也排除，匿名运营仍无法识别。5 类歌曲行为在自建 API 成功后镜像 GA，使用有限等待队列及同歌曲事件会话去重，不传用户/会话标识；playing 才记开始、累计实际播放 30 秒才有效、ended 且累计达到 90% 才听完、复制成功才记分享。真实登录 Chrome 本地 3100 验证 0:51 歌曲完整播放正常、本地无 GA 标签。（evidence: commit、主流程测试及浏览器验收）
+- 2026-09-20 16:32：GA 属性 529274494 已创建 song_play_qualified/song_share 关键事件（Create with code、每次事件、不设金额）与事件级歌曲 ID 维度 song_id，保存后回读确认，未删除历史数据。Vercel `dpl_G6cZGh1UwDAZpPJs8dcVH6YpQLB4` 当前 BUILDING，尚未完成线上验收或证实 GA 收到新事件；`docs/GA公众听歌统计.md` 已追加控制台实际配置，该追加尚未提交。（evidence: 主流程真实 GA 控制台配置与部署状态）
 - 2026-09-20 16:18：通过真实登录 Chrome 核验 GA 属性 scooprym（529274494），6/22–9/19 共 93 活跃用户、181 会话、482 PV、1,006 事件；渠道会话为自然搜索 1、社交 3、Direct 143、Referral 32。后台 9 个路径合计 259 PV（53.73%），仅 1–2 活跃用户，整体参与时长混入运营操作。首页 157 PV、曲库 1 PV、18 个歌曲 URL 合计 26 PV（含同 UUID 历史地址）。GA 仅有 page_view/session_start/user_engagement/scroll/first_visit/click 六类事件；代码歌曲行为仅 POST 自建 API，未发送 GA，故零关键事件不能证明无人听歌，首页亦可直接播放。本轮只读，未改代码、GA 设置或数据库。（evidence: `F:/CodexHome/seo-audit-2026-09-20/Google-Analytics实际核验.md`）
 - 2026-09-20 16:04：只读核查 GSC 抓取统计（更新至 9/18）：域名共 2,208 次请求，主域 2,050、www 158，平均 437ms；200 占 90%、301 占 10%、404 少于 1%，响应表仅列这 3 类，未列 429/5xx。主域平均 463ms、200 占 97%，显示近 90 天 Host had no problems，robots/DNS/connectivity 均为 Acceptable fail rate。目的为 98% Refresh、2% Discovery；主域 Discovery 详情为 51 次请求、平均 1.66 秒，50 条样本中最新两条为 9/13 Florida 与 Hailey，均 200，也包含 7/26 waitlist、zh/waitlist、旧 zh/song 及图片资源。（evidence: 主流程真实 GSC 抓取统计与样本核验）
 - 2026-09-20 16:04：只读查询 Vercel production runtime logs（since7d），状态分组为 200=755、304=33、410=30、308=28、204=5、404=3、307=1；单独查询 5xx 与 429 均无结果。runtime logs 并非完整边缘请求日志，且本轮无法核实实际保留覆盖，不据此声称七天或九十天零故障，也未取得真实 Googlebot 完整请求日志。（evidence: 主流程 Vercel runtime logs 查询）
