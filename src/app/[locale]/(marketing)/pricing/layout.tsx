@@ -16,6 +16,7 @@ export async function generateMetadata({
     description: pt('description'),
     locale,
     pathname: '/pricing',
+    noIndex: true,
   });
 }
 

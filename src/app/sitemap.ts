@@ -1,4 +1,3 @@
-import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
@@ -19,16 +18,7 @@ export const revalidate = 3600;
 /**
  * static routes for sitemap, you may change the routes for your own
  */
-const staticRoutes = [
-  '/',
-  '/songs',
-  '/about',
-  '/contact',
-  '/privacy',
-  '/terms',
-  '/cookie',
-  ...(websiteConfig.blog.enable ? ['/blog'] : []),
-];
+const staticRoutes = ['/', '/songs', '/about', '/contact', '/privacy', '/terms', '/cookie'];
 
 /**
  * Generate a sitemap for the website with hreflang support

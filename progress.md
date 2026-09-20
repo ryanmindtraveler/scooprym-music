@@ -1,7 +1,8 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-20 13:13_
+_Last updated: 2026-09-20 15:14_
 
 ## Pinned
+- 2026-09-20 15:10：用户明确选择套餐页“保留套餐购买，仅限制登录访问并禁止索引”；不得以旧路由退出为由停用套餐支付。
 - 2026-09-20 13:13：用户明确 /features/* 旧功能页早已弃用，不得再次恢复为 SEO 专题或增加入口；正常 /songs 曲库及分页保留。用户明确授权下架中文作品，公开站仅保留英文作品。
 - 2026-09-04 22:39：用户明确要求歌曲下载取消付费会员限制，账号登录即可下载；未登录用户仍需先登录。
 - 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
@@ -185,7 +186,9 @@ _Last updated: 2026-09-20 13:13_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
-- [P1][DOING][#31] 撤销错误恢复的六个 /features/* 专题：移除 sitemap 和页脚入口，路由返回真实 404/noindex，不通用跳转到无等价内容页面；保留 /songs 曲库分页。中文作品已定向下架，本轮 build 通过，尚待本地 HTTP 验证、提交及部署后 sitemap 刷新验收。（2026-09-20 13:13）
+- [P1][DOING][#33] 弃用路由/API 与套餐访问边界已通过最终本地构建（含类型检查）；本地生产 HTTP 验证 18 个旧页面及 4 个旧 API 的 GET/POST/OPTIONS 全部 410，匿名 pricing 服务端 307 跳登录，sitemap 与首页 /songs /about /contact 均 200。已登录 Chrome 环境确认 localhost/docs 退出页正常。Routes.Pricing 从旧 /#pricing 修正为 /pricing 并纳入 protectedRoutes，页面真实 getSession 二次校验保留；首次流式 200 后跳转已通过中间件匿名 307 修正。32 项测试与 Biome 已通过，曲库分页尚在最后检查（前四页各 50 首、末页预计 3 首，不作为完成结果）；尚待提交和正式部署验收。#32 其余发布边界问题未在本轮处理。（2026-09-20 15:14）
+- [P1][OPEN][#32] 第三轮只读审计发现的产品边界及 SEO 问题尚未修复：清理仍公开的模板/空壳路由并排查 docs 500；核实 pricing 与当前产品定位（不得擅停支付）；修正后台漏列非管理员作者公开作品、补齐发布语言门禁、统一失败状态过滤及到期发布 productCheck 重验。报告：`F:/CodexHome/seo-audit-2026-09-20/第三轮产品边界与SEO问题清单.md`。本轮仅审计与本地记录，未修改业务代码或生产数据，未提交部署。（2026-09-20 15:00）
+- [P1][DONE][#31] 旧功能页撤销与中文作品下架已完成部署验收：`f5354ac60c02da61f10c99f5a8f1c9e88e82ad2a` 已推送 `origin/master`，Vercel `dpl_8HEHGncg6s9bxN16kTYqATeokhx7` Ready，绑定 `scooprym.app` / `www`。线上 6 个旧功能页全部 404/noindex/无 canonical，首页无 features 入口；sitemap 210 个 URL 不含 features 或下架中文作品，中文作品直达 404，曲库 5 页 203 首。正式 210 个 URL 全量检查零失败；真实登录 Chrome 确认线上 gossip-roast 显示 404。本地服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/final-production-audit.json` 及同目录 `retirement-live-regression.json`。此次仅本地最终记录，不再次提交部署；技术验收不代表曝光已恢复。（2026-09-20 13:19）
 - [P1][DONE][#30] 第二轮 SEO 修复已提交 `3b500e85de3a2eced14b5f3113b2af904677c63e` 并推送 `origin/master`；Vercel `dpl_8839tUqhmEJogiHnu3sCMphvAMyU` Ready，已绑定 `scooprym.app`。正式全量 217 个 URL 零失败（HTTP 200、自引用 canonical、无 noindex、有 title）；曲库 5 页 204 首无重复、非法及越界页 404；中文规范 URL 200、旧标题及 zh 别名 308、缺失页 404/noindex 均通过。六专题各 12 个链接全属于已发布集合，两个未发布样本直达 404；已登录 Chrome 线上专题正常。本地生产服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/live-production-audit.json`、同目录 `live-boundary-regression.json` 与 `第二轮全量核验.md`。技术发布验收完成不代表 Google 索引或曝光已恢复；此次仅本地最终记忆更新，不为文档再次推送部署。（2026-09-20 13:07） 后续纠正（2026-09-20 13:13）：其中恢复 /features/* 专题并增加入口的方案因违反用户已弃用功能页的产品边界而撤销；当时发布与验收记录保留，撤销实施见 #31。
 - [P1][DONE][#29] 歌曲归档与专题 SEO 修复已完成构建、发布及线上验收；master 22646e2，Vercel dpl_JMUigqfLhHoS8L8DR7NP5yRwhJRj READY，正式域名已切换。GSC 后续索引及展示、点击改善尚未验证，不代表曝光已恢复。（2026-09-20 12:41）
 - [P1][DONE][#27] 歌曲 6265d944 的 GSC 实时测试通过，已明确显示 Indexing requested 并加入优先抓取队列；提交成功不保证最终收录。（2026-09-17 14:53）
@@ -214,6 +217,10 @@ _Last updated: 2026-09-20 13:13_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-20 15:10：本地已删除 23 个旧路由 page/layout/loading 源文件，退出 features/blog/changelog/docs/waitlist/roadmap/ai/magicui/blocks/preview 及其 en/zh 变体与子路由；中间件统一返回 410/noindex，robots 允许爬虫读取退出状态。历史 #31 的 features 404 方案本轮改为明确退出的 410，尚未部署。（evidence: 主流程变更、`docs/路由退出清单.md`）
+- 2026-09-20 15:10：四个旧 API `/api/chat`、`/api/analyze-content`、`/api/search`、`/api/generate/image` 已清除执行逻辑，所有方法仅返回 410/noindex，不再调用模型、抓取或搜索；代码核查未发现现用工作流或 cron 调用。保留音乐、歌词、封面生产、代理图片、认证与支付。（evidence: 主流程路由与调用核查）
+- 2026-09-20 15:10：pricing 的 generateMetadata 与 page 均加入真实 getSession 校验，匿名请求服务端跳转登录，登录后 noindex，套餐购买保留。新增 `docs/路由退出清单.md`、`scripts/verify-retired-routes.mjs` 及边界测试；32 项测试和 Biome 通过，完整 build 仍进行中，未提交部署。（evidence: 主流程代码与测试结果）
+- 2026-09-20 15:00：完成第三轮只读审计，实际 HTTP 核查 19 个路由：roadmap 仍有 John Doe/2024 模板、waitlist 为上线前文案、blog/changelog 为空壳；ai/text、chat、demo 及 audio/video 空白页面均返回 200 且无 noindex；ai/image 匿名 200 并以 meta refresh 转向首页。docs 两次 HTTP 与登录 Chrome 均为 500，根堆栈尚未定位。此条仅表示发现问题，不表示已修复。（evidence: `F:/CodexHome/seo-audit-2026-09-20/第三轮产品边界与SEO问题清单.md`）
 - 2026-09-20 13:13：按用户明确授权，只读核查生产库所有已发布/已排期作品的 title、lyrics、news_summary，仅发现中文作品 fe4de9ed-1f90-4ce1-9a76-a0f1117d5758《从意气风发到沉默寡言》；已事务定向设置 is_published=false、published_at=null、scheduled_at=null，保留作品和音频。备份：F:/CodexHome/seo-audit-2026-09-20/chinese-song-publication-backup.json。后台仅列管理员作者，该历史作品在管理员列表不可见，故使用定向数据修复；本轮 build 已通过，尚未完成部署验收。（evidence: 主流程生产数据库核查、事务及构建结果）
 - 2026-09-20 12:57：第二轮全量线上 sitemap 审计共 217 个 URL，216 个返回 200；中文歌曲 `fe4de9ed-1f90-4ce1-9a76-a0f1117d5758` 反复 500。本地复现 Location 头 `ERR_INVALID_CHAR`，已修复 slug 解码比较及 redirect/canonical/sitemap URL 标准编码，不改变语义路径；本地规范页 200、旧页 308。（evidence: `F:/CodexHome/seo-audit-2026-09-20/full-crawl-after-fix.json`、主流程复现与本地 HTTP）
 - 2026-09-20 12:57：6 个专题品牌 title 重复已去重；歌曲 title 改为歌名优先，避免长新闻标题截掉歌名，离线重复标题由 15 组降为 9 组，剩余同名同题而歌词不同的作品保留。专题正文移除无来源的硬编码 Today/年份热点案例，保留 hero 视觉、FAQ 与相关页；新增 `song-topics` 配置，按标题/编辑摘要关键词匹配已发布、有音频、最新 attempt 非失败的作品，comedy 使用真实制作 prompt 的 drill 匹配；本地 HTTP 六主题各测到 12 首。（evidence: 主流程代码、离线与 HTTP 检查）
@@ -555,6 +562,9 @@ _Last updated: 2026-09-20 13:13_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-20 15:10：本轮仅处理旧路由/API 与套餐页访问和索引边界；#32 的语言识别门禁、普通用户作者作品管理漏列、失败状态过滤及到期发布 productCheck 重验仍待处理，不能宣称全部 SEO 或发布流程问题已解决。
+- 2026-09-20 15:00：第三轮数据与发布边界：生产 203 首公开歌曲由 198 首管理员作品与 5 首普通用户作品组成，`get-admin-songs` 的作者 admin 过滤漏列这 5 首。手工发布、排期与定时发布均无语言门禁；公开查询仅过滤 4/5 种失败状态，与中央 8 种状态不一致。当前公开数据为 195 completed + 8 completed_without_cover，无失败状态，不能声称已有失败作品泄露。到期发布未重新验证 productCheck，当前排期数为 0。均为未修复问题。（evidence: 第三轮审计报告）
+- 2026-09-20 15:00：Needs-Confirmation：pricing 仍公开创作套餐，是否保留需依据产品定位确认，不擅自停用支付；24 首缺摘要、43 首缺来源仅记内容缺口，不伪造新闻或来源。此前 210 个 sitemap URL 通过不等于所有站点路由通过；后续清理不得复活已弃用页面。本轮未修改业务代码或生产数据，未提交部署。（evidence: 第三轮审计报告）
 - 2026-09-20 13:13：产品边界纠正：第二轮把用户早已弃用的旧功能页当作 SEO 专题恢复并增加页脚入口，是错误判断，方案已撤销；此前专题验收仅说明当时技术输出，不证明符合产品需求。新增公开英文约束通过本次定向中文作品下架执行，不能声称已建立所有语言的自动识别门禁。历史时间线保留，后续状态由 #31 跟踪。
 - 2026-09-20 12:57：第一轮部署验收只覆盖当时明确的分页与 HTTP 回归，第二轮全量审计仍发现中文 URL 500 与内容展示问题；不能将第一轮完成或第二轮本地通过表述为全站无问题。新增全量审计脚本不等于已验证生产 217 个 URL 全部通过；第二轮尚待完整构建、提交部署及线上复验，Google 索引与曝光恢复仍未证实。
 - 2026-09-20 12:41：技术修复的生产验收已完成；GSC 重新抓取、索引迁移及展示/点击改善仍未验证，不能将部署成功写为 SEO 曝光已经恢复。本次状态记录仅本地更新，未执行 Git 提交。

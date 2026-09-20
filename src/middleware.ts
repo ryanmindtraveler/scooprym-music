@@ -2,6 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
 import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE_NAME, routing } from './i18n/routing';
 import { getPublicEnglishPath } from './lib/urls/public-routing';
+import { isRetiredRoute, retiredRouteResponse } from './lib/urls/retired-routes';
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
 
 const intlMiddleware = createMiddleware(routing);
@@ -24,6 +25,10 @@ const songIntlMiddleware = createMiddleware({
  */
 export default async function middleware(req: NextRequest) {
   const { nextUrl } = req;
+  // 在语言重写和旧页面加载之前退出；不读取会话、不调用模型或数据库。
+  if (isRetiredRoute(nextUrl.pathname)) {
+    return retiredRouteResponse(nextUrl.pathname.startsWith('/api/'));
+  }
   console.log('>> middleware start, pathname', nextUrl.pathname);
 
   if (
@@ -207,5 +212,9 @@ export const config = {
     '/((?!api|_next|_vercel|manifest.webmanifest|.*\\..*).*)',
     // Explicitly include auth API routes for CORS handling
     '/api/auth/:path*',
+    '/api/chat/:path*',
+    '/api/analyze-content/:path*',
+    '/api/search/:path*',
+    '/api/generate/image/:path*',
   ],
 };

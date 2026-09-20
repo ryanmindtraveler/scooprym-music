@@ -3,16 +3,19 @@ import Container from '@/components/layout/container';
 import { PricingTable } from '@/components/pricing/pricing-table';
 import { Zap } from 'lucide-react';
 
+import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: Locale }>;
 }): Promise<Metadata | undefined> {
+  if (!(await getSession())) redirect('/auth/login?callbackUrl=%2Fpricing');
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'PricingPage' });
 
@@ -21,10 +24,12 @@ export async function generateMetadata({
     description: t('description'),
     locale,
     pathname: '/pricing',
+    noIndex: true,
   });
 }
 
 export default async function PricingPage() {
+  if (!(await getSession())) redirect('/auth/login?callbackUrl=%2Fpricing');
   const t = await getTranslations('PricingPage');
 
   return (

@@ -13,7 +13,7 @@ export enum Routes {
   // --- 营销页路由 (Marketing Pages) ---
   FAQ = '/#faqs', // 常见问题 (首页锚点)
   Features = '/#features', // 功能介绍 (首页锚点)
-  Pricing = '/#pricing', // 价格方案 (Homepage anchor)
+  Pricing = '/pricing', // 登录后访问的套餐购买页
   Blog = '/blog', // 博客文章
   Docs = '/docs', // 帮助文档中心
   About = '/about', // 关于我们
@@ -95,6 +95,7 @@ export const routesNotAllowedByLoggedInUsers = [Routes.Login, Routes.Register];
  * 只有登录用户才能访问，未登录用户将被重定向至登录页
  */
 export const protectedRoutes = [
+  Routes.Pricing,
   Routes.Dashboard,
   Routes.DashboardComments,
   Routes.DashboardVotes,
