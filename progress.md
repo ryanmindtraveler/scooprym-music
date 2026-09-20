@@ -1,7 +1,8 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-20 13:01_
+_Last updated: 2026-09-20 13:13_
 
 ## Pinned
+- 2026-09-20 13:13：用户明确 /features/* 旧功能页早已弃用，不得再次恢复为 SEO 专题或增加入口；正常 /songs 曲库及分页保留。用户明确授权下架中文作品，公开站仅保留英文作品。
 - 2026-09-04 22:39：用户明确要求歌曲下载取消付费会员限制，账号登录即可下载；未登录用户仍需先登录。
 - 2026-09-04 14:32：The Hot Sheet 按用户要求采用洛杉矶当地时间每日 18 点抓取、每日保存，并支持管理员查看历史日报。
 - 2026-09-04 11:56：本轮用户授权仅提交并推送开发快照至 `origin/dev`，不合并 `main`；该快照不作为稳定发布。
@@ -184,7 +185,8 @@ _Last updated: 2026-09-20 13:01_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
-- [P1][DOING][#30] 第二轮 SEO 修复最终本地验收完成：pnpm build、tsc、37 项 Vitest、scoped Biome 均通过；scripts/audit-public-seo.mjs 在本地生产模式检查 sitemap 全部 217 个 URL，零失败（HTTP 200、自引用 canonical、无 noindex、有 title）。证据：F:/CodexHome/seo-audit-2026-09-20/local-production-audit.json。尚待本轮提交推送及正式部署验收，不能据本地结果宣称线上全部通过或曝光恢复。（2026-09-20 13:01）
+- [P1][DOING][#31] 撤销错误恢复的六个 /features/* 专题：移除 sitemap 和页脚入口，路由返回真实 404/noindex，不通用跳转到无等价内容页面；保留 /songs 曲库分页。中文作品已定向下架，本轮 build 通过，尚待本地 HTTP 验证、提交及部署后 sitemap 刷新验收。（2026-09-20 13:13）
+- [P1][DONE][#30] 第二轮 SEO 修复已提交 `3b500e85de3a2eced14b5f3113b2af904677c63e` 并推送 `origin/master`；Vercel `dpl_8839tUqhmEJogiHnu3sCMphvAMyU` Ready，已绑定 `scooprym.app`。正式全量 217 个 URL 零失败（HTTP 200、自引用 canonical、无 noindex、有 title）；曲库 5 页 204 首无重复、非法及越界页 404；中文规范 URL 200、旧标题及 zh 别名 308、缺失页 404/noindex 均通过。六专题各 12 个链接全属于已发布集合，两个未发布样本直达 404；已登录 Chrome 线上专题正常。本地生产服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/live-production-audit.json`、同目录 `live-boundary-regression.json` 与 `第二轮全量核验.md`。技术发布验收完成不代表 Google 索引或曝光已恢复；此次仅本地最终记忆更新，不为文档再次推送部署。（2026-09-20 13:07） 后续纠正（2026-09-20 13:13）：其中恢复 /features/* 专题并增加入口的方案因违反用户已弃用功能页的产品边界而撤销；当时发布与验收记录保留，撤销实施见 #31。
 - [P1][DONE][#29] 歌曲归档与专题 SEO 修复已完成构建、发布及线上验收；master 22646e2，Vercel dpl_JMUigqfLhHoS8L8DR7NP5yRwhJRj READY，正式域名已切换。GSC 后续索引及展示、点击改善尚未验证，不代表曝光已恢复。（2026-09-20 12:41）
 - [P1][DONE][#27] 歌曲 6265d944 的 GSC 实时测试通过，已明确显示 Indexing requested 并加入优先抓取队列；提交成功不保证最终收录。（2026-09-17 14:53）
 - [P1][OPEN][#28] 用户已授权将歌曲分享规范 URL 修复提交到 GitHub；修复纳入本次提交，部署后仍需复核真实分享链接与线上规范 URL 一致。（2026-09-17）
@@ -212,6 +214,7 @@ _Last updated: 2026-09-20 13:01_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-20 13:13：按用户明确授权，只读核查生产库所有已发布/已排期作品的 title、lyrics、news_summary，仅发现中文作品 fe4de9ed-1f90-4ce1-9a76-a0f1117d5758《从意气风发到沉默寡言》；已事务定向设置 is_published=false、published_at=null、scheduled_at=null，保留作品和音频。备份：F:/CodexHome/seo-audit-2026-09-20/chinese-song-publication-backup.json。后台仅列管理员作者，该历史作品在管理员列表不可见，故使用定向数据修复；本轮 build 已通过，尚未完成部署验收。（evidence: 主流程生产数据库核查、事务及构建结果）
 - 2026-09-20 12:57：第二轮全量线上 sitemap 审计共 217 个 URL，216 个返回 200；中文歌曲 `fe4de9ed-1f90-4ce1-9a76-a0f1117d5758` 反复 500。本地复现 Location 头 `ERR_INVALID_CHAR`，已修复 slug 解码比较及 redirect/canonical/sitemap URL 标准编码，不改变语义路径；本地规范页 200、旧页 308。（evidence: `F:/CodexHome/seo-audit-2026-09-20/full-crawl-after-fix.json`、主流程复现与本地 HTTP）
 - 2026-09-20 12:57：6 个专题品牌 title 重复已去重；歌曲 title 改为歌名优先，避免长新闻标题截掉歌名，离线重复标题由 15 组降为 9 组，剩余同名同题而歌词不同的作品保留。专题正文移除无来源的硬编码 Today/年份热点案例，保留 hero 视觉、FAQ 与相关页；新增 `song-topics` 配置，按标题/编辑摘要关键词匹配已发布、有音频、最新 attempt 非失败的作品，comedy 使用真实制作 prompt 的 drill 匹配；本地 HTTP 六主题各测到 12 首。（evidence: 主流程代码、离线与 HTTP 检查）
 - 2026-09-20 12:57：发现 `7a044e76...` 的 source_url 为普通中文文本；新增 HTTP(S) 来源校验，应用于详情、弹窗、首页与 JSON-LD，无效来源链接隐藏而未修改数据库。首页移除原始 sourceText 180 字符兜底，避免抓取噪音；Latest Drops 从 h1 改为 h2、视觉保持原样。（evidence: `F:/CodexHome/seo-audit-2026-09-20/published-content-audit.json`、主流程实现）
@@ -552,6 +555,7 @@ _Last updated: 2026-09-20 13:01_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-20 13:13：产品边界纠正：第二轮把用户早已弃用的旧功能页当作 SEO 专题恢复并增加页脚入口，是错误判断，方案已撤销；此前专题验收仅说明当时技术输出，不证明符合产品需求。新增公开英文约束通过本次定向中文作品下架执行，不能声称已建立所有语言的自动识别门禁。历史时间线保留，后续状态由 #31 跟踪。
 - 2026-09-20 12:57：第一轮部署验收只覆盖当时明确的分页与 HTTP 回归，第二轮全量审计仍发现中文 URL 500 与内容展示问题；不能将第一轮完成或第二轮本地通过表述为全站无问题。新增全量审计脚本不等于已验证生产 217 个 URL 全部通过；第二轮尚待完整构建、提交部署及线上复验，Google 索引与曝光恢复仍未证实。
 - 2026-09-20 12:41：技术修复的生产验收已完成；GSC 重新抓取、索引迁移及展示/点击改善仍未验证，不能将部署成功写为 SEO 曝光已经恢复。本次状态记录仅本地更新，未执行 Git 提交。
 - 2026-09-20 12:34：本轮后续实现推进了 12:14 诊断中的分页、入口、专题和 Bond 主体错配处理；历史“仅诊断、建议未实施”描述限定当时阶段，保留原文。数据库定向修复已执行，但应用代码尚未发布；不据此宣称 Google 重抓取、索引迁移或曝光恢复。

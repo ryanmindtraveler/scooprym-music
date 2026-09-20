@@ -1,4 +1,3 @@
-import { featuresContent } from '@/config/features';
 import { websiteConfig } from '@/config/website';
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
@@ -31,8 +30,6 @@ const staticRoutes = [
   ...(websiteConfig.blog.enable ? ['/blog'] : []),
 ];
 
-const featureRoutes = Object.keys(featuresContent).map((slug) => `/features/${slug}` as const);
-
 /**
  * Generate a sitemap for the website with hreflang support
  *
@@ -56,16 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority,
       }));
     })
-  );
-
-  sitemapList.push(
-    ...featureRoutes.flatMap((route) =>
-      [routing.defaultLocale].map((locale) => ({
-        url: getUrl(route, locale),
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
-      }))
-    )
   );
 
   // 2. Add dynamic song routes

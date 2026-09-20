@@ -18,7 +18,6 @@ import { websiteConfig } from './website';
 export function useFooterLinks(): NestedMenuItem[] {
   const t = useTranslations('Marketing.navbar');
   const tLegal = useTranslations('Marketing.footer.legal');
-  const tResources = useTranslations('Marketing.footer.resources');
 
   return [
     {
@@ -52,17 +51,6 @@ export function useFooterLinks(): NestedMenuItem[] {
       ],
     },
 
-    {
-      title: 'Explore',
-      items: [
-        { title: 'News Parody', href: '/features/news-parody', external: false },
-        { title: 'Celebrity Gossip', href: '/features/gossip-roast', external: false },
-        { title: 'Entertainment', href: '/features/entertainment-topics', external: false },
-        { title: 'Absurd Headlines', href: '/features/absurd-social-phenomena', external: false },
-        { title: 'Meme Culture', href: '/features/meme-culture', external: false },
-        { title: 'Comedy Drill', href: '/features/comedy-drill', external: false },
-      ],
-    },
     {
       title: tLegal('title'),
       items: [
