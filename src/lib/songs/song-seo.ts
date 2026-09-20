@@ -4,6 +4,15 @@ import { getNewsDescription, getNewsTitle } from './song-editorial';
 
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'>;
 
+/** 路由和国际化重写可能保留百分号编码，比较规范路径前统一解码一次。 */
+export function decodeSongSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
 function truncateAtWord(value: string, maxLength: number) {
   if (value.length <= maxLength) return value;
 
@@ -40,8 +49,9 @@ export function getSongCanonicalSlug(song: SeoSong) {
 
 export function getSongSeoTitle(song: SeoSong) {
   const headline = getSongSearchHeadline(song);
+  const title = truncateAtWord(song.title, 55);
   return truncateAtWord(
-    headline === song.title ? `${song.title} — Listen & Lyrics` : `${headline} — ${song.title}`,
+    headline === song.title ? `${title} — Listen & Lyrics` : `${title} — ${truncateAtWord(headline, 65)}`,
     100
   );
 }

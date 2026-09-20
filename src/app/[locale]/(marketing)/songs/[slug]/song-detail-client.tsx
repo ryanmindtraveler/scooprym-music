@@ -1,5 +1,7 @@
 'use client';
 
+import { getSourceUrl } from '@/lib/urls/source-url';
+
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
@@ -84,7 +86,7 @@ export function SongDetailClient({
         artist: 'AI Generated',
         newsSummary: song.newsSummary || undefined,
         newsContent: song.sourceText || undefined,
-        newsLink: song.sourceUrl || undefined,
+        newsLink: getSourceUrl(song.sourceUrl) || undefined,
       });
     }
   }, [song.id, autoPlay, song.audioUrl, song.title, song.coverImageUrl, play, currentSong?.id]);
@@ -109,7 +111,7 @@ export function SongDetailClient({
         artist: 'AI Generated',
         newsSummary: song.newsSummary || undefined,
         newsContent: song.sourceText || undefined,
-        newsLink: song.sourceUrl || undefined,
+        newsLink: getSourceUrl(song.sourceUrl) || undefined,
       });
     }
   };
@@ -223,7 +225,7 @@ export function SongDetailClient({
             })()}
 
             {/* News Background Inset Card - Frosted Glass */}
-            {(song.newsSummary || song.sourceUrl) && (
+            {(song.newsSummary || getSourceUrl(song.sourceUrl)) && (
               <article className="group/text relative mt-5 w-full max-w-lg rounded-2xl border border-white/90 bg-white/75 p-5 text-left shadow-[0_12px_36px_rgba(15,23,42,0.04)] ring-1 ring-slate-900/4 backdrop-blur-3xl transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-white/6 dark:ring-white/10">
                 <div className="mb-2 flex items-center gap-2">
                   <NewspaperIcon className="size-3.5 text-indigo-500" style={{ color: accentColor }} />
@@ -242,9 +244,9 @@ export function SongDetailClient({
                     {storyContext}
                   </p>
                 )}
-                {song.sourceUrl && (
+                {getSourceUrl(song.sourceUrl) && (
                   <a
-                    href={song.sourceUrl}
+                    href={getSourceUrl(song.sourceUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 hover:text-pink-600 underline decoration-indigo-300 underline-offset-4 transition dark:text-indigo-300"

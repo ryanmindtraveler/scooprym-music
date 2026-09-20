@@ -43,7 +43,7 @@ export function constructMetadata({
     locale = routing.defaultLocale;
     includeLanguageAlternates = false;
   }
-  const canonicalUrl = locale ? getUrlWithLocale(activePathname, locale).replace(/\/$/, '') : undefined;
+  const canonicalUrl = locale ? new URL(getUrlWithLocale(activePathname, locale)).href.replace(/\/$/, '') : undefined;
 
   // Generate hreflang alternates if we have multiple locales
   const alternates =

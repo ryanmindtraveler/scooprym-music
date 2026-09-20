@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { getIdFromSlug } from '../utils';
-import { getSongCanonicalSlug, getSongSearchHeadline, getSongSeoDescription, getSongSeoTitle } from './song-seo';
+import {
+  decodeSongSlug,
+  getSongCanonicalSlug,
+  getSongSearchHeadline,
+  getSongSeoDescription,
+  getSongSeoTitle,
+} from './song-seo';
 
 const song = {
   id: '8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68',
@@ -10,6 +16,25 @@ const song = {
 };
 
 describe('歌曲详情 SEO', () => {
+  it('中文地址编码前后识别为同一个规范 slug', () => {
+    const slug = getSongCanonicalSlug({ ...song, newsSummary: '音乐挑战来了' });
+    expect(decodeSongSlug(encodeURIComponent(slug))).toBe(slug);
+    expect(decodeSongSlug(slug)).toBe(slug);
+    const location = new URL(`/songs/${slug}`, 'https://scooprym.app').href;
+    expect([...location].every((character) => character.charCodeAt(0) < 128)).toBe(true);
+    expect(decodeSongSlug(new URL(location).pathname.slice(7))).toBe(slug);
+  });
+
+  it('长新闻标题不会截掉不同作品的身份', () => {
+    const newsSummary =
+      'A long news headline about an anniversary premiere and a conversation that keeps circulating online.';
+    const first = getSongSeoTitle({ ...song, title: 'Wig Off, Gloves On', newsSummary });
+    const second = getSongSeoTitle({ ...song, title: 'Disney Legend Legacy', newsSummary });
+    expect(first).toContain('Wig Off, Gloves On');
+    expect(second).toContain('Disney Legend Legacy');
+    expect(first).not.toBe(second);
+    expect(first.length).toBeLessThanOrEqual(101);
+  });
   it('缺失摘要显示真实歌名但不迁移历史规范地址', () => {
     const item = { ...song, title: 'Billionaire Buffet', newsSummary: null };
     expect(getSongSearchHeadline(item)).toBe('Billionaire Buffet');

@@ -7,12 +7,14 @@ import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
 import {
+  decodeSongSlug,
   getSongCanonicalSlug,
   getSongSearchHeadline,
   getSongSeoDescription,
   getSongSeoTitle,
   getSongStoryContext,
 } from '@/lib/songs/song-seo';
+import { getSourceUrl } from '@/lib/urls/source-url';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';
@@ -33,7 +35,7 @@ interface SongDetailPageProps {
 
 export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
+  const slug = decodeSongSlug(resolvedParams.slug);
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -79,7 +81,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 
   // 在响应头发送前处理旧 slug，保证搜索引擎收到真实的永久跳转。
   if (slug !== canonicalSlug) {
-    permanentRedirect(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale));
+    permanentRedirect(new URL(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale)).href);
   }
 
   return constructMetadata({
@@ -95,7 +97,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
+  const slug = decodeSongSlug(resolvedParams.slug);
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -138,7 +140,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   };
 
   const canonicalSlug = getSongCanonicalSlug(song);
-  const canonicalUrl = getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale);
+  const canonicalUrl = new URL(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale)).href;
   if (slug !== canonicalSlug) {
     permanentRedirect(canonicalUrl);
   }
@@ -219,7 +221,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
           encodingFormat: 'audio/mpeg',
         }
       : undefined,
-    isBasedOn: song.sourceUrl || undefined,
+    isBasedOn: getSourceUrl(song.sourceUrl),
     byArtist: {
       '@type': 'MusicGroup',
       name: 'ScoopRYM',

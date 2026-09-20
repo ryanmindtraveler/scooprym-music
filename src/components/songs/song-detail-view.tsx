@@ -1,5 +1,7 @@
 ﻿'use client';
 
+import { getSourceUrl } from '@/lib/urls/source-url';
+
 import { getActiveLyricIndex, parseLrc } from '@/ai/text/utils/lyrics-parser';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
@@ -82,7 +84,7 @@ export function SongDetailView({
         artist: 'AI Generated',
         newsSummary: song.newsSummary || undefined,
         newsContent: song.sourceText || undefined,
-        newsLink: song.sourceUrl || undefined,
+        newsLink: getSourceUrl(song.sourceUrl) || undefined,
       });
     }
   }, [song.id, autoPlay, song.audioUrl, song.title, song.coverImageUrl, play, currentSong?.id]);
@@ -115,7 +117,7 @@ export function SongDetailView({
         artist: 'AI Generated',
         newsSummary: song.newsSummary || undefined,
         newsContent: song.sourceText || undefined,
-        newsLink: song.sourceUrl || undefined,
+        newsLink: getSourceUrl(song.sourceUrl) || undefined,
       });
     }
   };
@@ -386,7 +388,7 @@ export function SongDetailView({
               {/* Actions - Removed from here (Moved to Top Right) */}
 
               {/* News Summary */}
-              {(song.newsSummary || song.sourceUrl) && (
+              {(song.newsSummary || getSourceUrl(song.sourceUrl)) && (
                 <div className="group/news relative w-full overflow-hidden rounded-2xl bg-white/3 hover:bg-white/6 border border-white/10 p-5 backdrop-blur-md transition-colors duration-500">
                   {/* Subtle Gradient Glow */}
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none group-hover/news:bg-indigo-400/30 transition-colors duration-500" />
@@ -409,7 +411,8 @@ export function SongDetailView({
                           onClick={() => {
                             const searchQuery = (song.newsSummary || song.title || '').slice(0, 100);
                             window.open(
-                              song.sourceUrl || `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
+                              getSourceUrl(song.sourceUrl) ||
+                                `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`,
                               '_blank'
                             );
                           }}
@@ -427,7 +430,7 @@ export function SongDetailView({
                         className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white"
                       >
                         <p>
-                          {song.sourceUrl
+                          {getSourceUrl(song.sourceUrl)
                             ? locale.startsWith('zh')
                               ? '查看来源'
                               : 'Read Source'

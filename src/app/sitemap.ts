@@ -129,5 +129,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 function getUrl(href: Href, locale: Locale) {
   const pathname = getLocalePathname({ locale, href });
-  return getCanonicalBaseUrl() + pathname;
+  return new URL(pathname, getCanonicalBaseUrl()).href;
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { getSourceUrl } from '@/lib/urls/source-url';
+
 import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary, getNewsDescription } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
@@ -30,7 +32,7 @@ function toPlayerSong(song: Song) {
     artist: 'ScoopRYM',
     newsSummary: song.newsSummary || undefined,
     newsContent: song.sourceText || undefined,
-    newsLink: song.sourceUrl || undefined,
+    newsLink: getSourceUrl(song.sourceUrl) || undefined,
   };
 }
 
@@ -167,8 +169,8 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
     );
   }
 
-  const leadDescription = getNewsDescription(featured) || featured.sourceText?.slice(0, 180);
-  const leadDomain = getSourceDomain(featured.sourceUrl);
+  const leadDescription = getNewsDescription(featured);
+  const leadDomain = getSourceDomain(getSourceUrl(featured.sourceUrl));
 
   return (
     <main className="relative z-20 overflow-hidden bg-[linear-gradient(90deg,#06b6d4_0%,#a78bfa_50%,#f472b6_100%)] text-[#fffdf8]">
@@ -178,9 +180,9 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
           {/* Header Bar */}
           <div className="mb-7 flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between md:mb-10">
             <div className="flex flex-wrap items-center gap-3.5">
-              <h1 className="text-4xl font-black tracking-tight drop-shadow-xs sm:text-5xl md:text-6xl">
+              <h2 className="text-4xl font-black tracking-tight drop-shadow-xs sm:text-5xl md:text-6xl">
                 {hasNewToday ? 'Today’s Drops' : 'Latest Drops'}
-              </h1>
+              </h2>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/20 px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-widest text-white shadow-xs backdrop-blur-md">
                 <span className="relative flex size-2.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-300 opacity-75" />
@@ -242,9 +244,9 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                       )}
                     </div>
 
-                    {featured.sourceUrl && (
+                    {getSourceUrl(featured.sourceUrl) && (
                       <a
-                        href={featured.sourceUrl}
+                        href={getSourceUrl(featured.sourceUrl)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-xs sm:text-sm font-black text-slate-500 transition-colors hover:text-[#d80d63] dark:text-slate-300"
@@ -360,7 +362,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
             {/* Secondary Drops List (Right Column) */}
             <div className="flex flex-col gap-4.5 justify-between">
               {todayDrops.map((song, index) => {
-                const domain = getSourceDomain(song.sourceUrl);
+                const domain = getSourceDomain(getSourceUrl(song.sourceUrl));
                 return (
                   <article
                     key={song.id}
@@ -393,9 +395,9 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                           <span className="font-black uppercase tracking-widest text-[#d80d63]">
                             {formatBusinessDate(song.publishedAt || song.createdAt, { month: 'short', day: 'numeric' })}
                           </span>
-                          {song.sourceUrl && (
+                          {getSourceUrl(song.sourceUrl) && (
                             <a
-                              href={song.sourceUrl}
+                              href={getSourceUrl(song.sourceUrl)}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-[#d80d63] dark:text-slate-400"
