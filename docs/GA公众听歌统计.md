@@ -26,7 +26,7 @@
 
 在 GA 数据可用后使用上述事件建立探索漏斗：page_view → song_play_start → song_play_qualified → song_play_complete。song_share 单独观察。用户级漏斗可能跨歌曲，精确单次播放以自建事件的 eventSessionId 分析；不要宣称 GA 用户级漏斗等同同一首作品完整播放。
 
-推荐将 song_play_qualified、song_share 设为关键事件，song_id 设为事件范围自定义维度。此文档描述建议，不代表控制台配置已经完成；线上发出与 GA 收到需分别验收。
+2026-09-20 已在 scooprym 属性（529274494）保存 song_play_qualified、song_share 两个关键事件，使用代码上报、按每次事件计数、不设置默认金额；已保存“歌曲 ID”事件范围自定义维度，对应参数 song_id。没有创建由 page_view 派生的重复事件。线上发出与 GA 收到仍需分别验收，关键事件注册不代表已有真实数据。
 
 ## 推广链接
 

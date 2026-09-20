@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-20 15:14_
+_Last updated: 2026-09-20 16:18_
 
 ## Pinned
 - 2026-09-20 15:10：用户明确选择套餐页“保留套餐购买，仅限制登录访问并禁止索引”；不得以旧路由退出为由停用套餐支付。
@@ -186,7 +186,7 @@ _Last updated: 2026-09-20 15:14_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
-- [P1][DOING][#33] 弃用路由/API 与套餐访问边界已通过最终本地构建（含类型检查）；本地生产 HTTP 验证 18 个旧页面及 4 个旧 API 的 GET/POST/OPTIONS 全部 410，匿名 pricing 服务端 307 跳登录，sitemap 与首页 /songs /about /contact 均 200。已登录 Chrome 环境确认 localhost/docs 退出页正常。Routes.Pricing 从旧 /#pricing 修正为 /pricing 并纳入 protectedRoutes，页面真实 getSession 二次校验保留；首次流式 200 后跳转已通过中间件匿名 307 修正。32 项测试与 Biome 已通过，曲库分页尚在最后检查（前四页各 50 首、末页预计 3 首，不作为完成结果）；尚待提交和正式部署验收。#32 其余发布边界问题未在本轮处理。（2026-09-20 15:14）
+- [P1][DONE][#33] 弃用路由/API 与套餐访问边界已完成正式部署及验收：`4df1d42e581676cd172e553ad8d54b4dea37c01a` 已推送 `origin/master`，Vercel `dpl_B31zW6gR9RnSAh2hCKPr2XEYzDiw` READY，绑定 `scooprym.app` / `www`。线上 verify-retired-routes 检查 18 个旧页面、4 个旧 API 的 GET/POST/OPTIONS 全部 410/noindex；匿名 pricing 真实 307 跳登录。真实已登录 Chrome 用户 Ryan Gong 可见套餐及 3 个 Get Started 按钮，DOM robots=noindex,nofollow，未付款。公开曲库 5 页 203 首无重复，210 个 sitemap URL 全量零失败，报告 `F:/CodexHome/seo-audit-2026-09-20/retired-cleanup-public-audit.json`。32 项 Vitest、Biome 与最终 build 通过；旧 docs 500 路由已退出为 410，本地生产服务已停止。#32 其余语言门禁、管理列表及统一发布规则继续待办；不代表全部 SEO 问题解决或曝光恢复。本次仅本地记录，不再提交部署。（2026-09-20 15:21）
 - [P1][OPEN][#32] 第三轮只读审计发现的产品边界及 SEO 问题尚未修复：清理仍公开的模板/空壳路由并排查 docs 500；核实 pricing 与当前产品定位（不得擅停支付）；修正后台漏列非管理员作者公开作品、补齐发布语言门禁、统一失败状态过滤及到期发布 productCheck 重验。报告：`F:/CodexHome/seo-audit-2026-09-20/第三轮产品边界与SEO问题清单.md`。本轮仅审计与本地记录，未修改业务代码或生产数据，未提交部署。（2026-09-20 15:00）
 - [P1][DONE][#31] 旧功能页撤销与中文作品下架已完成部署验收：`f5354ac60c02da61f10c99f5a8f1c9e88e82ad2a` 已推送 `origin/master`，Vercel `dpl_8HEHGncg6s9bxN16kTYqATeokhx7` Ready，绑定 `scooprym.app` / `www`。线上 6 个旧功能页全部 404/noindex/无 canonical，首页无 features 入口；sitemap 210 个 URL 不含 features 或下架中文作品，中文作品直达 404，曲库 5 页 203 首。正式 210 个 URL 全量检查零失败；真实登录 Chrome 确认线上 gossip-roast 显示 404。本地服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/final-production-audit.json` 及同目录 `retirement-live-regression.json`。此次仅本地最终记录，不再次提交部署；技术验收不代表曝光已恢复。（2026-09-20 13:19）
 - [P1][DONE][#30] 第二轮 SEO 修复已提交 `3b500e85de3a2eced14b5f3113b2af904677c63e` 并推送 `origin/master`；Vercel `dpl_8839tUqhmEJogiHnu3sCMphvAMyU` Ready，已绑定 `scooprym.app`。正式全量 217 个 URL 零失败（HTTP 200、自引用 canonical、无 noindex、有 title）；曲库 5 页 204 首无重复、非法及越界页 404；中文规范 URL 200、旧标题及 zh 别名 308、缺失页 404/noindex 均通过。六专题各 12 个链接全属于已发布集合，两个未发布样本直达 404；已登录 Chrome 线上专题正常。本地生产服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/live-production-audit.json`、同目录 `live-boundary-regression.json` 与 `第二轮全量核验.md`。技术发布验收完成不代表 Google 索引或曝光已恢复；此次仅本地最终记忆更新，不为文档再次推送部署。（2026-09-20 13:07） 后续纠正（2026-09-20 13:13）：其中恢复 /features/* 专题并增加入口的方案因违反用户已弃用功能页的产品边界而撤销；当时发布与验收记录保留，撤销实施见 #31。
@@ -217,6 +217,15 @@ _Last updated: 2026-09-20 15:14_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-20 16:18：通过真实登录 Chrome 核验 GA 属性 scooprym（529274494），6/22–9/19 共 93 活跃用户、181 会话、482 PV、1,006 事件；渠道会话为自然搜索 1、社交 3、Direct 143、Referral 32。后台 9 个路径合计 259 PV（53.73%），仅 1–2 活跃用户，整体参与时长混入运营操作。首页 157 PV、曲库 1 PV、18 个歌曲 URL 合计 26 PV（含同 UUID 历史地址）。GA 仅有 page_view/session_start/user_engagement/scroll/first_visit/click 六类事件；代码歌曲行为仅 POST 自建 API，未发送 GA，故零关键事件不能证明无人听歌，首页亦可直接播放。本轮只读，未改代码、GA 设置或数据库。（evidence: `F:/CodexHome/seo-audit-2026-09-20/Google-Analytics实际核验.md`）
+- 2026-09-20 16:04：只读核查 GSC 抓取统计（更新至 9/18）：域名共 2,208 次请求，主域 2,050、www 158，平均 437ms；200 占 90%、301 占 10%、404 少于 1%，响应表仅列这 3 类，未列 429/5xx。主域平均 463ms、200 占 97%，显示近 90 天 Host had no problems，robots/DNS/connectivity 均为 Acceptable fail rate。目的为 98% Refresh、2% Discovery；主域 Discovery 详情为 51 次请求、平均 1.66 秒，50 条样本中最新两条为 9/13 Florida 与 Hailey，均 200，也包含 7/26 waitlist、zh/waitlist、旧 zh/song 及图片资源。（evidence: 主流程真实 GSC 抓取统计与样本核验）
+- 2026-09-20 16:04：只读查询 Vercel production runtime logs（since7d），状态分组为 200=755、304=33、410=30、308=28、204=5、404=3、307=1；单独查询 5xx 与 429 均无结果。runtime logs 并非完整边缘请求日志，且本轮无法核实实际保留覆盖，不据此声称七天或九十天零故障，也未取得真实 Googlebot 完整请求日志。（evidence: 主流程 Vercel runtime logs 查询）
+- 2026-09-20 15:55：同题链接与首页占位文字修复已正式上线：代码提交 `b277de97b0ffdc914cce5eed92fbaeb4a6c7ca9a` 已推送 `origin/master`；Vercel `dpl_8Z9Bsg6DAYsGSXE8chuY4vor5g3A` READY，`scooprym.app` / `www` 已绑定。`node scripts/verify-related-songs.mjs https://scooprym.app` 线上通过，样本 Karamo’s Final Bow 关联 4 首同题作品均直接返回 200，数据库发布状态、生成状态与 audio 条件通过，首页旧占位文字已消失。本地 3100 生产服务已停止；progress.md 仅保留本地会话审计，未提交。（evidence: commit、Vercel 部署及线上验证脚本输出）
+- 2026-09-20 15:50：歌曲详情同题链接与首页缺摘要回退修复已完成本地验收：pnpm build（含类型检查）、3 项测试、6 文件 Biome、git diff --check 均通过。新增 scripts/verify-related-songs.mjs，以只读生产数据库对照本地 SSR，核验推荐同 storyId、已发布、完成状态、有效 audio、去重及链接 200；首页无旧占位词。真实 Chrome3 在 localhost:3100 的 Karamo Cuts the Camera 页面看到 4 个同题链接。当前准备 commit/push，尚未确认正式上线。（evidence: 主流程构建与测试输出、scripts/verify-related-songs.mjs、真实 Chrome 本地验收）
+- 2026-09-20 15:44：完成 9/20 真实浏览器 GSC 核验：Web 6/18–9/17 仍为 113 展示、1 点击；索引汇总更新停在 9/14，显示 370 未收录 / 159 已收录，不能视为最新页面状态。`/songs` 独立 URL 记录仍为已发现未抓取，但 Google 实时手机测试于 9/20 15:41:28 抓取成功、允许索引且 canonical 正确；Ten and Undefeated（`b0134748`）当前规范页 200，索引记录仍为已发现未抓取。Florida（`f0db1c7e`）仍在汇总 16 条列表中，独立 URL 却已索引、9/17 抓取且 Google 选择的 canonical 一致，直接证明汇总滞后。（evidence: `F:/CodexHome/seo-audit-2026-09-20/Search-Console实际核验.md`）
+- 2026-09-20 15:44：GSC 六条历史 Redirect error 逐跳核验最终均 200、无循环，但仍有 2–3 跳；sitemap 显示 9/20 读取成功、发现 210 个 URL，该数为报告快照，非用户刚下架后的实时数量。无人工处罚、无安全问题，CWV 手机与桌面均数据不足；外链报告仍列 17 条、2 个来源域、全部首页，不代表全网完整外链清单。（evidence: 本轮真实 GSC 核验报告）
+- 2026-09-20 15:33：按用户要求修复首页 `No news content available.` 占位文字：`biggest-drops.tsx` 与 `gallery-song-card.tsx` 两处在 newsSummary?.trim() 非空时保留原摘要，否则显示真实 song.title/item.title。两文件 Biome、git diff --check 通过；rg 确认 src 无旧占位文字（退出 1 表示无匹配）。仅本地修改，未提交、未部署；未更改发布状态、URL、标题生成逻辑或数据库。（evidence: 主流程两组件变更与检查结果）
+- 2026-09-20 15:27：完成当前生产 `4df1d42` 的只读歌曲内容 SEO 复核：203 个歌曲页全部返回 200，JSON-LD 均解析成功；9 组共 22 页 title 完全重复，155 个标题含代码生成的省略号、179 个 description 以省略号结尾，32 页 h2 背景被 `getSongSearchHeadline` 截至 150 字符。203 个详情页均没有其他歌曲的 a 链接，但均有 `/songs` 曲库入口，不能称为孤岛；首页实时有 40 个独立歌曲链接，其中 2 条锚文字为 `No news content available`。（evidence: `F:/CodexHome/seo-audit-2026-09-20/song-content-full-recheck.json` 与同目录 `content-live-recheck.json`）
 - 2026-09-20 15:10：本地已删除 23 个旧路由 page/layout/loading 源文件，退出 features/blog/changelog/docs/waitlist/roadmap/ai/magicui/blocks/preview 及其 en/zh 变体与子路由；中间件统一返回 410/noindex，robots 允许爬虫读取退出状态。历史 #31 的 features 404 方案本轮改为明确退出的 410，尚未部署。（evidence: 主流程变更、`docs/路由退出清单.md`）
 - 2026-09-20 15:10：四个旧 API `/api/chat`、`/api/analyze-content`、`/api/search`、`/api/generate/image` 已清除执行逻辑，所有方法仅返回 410/noindex，不再调用模型、抓取或搜索；代码核查未发现现用工作流或 cron 调用。保留音乐、歌词、封面生产、代理图片、认证与支付。（evidence: 主流程路由与调用核查）
 - 2026-09-20 15:10：pricing 的 generateMetadata 与 page 均加入真实 getSession 校验，匿名请求服务端跳转登录，登录后 noindex，套餐购买保留。新增 `docs/路由退出清单.md`、`scripts/verify-retired-routes.mjs` 及边界测试；32 项测试和 Biome 通过，完整 build 仍进行中，未提交部署。（evidence: 主流程代码与测试结果）
@@ -562,6 +571,14 @@ _Last updated: 2026-09-20 15:14_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-20 16:18：Needs-Confirmation：建议分离后台运营流量、将已有歌曲行为事件接入 GA，并为推广链接添加 UTM；上述为分析改进建议，尚未实施，不用当前不完整歌曲事件数据推断播放量为零。
+- 2026-09-20 16:09：在用户已登录 Chrome3 的 Google（hl=en、gl=us）抽查搜索意图：`Karamo Brown skips Queer Eye interviews` 首屏主要为 CBS/People/Them 新闻、采访视频及 Reddit；`meme songs` 主要为已有热门梗曲合集、YouTube/Spotify 歌单及 Pixabay 音频下载。与本产品新闻启发的原创歌曲存在意图差异，但仅为样本推断，非搜索量分析，不证明无需求，也不能解释全部低流量。结合 GSC 113 展示/1 点击、旧汇总 195 已发现未索引及 `/songs` 实时可索引但正式记录未抓取，需区分抓取覆盖和搜索需求匹配两个层面，不保证流量恢复。本轮未修改代码、发布状态或 URL，未发布外部内容。（evidence: 主流程真实 Google 搜索与已核验 GSC 记录）
+- 2026-09-20 16:04：本轮证据未支持“持续服务器故障阻止抓取”；新地址 Discovery 抓取较少只是观察现象，不证明 Google 低优先级的原因。51 次 Discovery 不能当作 51 首新歌，2% 不是健康阈值；全域资源占比 64% JS、21% HTML 不自动表示错误。本轮无代码或配置改动。
+- 2026-09-20 15:55：用户询问多次请求索引仍未抓取的原因。Google 官方说明重复请求不会加速抓取，也不保证收录；`/songs` 实时测试成功但索引记录仍显示未抓取，具体调度原因未知，不据此推断服务器过载或处罚。本轮不创建监控，不宣称索引或曝光恢复。（evidence: https://developers.google.com/search/docs/crawling-indexing/ask-google-to-recrawl 、此前真实 GSC 核验）
+- 2026-09-20 15:48：本地正在实现歌曲详情服务器 HTML 同题链接：仅选择相同 storyId、isPublished=true、最新 attempt 为 completed/completed_without_cover、audio 非空且非 pending 的作品；排除当前歌曲及按大小写、空格、弯引号归一后的同名版本，最多 4 首，无候选则不展示。新增 related-songs.ts，3 项测试通过；详情查询并行执行，canonical 生成算法保持原样。结合此前两处缺摘要时显示真实歌名的修复，本轮构建仍进行中，尚未完成发布验收，不能写为已上线。（evidence: 主流程 related-songs.ts 实现及 3 项测试结果）
+- 2026-09-20 15:44：本轮 GSC 审计未修改配置、申请收录、业务代码或生产数据；Google 实时测试成功不等于已索引。此前两处首页占位文字的本地修复仍未提交、未部署，保持原样；未据本轮旧汇总或实时测试宣称曝光恢复。
+- 2026-09-20 15:33：用户告知已自行下架部分重复歌曲；本轮未独立核验下架数量或当前公开作品总数，因此此前 203 首及 9 组重复标题统计仅代表当时快照，不能直接视为当前值。首页占位修复尚未上线，不据此宣称线上已消失。
+- 2026-09-20 15:27：本轮重复标题、背景截断与占位锚文字为待改善项，未实施修复；代码省略号不自动等同于 Google 错误。#32 中管理员列表作者 admin 过滤、语言门禁、公开失败状态过滤分歧及定时发布重验仍未修复。本轮仅只读复核与记录，没有修改业务代码或部署，没有新读取 GSC 或测量 CWV，不能据此保证曝光；独立诊断报告由主流程另行编写。
 - 2026-09-20 15:10：本轮仅处理旧路由/API 与套餐页访问和索引边界；#32 的语言识别门禁、普通用户作者作品管理漏列、失败状态过滤及到期发布 productCheck 重验仍待处理，不能宣称全部 SEO 或发布流程问题已解决。
 - 2026-09-20 15:00：第三轮数据与发布边界：生产 203 首公开歌曲由 198 首管理员作品与 5 首普通用户作品组成，`get-admin-songs` 的作者 admin 过滤漏列这 5 首。手工发布、排期与定时发布均无语言门禁；公开查询仅过滤 4/5 种失败状态，与中央 8 种状态不一致。当前公开数据为 195 completed + 8 completed_without_cover，无失败状态，不能声称已有失败作品泄露。到期发布未重新验证 productCheck，当前排期数为 0。均为未修复问题。（evidence: 第三轮审计报告）
 - 2026-09-20 15:00：Needs-Confirmation：pricing 仍公开创作套餐，是否保留需依据产品定位确认，不擅自停用支付；24 首缺摘要、43 首缺来源仅记内容缺口，不伪造新闻或来源。此前 210 个 sitemap URL 通过不等于所有站点路由通过；后续清理不得复活已弃用页面。本轮未修改业务代码或生产数据，未提交部署。（evidence: 第三轮审计报告）
