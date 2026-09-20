@@ -27,16 +27,20 @@ export function ShareButton({
   variant = 'ghost',
   size = 'icon',
 }: ShareButtonProps) {
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
 
     // 分享链接与详情页、站点地图使用同一规范地址。
     const slug = getSongCanonicalSlug({ id: songId, title: songTitle, newsSummary, sourceText });
     const url = `${getCanonicalBaseUrl()}/songs/${slug}`;
-    navigator.clipboard.writeText(url);
-    void recordSongEngagement(songId, 'share', createEngagementSessionId('share')).catch(() => {});
-    toast.success('Link copied to clipboard');
+    try {
+      await navigator.clipboard.writeText(url);
+      void recordSongEngagement(songId, 'share', createEngagementSessionId('share')).catch(() => {});
+      toast.success('Link copied to clipboard');
+    } catch {
+      toast.error('Unable to copy link. Please try again.');
+    }
   };
 
   return (

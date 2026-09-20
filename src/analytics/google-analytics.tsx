@@ -1,8 +1,15 @@
 'use client';
 
+import { authClient } from '@/lib/auth/auth-client';
 import { GoogleAnalytics as NextGoogleAnalytics } from '@next/third-parties/google';
-
-const CANONICAL_ANALYTICS_ORIGIN = 'https://scooprym.app';
+import { usePathname } from 'next/navigation';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import {
+  ANALYTICS_ORIGIN,
+  flushPublicSongEvents,
+  isAdminAnalyticsPath,
+  setPublicAnalyticsEnabled,
+} from './public-analytics';
 
 /**
  * Google Analytics
@@ -12,23 +19,39 @@ const CANONICAL_ANALYTICS_ORIGIN = 'https://scooprym.app';
  * https://nextjs.org/docs/app/building-your-application/optimizing/third-party-libraries#google-analytics
  */
 export default function GoogleAnalytics() {
-  if (process.env.NODE_ENV !== 'production') {
-    return null;
-  }
-
+  const { data: session, isPending, error } = authClient.useSession();
+  const pathname = usePathname();
+  const [enabled, setEnabled] = useState(false);
   const analyticsId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID;
-  if (!analyticsId) {
-    return null;
-  }
+  useLayoutEffect(() => {
+    const publicPage = Boolean(
+      process.env.NODE_ENV === 'production' &&
+        analyticsId &&
+        window.location.origin === ANALYTICS_ORIGIN &&
+        !error &&
+        session?.user?.role !== 'admin' &&
+        !isAdminAnalyticsPath(pathname || window.location.pathname)
+    );
+    const allow = publicPage && !isPending;
+    setPublicAnalyticsEnabled(publicPage && isPending ? undefined : allow, analyticsId || '');
+    setEnabled(allow);
+    const timer = allow
+      ? window.setInterval(() => {
+          if (flushPublicSongEvents()) window.clearInterval(timer);
+        }, 500)
+      : undefined;
+    return () => window.clearInterval(timer);
+  }, [analyticsId, isPending, error, session?.user?.role, pathname]);
 
-  // Only enable the production GA property on the canonical production origin.
-  // This prevents preview/staging deployments from polluting the main GA4 reports.
-  const configuredBaseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || CANONICAL_ANALYTICS_ORIGIN;
+  useEffect(() => () => setPublicAnalyticsEnabled(false, analyticsId || ''), [analyticsId]);
 
-  if (configuredBaseUrl.replace(/\/$/, '') !== CANONICAL_ANALYTICS_ORIGIN) {
-    return null;
-  }
-
-  return <NextGoogleAnalytics gaId={analyticsId} />;
+  // 等待身份确认后才加载，管理员在公开页面的操作也不计入公众统计。
+  return enabled &&
+    analyticsId &&
+    !isPending &&
+    !error &&
+    session?.user?.role !== 'admin' &&
+    !isAdminAnalyticsPath(pathname || '') ? (
+    <NextGoogleAnalytics gaId={analyticsId} />
+  ) : null;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { ListeningClock } from '@/lib/songs/listening-clock';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { usePlayerStore } from '@/store';
 import { useEffect, useRef } from 'react';
@@ -11,6 +12,7 @@ export function GlobalPlayer() {
   const lastCountedSongId = useRef<string | null>(null);
   const playSessionRef = useRef<string | null>(null);
   const qualifiedSessionRef = useRef<string | null>(null);
+  const listeningClock = useRef(new ListeningClock());
 
   // Using selectors to prevent re-renders on every currentTime update
   const currentSong = usePlayerStore((state) => state.currentSong);
@@ -69,7 +71,8 @@ export function GlobalPlayer() {
       setCurrentTime(audio.currentTime);
       const currentId = usePlayerStore.getState().currentSong?.id;
       const sessionId = playSessionRef.current;
-      if (currentId && sessionId && audio.currentTime >= 30 && qualifiedSessionRef.current !== sessionId) {
+      const listened = listeningClock.current.update(audio.currentTime, performance.now());
+      if (currentId && sessionId && listened >= 30 && qualifiedSessionRef.current !== sessionId) {
         qualifiedSessionRef.current = sessionId;
         void recordSongEngagement(currentId, 'play_qualified', sessionId).catch(() => {});
       }
@@ -81,14 +84,17 @@ export function GlobalPlayer() {
 
     const handleEnded = () => {
       const currentId = usePlayerStore.getState().currentSong?.id;
-      if (currentId && playSessionRef.current) {
+      const listened = listeningClock.current.update(audio.currentTime, performance.now());
+      if (currentId && playSessionRef.current && audio.duration > 0 && listened >= audio.duration * 0.9) {
         void recordSongEngagement(currentId, 'play_complete', playSessionRef.current).catch(() => {});
       }
       lastCountedSongId.current = null;
+      listeningClock.current.stop();
       playNext();
     };
 
     const handleWaiting = () => {
+      listeningClock.current.stop();
       setIsLoading(true);
     };
 
@@ -98,7 +104,15 @@ export function GlobalPlayer() {
 
     const handlePlayingEvent = () => {
       setIsLoading(false);
+      handlePlay();
+      listeningClock.current.start(audio.currentTime, performance.now());
     };
+
+    const handlePause = () => {
+      listeningClock.current.update(audio.currentTime, performance.now());
+      listeningClock.current.stop();
+    };
+    const handleSeeking = () => listeningClock.current.stop();
 
     const handleLoadedData = () => {
       setIsLoading(false);
@@ -112,6 +126,7 @@ export function GlobalPlayer() {
         lastCountedSongId.current = currentId;
         playSessionRef.current = createEngagementSessionId('play');
         qualifiedSessionRef.current = null;
+        listeningClock.current.reset();
         fetch(`/api/songs/${currentId}/play`, { method: 'POST' }).catch((err) =>
           console.warn('Failed to track play:', err)
         );
@@ -153,7 +168,8 @@ export function GlobalPlayer() {
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('seeking', handleSeeking);
     audio.addEventListener('error', handleError);
     audio.addEventListener('waiting', handleWaiting); // Buffering...
     audio.addEventListener('canplay', handleCanPlay); // Ready
@@ -165,7 +181,8 @@ export function GlobalPlayer() {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('seeking', handleSeeking);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('waiting', handleWaiting);
       audio.removeEventListener('canplay', handleCanPlay);
@@ -189,6 +206,9 @@ export function GlobalPlayer() {
     if (hasValidAudio) {
       // 1. New Song Loaded
       if (currentUrlRef.current !== currentSong.audioUrl) {
+        listeningClock.current.reset();
+        lastCountedSongId.current = null;
+        playSessionRef.current = null;
         currentUrlRef.current = currentSong.audioUrl;
         audio.src = currentSong.audioUrl;
         audio.load();
