@@ -52,7 +52,7 @@ function splitNewsLead(value: string) {
  */
 export function getNewsTitle(song: Song, options: { truncate?: boolean } = {}) {
   const summary = cleanNewsText(song.newsSummary);
-  const title = splitNewsLead(summary).headline || 'The internet did what?';
+  const title = splitNewsLead(summary).headline || cleanNewsText(song.title) || 'The internet did what?';
   const shouldTruncate = options.truncate ?? true;
 
   if (!shouldTruncate || title.length <= MAX_HEADLINE_LENGTH) return title;

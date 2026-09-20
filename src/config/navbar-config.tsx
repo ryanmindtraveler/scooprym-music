@@ -35,7 +35,7 @@ export function useNavbarLinks(): NestedMenuItem[] {
     },
     {
       title: 'Gallery',
-      href: Routes.Gallery,
+      href: '/songs',
       external: false,
     },
     {

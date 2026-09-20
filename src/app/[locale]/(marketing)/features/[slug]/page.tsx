@@ -1,9 +1,14 @@
 import { BreadcrumbJsonLd, FaqJsonLd } from '@/components/seo/json-ld';
 import { Button } from '@/components/ui/button';
 import { featuresContent } from '@/config/features';
+import { getDb } from '@/db';
+import { song as songTable, story as storyTable } from '@/db/schema';
+import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { LOCALES } from '@/i18n/routing';
 import { constructMetadata } from '@/lib/seo/metadata';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getUrlWithLocale } from '@/lib/urls/urls';
+import { and, eq, inArray, ne, notInArray } from 'drizzle-orm';
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -49,6 +54,9 @@ const iconMap = {
   'meme-culture': <FingerprintIcon className="size-16" />,
   'comedy-drill': <CpuIcon className="size-16" />,
 } as const;
+
+// 专题试听入口必须及时响应发布与撤回操作。
+export const dynamic = 'force-dynamic';
 
 export function generateStaticParams() {
   const slugs = Object.keys(featuresContent);
@@ -100,20 +108,47 @@ export default async function FeaturePage({ params }: Props) {
   const faqs = feature.faqs[langKey];
   const relatedPages = feature.relatedSlugs.map((relatedSlug) => featuresContent[relatedSlug]).filter(Boolean);
   const icon = iconMap[slug as keyof typeof iconMap];
-  const archiveSongUrls =
+  // 原有专题精选必须实时检查发布状态，避免撤回后仍显示试听入口。
+  const archiveSongIds = [
+    'f8a8e177-6f18-4cbd-9f70-1f479128954a',
+    '4f0de696-b9d1-451a-abed-b96044514491',
+    '91658fb9-b0f0-4cdd-b586-fcebb7b2d0c7',
+    '6523bb10-c6d0-41d6-b0a8-f04b4fd63cd1',
+    '63ce09c5-b702-4ec9-8bd4-14b5624d9e1a',
+    '3523b8c0-3fde-4fa9-be52-64ebf3683894',
+    '316d278c-993c-47b6-973d-0e90d19a5301',
+    'f358b6af-c0a9-4ca1-85ed-d450a4e2cb37',
+    'e64e85ac-19ff-4ca2-bc06-8429c9a569e4',
+  ];
+  const db = getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
+  const archiveSongs =
     slug === 'absurd-social-phenomena'
-      ? [
-          'https://scooprym.app/songs/the-bardstown-bender-f8a8e177-6f18-4cbd-9f70-1f479128954a',
-          'https://scooprym.app/songs/al-dente-felony-4f0de696-b9d1-451a-abed-b96044514491',
-          'https://scooprym.app/songs/the-gavel-and-the-gas-91658fb9-b0f0-4cdd-b586-fcebb7b2d0c7',
-          'https://scooprym.app/songs/the-sunshine-state-silhouette-6523bb10-c6d0-41d6-b0a8-f04b4fd63cd1',
-          'https://scooprym.app/songs/the-golden-waterfall-63ce09c5-b702-4ec9-8bd4-14b5624d9e1a',
-          'https://scooprym.app/songs/lights-sirens-and-lagers-3523b8c0-3fde-4fa9-be52-64ebf3683894',
-          'https://scooprym.app/songs/the-flannel-felony-316d278c-993c-47b6-973d-0e90d19a5301',
-          'https://scooprym.app/songs/pasta-engine-paralysis-f358b6af-c0a9-4ca1-85ed-d450a4e2cb37',
-          'https://scooprym.app/songs/chrome-claw-oklahoma-e64e85ac-19ff-4ca2-bc06-8429c9a569e4',
-        ]
+      ? await db
+          .select({ id: songTable.id, title: songTable.title, newsSummary: storyTable.newsSummary })
+          .from(songTable)
+          .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+          .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+          .where(
+            and(
+              inArray(songTable.id, archiveSongIds),
+              eq(songTable.isPublished, true),
+              ne(songTable.audioUrl, ''),
+              ne(songTable.audioUrl, 'pending-stream'),
+              notInArray(latestAttempt.processingStatus, [
+                'failed_generation',
+                'processing_queue_failed',
+                'failed_audio_upload',
+                'failed_internal_error',
+                'failed_credit_deduction',
+              ])
+            )
+          )
       : [];
+  const archiveSongUrls = archiveSongIds.map((id) => {
+    const song = archiveSongs.find((item) => item.id === id);
+    return song ? `/songs/${getSongCanonicalSlug(song)}` : undefined;
+  });
 
   // Theme configuration for each topic (using homepage-inspired light palettes)
   const themeMap: Record<string, { blob1: string; blob2: string; textGradient: string; accent: string }> = {
@@ -162,7 +197,7 @@ export default async function FeaturePage({ params }: Props) {
       <BreadcrumbJsonLd
         items={[
           { name: isZh ? '首页' : 'Home', item: getUrlWithLocale('/', locale as Locale) },
-          { name: isZh ? '功能' : 'Features', item: `${getUrlWithLocale('/', locale as Locale)}#features` },
+          { name: isZh ? '功能' : 'Features', item: getUrlWithLocale('/songs', locale as Locale) },
           { name: title, item: getUrlWithLocale(`/features/${slug}`, locale as Locale) },
         ]}
       />
@@ -193,11 +228,11 @@ export default async function FeaturePage({ params }: Props) {
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mb-10">
           <Link
-            href={`${getUrlWithLocale('/', locale as Locale)}#features`}
+            href={getUrlWithLocale('/songs', locale as Locale)}
             className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-slate-900"
           >
             <span className="transition-transform group-hover:-translate-x-1">{'<-'}</span>
-            {isZh ? '返回特性卡片' : 'Back to feature cards'}
+            {isZh ? '返回特性卡片' : 'Browse all songs'}
           </Link>
         </div>
 
@@ -242,8 +277,8 @@ export default async function FeaturePage({ params }: Props) {
                 className="h-14 rounded-full bg-slate-900 px-8 text-base font-bold text-white shadow-2xl shadow-indigo-200 transition-all hover:scale-105 hover:bg-slate-800 sm:h-16 sm:px-10 sm:text-lg"
                 asChild
               >
-                <Link href={`${getUrlWithLocale('/', locale as Locale)}#generator`}>
-                  {isZh ? '开始生成' : 'Start generating'}
+                <Link href={getUrlWithLocale('/songs', locale as Locale)}>
+                  {isZh ? '开始生成' : 'Listen to published songs'}
                 </Link>
               </Button>
             </div>
@@ -260,22 +295,6 @@ export default async function FeaturePage({ params }: Props) {
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-linear-to-tr from-slate-900/10 via-transparent to-transparent" />
-            </div>
-
-            <div className="rounded-[2.5rem] border border-white/60 bg-white/40 p-8 backdrop-blur-2xl shadow-xl shadow-slate-200/40">
-              <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">
-                {isZh ? '目标关键词角度' : 'Target keyword angles'}
-              </h2>
-              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-                {feature.keywords.en.map((keyword) => (
-                  <li
-                    key={keyword}
-                    className="rounded-2xl border border-white/80 bg-white/60 px-4 py-3 text-sm font-bold text-slate-600 shadow-sm"
-                  >
-                    {keyword}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </section>
@@ -431,11 +450,11 @@ export default async function FeaturePage({ params }: Props) {
                     <div className="flex flex-row md:flex-col items-center gap-6 md:min-w-[140px] justify-between w-full md:w-auto mt-6 md:mt-0 pt-6 md:pt-0 border-t border-slate-100 md:border-t-0">
                       <div className="flex flex-col items-start md:items-end gap-1">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {isZh ? '热度峰值' : 'Peak Trend'}
+                          Song inspiration
                         </span>
                         <div className="flex items-center gap-1 text-orange-500">
                           <ZapIcon className="size-4 animate-pulse" />
-                          <span className="font-mono font-black text-lg">{100 - idx * 10}M+</span>
+                          <span className="font-mono font-black text-lg">Satire</span>
                         </div>
                       </div>
 
@@ -889,7 +908,7 @@ export default async function FeaturePage({ params }: Props) {
               <p className="mt-3 max-w-2xl text-slate-500 font-medium">
                 {isZh
                   ? '这些页面涵盖了相邻的内容角度，因此用户和搜索引擎可以了解您的主题有何不同。'
-                  : 'These pages cover adjacent content angles so users and search engines can understand how your themes differ.'}
+                  : 'Explore more news satire, celebrity drama, and internet culture.'}
               </p>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
@@ -926,8 +945,8 @@ export default async function FeaturePage({ params }: Props) {
                 className="h-14 rounded-full bg-slate-900 px-10 text-base font-bold text-white shadow-2xl shadow-indigo-200 transition-all hover:scale-105 hover:bg-slate-800 sm:h-16 sm:text-lg"
                 asChild
               >
-                <Link href={`${getUrlWithLocale('/', locale as Locale)}#generator`}>
-                  {isZh ? '立即开始创作' : 'Start creating'}
+                <Link href={getUrlWithLocale('/songs', locale as Locale)}>
+                  {isZh ? '立即开始创作' : 'Browse the song archive'}
                 </Link>
               </Button>
             </div>

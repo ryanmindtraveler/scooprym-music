@@ -26,7 +26,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
       <div aria-hidden="true" className="h-1 w-full bg-linear-to-r from-[#ffe600] via-[#ff007a] via-50% to-[#00e5ff]" />
 
       <Container className="max-w-[1760px] px-4 md:px-8 2xl:px-12">
-        <div className="grid grid-cols-2 gap-12 py-16 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-12 py-16 lg:grid-cols-5">
           <div className="flex flex-col items-start col-span-full md:col-span-2">
             <div className="space-y-5">
               {/* logo and name */}

@@ -27,7 +27,8 @@ export function getSongStoryContext(song: SeoSong) {
 }
 
 export function getSongCanonicalSlug(song: SeoSong) {
-  const searchableHeadline = truncateAtWord(getSongSearchHeadline(song), 82);
+  // 缺失摘要的历史地址保持不变；改善展示标题不应再次迁移规范地址。
+  const searchableHeadline = truncateAtWord(getSongSearchHeadline({ ...song, title: '' }), 82);
   // 只允许路径中稳定的字符，避免加号等符号在路由转换后造成规范地址自循环。
   // 保留 Unicode 字母与数字；旧链接仍通过末尾的歌曲 ID 找到同一首作品。
   const headlineSlug = slugify(searchableHeadline)
@@ -38,10 +39,20 @@ export function getSongCanonicalSlug(song: SeoSong) {
 }
 
 export function getSongSeoTitle(song: SeoSong) {
-  return truncateAtWord(`${getSongSearchHeadline(song)} — ${song.title}`, 100);
+  const headline = getSongSearchHeadline(song);
+  return truncateAtWord(
+    headline === song.title ? `${song.title} — Listen & Lyrics` : `${headline} — ${song.title}`,
+    100
+  );
 }
 
 export function getSongSeoDescription(song: SeoSong) {
+  if (!song.newsSummary?.trim()) {
+    return truncateAtWord(
+      `Listen to “${song.title}” on ScoopRYM. Play the song, read the lyrics, and join the conversation.`,
+      158
+    );
+  }
   const headline = getSongSearchHeadline(song);
   const context = getSongStoryContext(song);
   const lead = context && !context.startsWith('A strange true story') ? `${headline} ${context}` : headline;

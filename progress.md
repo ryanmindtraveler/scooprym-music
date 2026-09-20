@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-17 14:53_
+_Last updated: 2026-09-20 12:34_
 
 ## Pinned
 - 2026-09-04 22:39：用户明确要求歌曲下载取消付费会员限制，账号登录即可下载；未登录用户仍需先登录。
@@ -184,6 +184,7 @@ _Last updated: 2026-09-17 14:53_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
+- [P1][DOING][#29] 收集本轮歌曲归档与专题 SEO 修复的生产构建结果；当前 build 进行中，尚未提交或发布，发布后需复核线上分页、专题链接及 canonical。（2026-09-20 12:34）
 - [P1][DONE][#27] 歌曲 6265d944 的 GSC 实时测试通过，已明确显示 Indexing requested 并加入优先抓取队列；提交成功不保证最终收录。（2026-09-17 14:53）
 - [P1][OPEN][#28] 用户已授权将歌曲分享规范 URL 修复提交到 GitHub；修复纳入本次提交，部署后仍需复核真实分享链接与线上规范 URL 一致。（2026-09-17）
 - [P1][OPEN][#25] 完成歌曲规范链接修复的页面端到端验证；最终 `pnpm exec tsc --noEmit` 退出 0，`git diff --check` 通过，但本地无运行服务器，未完成页面验收，本次修复未提交、未部署。（2026-09-04 23:59）
@@ -210,6 +211,11 @@ _Last updated: 2026-09-17 14:53_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-20 12:34：实现 `/songs` 服务端 page 分页，每页 50 首、各页独立 canonical；`page=1` 永久 308，非法或越界页 404。完整公开曲库去除管理员角色限制，仍要求 `isPublished=true`、有音频、最新 attempt 非失败；本地 204 首分 5 页且无重复，首页精选逻辑保持原样。（evidence: 主流程代码及本地 HTTP 检查）
+- 2026-09-20 12:34：导航、页脚、首页 Gallery 与详情新增曲库入口，页脚新增 6 个专题入口。无摘要时显示真实歌名，保留历史 generic 规范 URL。专题移除内部 `Target keyword angles` 及无来源支撑的模板 `Peak Trend` 数字，CTA 从不存在的 generator/features 入口改为 `/songs`；9 个精选链接动态校验已发布、有音频及非失败状态并生成 canonical，未发布 ChromeClaw 不输出链接；专题设置 `force-dynamic`。（evidence: 主流程实现与 HTTP 核验）
+- 2026-09-20 12:34：执行 `scripts/repair-bond-story-association.mjs --apply`，仅将 Bond’s Bold Blonde（`8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68`）的 story 关联从错误的 `2eb4b9cc-aee9-4ca7-8829-578e7f5f5a89` 切换至与歌曲同 ID 的新 story；新记录 `newsSummary` / `sourceUrl` 为空，不编造新闻。原 story 保留供 Banderas 使用，未改 published、歌词或音频；复跑幂等成功。（evidence: `scripts/repair-bond-story-association.mjs` 及主流程执行结果）
+- 2026-09-20 12:34：新增只读 HTTP 验证脚本 `scripts/verify-song-archive.mjs`；27 项测试、Biome 与 TypeScript 通过。本地 HTTP 验证全部 5 页覆盖 204 首、无未发布样本；已登录 Chrome 点击 Next 进入第 3 页且 canonical 正确；旧地址 308、缺失歌曲 404、现址 200、中文别名 308 回归通过。生产构建仍进行中，尚未提交或发布。（evidence: 两项 HTTP 回归脚本及主流程测试、真实浏览器检查）
+- 2026-09-20 12:14：完成搜索曝光专项诊断，证据来自已登录 Chrome 的 GSC、线上 HTML、sitemap 与代码；未修改应用代码、数据库、发布状态、防火墙，未提交索引申请。6/18–9/17 Web 报告为 113 次展示、1 次点击、平均位置 16.1。已收录 159 个 URL 中，142 个歌曲 URL 仅对应 88 个唯一歌曲 ID；195 个已发现未收录 URL 中含 188 个歌曲地址，其中 76 首存在已收录旧别名，不可当作全部从未收录的独立作品。（evidence: `F:/CodexHome/seo-audit-2026-09-20/诊断结论.md`）
 - 2026-09-17 14:53：完成真实 Chrome GSC 与线上响应核验：6 条 Redirect error 当前均经 2–3 次跳转最终返回 200；45 条 Duplicate 样本全部批量检查，43 条最终 200、有正确 canonical 且无 noindex，2 条为真实 404。（evidence: `F:/CodexHome/seo-audit-2026-09-17/duplicates.json`、主流程真实 Chrome 检查）
 - 2026-09-17 14:53：核实 404 数据状态：`01d4e8e4-8756-4ad9-8663-26556ec5b7fb` 数据库无记录；`e64e85ac-19ff-4ca2-bc06-8429c9a569e4` 未发布；`35801181-3fd9-45c4-b170-d411ead20d1c` 未发布、9 月 12 日更新。三个 ID 均未出现在首页、歌曲列表首屏 HTML 与 sitemap；本轮未恢复或发布这些歌曲。（evidence: 主流程只读数据库及页面核查）
 - 2026-09-17 14:53：分享按钮及 7 个调用/相关组件改用现有 `getSongCanonicalSlug` 并传递 `newsSummary` / `sourceText`，修复继续分享旧标题 URL 的问题；新增组件回归测试。12 项既有测试与 1 项新测试通过，TypeScript、全部变更组件及新测试的最终 Biome、`git diff --check` 均通过；Biome 修正了一处 import 顺序。代码尚未提交、部署。（evidence: 主流程代码变更与检查结果）
@@ -538,6 +544,13 @@ _Last updated: 2026-09-17 14:53_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-20 12:34：本轮后续实现推进了 12:14 诊断中的分页、入口、专题和 Bond 主体错配处理；历史“仅诊断、建议未实施”描述限定当时阶段，保留原文。数据库定向修复已执行，但应用代码尚未发布；不据此宣称 Google 重抓取、索引迁移或曝光恢复。
+- 2026-09-20 12:34：Bond 关联修复可原子回退：将该歌曲 `story_id` 恢复为 `2eb4b9cc-aee9-4ca7-8829-578e7f5f5a89`，新 story 无需删除。未为缺失背景虚构事实或来源，后续补充背景仍需可靠证据。（evidence: `scripts/repair-bond-story-association.mjs`）
+- 2026-09-20 12:14：曝光诊断的抓取入口证据：当前 sitemap 含 204 首歌曲；首页初始 HTML 与 `/songs` 的歌曲 href 合并覆盖 65 首。其余 139 首仅表示没有来自这两个入口的初始 HTML 直接链接，不能称为全站孤页。`/songs` 固定取 50 首且无分页；首页 Gallery 展示 100 stories、客户端按钮分页。抽查 7 个详情页无其他歌曲 href，不能外推全部详情页。（evidence: `F:/CodexHome/seo-audit-2026-09-20/诊断结论.md`、同目录 `live.json` / `urls.json` / `sitemap.xml`）
+- 2026-09-20 12:14：内容证据：sitemap 有 23 个 `the-internet-did-what-*` 地址，抽查 2 首标题和背景均为通用回退文本；Bond’s Bold Blonde（`8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68`）歌词为 Sydney/Sweeney/007，title、URL 与 Background 却指向 Antonio Banderas / Automata，已确认主体错配。旧 Bond 地址已收录、最近抓取 7/27，新 Antonio 地址未抓取；证明样本的索引迁移尚未完成，不能解释整个三个月的曝光损失。（evidence: 本轮诊断结论及真实 GSC 样本）
+- 2026-09-20 12:14：旧专题页公开展示 `Target keyword angles`，`Start generating` 指向实际为 Latest Drops 的兼容锚点，与公众试听定位不符；`Back to feature cards` 指向不存在的首页锚点。模板趋势数字未核验来源，不能宣称已证实虚假。（evidence: 本轮诊断结论）
+- 2026-09-20 12:14：排除项与边界：GSC 90 天记录 2,208 次抓取，200 占 90%，host 状态正常、无人工处罚；未见大面积服务器不可用证据。外链报告仅列 17 条、来自 2 个站点、全部指向首页，报告不完整，不能断言全网只有这些链接。不能把近期 Bot Protection、JS 抓取比例或某一缺陷作为三个月低曝光的唯一原因。（evidence: 本轮真实 GSC 报告及诊断结论）
+- 2026-09-20 12:14：Needs-Confirmation：下一步建议按顺序核对主体错配及 23 个无摘要页面；在公开发布门禁下补齐服务端归档分页、首页归档入口与主题内链；将专题对齐真实试听；稳定 URL 并复核代表样本重新抓取和 Google canonical 接替；最后通过真实作品传播改善外部发现。建议尚未实施，不新增“修复完成”结论，不擅自发布、合并或删除歌曲，不为关键词反复批量更换 URL。（evidence: `F:/CodexHome/seo-audit-2026-09-20/诊断结论.md`）
 - 2026-09-17 14:53：本轮 SEO 处理保留正常 HTTP/www/旧标题跳转；当前 200 与正确 canonical 只能证明抓取条件，不等于 Google 已收录，也不能据此宣布全部 SEO 问题解决。45 条 Duplicate 核验更新了 TODO #26 的样本进展，历史 201 条未收录样本并未在本轮全部验证。
 - 2026-09-17 14:53：Needs-Confirmation：两首未发布歌曲是否应恢复公开尚无授权依据，不因旧地址 404 擅自发布。
 - 2026-09-04 23:59：补充 23:35 歌曲规范链接记录：最终类型及差异检查已通过，但本地无运行服务器，未进行页面端到端验证，不宣称线上已修复。公开英文路由与 sitemap 本轮同样未提交、未部署；GSC 的 40 条重复与 201 条未收录样本仍未读完，不能将局部代码修复等同于全部索引问题解决。本轮仅更新 `progress.md`，保留他人修改。

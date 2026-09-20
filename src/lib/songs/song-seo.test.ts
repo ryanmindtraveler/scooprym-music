@@ -4,12 +4,20 @@ import { getSongCanonicalSlug, getSongSearchHeadline, getSongSeoDescription, get
 
 const song = {
   id: '8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68',
-  title: 'Bond’s Bold Blonde',
+  title: 'Banderas & Robot Soul',
   newsSummary: "Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata'. Robots find their feelings.",
   sourceText: null,
 };
 
 describe('歌曲详情 SEO', () => {
+  it('缺失摘要显示真实歌名但不迁移历史规范地址', () => {
+    const item = { ...song, title: 'Billionaire Buffet', newsSummary: null };
+    expect(getSongSearchHeadline(item)).toBe('Billionaire Buffet');
+    expect(getSongSeoTitle(item)).toBe('Billionaire Buffet — Listen & Lyrics');
+    expect(getSongCanonicalSlug(item)).toBe(`the-internet-did-what-${item.id}`);
+    expect(getSongSeoDescription(item)).not.toContain('inspired by this story');
+  });
+
   it('以新闻八卦标题承接搜索意图', () => {
     expect(getSongSearchHeadline(song)).toBe("Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata'.");
   });
@@ -22,8 +30,8 @@ describe('歌曲详情 SEO', () => {
 
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {
     expect(getSongSeoTitle(song)).toContain('Antonio Banderas');
-    expect(getSongSeoTitle(song)).toContain('Bond’s Bold Blonde');
-    expect(getSongSeoDescription(song)).toContain('Bond’s Bold Blonde');
+    expect(getSongSeoTitle(song)).toContain('Banderas & Robot Soul');
+    expect(getSongSeoDescription(song)).toContain('Banderas & Robot Soul');
     expect(getSongSeoDescription(song).length).toBeLessThanOrEqual(159);
   });
 

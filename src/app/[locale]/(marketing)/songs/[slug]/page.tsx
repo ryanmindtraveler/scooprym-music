@@ -19,6 +19,7 @@ import type { Song } from '@/types/song';
 import { and, count, desc, eq, notInArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
+import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import type { MusicRecording, WithContext } from 'schema-dts';
 import { SongDetailClient } from './song-detail-client';
@@ -232,7 +233,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
 
   const breadcrumbs = [
     { name: 'Home', item: getUrlWithLocale('/', routing.defaultLocale) },
-    { name: 'Gallery', item: `${getUrlWithLocale('/', routing.defaultLocale)}#gallery` },
+    { name: 'Gallery', item: getUrlWithLocale('/songs', routing.defaultLocale) },
     { name: searchHeadline, item: canonicalUrl },
   ];
 
@@ -240,6 +241,11 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     <div className="min-h-screen w-full bg-slate-50 dark:bg-black">
       <JsonLd data={musicRecordingSchema} />
       <BreadcrumbJsonLd items={breadcrumbs} />
+      <nav aria-label="Song archive" className="px-6 pt-24 text-center">
+        <Link href="/songs" className="font-semibold underline underline-offset-4">
+          Browse all published songs
+        </Link>
+      </nav>
       <SongDetailClient
         song={serializableSong}
         initialIsFavorite={isFavorite}

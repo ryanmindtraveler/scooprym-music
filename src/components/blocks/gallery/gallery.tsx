@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
@@ -67,6 +68,9 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
           >
             {t('title')}
           </motion.h2>
+          <Link href="/songs" className="mt-6 inline-flex font-bold underline underline-offset-4">
+            Browse all published songs →
+          </Link>
 
           <motion.p
             initial={{ opacity: 0, y: 14 }}
