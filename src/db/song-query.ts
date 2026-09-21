@@ -1,6 +1,6 @@
 import { getDb } from '@/db';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
-import type { SongRecordingVersion } from '@/lib/songs/song-seo';
+import { getSongSearchHeadline, type SongRecordingVersion } from '@/lib/songs/song-seo';
 import { getSourceUrl } from '@/lib/urls/source-url';
 import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
 
@@ -44,23 +44,23 @@ export async function getPublishedSongRecordingVersion(
     title: string;
     sourceUrl?: string | null;
     newsSummary?: string | null;
+    sourceText?: string | null;
   }
 ): Promise<SongRecordingVersion | undefined> {
   const latestAttempt = createLatestGenerationAttemptQuery(db);
-  const sourceUrl = getSourceUrl(current.sourceUrl) ? current.sourceUrl?.trim() : undefined;
-  const sameStory = sourceUrl
-    ? eq(storyTable.sourceUrl, sourceUrl)
-    : current.newsSummary
-      ? eq(storyTable.newsSummary, current.newsSummary)
-      : eq(songTable.storyId, current.storyId);
   const rows = await db
-    .select({ id: songTable.id })
+    .select({
+      id: songTable.id,
+      storyId: songTable.storyId,
+      sourceUrl: storyTable.sourceUrl,
+      newsSummary: storyTable.newsSummary,
+      sourceText: storyTable.sourceText,
+    })
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        sameStory,
         eq(songTable.title, current.title),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
@@ -73,7 +73,29 @@ export async function getPublishedSongRecordingVersion(
     )
     .orderBy(asc(songTable.publishedAt), asc(songTable.createdAt), asc(songTable.id));
 
-  if (rows.length < 2) return undefined;
-  const index = rows.findIndex((row) => row.id === current.id);
-  return index < 0 ? undefined : { number: index + 1, total: rows.length };
+  const currentSourceUrl = getSourceUrl(current.sourceUrl);
+  const hasEditorialIdentity = Boolean(current.newsSummary?.trim() || current.sourceText?.trim());
+  const currentHeadline = getSongSearchHeadline({
+    id: current.id,
+    title: current.title,
+    newsSummary: current.newsSummary ?? null,
+    sourceText: current.sourceText ?? null,
+  });
+  const matchingRows = rows.filter((row) => {
+    const candidateSourceUrl = getSourceUrl(row.sourceUrl);
+    if (currentSourceUrl && candidateSourceUrl) return currentSourceUrl === candidateSourceUrl;
+    if (!currentSourceUrl && !hasEditorialIdentity) return row.storyId === current.storyId;
+    return (
+      getSongSearchHeadline({
+        id: row.id,
+        title: current.title,
+        newsSummary: row.newsSummary,
+        sourceText: row.sourceText,
+      }) === currentHeadline
+    );
+  });
+
+  if (matchingRows.length < 2) return undefined;
+  const index = matchingRows.findIndex((row) => row.id === current.id);
+  return index < 0 ? undefined : { number: index + 1, total: matchingRows.length };
 }
