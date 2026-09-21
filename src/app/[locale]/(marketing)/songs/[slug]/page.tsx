@@ -2,7 +2,7 @@ import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import type { SongCommentItem } from '@/components/songs/song-comments';
 import { getDb } from '@/db';
 import { songComment, songFavorite, song as songTable, story as storyTable, user } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { createLatestGenerationAttemptQuery, getPublishedSongRecordingVersion } from '@/db/song-query';
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
@@ -85,10 +85,11 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   if (slug !== canonicalSlug) {
     permanentRedirect(new URL(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale)).href);
   }
+  const recordingVersion = await getPublishedSongRecordingVersion(db, song);
 
   return constructMetadata({
-    title: getSongSeoTitle(song),
-    description: getSongSeoDescription(song),
+    title: getSongSeoTitle(song, recordingVersion),
+    description: getSongSeoDescription(song, recordingVersion),
     image: song.coverImageUrl || undefined,
     locale: routing.defaultLocale,
     pathname: `/songs/${canonicalSlug}`,
@@ -151,7 +152,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const userId = session?.user?.id;
 
   const isAdmin = session?.user?.role === 'admin';
-  const [favoriteRows, commentCountRows, commentRows, relatedRows] = await Promise.all([
+  const [favoriteRows, commentCountRows, commentRows, relatedRows, recordingVersion] = await Promise.all([
     userId
       ? db
           .select({ id: songFavorite.id })
@@ -193,6 +194,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
         )
       )
       .orderBy(desc(songTable.publishedAt), desc(songTable.createdAt), desc(songTable.id)),
+    getPublishedSongRecordingVersion(db, song),
   ]);
   const relatedSongs = selectRelatedSongs(song, relatedRows);
   const isFavorite = favoriteRows.length > 0;
@@ -218,13 +220,15 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   };
 
   const searchHeadline = getSongSearchHeadline(serializableSong);
-  const seoDescription = getSongSeoDescription(serializableSong);
+  const seoDescription = getSongSeoDescription(serializableSong, recordingVersion);
   const publicDate = getSongPublicDate(serializableSong).toISOString();
 
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
     '@type': 'MusicRecording',
-    name: serializableSong.title,
+    name: recordingVersion
+      ? `${serializableSong.title} — Recording ${recordingVersion.number} of ${recordingVersion.total}`
+      : serializableSong.title,
     headline: searchHeadline,
     description: seoDescription,
     url: canonicalUrl,

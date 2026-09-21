@@ -85,6 +85,24 @@ describe('歌曲详情 SEO', () => {
     expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(159);
   });
 
+  it('同名同曲风的多个录音使用稳定版本号区分元数据', () => {
+    const item = {
+      ...song,
+      title: 'Prison Blues',
+      prompt: 'hip-hop',
+      lyrics: '[Intro]\nYo, yo, check it, we in the cell block',
+    };
+    const first = { number: 1, total: 2 };
+    const second = { number: 2, total: 2 };
+
+    expect(getSongSeoTitle(item, first)).toContain('Recording 1/2');
+    expect(getSongSeoTitle(item, first)).not.toBe(getSongSeoTitle(item, second));
+    expect(getSongSeoDescription(item, first)).toContain('recording 1 of 2');
+    expect(getSongSeoDescription(item, first)).not.toBe(getSongSeoDescription(item, second));
+    expect(getSongSeoTitle(item, first).length).toBeLessThanOrEqual(101);
+    expect(getSongSeoDescription(item, first).length).toBeLessThanOrEqual(159);
+  });
+
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {
     expect(getSongSeoTitle(song)).toContain('Antonio Banderas');
     expect(getSongSeoTitle(song)).toContain('Banderas & Robot Soul');

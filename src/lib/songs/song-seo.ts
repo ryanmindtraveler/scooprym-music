@@ -5,6 +5,7 @@ import { getNewsDescription, getNewsTitle } from './song-editorial';
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'> & Partial<Pick<Song, 'lyrics' | 'prompt'>>;
 type SongIdentity = Pick<Song, 'id'>;
 type PublicDatedSong = Pick<Song, 'createdAt'> & Partial<Pick<Song, 'publishedAt'>>;
+export type SongRecordingVersion = { number: number; total: number };
 
 /** 路由和国际化重写可能保留百分号编码，比较规范路径前统一解码一次。 */
 export function decodeSongSlug(slug: string) {
@@ -78,12 +79,14 @@ export function getSongCanonicalSlug<T extends SongIdentity>(song: T) {
   return song.id;
 }
 
-export function getSongSeoTitle(song: SeoSong) {
+export function getSongSeoTitle(song: SeoSong, version?: SongRecordingVersion) {
   const headline = getSongSearchHeadline(song);
   const title = truncateAtWord(song.title, 55);
   const style = getSongPrimaryStyle(song);
   const titleStyle = style ? `${style.charAt(0).toLocaleUpperCase()}${style.slice(1)}` : '';
-  const titleWithStyle = titleStyle ? `${title} (${titleStyle})` : title;
+  const recordingLabel = version ? `Recording ${version.number}/${version.total}` : '';
+  const qualifiers = [titleStyle, recordingLabel].filter(Boolean).join(' · ');
+  const titleWithStyle = qualifiers ? `${title} (${qualifiers})` : title;
   return truncateAtWord(
     headline === song.title
       ? `${titleWithStyle} — Listen & Lyrics`
@@ -92,15 +95,16 @@ export function getSongSeoTitle(song: SeoSong) {
   );
 }
 
-export function getSongSeoDescription(song: SeoSong) {
+export function getSongSeoDescription(song: SeoSong, version?: SongRecordingVersion) {
   const style = getSongPrimaryStyle(song);
   const hook = getSongLyricHook(song);
   const recording = style ? `${style} meme song` : 'meme song';
   const opening = hook ? ` opening with “${hook}”` : '';
+  const versionLead = version ? ` recording ${version.number} of ${version.total},` : '';
 
   if (!song.newsSummary?.trim()) {
     return truncateAtWord(
-      `Listen to “${song.title},” a ${recording}${opening}. Play the song, read the lyrics, and join the conversation.`,
+      `Listen to “${song.title},”${versionLead} a ${recording}${opening}. Play the song, read the lyrics, and join the conversation.`,
       158
     );
   }
@@ -109,7 +113,7 @@ export function getSongSeoDescription(song: SeoSong) {
   const lead = context && !context.startsWith('A strange true story') ? `${headline} ${context}` : headline;
 
   return truncateAtWord(
-    `Hear “${song.title},” a ${recording}${opening}, inspired by: ${lead} Read the lyrics and join the conversation.`,
+    `Hear “${song.title},”${versionLead} a ${recording}${opening}, inspired by: ${lead} Read the lyrics and join the conversation.`,
     158
   );
 }

@@ -1,6 +1,7 @@
 import { getDb } from '@/db';
-import { generationAttempt } from '@/db/schema';
-import { desc, sql } from 'drizzle-orm';
+import { generationAttempt, song as songTable } from '@/db/schema';
+import type { SongRecordingVersion } from '@/lib/songs/song-seo';
+import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 /**
  * 每首歌曲只暴露最近一次生成记录，避免一首歌重试后在列表查询中出现多行。
@@ -31,4 +32,34 @@ export function createLatestGenerationAttemptQuery(db: ReturnType<typeof getDb>)
     .from(generationAttempt)
     .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
     .as('latest_generation_attempt');
+}
+
+/** 同一新闻、同名的公开录音按首次发布时间稳定编号，避免向搜索引擎发布重复元数据。 */
+export async function getPublishedSongRecordingVersion(
+  db: ReturnType<typeof getDb>,
+  current: { id: string; storyId: string; title: string }
+): Promise<SongRecordingVersion | undefined> {
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
+  const rows = await db
+    .select({ id: songTable.id })
+    .from(songTable)
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+    .where(
+      and(
+        eq(songTable.storyId, current.storyId),
+        eq(songTable.title, current.title),
+        eq(songTable.isPublished, true),
+        notInArray(latestAttempt.processingStatus, [
+          'failed_generation',
+          'processing_queue_failed',
+          'failed_audio_upload',
+          'failed_credit_deduction',
+        ])
+      )
+    )
+    .orderBy(asc(songTable.publishedAt), asc(songTable.createdAt), asc(songTable.id));
+
+  if (rows.length < 2) return undefined;
+  const index = rows.findIndex((row) => row.id === current.id);
+  return index < 0 ? undefined : { number: index + 1, total: rows.length };
 }
