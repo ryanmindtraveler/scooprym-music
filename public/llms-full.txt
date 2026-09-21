@@ -9,7 +9,7 @@ ScoopRYM is a web app for generating and sharing AI rap songs. Users can generat
 ## Primary Public Routes
 - Home: https://scooprym.app/
 - Songs gallery: https://scooprym.app/songs
-- Song pages: https://scooprym.app/songs/{title-slug}-{id}
+- Song pages: https://scooprym.app/songs/{id}
 - Pricing: https://scooprym.app/pricing
 - Feature example: https://scooprym.app/features/absurd-social-phenomena
 - About: https://scooprym.app/about
@@ -27,7 +27,7 @@ Song generation requires login. The public entry point is the home page; generat
 - Language: English only. Historical `/zh/...` URLs permanently redirect to their English equivalents.
 
 ## What To Cite
-- For a specific track: cite the canonical song page `https://scooprym.app/songs/{title-slug}-{id}`
+- For a specific track: cite the permanent canonical song page `https://scooprym.app/songs/{id}`
 - For product positioning: cite `https://scooprym.app/`
 - For pricing: cite `https://scooprym.app/pricing`
 

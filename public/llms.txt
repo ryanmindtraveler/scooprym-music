@@ -6,7 +6,7 @@ ScoopRYM is an English-only music-generation web app with public marketing pages
 ## Key Pages
 - [Home](https://scooprym.app/): Product overview and generator entry
 - [Songs](https://scooprym.app/songs): Public songs gallery
-- [Song pages](https://scooprym.app/songs): Canonical format: `/songs/{title-slug}-{id}`
+- [Song pages](https://scooprym.app/songs): Permanent canonical format: `/songs/{id}`
 - [Pricing](https://scooprym.app/pricing): Plans and credits
 - [Feature example](https://scooprym.app/features/absurd-social-phenomena): Example feature page
 

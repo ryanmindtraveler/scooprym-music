@@ -29,7 +29,7 @@ it('复制失败不记录分享，不显示成功提示', async () => {
   expect(toast.success).not.toHaveBeenCalled();
 });
 
-it('分享新闻规范地址，不再生成旧歌曲标题地址或语言前缀', () => {
+it('分享 UUID 永久地址，不再生成可变标题地址或语言前缀', () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
   window.history.replaceState(null, '', '/zh/songs');
@@ -41,8 +41,6 @@ it('分享新闻规范地址，不再生成旧歌曲标题地址或语言前缀'
     />
   );
   fireEvent.click(screen.getByRole('button', { name: 'Share song' }));
-  expect(writeText).toHaveBeenCalledWith(
-    'https://scooprym.app/songs/karley-scott-collins-shuts-down-the-keith-urban-dating-rumors-d6b130d8-47ad-4076-8712-d302b2de7125'
-  );
+  expect(writeText).toHaveBeenCalledWith('https://scooprym.app/songs/d6b130d8-47ad-4076-8712-d302b2de7125');
   window.history.replaceState(null, '', '/');
 });

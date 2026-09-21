@@ -1,5 +1,4 @@
 import type { Song } from '@/types/song';
-import { slugify } from '../utils';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
 
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'>;
@@ -36,15 +35,9 @@ export function getSongStoryContext(song: SeoSong) {
 }
 
 export function getSongCanonicalSlug(song: SeoSong) {
-  // 缺失摘要的历史地址保持不变；改善展示标题不应再次迁移规范地址。
-  const searchableHeadline = truncateAtWord(getSongSearchHeadline({ ...song, title: '' }), 82);
-  // 只允许路径中稳定的字符，避免加号等符号在路由转换后造成规范地址自循环。
-  // 保留 Unicode 字母与数字；旧链接仍通过末尾的歌曲 ID 找到同一首作品。
-  const headlineSlug = slugify(searchableHeadline)
-    .replace(/[^\p{L}\p{N}-]+/gu, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return `${headlineSlug || 'story-song'}-${song.id}`;
+  // UUID 是歌曲创建后唯一不变的公开身份。标题、摘要和歌词都允许编辑，
+  // 因此不能再参与 canonical URL；历史标题型地址仍可从末尾 UUID 解析并 308 归并。
+  return song.id;
 }
 
 export function getSongSeoTitle(song: SeoSong) {
