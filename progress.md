@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-21 17:05_
+_Last updated: 2026-09-21 17:10_
 
 ## Pinned
 - 2026-09-21 17:05：最终语言与 URL 业务边界：公开站只允许英文无前缀 URL；任何公开 `/zh/*`（包括歌曲、登录、About 等）必须永久归并到英文规范地址。中文仅允许登录后的 `/zh/admin/*` 与 `/zh/dashboard/*` 两类后台页面。后台跳向公开站的链接必须直接使用 `/` 或 `/songs/{UUID}`，禁止生成 `/zh/songs`、`/en` 或标题型歌曲 URL。本条纠正并取代 2026-09-21 15:58“管理后台也不得生成中文页面”的错误记录。
@@ -223,6 +223,7 @@ _Last updated: 2026-09-21 17:05_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-21 17:10：已在 Google Search Console 的 `scooprym.app` 属性中删除旧 sitemap 提交记录 `http://scooprym.app/sitemap.xml`；该记录删除前显示 211 页，最后读取时间为 Sep 19, 2026。删除后界面明确显示 “Sitemap removed”，Submitted sitemaps 仅剩 `https://scooprym.app/sitemap.xml`，状态 Success、206 discovered pages、列表 `1-1 of 1`。本次操作只删除 GSC 中的旧提交记录，不删除站点 sitemap 文件、页面或任何线上内容。（evidence: 本轮真实 Google Search Console 操作与删除后页面回读）
 - 2026-09-21 17:05：[#35] 最终语言与 URL 边界已通过提交 `edb9174`、`d3268f5` 实施并完成生产验收：公开站仅使用英文无前缀 URL，公开 `/zh/*` 永久归并英文；中文仅保留在登录后的 `/zh/admin/*`、`/zh/dashboard/*`。后台跳转公开站统一为 `/` 或 `/songs/{UUID}`，不再生成 `/zh/songs`、`/en` 或标题型歌曲 URL。生产 SEO 审计 206/206、0 failures，sitemap 不含 `/zh`、`/en`、`http`；真实登录 Chrome 验证中文 dashboard/admin 正常、`publicZhLeakCount=0`、歌曲链接均为 UUID。（evidence: commits `edb9174`、`d3268f5`；生产公开 SEO 审计；真实登录 Chrome 验收）
 - 2026-09-21 16:18：[#34] 全站仅英文架构变更完成：website i18n 只保留 `en`，已删除 `messages/zh.json`、全部 `*.zh` 内容、语言切换器和已弃用双语 features 配置；公开页、认证、后台与风格推荐链路统一英文。历史 `/zh`、`/en` 仅作 308 英文归并兼容，退出路由保持 410。content 生成、TypeScript、lint、production build 均成功；启用 `RUN_DATABASE_TESTS=1` 后全量 Vitest 86 个文件、503 项全部通过、0 跳过。新增协议/主机/语言前缀一次 308 归并回归；本地生产 HTTP 验证 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均 308，`/zh/docs` 为 410，首页无 zh hreflang/中文文案且 sitemap 无 `/zh`。（evidence: 本轮代码变更、构建/测试输出与本地生产 HTTP 验证）
 - 2026-09-20 16:35：GA 任务最终部署状态：代码 `df696b8` 已推送，Vercel `dpl_G6cZGh1UwDAZpPJs8dcVH6YpQLB4` 已 READY 并绑定 `scooprym.app`。生产 `/songs` 浏览器确认 Ryan Gong 已登录、Admin 入口可见，DOM 无 googletagmanager/google-analytics 脚本，管理员流量排除验证通过。两个 GA 关键事件及 song_id 维度已保存；普通访客生产事件实际入库尚未验证，不能宣称 GA 接收已完成验收。20 项测试与构建通过，本地 3100 服务已停止。本次仅更新本地记录，提交推送由主流程处理。（evidence: 主流程部署状态、生产浏览器及 GA 配置回读）
