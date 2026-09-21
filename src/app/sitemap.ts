@@ -3,7 +3,7 @@ import { song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
-import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
+import { getSongCanonicalSlug, getSongPublicDate } from '@/lib/songs/song-seo';
 import { and, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';
@@ -55,8 +55,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         title: songTable.title,
         newsSummary: storyTable.newsSummary,
         sourceText: storyTable.sourceText,
-        updatedAt: songTable.updatedAt,
         createdAt: songTable.createdAt,
+        publishedAt: songTable.publishedAt,
       })
       .from(songTable)
       .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
@@ -85,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           title: songItem.title || 'Story song',
         });
         const route = `/songs/${slug}`;
-        const lastModified = songItem.updatedAt ? new Date(songItem.updatedAt) : new Date(songItem.createdAt);
+        const lastModified = getSongPublicDate(songItem);
 
         return {
           url: getUrl(route as Href, routing.defaultLocale),

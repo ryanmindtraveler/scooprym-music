@@ -3,6 +3,7 @@ import { getIdFromSlug } from '../utils';
 import {
   decodeSongSlug,
   getSongCanonicalSlug,
+  getSongPublicDate,
   getSongSearchHeadline,
   getSongSeoDescription,
   getSongSeoTitle,
@@ -50,6 +51,38 @@ describe('歌曲详情 SEO', () => {
   it('URL 只使用不可变歌曲标识', () => {
     expect(getSongCanonicalSlug(song)).toBe(song.id);
     expect(getSongCanonicalSlug({ id: song.id })).toBe(song.id);
+  });
+
+  it('迁移和任务恢复的 updatedAt 不会伪装成公开内容更新', () => {
+    expect(
+      getSongPublicDate({
+        createdAt: '2025-12-24T01:00:00.000Z',
+        publishedAt: '2026-01-02T02:00:00.000Z',
+      }).toISOString()
+    ).toBe('2026-01-02T02:00:00.000Z');
+    expect(getSongPublicDate({ createdAt: '2025-12-24T01:00:00.000Z', publishedAt: null }).toISOString()).toBe(
+      '2025-12-24T01:00:00.000Z'
+    );
+  });
+
+  it('同一新闻下的不同录音使用曲风和歌词开场区分搜索摘要', () => {
+    const acoustic = {
+      ...song,
+      prompt: 'acoustic trap, pizzicato strings',
+      lyrics: '[Intro]\nYo, Drake bought the Bentley back',
+    };
+    const boomBap = {
+      ...song,
+      prompt: 'old school hip hop, boom bap',
+      lyrics: '[Intro]\nBlue Bentley back on the block',
+    };
+
+    expect(getSongSeoTitle(acoustic)).not.toBe(getSongSeoTitle(boomBap));
+    expect(getSongSeoDescription(acoustic)).toContain('acoustic trap');
+    expect(getSongSeoDescription(acoustic)).toContain('Yo, Drake bought the Bentley back');
+    expect(getSongSeoDescription(acoustic)).not.toBe(getSongSeoDescription(boomBap));
+    expect(getSongSeoTitle(acoustic).length).toBeLessThanOrEqual(101);
+    expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(159);
   });
 
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {

@@ -10,6 +10,7 @@ import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
   getSongCanonicalSlug,
+  getSongPublicDate,
   getSongSearchHeadline,
   getSongSeoDescription,
   getSongSeoTitle,
@@ -218,6 +219,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
 
   const searchHeadline = getSongSearchHeadline(serializableSong);
   const seoDescription = getSongSeoDescription(serializableSong);
+  const publicDate = getSongPublicDate(serializableSong).toISOString();
 
   const musicRecordingSchema: WithContext<MusicRecording> = {
     '@context': 'https://schema.org',
@@ -227,8 +229,8 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     description: seoDescription,
     url: canonicalUrl,
     mainEntityOfPage: canonicalUrl,
-    datePublished: new Date(serializableSong.publishedAt || serializableSong.createdAt).toISOString(),
-    dateModified: new Date(serializableSong.updatedAt || serializableSong.createdAt).toISOString(),
+    datePublished: publicDate,
+    dateModified: publicDate,
     duration: song.durationSec ? `PT${song.durationSec}S` : undefined,
     image: song.coverImageUrl || undefined,
     audio: song.audioUrl
