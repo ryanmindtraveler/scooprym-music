@@ -5,6 +5,8 @@ describe('公开英文路由', () => {
   it.each([
     ['/zh', '/'],
     ['/zh/songs/old-id', '/songs/old-id'],
+    ['/zh/songs/old-title-9ac474b0-e5bb-4d77-a505-6199ff73e489', '/songs/9ac474b0-e5bb-4d77-a505-6199ff73e489'],
+    ['/songs/another-title-9ac474b0-e5bb-4d77-a505-6199ff73e489/', '/songs/9ac474b0-e5bb-4d77-a505-6199ff73e489'],
     ['/en/songs', '/songs'],
     ['/zh/features/meme-culture', '/features/meme-culture'],
     ['/songs/example', '/songs/example'],

@@ -44,6 +44,19 @@ describe('公开页面规范地址', () => {
     expect(response.headers.get('location')).toBe('https://scooprym.app/songs/example?from=share');
   });
 
+  it('将中文前缀和历史歌曲标题一次归并到 UUID 永久地址', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const response = await middleware(
+      new NextRequest('https://scooprym.app/zh/songs/old-title-9ac474b0-e5bb-4d77-a505-6199ff73e489?from=google', {
+        headers: { host: 'scooprym.app' },
+      })
+    );
+    expect(response.status).toBe(308);
+    expect(response.headers.get('location')).toBe(
+      'https://scooprym.app/songs/9ac474b0-e5bb-4d77-a505-6199ff73e489?from=google'
+    );
+  });
+
   it.each([
     ['http://scooprym.app/about', 'scooprym.app', 'http', 'https://scooprym.app/about'],
     ['http://www.scooprym.app/zh/about', 'www.scooprym.app', 'http', 'https://scooprym.app/about'],
