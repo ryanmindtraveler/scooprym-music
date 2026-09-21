@@ -1,6 +1,7 @@
 import { getDb } from '@/db';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import type { SongRecordingVersion } from '@/lib/songs/song-seo';
+import { getSourceUrl } from '@/lib/urls/source-url';
 import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 /**
@@ -46,8 +47,9 @@ export async function getPublishedSongRecordingVersion(
   }
 ): Promise<SongRecordingVersion | undefined> {
   const latestAttempt = createLatestGenerationAttemptQuery(db);
-  const sameStory = current.sourceUrl
-    ? eq(storyTable.sourceUrl, current.sourceUrl)
+  const sourceUrl = getSourceUrl(current.sourceUrl) ? current.sourceUrl?.trim() : undefined;
+  const sameStory = sourceUrl
+    ? eq(storyTable.sourceUrl, sourceUrl)
     : current.newsSummary
       ? eq(storyTable.newsSummary, current.newsSummary)
       : eq(songTable.storyId, current.storyId);
