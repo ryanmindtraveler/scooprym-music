@@ -1,7 +1,12 @@
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import type { PropsWithChildren } from 'react';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /**
  * inspired by dashboard-01

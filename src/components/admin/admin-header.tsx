@@ -14,6 +14,7 @@ import { LocaleLink, useLocalePathname } from '@/i18n/navigation';
 import { Routes } from '@/routes';
 import { useTranslations } from 'next-intl';
 import { Fragment } from 'react';
+import LocaleSwitcher from '../layout/locale-switcher';
 import { ModeSwitcher } from '../layout/mode-switcher';
 
 const adminSections = [
@@ -57,6 +58,7 @@ export function AdminHeader() {
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-1">
           <ModeSwitcher />
+          <LocaleSwitcher />
         </div>
       </div>
     </header>

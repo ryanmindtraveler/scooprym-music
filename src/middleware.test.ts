@@ -3,17 +3,40 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import middleware from './middleware';
 
 describe('公开页面规范地址', () => {
-  it.each(['/auth/login', '/dashboard', '/unknown-page', '/admin/dashboard'])(
-    '历史中文地址统一英文：%s',
+  it.each(['/auth/login', '/unknown-page'])('历史中文地址统一英文：%s', async (path) => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const response = await middleware(
+      new NextRequest(`https://scooprym.app/zh${path}?from=test`, { headers: { host: 'scooprym.app' } })
+    );
+    expect(response.status).toBe(308);
+    expect(response.headers.get('location')).toBe(`https://scooprym.app${path}?from=test`);
+  });
+
+  it.each(['/dashboard', '/dashboard/comments', '/admin/dashboard', '/admin/create'])(
+    '中文后台地址保持 /zh：%s',
     async (path) => {
       vi.stubEnv('NODE_ENV', 'production');
       const response = await middleware(
-        new NextRequest(`https://scooprym.app/zh${path}?from=test`, { headers: { host: 'scooprym.app' } })
+        new NextRequest(`https://scooprym.app/zh${path}?from=test`, {
+          headers: {
+            host: 'scooprym.app',
+            cookie: 'better-auth.session_token=test-session',
+          },
+        })
       );
-      expect(response.status).toBe(308);
-      expect(response.headers.get('location')).toBe(`https://scooprym.app${path}?from=test`);
+      expect(response.status).not.toBe(308);
+      expect(response.headers.get('location')).toBeNull();
     }
   );
+
+  it.each(['/dashboard', '/admin/dashboard'])('未登录访问中文后台仍执行认证保护：%s', async (path) => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const response = await middleware(
+      new NextRequest(`https://scooprym.app/zh${path}`, { headers: { host: 'scooprym.app' } })
+    );
+    expect(response.headers.get('location')).toContain('/auth/login?callbackUrl=');
+    expect(response.headers.get('location')).toContain(encodeURIComponent(`/zh${path}`));
+  });
 
   it('英文用户页面仍保留认证保护', async () => {
     vi.stubEnv('NODE_ENV', 'production');

@@ -1,15 +1,43 @@
 import type { Locale, Messages } from 'next-intl';
-import defaultMessages from '../../messages/en.json';
+import { routing } from './routing';
 
 // assume that the default messages are in the en.json file
 // if you want to use a different default locale, you can change to other {locale}.json file
 // we need to export the default messages so that we can use them in the app/manifest.ts file
 // and the email templates can use the default messages to preview the emails
-export { defaultMessages };
+export { default as defaultMessages } from '../../messages/en.json';
+
+const importLocale = async (locale: Locale): Promise<Messages> => {
+  return (await import(`../../messages/${locale}.json`)).default as Messages;
+};
+
+function mergeMessageRecords(
+  base: Record<string, unknown>,
+  overrides: Record<string, unknown>
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = { ...base };
+
+  for (const [key, value] of Object.entries(overrides)) {
+    const baseValue = merged[key];
+    const canMerge =
+      typeof baseValue === 'object' &&
+      baseValue !== null &&
+      !Array.isArray(baseValue) &&
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value);
+
+    merged[key] = canMerge
+      ? mergeMessageRecords(baseValue as Record<string, unknown>, value as Record<string, unknown>)
+      : value;
+  }
+
+  return merged;
+}
 
 // Instead of using top-level await, create a function to get default messages
 export const getDefaultMessages = async (): Promise<Messages> => {
-  return defaultMessages as Messages;
+  return await importLocale(routing.defaultLocale);
 };
 
 /**
@@ -18,6 +46,14 @@ export const getDefaultMessages = async (): Promise<Messages> => {
  *
  * https://next-intl.dev/docs/usage/configuration#messages
  */
-export const getMessagesForLocale = async (_locale: Locale): Promise<Messages> => {
-  return defaultMessages as Messages;
+export const getMessagesForLocale = async (locale: Locale): Promise<Messages> => {
+  const localeMessages = await importLocale(locale);
+  if (locale === routing.defaultLocale) {
+    return localeMessages;
+  }
+  const defaultMessages = await getDefaultMessages();
+  return mergeMessageRecords(
+    defaultMessages as unknown as Record<string, unknown>,
+    localeMessages as unknown as Record<string, unknown>
+  ) as Messages;
 };

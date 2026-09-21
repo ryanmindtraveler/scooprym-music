@@ -3,9 +3,14 @@ import { AdminSidebar } from '@/components/admin/sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { getSession } from '@/lib/auth/server';
 import { Routes } from '@/routes';
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { PropsWithChildren } from 'react';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminLayout({ children }: PropsWithChildren) {
   const [session, cookieStore] = await Promise.all([getSession(), cookies()]);

@@ -190,7 +190,7 @@ export function SidebarUser({ user, className }: SidebarUserProps) {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <LocaleLink href={Routes.Root}>
+              <LocaleLink href={Routes.Root} locale="en">
                 <LaptopIcon className="mr-2 size-4" />
                 <span>{t('Common.backToWebsite')}</span>
               </LocaleLink>

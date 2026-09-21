@@ -67,7 +67,7 @@ export function AdminSidebar({ user, ...props }: AdminSidebarProps) {
     <Sidebar {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-4 py-2">
-          <LocaleLink href={Routes.Root} className="flex items-center gap-2">
+          <LocaleLink href={Routes.Root} locale="en" className="flex items-center gap-2">
             <ScoopRYMLogo className="h-8 w-8" />
             <span className="font-semibold text-base tracking-tight">{t('brand')}</span>
           </LocaleLink>

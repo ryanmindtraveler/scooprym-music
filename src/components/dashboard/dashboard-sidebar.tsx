@@ -51,7 +51,7 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:p-1.5!">
-              <LocaleLink href={Routes.Root}>
+              <LocaleLink href={Routes.Root} locale="en">
                 <Logo className="size-5" />
                 <span className="truncate font-semibold text-base">{t('Metadata.name')}</span>
               </LocaleLink>

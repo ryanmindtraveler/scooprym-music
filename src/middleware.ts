@@ -1,11 +1,17 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
-import { routing } from './i18n/routing';
-import { getPublicEnglishPath } from './lib/urls/public-routing';
+import { DEFAULT_LOCALE, routing } from './i18n/routing';
+import { getPathnameWithoutLocale, getPublicEnglishPath } from './lib/urls/public-routing';
 import { isRetiredRoute, retiredRouteResponse } from './lib/urls/retired-routes';
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
 
 const intlMiddleware = createMiddleware(routing);
+const publicEnglishIntlMiddleware = createMiddleware({
+  ...routing,
+  locales: [DEFAULT_LOCALE],
+  // 公开站没有中文版本，禁止 next-intl 自动发布 /zh hreflang。
+  alternateLinks: false,
+});
 
 /**
  * 1. Next.js middleware
@@ -123,8 +129,8 @@ export default async function middleware(req: NextRequest) {
   const isLoggedIn = !!sessionCookie;
   // console.log('middleware, isLoggedIn', isLoggedIn);
 
-  // /en 与 /zh 已在上方归并；后续认证逻辑只处理无语言前缀的英文路径。
-  const pathnameWithoutLocale = nextUrl.pathname;
+  // /zh 仅在 admin/dashboard 后台保留；认证规则始终匹配无语言前缀的业务路径。
+  const pathnameWithoutLocale = getPathnameWithoutLocale(nextUrl.pathname);
 
   // If the route can not be accessed by logged in users, redirect if the user is logged in
   if (isLoggedIn) {
@@ -153,7 +159,7 @@ export default async function middleware(req: NextRequest) {
 
   // Apply intlMiddleware for all routes
   console.log('<< middleware end, applying intlMiddleware');
-  return intlMiddleware(req);
+  return publicPath !== null ? publicEnglishIntlMiddleware(req) : intlMiddleware(req);
 }
 
 /**
