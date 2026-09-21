@@ -1,5 +1,5 @@
 import { getDb } from '@/db';
-import { generationAttempt, song as songTable } from '@/db/schema';
+import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import type { SongRecordingVersion } from '@/lib/songs/song-seo';
 import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
 
@@ -37,16 +37,28 @@ export function createLatestGenerationAttemptQuery(db: ReturnType<typeof getDb>)
 /** 同一新闻、同名的公开录音按首次发布时间稳定编号，避免向搜索引擎发布重复元数据。 */
 export async function getPublishedSongRecordingVersion(
   db: ReturnType<typeof getDb>,
-  current: { id: string; storyId: string; title: string }
+  current: {
+    id: string;
+    storyId: string;
+    title: string;
+    sourceUrl?: string | null;
+    newsSummary?: string | null;
+  }
 ): Promise<SongRecordingVersion | undefined> {
   const latestAttempt = createLatestGenerationAttemptQuery(db);
+  const sameStory = current.sourceUrl
+    ? eq(storyTable.sourceUrl, current.sourceUrl)
+    : current.newsSummary
+      ? eq(storyTable.newsSummary, current.newsSummary)
+      : eq(songTable.storyId, current.storyId);
   const rows = await db
     .select({ id: songTable.id })
     .from(songTable)
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        eq(songTable.storyId, current.storyId),
+        sameStory,
         eq(songTable.title, current.title),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
