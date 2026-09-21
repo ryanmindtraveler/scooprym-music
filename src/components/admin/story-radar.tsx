@@ -31,6 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 
@@ -810,17 +811,21 @@ export function StoryRadar({
                             <ul className="mt-1 space-y-1 pl-2">
                               {completedSongs.map((version) => (
                                 <li key={version.id}>
-                                  <LocaleLink
-                                    className="font-semibold underline underline-offset-4 hover:text-pink-600"
-                                    href={
-                                      version.isPublished
-                                        ? `/songs/${version.id}`
-                                        : `/admin/create?songId=${version.id}`
-                                    }
-                                  >
-                                    {version.title} ·{' '}
-                                    {version.isPublished ? (zh ? '查看歌曲' : 'View') : zh ? '创作台预览' : 'Preview'}
-                                  </LocaleLink>
+                                  {version.isPublished ? (
+                                    <Link
+                                      className="font-semibold underline underline-offset-4 hover:text-pink-600"
+                                      href={`/songs/${version.id}`}
+                                    >
+                                      {version.title} · {zh ? '查看歌曲' : 'View'}
+                                    </Link>
+                                  ) : (
+                                    <LocaleLink
+                                      className="font-semibold underline underline-offset-4 hover:text-pink-600"
+                                      href={`/admin/create?songId=${version.id}`}
+                                    >
+                                      {version.title} · {zh ? '创作台预览' : 'Preview'}
+                                    </LocaleLink>
+                                  )}
                                 </li>
                               ))}
                             </ul>
@@ -1098,9 +1103,11 @@ export function StoryRadar({
                         size="sm"
                         className="h-7.5 px-3 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
                       >
-                        <LocaleLink href={latestSong.isPublished ? `/songs/${latestSong.id}` : studioHref}>
-                          {latestSong.isPublished ? (zh ? '查看歌曲' : 'View') : zh ? '预览/发布' : 'Preview'}
-                        </LocaleLink>
+                        {latestSong.isPublished ? (
+                          <Link href={`/songs/${latestSong.id}`}>{zh ? '查看歌曲' : 'View'}</Link>
+                        ) : (
+                          <LocaleLink href={studioHref}>{zh ? '预览/发布' : 'Preview'}</LocaleLink>
+                        )}
                       </Button>
                     </>
                   )}

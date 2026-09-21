@@ -4,7 +4,6 @@ import { song, storyCandidate, storyCandidateVote } from '@/db/schema';
 import { LocaleLink } from '@/i18n/navigation';
 import { getSession } from '@/lib/auth/server';
 import { formatBusinessDate } from '@/lib/shared/business-time';
-import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 import { ArrowUpRight, CheckCircle2, ExternalLink, Radio, Vote } from 'lucide-react';
@@ -136,12 +135,12 @@ export default async function DashboardVotesPage({
               </div>
               <h2 className="mt-5 text-xl font-black text-slate-900">{t('noPicks')}</h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{t('voteHint')}</p>
-              <LocaleLink
+              <Link
                 href="/#vote"
                 className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
               >
                 {t('seeTrending')} <ArrowUpRight className="size-4" />
-              </LocaleLink>
+              </Link>
             </div>
           ) : (
             <div className="overflow-hidden rounded-[28px] border border-white/80 bg-white/78 shadow-[0_20px_55px_-36px_rgba(15,23,42,0.5)] backdrop-blur-xl">
@@ -176,14 +175,14 @@ export default async function DashboardVotesPage({
                             {vote.sourceDomain} <ExternalLink className="size-3" />
                           </Link>
                           {vote.songId && vote.songTitle ? (
-                            <LocaleLink
-                              href={`/songs/${slugify(vote.songTitle)}-${vote.songId}`}
+                            <Link
+                              href={`/songs/${vote.songId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-900"
                             >
                               <CheckCircle2 className="size-3.5" /> Hear the song
-                            </LocaleLink>
+                            </Link>
                           ) : null}
                         </div>
                       </div>

@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import { ArrowRight, Music, Pause, Play, Radio, Sparkles } from 'lucide-react';
@@ -67,7 +66,7 @@ export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
         <div className="max-h-[420px] overflow-y-auto divide-y divide-border/40">
           {songs.slice(0, 10).map((song) => {
             const isCurrentPlaying = currentSong?.id === song.id && isPlaying;
-            const songSlug = `/songs/${slugify(song.title || 'song')}-${song.id}`;
+            const songSlug = `/songs/${song.id}`;
 
             return (
               <div

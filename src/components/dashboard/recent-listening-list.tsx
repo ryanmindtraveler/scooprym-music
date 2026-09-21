@@ -1,7 +1,5 @@
 'use client';
 
-import { LocaleLink } from '@/i18n/navigation';
-import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
@@ -10,6 +8,7 @@ import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, Clock3, Headphones, Music2, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export interface RecentListeningSong extends Song {
   lastPlayedAt: Date | string;
@@ -41,12 +40,12 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
           {mode === 'saved' ? t('saveHint') : t('playHint')}
         </p>
-        <LocaleLink
+        <Link
           href={Routes.Gallery}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
         >
           {t('exploreGallery')} <ArrowUpRight className="size-4" />
-        </LocaleLink>
+        </Link>
       </div>
     );
   }
@@ -63,7 +62,7 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
 
       <ol className="divide-y divide-slate-200/75">
         {songs.map((song, index) => {
-          const songUrl = `/songs/${slugify(song.title || 'song')}-${song.id}`;
+          const songUrl = `/songs/${song.id}`;
           const isCurrentSong = currentSong?.id === song.id;
           const isCurrentSongPlaying = isCurrentSong && isPlaying;
           const summary = song.newsSummary?.trim() || song.sourceText?.trim() || t('openStory');
@@ -98,7 +97,7 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
                 {String(startIndex + index + 1).padStart(2, '0')}
               </span>
 
-              <LocaleLink
+              <Link
                 href={songUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -111,17 +110,17 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
                   sizes="76px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-              </LocaleLink>
+              </Link>
 
               <div className="min-w-0">
-                <LocaleLink
+                <Link
                   href={songUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 transition-colors hover:text-pink-700 md:text-[15px]"
                 >
                   {summary}
-                </LocaleLink>
+                </Link>
                 <div className="mt-1.5 flex min-w-0 items-center gap-2 text-xs text-slate-500">
                   <Music2 className="size-3.5 shrink-0 text-pink-600" />
                   <span className="truncate font-semibold">{song.title}</span>

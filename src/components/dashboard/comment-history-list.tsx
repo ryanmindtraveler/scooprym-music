@@ -1,13 +1,12 @@
 'use client';
 
-import { LocaleLink } from '@/i18n/navigation';
-import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { format, formatDistanceToNow } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, MessageSquareText, Music2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export interface CommentHistoryItem {
   id: string;
@@ -36,12 +35,12 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
         </div>
         <h3 className="mt-5 text-xl font-black text-slate-900">{t('noComments')}</h3>
         <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{t('commentHint')}</p>
-        <LocaleLink
+        <Link
           href={Routes.Gallery}
           className="mt-5 inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition-transform hover:-translate-y-0.5"
         >
           {t('exploreGallery')} <ArrowUpRight className="size-4" />
-        </LocaleLink>
+        </Link>
       </div>
     );
   }
@@ -59,7 +58,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
 
       <ol className="divide-y divide-slate-200/75">
         {comments.map((comment, index) => {
-          const songUrl = `/songs/${slugify(comment.songTitle || 'song')}-${comment.songId}`;
+          const songUrl = `/songs/${comment.songId}`;
           const context = comment.newsSummary?.trim() || comment.sourceText?.trim() || t('openStory');
           const commentedAt = new Date(comment.createdAt);
 
@@ -72,7 +71,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
                 {String(startIndex + index + 1).padStart(2, '0')}
               </span>
 
-              <LocaleLink
+              <Link
                 href={songUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -85,7 +84,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
                   sizes="68px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-              </LocaleLink>
+              </Link>
 
               <div className="min-w-0">
                 <p className="line-clamp-3 text-sm font-bold leading-5 text-slate-900 md:text-[15px]">
@@ -97,14 +96,14 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
               </div>
 
               <div className="hidden min-w-0 lg:block">
-                <LocaleLink
+                <Link
                   href={songUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="line-clamp-2 text-xs font-semibold leading-5 text-slate-600 transition-colors hover:text-pink-700"
                 >
                   {context}
-                </LocaleLink>
+                </Link>
                 <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-400">
                   <Music2 className="size-3 shrink-0 text-pink-600" />
                   <span className="truncate font-semibold">{comment.songTitle}</span>
@@ -120,7 +119,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
                 </p>
               </div>
 
-              <LocaleLink
+              <Link
                 href={songUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -128,7 +127,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
                 className="flex size-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-950 shadow-sm transition hover:scale-105 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-700"
               >
                 <ArrowUpRight className="size-4" />
-              </LocaleLink>
+              </Link>
             </li>
           );
         })}

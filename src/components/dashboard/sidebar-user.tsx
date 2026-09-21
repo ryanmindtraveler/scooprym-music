@@ -24,6 +24,7 @@ import type { User } from 'better-auth';
 import { ChevronsUpDown, Languages, LaptopIcon, LogOut, MoonIcon, SunIcon } from 'lucide-react';
 import { type Locale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
@@ -190,10 +191,10 @@ export function SidebarUser({ user, className }: SidebarUserProps) {
             <DropdownMenuSeparator />
 
             <DropdownMenuItem className="cursor-pointer" asChild>
-              <LocaleLink href={Routes.Root} locale="en">
+              <Link href={Routes.Root}>
                 <LaptopIcon className="mr-2 size-4" />
                 <span>{t('Common.backToWebsite')}</span>
-              </LocaleLink>
+              </Link>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

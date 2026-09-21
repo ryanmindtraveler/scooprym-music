@@ -39,10 +39,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LocaleLink } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { ChevronLeft, ChevronRight, Clock, Heart, Loader2, Mic2, Music2 } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { SongItem } from './types';
@@ -443,7 +443,7 @@ export function SongsPageClient({ creations, recent, favorites, userId, initialP
                   </p>
                 </div>
                 <Button asChild className="rounded-full px-8 bg-indigo-600 hover:bg-indigo-700">
-                  <LocaleLink href="/#gallery">Browse the Gallery</LocaleLink>
+                  <Link href="/#gallery">Browse the Gallery</Link>
                 </Button>
               </div>
             </Card>

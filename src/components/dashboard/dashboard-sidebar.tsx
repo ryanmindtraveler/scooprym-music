@@ -12,10 +12,10 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useSidebarLinks } from '@/config/sidebar-config';
-import { LocaleLink } from '@/i18n/navigation';
 import { authClient } from '@/lib/auth/auth-client';
 import { Routes } from '@/routes';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import type * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Logo } from '../layout/logo';
@@ -51,10 +51,10 @@ export function DashboardSidebar({ ...props }: React.ComponentProps<typeof Sideb
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:p-1.5!">
-              <LocaleLink href={Routes.Root} locale="en">
+              <Link href={Routes.Root}>
                 <Logo className="size-5" />
                 <span className="truncate font-semibold text-base">{t('Metadata.name')}</span>
-              </LocaleLink>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
