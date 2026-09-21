@@ -114,7 +114,7 @@ export async function processRadarCreation(candidateId: string) {
       ) {
         const stepId = await startWorkflowStage(job.runId, 'source_ready');
         const source = await prepareSourceMaterial({ newsUrl: job.sourceUrl, prompt: job.sourceTitle });
-        const recommendation = await recommendSourceStyle(job.sourceUrl, job.sourceTitle, 'en', source);
+        const recommendation = await recommendSourceStyle(job.sourceUrl, job.sourceTitle, source);
         const direction = recommendation.tags.join(', ');
         const recipe = buildDynamicProductionRecipe({ direction, storyContext: `${job.sourceTitle}\n${source.text}` });
         if (!recipe) throw new Error('Automatic production recipe could not be selected');

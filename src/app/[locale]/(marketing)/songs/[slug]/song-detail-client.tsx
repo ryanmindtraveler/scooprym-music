@@ -16,7 +16,6 @@ import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/son
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2, Sparkles } from 'lucide-react';
-import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef } from 'react';
@@ -58,7 +57,6 @@ export function SongDetailClient({
   initialComments,
   viewer,
 }: SongDetailClientProps) {
-  const locale = useLocale();
   const tNavbar = useTranslations('Marketing.navbar');
 
   // Global Player Store
@@ -233,7 +231,7 @@ export function SongDetailClient({
                     className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none"
                     style={{ color: accentColor }}
                   >
-                    {locale.startsWith('zh') ? '新闻背景' : 'Background'}
+                    Background
                   </span>
                 </div>
                 <h2 className="text-pretty font-serif text-base sm:text-lg font-black leading-[1.3] tracking-tight text-slate-900 dark:text-white">
@@ -489,7 +487,6 @@ function FormattedLyricsView({
   accentColor?: string;
   className?: string;
 }) {
-  const locale = useLocale();
   const { currentTime, isPlaying, currentSong } = usePlayerStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -498,7 +495,7 @@ function FormattedLyricsView({
   if (!lyrics) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-slate-400 italic">
-        <span>{locale.startsWith('zh') ? '这首歌暂时没有可显示的歌词。' : 'No lyrics available for this track.'}</span>
+        <span>No lyrics available for this track.</span>
       </div>
     );
   }

@@ -6,9 +6,9 @@ import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { format, formatDistanceToNow } from 'date-fns';
-import { enUS, zhCN } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, Clock3, Headphones, Music2, Pause, Play } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 
 export interface RecentListeningSong extends Song {
@@ -23,8 +23,7 @@ interface RecentListeningListProps {
 
 export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: RecentListeningListProps) {
   const t = useTranslations('Dashboard.activity');
-  const locale = useLocale();
-  const dateLocale = locale === 'zh' ? zhCN : enUS;
+  const dateLocale = enUS;
   const currentSong = usePlayerStore((state) => state.currentSong);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const play = usePlayerStore((state) => state.play);

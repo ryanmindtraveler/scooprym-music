@@ -8,7 +8,7 @@ import {
 } from '@/lib/music/production-recipe';
 import { cn } from '@/lib/utils';
 import { AudioLines, Lock, RefreshCw, SlidersHorizontal, Unlock } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
 interface ProductionRecipePreviewProps {
@@ -33,7 +33,6 @@ export function ProductionRecipePreview({
   onFineTune,
 }: ProductionRecipePreviewProps) {
   const t = useTranslations('Dashboard.admin.createStudio');
-  const locale = useLocale();
   const recommendedRecipe = useMemo(
     () => buildDynamicProductionRecipe({ direction, storyContext, lyrics }),
     [direction, storyContext, lyrics]
@@ -101,11 +100,7 @@ export function ProductionRecipePreview({
               </span>
             </div>
             <p className="mt-0.5 truncate text-[9px] font-medium text-slate-500 dark:text-slate-400">
-              {isManualChoice
-                ? t('alternateRecipeReady')
-                : locale === 'zh'
-                  ? t('recipeRecommendedReason')
-                  : explainProductionRecipeSelection(recipe)}
+              {isManualChoice ? t('alternateRecipeReady') : explainProductionRecipeSelection(recipe)}
             </p>
           </div>
 
@@ -141,24 +136,20 @@ export function ProductionRecipePreview({
           </div>
         </div>
 
-        {locale !== 'zh' && (
-          <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-dashed border-slate-200/90 pt-2.5 dark:border-white/10">
-            <RecipeLine label="Foundation" value={recipe.foundation} />
-            <RecipeLine label="Groove" value={recipe.groove} />
-            <RecipeLine label="Vocal" value={recipe.vocal} />
-            <RecipeLine label="Colors" value={recipe.colors.join(' + ')} />
-          </div>
-        )}
-        {locale !== 'zh' && (
-          <button
-            type="button"
-            onClick={onFineTune}
-            className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-300"
-          >
-            <SlidersHorizontal className="size-3" />
-            {t('fineTuneRecipe')}
-          </button>
-        )}
+        <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-dashed border-slate-200/90 pt-2.5 dark:border-white/10">
+          <RecipeLine label="Foundation" value={recipe.foundation} />
+          <RecipeLine label="Groove" value={recipe.groove} />
+          <RecipeLine label="Vocal" value={recipe.vocal} />
+          <RecipeLine label="Colors" value={recipe.colors.join(' + ')} />
+        </div>
+        <button
+          type="button"
+          onClick={onFineTune}
+          className="mt-2 flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.14em] text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-300"
+        >
+          <SlidersHorizontal className="size-3" />
+          {t('fineTuneRecipe')}
+        </button>
       </div>
     </section>
   );

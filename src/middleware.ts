@@ -1,17 +1,11 @@
 import createMiddleware from 'next-intl/middleware';
 import { type NextRequest, NextResponse } from 'next/server';
-import { DEFAULT_LOCALE, LOCALES, LOCALE_COOKIE_NAME, routing } from './i18n/routing';
+import { routing } from './i18n/routing';
 import { getPublicEnglishPath } from './lib/urls/public-routing';
 import { isRetiredRoute, retiredRouteResponse } from './lib/urls/retired-routes';
 import { DEFAULT_LOGIN_REDIRECT, protectedRoutes, routesNotAllowedByLoggedInUsers } from './routes';
 
 const intlMiddleware = createMiddleware(routing);
-const songIntlMiddleware = createMiddleware({
-  ...routing,
-  locales: [DEFAULT_LOCALE],
-  // 歌曲与八卦正文目前只有英文版本，不能向搜索引擎声明不存在的翻译页。
-  alternateLinks: false,
-});
 
 /**
  * 1. Next.js middleware
@@ -121,21 +115,6 @@ export default async function middleware(req: NextRequest) {
     // 规范语言后继续执行认证检查，不能提前放行用户受保护页面。
   }
 
-  // Handle internal docs link redirection for internationalization
-  // Check if this is a docs page without locale prefix
-  if (publicPath === null && (nextUrl.pathname.startsWith('/docs/') || nextUrl.pathname === '/docs')) {
-    // Get the user's preferred locale from cookie
-    const localeCookie = req.cookies.get(LOCALE_COOKIE_NAME);
-    const preferredLocale = localeCookie?.value;
-
-    // If user has a non-default locale preference, redirect to localized version
-    if (preferredLocale && preferredLocale !== DEFAULT_LOCALE && LOCALES.includes(preferredLocale)) {
-      const localizedPath = `/${preferredLocale}${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
-      console.log('<< middleware end, redirecting docs link to preferred locale:', localizedPath);
-      return NextResponse.redirect(new URL(localizedPath, nextUrl));
-    }
-  }
-
   // do not use getSession() here, it will cause error related to edge runtime
 
   // Check session using cookie instead of making HTTP request to avoid fetch failures
@@ -144,20 +123,8 @@ export default async function middleware(req: NextRequest) {
   const isLoggedIn = !!sessionCookie;
   // console.log('middleware, isLoggedIn', isLoggedIn);
 
-  // Get the pathname of the request (e.g. /zh/dashboard to /dashboard)
-  const pathnameWithoutLocale = getPathnameWithoutLocale(nextUrl.pathname, LOCALES);
-
-  // 歌曲搜索落地页只有英文正文；把带非默认语言前缀的重复 URL 合并到唯一英文版本。
-  const localePrefix = nextUrl.pathname.split('/')[1];
-  if (
-    localePrefix &&
-    localePrefix !== DEFAULT_LOCALE &&
-    LOCALES.includes(localePrefix) &&
-    pathnameWithoutLocale.startsWith('/songs/')
-  ) {
-    const canonicalSongUrl = new URL(`${pathnameWithoutLocale}${nextUrl.search}`, nextUrl);
-    return NextResponse.redirect(canonicalSongUrl, 308);
-  }
+  // /en 与 /zh 已在上方归并；后续认证逻辑只处理无语言前缀的英文路径。
+  const pathnameWithoutLocale = nextUrl.pathname;
 
   // If the route can not be accessed by logged in users, redirect if the user is logged in
   if (isLoggedIn) {
@@ -186,15 +153,7 @@ export default async function middleware(req: NextRequest) {
 
   // Apply intlMiddleware for all routes
   console.log('<< middleware end, applying intlMiddleware');
-  return publicPath !== null ? songIntlMiddleware(req) : intlMiddleware(req);
-}
-
-/**
- * Get the pathname of the request (e.g. /zh/dashboard to /dashboard)
- */
-function getPathnameWithoutLocale(pathname: string, locales: string[]): string {
-  const localePattern = new RegExp(`^/(${locales.join('|')})/`);
-  return pathname.replace(localePattern, '/');
+  return intlMiddleware(req);
 }
 
 /**

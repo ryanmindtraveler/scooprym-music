@@ -10,25 +10,17 @@ export const size = {
 
 export const contentType = 'image/png';
 
-function getOgCopy(locale: string) {
-  const isZh = locale.startsWith('zh');
-
+function getOgCopy() {
   return {
-    isZh,
-    subtitle: isZh ? '每日发布' : 'Daily Meme Songs from',
-    highlight: isZh ? '爆红时刻梗歌' : 'Viral Moments',
-    badge: isZh ? '听 · 笑 · 分享' : 'Listen · Laugh · Share',
-    alt: isZh ? 'ScoopRYM — 每日爆红时刻梗歌' : 'ScoopRYM — Daily Meme Songs from Viral Moments',
+    subtitle: 'Daily Meme Songs from',
+    highlight: 'Viral Moments',
+    badge: 'Listen · Laugh · Share',
+    alt: 'ScoopRYM — Daily Meme Songs from Viral Moments',
   };
 }
 
-export default async function Image({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  const copy = getOgCopy(locale);
+export default async function Image() {
+  const copy = getOgCopy();
   const headerStore = await headers();
   const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host');
   const proto = headerStore.get('x-forwarded-proto') ?? 'https';
@@ -212,13 +204,8 @@ export default async function Image({
   );
 }
 
-export async function generateImageMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  const copy = getOgCopy(locale);
+export async function generateImageMetadata() {
+  const copy = getOgCopy();
 
   return [
     {

@@ -3,14 +3,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import middleware from './middleware';
 
 describe('公开页面规范地址', () => {
-  it.each(['/auth/login', '/dashboard', '/docs', '/unknown-page'])('非后台中文地址统一英文：%s', async (path) => {
-    vi.stubEnv('NODE_ENV', 'production');
-    const response = await middleware(
-      new NextRequest(`https://scooprym.app/zh${path}?from=test`, { headers: { host: 'scooprym.app' } })
-    );
-    expect(response.status).toBe(308);
-    expect(response.headers.get('location')).toBe(`https://scooprym.app${path}?from=test`);
-  });
+  it.each(['/auth/login', '/dashboard', '/unknown-page', '/admin/dashboard'])(
+    '历史中文地址统一英文：%s',
+    async (path) => {
+      vi.stubEnv('NODE_ENV', 'production');
+      const response = await middleware(
+        new NextRequest(`https://scooprym.app/zh${path}?from=test`, { headers: { host: 'scooprym.app' } })
+      );
+      expect(response.status).toBe(308);
+      expect(response.headers.get('location')).toBe(`https://scooprym.app${path}?from=test`);
+    }
+  );
 
   it('英文用户页面仍保留认证保护', async () => {
     vi.stubEnv('NODE_ENV', 'production');
@@ -20,15 +23,13 @@ describe('公开页面规范地址', () => {
     expect(response.headers.get('location')).toContain('/auth/login?callbackUrl=');
   });
 
-  it('管理后台保留中文', async () => {
+  it('已退出页面的中文旧地址直接返回 410', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     const response = await middleware(
-      new NextRequest('https://scooprym.app/zh/admin/dashboard', {
-        headers: { host: 'scooprym.app', cookie: 'better-auth.session_token=test' },
-      })
+      new NextRequest('https://scooprym.app/zh/docs?from=test', { headers: { host: 'scooprym.app' } })
     );
+    expect(response.status).toBe(410);
     expect(response.headers.get('location')).toBeNull();
-    expect(response.headers.get('x-middleware-next')).toBe('1');
   });
   afterEach(() => vi.unstubAllEnvs());
 
@@ -43,6 +44,21 @@ describe('公开页面规范地址', () => {
     expect(response.headers.get('location')).toBe('https://scooprym.app/songs/example?from=share');
   });
 
+  it.each([
+    ['http://scooprym.app/about', 'scooprym.app', 'http', 'https://scooprym.app/about'],
+    ['http://www.scooprym.app/zh/about', 'www.scooprym.app', 'http', 'https://scooprym.app/about'],
+    ['https://www.scooprym.app/en/about', 'www.scooprym.app', 'https', 'https://scooprym.app/about'],
+  ])('协议、主机和语言前缀一次永久归并：%s', async (url, host, proto, expected) => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const response = await middleware(
+      new NextRequest(url, {
+        headers: { host, 'x-forwarded-host': host, 'x-forwarded-proto': proto },
+      })
+    );
+    expect(response.status).toBe(308);
+    expect(response.headers.get('location')).toBe(expected);
+  });
+
   it('中文公开首页重定向到英文首页', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     const response = await middleware(
@@ -55,7 +71,7 @@ describe('公开页面规范地址', () => {
     vi.stubEnv('NODE_ENV', 'production');
     const response = await middleware(
       new NextRequest('https://scooprym.app/songs/example', {
-        headers: { host: 'scooprym.app', cookie: 'NEXT_LOCALE=zh' },
+        headers: { host: 'scooprym.app', cookie: 'NEXT_LOCALE=en' },
       })
     );
     expect(response.headers.get('location')).toBeNull();

@@ -32,7 +32,6 @@ import {
   Play,
   Share2,
 } from 'lucide-react';
-import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -58,7 +57,6 @@ export function SongDetailView({
   variant = 'card', // 'card' | 'clean'
   // layoutMode = 'default',
 }: SongDetailViewProps) {
-  const locale = useLocale();
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
   const currentTime = usePlayerStore((state) => state.currentTime);
@@ -398,9 +396,7 @@ export function SongDetailView({
                       <div className="p-1.5 rounded-md bg-white/5">
                         <Newspaper className="size-3.5" />
                       </div>
-                      <span className="text-[10px] font-black tracking-[0.2em]">
-                        {locale.startsWith('zh') ? '背景' : 'Background'}
-                      </span>
+                      <span className="text-[10px] font-black tracking-[0.2em]">Background</span>
                     </div>
 
                     <Tooltip>
@@ -429,15 +425,7 @@ export function SongDetailView({
                         side="left"
                         className="text-xs bg-black/80 border-white/10 backdrop-blur-xl text-white"
                       >
-                        <p>
-                          {getSourceUrl(song.sourceUrl)
-                            ? locale.startsWith('zh')
-                              ? '查看来源'
-                              : 'Read Source'
-                            : locale.startsWith('zh')
-                              ? '搜索话题'
-                              : 'Search Topic'}
-                        </p>
+                        <p>{getSourceUrl(song.sourceUrl) ? 'Read Source' : 'Search Topic'}</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -476,7 +464,7 @@ export function SongDetailView({
                 isClean && 'text-slate-400'
               )}
             >
-              <Disc3 className="size-4" /> {locale.startsWith('zh') ? '歌词' : 'Lyrics'}
+              <Disc3 className="size-4" /> Lyrics
             </span>
             {song.category && (
               <span className="text-[10px] text-white/30 uppercase border border-white/10 px-2 py-0.5 rounded-full">
@@ -525,7 +513,6 @@ function FormattedLyricsView({
   children?: React.ReactNode;
   lineClassName?: string;
 }) {
-  const locale = useLocale();
   const { currentTime, isPlaying, currentSong } = usePlayerStore();
 
   // Refs for scroll control
@@ -541,7 +528,7 @@ function FormattedLyricsView({
           isClean && 'text-slate-400'
         )}
       >
-        <span>{locale.startsWith('zh') ? '这首歌暂时没有可显示的歌词。' : 'No lyrics available for this track.'}</span>
+        <span>No lyrics available for this track.</span>
       </div>
     );
   }

@@ -157,7 +157,6 @@ describe('热点后台创作队列', () => {
     expect(mocks.recommend).toHaveBeenCalledWith(
       'https://example.com/news',
       'News',
-      'en',
       expect.objectContaining({ text: expect.stringContaining('needle') })
     );
     expect(mocks.stageComplete).toHaveBeenCalledWith(

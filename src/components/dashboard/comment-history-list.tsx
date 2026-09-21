@@ -4,9 +4,9 @@ import { LocaleLink } from '@/i18n/navigation';
 import { slugify } from '@/lib/utils';
 import { Routes } from '@/routes';
 import { format, formatDistanceToNow } from 'date-fns';
-import { enUS, zhCN } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, MessageSquareText, Music2 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 
 export interface CommentHistoryItem {
@@ -27,8 +27,7 @@ interface CommentHistoryListProps {
 
 export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryListProps) {
   const t = useTranslations('Dashboard.activity');
-  const locale = useLocale();
-  const dateLocale = locale === 'zh' ? zhCN : enUS;
+  const dateLocale = enUS;
   if (comments.length === 0) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-white/60 px-6 text-center shadow-sm backdrop-blur-lg">

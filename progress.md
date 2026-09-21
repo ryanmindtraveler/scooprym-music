@@ -1,7 +1,8 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-20 16:35_
+_Last updated: 2026-09-21 15:58_
 
 ## Pinned
+- 2026-09-21 15:58：用户明确要求全站只支持英文 `en`；公开页、认证页和管理后台均不得再生成中文页面。`zh` 不再是受支持语言，仅允许历史 `/zh/*` 与 `/en/*` URL 通过 308 归并到英文规范地址；已退出路由继续返回 410，不得恢复。
 - 2026-09-20 15:10：用户明确选择套餐页“保留套餐购买，仅限制登录访问并禁止索引”；不得以旧路由退出为由停用套餐支付。
 - 2026-09-20 13:13：用户明确 /features/* 旧功能页早已弃用，不得再次恢复为 SEO 专题或增加入口；正常 /songs 曲库及分页保留。用户明确授权下架中文作品，公开站仅保留英文作品。
 - 2026-09-04 22:39：用户明确要求歌曲下载取消付费会员限制，账号登录即可下载；未登录用户仍需先登录。
@@ -40,6 +41,7 @@ _Last updated: 2026-09-20 16:35_
 - 2026-07-21 11:37：Gallery 内容扩容保持现有业务流程与卡片结构不变，继续以新闻标题为信息优先级，并保留封面、播放、来源和歌词入口。
 
 ## Decisions
+- 2026-09-21 15:58：语言架构最终确定为单语言 `en`：从 website i18n 配置移除 `zh`，删除 `messages/zh.json`、全部 `*.zh` 内容、语言切换器及已弃用双语 features 配置；公开页、认证与后台统一英文，风格推荐接口及提示固定英文。中间件只保留历史 `/zh`、`/en` URL 的 308 英文归并兼容，已退出路由维持 410。本决策取代 2026-09-10“只有 admin 允许中文”的历史方案。
 - 2026-09-04 17:10：按用户合并审查与修正的要求，歌词普通路径改为“策划 → 单稿 → 一次完整定稿”；`lyrics-finalize` 一次调用共同检查并修正事实、创作和格式问题，强稿原样保留，取代 16:19 的“独立轻量审查后按需模型修订”方案。原策划与单稿提示词、模型配置保持不变，不新增人工赞同门槛。
 - 2026-09-04 16:19：按用户要求，歌词执行链改为“规划 → 单稿完整成歌 → 独立轻量审查 → 仅存在具体结构、事实或艺术问题时修订一次”；不再进行双稿竞争与无条件整合，保留原 Meme、事实、艺术和时长标准。本轮取代历史双稿执行方案，旧 A/B 检查点与定稿保持兼容。
 - 2026-09-03 11:13：按用户明确要求，内容安全尺度确定调整为宽松的公开事件讽刺政策：默认允许公开明星吐槽、粗口、调侃、角色对白、假广告及明显荒诞比喻；风险词、名人姓名或泛化名誉风险不得单独触发 `review`。用户既定敏感话题核心禁区与捏造真实严重指控仍为 `block`，不新增人工赞同步骤，不改变双稿竞争、艺术性与事件原生 Meme 创作结构。
@@ -186,6 +188,7 @@ _Last updated: 2026-09-20 16:35_
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
 ## TODO
+- [P1][DONE][#34] 全站单语言英文架构已完成：移除 `zh` i18n 配置、中文消息与内容、语言切换及弃用双语 features 配置，公开页/认证/后台不再生成中文页面；保留历史 `/zh`、`/en` 的 308 英文归并与退出路由 410。风格推荐接口及提示固定英文。验证完成：content 生成、`tsc`、lint、全量 Vitest 86 个文件 503 项全部通过（含真实数据库事务回滚集成测试，0 跳过）、production build 成功；本地生产请求 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均为 308，`/zh/docs` 为 410；首页无 zh hreflang 与中文文案，sitemap 无 `/zh`。（2026-09-21 16:18）
 - [P1][DONE][#33] 弃用路由/API 与套餐访问边界已完成正式部署及验收：`4df1d42e581676cd172e553ad8d54b4dea37c01a` 已推送 `origin/master`，Vercel `dpl_B31zW6gR9RnSAh2hCKPr2XEYzDiw` READY，绑定 `scooprym.app` / `www`。线上 verify-retired-routes 检查 18 个旧页面、4 个旧 API 的 GET/POST/OPTIONS 全部 410/noindex；匿名 pricing 真实 307 跳登录。真实已登录 Chrome 用户 Ryan Gong 可见套餐及 3 个 Get Started 按钮，DOM robots=noindex,nofollow，未付款。公开曲库 5 页 203 首无重复，210 个 sitemap URL 全量零失败，报告 `F:/CodexHome/seo-audit-2026-09-20/retired-cleanup-public-audit.json`。32 项 Vitest、Biome 与最终 build 通过；旧 docs 500 路由已退出为 410，本地生产服务已停止。#32 其余语言门禁、管理列表及统一发布规则继续待办；不代表全部 SEO 问题解决或曝光恢复。本次仅本地记录，不再提交部署。（2026-09-20 15:21）
 - [P1][OPEN][#32] 第三轮只读审计发现的产品边界及 SEO 问题尚未修复：清理仍公开的模板/空壳路由并排查 docs 500；核实 pricing 与当前产品定位（不得擅停支付）；修正后台漏列非管理员作者公开作品、补齐发布语言门禁、统一失败状态过滤及到期发布 productCheck 重验。报告：`F:/CodexHome/seo-audit-2026-09-20/第三轮产品边界与SEO问题清单.md`。本轮仅审计与本地记录，未修改业务代码或生产数据，未提交部署。（2026-09-20 15:00）
 - [P1][DONE][#31] 旧功能页撤销与中文作品下架已完成部署验收：`f5354ac60c02da61f10c99f5a8f1c9e88e82ad2a` 已推送 `origin/master`，Vercel `dpl_8HEHGncg6s9bxN16kTYqATeokhx7` Ready，绑定 `scooprym.app` / `www`。线上 6 个旧功能页全部 404/noindex/无 canonical，首页无 features 入口；sitemap 210 个 URL 不含 features 或下架中文作品，中文作品直达 404，曲库 5 页 203 首。正式 210 个 URL 全量检查零失败；真实登录 Chrome 确认线上 gossip-roast 显示 404。本地服务已停止。证据：`F:/CodexHome/seo-audit-2026-09-20/final-production-audit.json` 及同目录 `retirement-live-regression.json`。此次仅本地最终记录，不再次提交部署；技术验收不代表曝光已恢复。（2026-09-20 13:19）
@@ -217,6 +220,7 @@ _Last updated: 2026-09-20 16:35_
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
 ## Done
+- 2026-09-21 16:18：[#34] 全站仅英文架构变更完成：website i18n 只保留 `en`，已删除 `messages/zh.json`、全部 `*.zh` 内容、语言切换器和已弃用双语 features 配置；公开页、认证、后台与风格推荐链路统一英文。历史 `/zh`、`/en` 仅作 308 英文归并兼容，退出路由保持 410。content 生成、TypeScript、lint、production build 均成功；启用 `RUN_DATABASE_TESTS=1` 后全量 Vitest 86 个文件、503 项全部通过、0 跳过。新增协议/主机/语言前缀一次 308 归并回归；本地生产 HTTP 验证 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均 308，`/zh/docs` 为 410，首页无 zh hreflang/中文文案且 sitemap 无 `/zh`。（evidence: 本轮代码变更、构建/测试输出与本地生产 HTTP 验证）
 - 2026-09-20 16:35：GA 任务最终部署状态：代码 `df696b8` 已推送，Vercel `dpl_G6cZGh1UwDAZpPJs8dcVH6YpQLB4` 已 READY 并绑定 `scooprym.app`。生产 `/songs` 浏览器确认 Ryan Gong 已登录、Admin 入口可见，DOM 无 googletagmanager/google-analytics 脚本，管理员流量排除验证通过。两个 GA 关键事件及 song_id 维度已保存；普通访客生产事件实际入库尚未验证，不能宣称 GA 接收已完成验收。20 项测试与构建通过，本地 3100 服务已停止。本次仅更新本地记录，提交推送由主流程处理。（evidence: 主流程部署状态、生产浏览器及 GA 配置回读）
 - 2026-09-20 16:32：GA 公众听歌统计修复已提交并推送 master `df696b8cbaa6793c1df007bf7433d30a80c33cf9`；20 项测试、11 文件 Biome 与 pnpm build（含类型检查）通过。GA 仅在真实生产 origin、身份确认非 admin 且非 admin 路径加载，已加载标签使用 ga-disable 停用；管理员访问公开页也排除，匿名运营仍无法识别。5 类歌曲行为在自建 API 成功后镜像 GA，使用有限等待队列及同歌曲事件会话去重，不传用户/会话标识；playing 才记开始、累计实际播放 30 秒才有效、ended 且累计达到 90% 才听完、复制成功才记分享。真实登录 Chrome 本地 3100 验证 0:51 歌曲完整播放正常、本地无 GA 标签。（evidence: commit、主流程测试及浏览器验收）
 - 2026-09-20 16:32：GA 属性 529274494 已创建 song_play_qualified/song_share 关键事件（Create with code、每次事件、不设金额）与事件级歌曲 ID 维度 song_id，保存后回读确认，未删除历史数据。Vercel `dpl_G6cZGh1UwDAZpPJs8dcVH6YpQLB4` 当前 BUILDING，尚未完成线上验收或证实 GA 收到新事件；`docs/GA公众听歌统计.md` 已追加控制台实际配置，该追加尚未提交。（evidence: 主流程真实 GA 控制台配置与部署状态）
@@ -574,6 +578,7 @@ _Last updated: 2026-09-20 16:35_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-09-21 15:58：历史记录“2026-09-10 语言边界：只有 admin 允许中文”及其相关实现已被本轮明确决策取代；为保持审计历史不修改原记录。当前有效边界是包括 admin 在内的全站仅英文，`zh` 只作为历史 URL 重定向输入，不再属于应用语言或可生成页面。
 - 2026-09-20 16:18：Needs-Confirmation：建议分离后台运营流量、将已有歌曲行为事件接入 GA，并为推广链接添加 UTM；上述为分析改进建议，尚未实施，不用当前不完整歌曲事件数据推断播放量为零。
 - 2026-09-20 16:09：在用户已登录 Chrome3 的 Google（hl=en、gl=us）抽查搜索意图：`Karamo Brown skips Queer Eye interviews` 首屏主要为 CBS/People/Them 新闻、采访视频及 Reddit；`meme songs` 主要为已有热门梗曲合集、YouTube/Spotify 歌单及 Pixabay 音频下载。与本产品新闻启发的原创歌曲存在意图差异，但仅为样本推断，非搜索量分析，不证明无需求，也不能解释全部低流量。结合 GSC 113 展示/1 点击、旧汇总 195 已发现未索引及 `/songs` 实时可索引但正式记录未抓取，需区分抓取覆盖和搜索需求匹配两个层面，不保证流量恢复。本轮未修改代码、发布状态或 URL，未发布外部内容。（evidence: 主流程真实 Google 搜索与已核验 GSC 记录）
 - 2026-09-20 16:04：本轮证据未支持“持续服务器故障阻止抓取”；新地址 Discovery 抓取较少只是观察现象，不证明 Google 低优先级的原因。51 次 Discovery 不能当作 51 首新歌，2% 不是健康阈值；全域资源占比 64% JS、21% HTML 不自动表示错误。本轮无代码或配置改动。

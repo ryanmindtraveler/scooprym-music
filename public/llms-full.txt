@@ -24,7 +24,7 @@ Song generation requires login. The public entry point is the home page; generat
 
 ## Localization
 - Default language: English (no locale prefix)
-- Chinese: `/zh/...` (example: https://scooprym.app/zh/songs)
+- Language: English only. Historical `/zh/...` URLs permanently redirect to their English equivalents.
 
 ## What To Cite
 - For a specific track: cite the canonical song page `https://scooprym.app/songs/{title-slug}-{id}`

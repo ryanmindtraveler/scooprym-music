@@ -1,20 +1,10 @@
 import { VIBE_PERSONAS } from '@/components/create/form/create-music-data';
 import { describe, expect, it } from 'vitest';
-import zhMessages from '../../../messages/zh.json';
 import { EDITORIAL_STYLE_PROFILES, resolveEditorialStyleProfile } from './editorial-styles';
 import { LEGACY_VIBE_PERSONAS } from './legacy-vibes';
 import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from './production-recipe';
 
 describe('恢复主分支风格并合并', () => {
-  it('旧风格的名称、说明和原版配方都有中文翻译', () => {
-    const messages = zhMessages.Dashboard.admin.createStudio;
-    for (const preset of LEGACY_VIBE_PERSONAS) {
-      const direction = messages.directions[preset.id];
-      expect(direction.label).toMatch(/[\u4e00-\u9fff]/);
-      expect(direction.description).toMatch(/[\u4e00-\u9fff]/);
-      expect(messages.productionVariants[`${preset.id}_original`]).toContain('原版');
-    }
-  });
   it('保留 22 种预设和唯一自定义入口', () => {
     expect(LEGACY_VIBE_PERSONAS).toHaveLength(11);
     expect(VIBE_PERSONAS).toHaveLength(23);

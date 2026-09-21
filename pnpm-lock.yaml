@@ -239,9 +239,6 @@ importers:
       ddg-scraper:
         specifier: ^1.0.2
         version: 1.0.2
-      deepmerge:
-        specifier: ^4.3.1
-        version: 4.3.1
       dotenv:
         specifier: ^16.4.7
         version: 16.6.1

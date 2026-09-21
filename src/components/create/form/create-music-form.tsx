@@ -23,7 +23,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -95,7 +95,6 @@ export function CreateMusicForm({
   onReset,
 }: CreateMusicFormProps) {
   const t = useTranslations('Dashboard.admin.createStudio');
-  const locale = useLocale();
   const hasActiveWorkflowTask = useCreateStore((state) =>
     state.tasks.some(
       (task) =>
@@ -140,7 +139,7 @@ export function CreateMusicForm({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ newsLink, newsContent, locale: locale === 'zh' ? 'zh' : 'en' }),
+        body: JSON.stringify({ newsLink, newsContent }),
       });
       if (!response.ok) throw new Error('Recommendation failed');
       const result = await response.json();

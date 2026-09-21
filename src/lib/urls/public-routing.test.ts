@@ -16,7 +16,10 @@ describe('公开英文路由', () => {
   ])('%s 统一到 %s', (input, output) => {
     expect(getPublicEnglishPath(input)).toBe(output);
   });
-  it.each(['/zh/admin/create', '/api/songs'])('%s 不改变后台与非公开路径', (path) => {
+  it('/zh/admin/create 同样归并到英文后台', () => {
+    expect(getPublicEnglishPath('/zh/admin/create')).toBe('/admin/create');
+  });
+  it.each(['/api/songs', '/_next/static/app.js'])('%s 不改变内部路径', (path) => {
     expect(getPublicEnglishPath(path)).toBeNull();
   });
 });

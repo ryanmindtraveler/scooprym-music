@@ -9,7 +9,6 @@ const inputSchema = z
   .object({
     newsLink: z.string().trim().max(2048).default(''),
     newsContent: z.string().trim().max(30000).default(''),
-    locale: z.enum(['en', 'zh']).default('en'),
   })
   .refine((value) => Boolean(value.newsLink || value.newsContent));
 
@@ -22,9 +21,7 @@ export async function POST(request: Request) {
   const input = inputSchema.safeParse(await request.json().catch(() => null));
   if (!input.success) return NextResponse.json({ error: 'Invalid source input' }, { status: 400 });
   try {
-    return NextResponse.json(
-      await recommendSourceStyle(input.data.newsLink, input.data.newsContent, input.data.locale)
-    );
+    return NextResponse.json(await recommendSourceStyle(input.data.newsLink, input.data.newsContent));
   } catch {
     return NextResponse.json(
       { error: 'Could not recommend a style. Check the source and try again.' },

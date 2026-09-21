@@ -28,16 +28,14 @@ describe('独立风格推荐入口', () => {
   it('准确传入当前链接和背景，支持自定义推荐', async () => {
     const result = { styleId: 'viral_pop', tags: ['Boom Bap'], reason: '适合这个新闻' };
     mocks.recommend.mockResolvedValue(result);
-    const response = await POST(
-      request({ newsLink: 'https://example.com/story-a', newsContent: '背景A', locale: 'zh' })
-    );
-    expect(mocks.recommend).toHaveBeenCalledWith('https://example.com/story-a', '背景A', 'zh');
+    const response = await POST(request({ newsLink: 'https://example.com/story-a', newsContent: '背景A' }));
+    expect(mocks.recommend).toHaveBeenCalledWith('https://example.com/story-a', '背景A');
     expect(await response.json()).toEqual(result);
   });
   it('仅正文也支持预设推荐', async () => {
     mocks.recommend.mockResolvedValue({ styleId: 'algorithm_circus', tags: ['Jersey Club'], reason: 'Fits' });
     expect((await POST(request({ newsContent: 'A viral game' }))).status).toBe(200);
-    expect(mocks.recommend).toHaveBeenCalledWith('', 'A viral game', 'en');
+    expect(mocks.recommend).toHaveBeenCalledWith('', 'A viral game');
   });
   it('提供商失败不泄露原始错误', async () => {
     mocks.recommend.mockRejectedValue(new Error('private provider credentials'));
