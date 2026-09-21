@@ -21,9 +21,9 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
-import { slugify } from '@/lib/utils';
 
 export function MusicPlayerEnhanced() {
   const { isPlaying, currentSong, togglePlay, setDuration, setCurrentTime: setStoreTime } = usePlayerStore();
@@ -169,7 +169,7 @@ export function MusicPlayerEnhanced() {
   const showGeneratingUI = isGenerating;
   const isCoverStillLoading = !currentSong.coverImageUrl && currentSong.audioUrl;
 
-  const activeShareUrl = `${getCanonicalBaseUrl()}/songs/${slugify(currentSong.title || 'song')}-${currentSong.id}`;
+  const activeShareUrl = `${getCanonicalBaseUrl()}/songs/${getSongCanonicalSlug(currentSong)}`;
 
   // Used for slider value to avoid jumping
   const sliderValue = [currentTime];

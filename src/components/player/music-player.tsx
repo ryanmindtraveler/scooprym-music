@@ -3,8 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { LoadingTicker } from '@/components/ui/loading-ticker';
 import { Slider } from '@/components/ui/slider';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
-import { cn, slugify } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -144,8 +145,7 @@ export function MusicPlayer({ className, shareUrl: propShareUrl }: MusicPlayerPr
   };
 
   const activeShareUrl =
-    propShareUrl ||
-    (currentSong ? `${getCanonicalBaseUrl()}/songs/${slugify(currentSong.title || 'song')}-${currentSong.id}` : '');
+    propShareUrl || (currentSong ? `${getCanonicalBaseUrl()}/songs/${getSongCanonicalSlug(currentSong)}` : '');
 
   const handleDownload = async () => {
     if (!currentSong?.audioUrl || isDownloading) return;

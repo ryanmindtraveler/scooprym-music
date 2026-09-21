@@ -1,8 +1,8 @@
 'use client';
 
 import { Slider } from '@/components/ui/slider';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
-import { slugify } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { motion } from 'framer-motion';
@@ -97,8 +97,7 @@ export function HeaderPlayer({
   const handleShare = async () => {
     const targetSong = contextSong || currentSong;
     if (!targetSong) return;
-    const songSlug = slugify(targetSong.title || 'song');
-    const shareUrl = `${getCanonicalBaseUrl()}/songs/${songSlug}-${targetSong.id}`;
+    const shareUrl = `${getCanonicalBaseUrl()}/songs/${getSongCanonicalSlug(targetSong)}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success('Link copied to clipboard!');

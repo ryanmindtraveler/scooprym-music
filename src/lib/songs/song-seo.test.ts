@@ -49,6 +49,7 @@ describe('歌曲详情 SEO', () => {
 
   it('URL 只使用不可变歌曲标识', () => {
     expect(getSongCanonicalSlug(song)).toBe(song.id);
+    expect(getSongCanonicalSlug({ id: song.id })).toBe(song.id);
   });
 
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {

@@ -2,6 +2,7 @@ import type { Song } from '@/types/song';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
 
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'>;
+type SongIdentity = Pick<Song, 'id'>;
 
 /** 路由和国际化重写可能保留百分号编码，比较规范路径前统一解码一次。 */
 export function decodeSongSlug(slug: string) {
@@ -34,7 +35,7 @@ export function getSongStoryContext(song: SeoSong) {
   return context.startsWith('A strange true story') ? '' : context;
 }
 
-export function getSongCanonicalSlug(song: SeoSong) {
+export function getSongCanonicalSlug<T extends SongIdentity>(song: T) {
   // UUID 是歌曲创建后唯一不变的公开身份。标题、摘要和歌词都允许编辑，
   // 因此不能再参与 canonical URL；历史标题型地址仍可从末尾 UUID 解析并 308 归并。
   return song.id;
