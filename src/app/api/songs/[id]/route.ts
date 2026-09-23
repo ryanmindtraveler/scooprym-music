@@ -3,6 +3,8 @@ import { generationAttempt, song, story } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { buildStoryBrief } from '@/features/full-songs/services/full-songs-helpers';
 import { getSession } from '@/lib/auth/server';
+import { getSongIndexNowPaths, notifyIndexNow } from '@/lib/seo/indexnow';
+import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
 import { getSongSourceCompatFields, getSongSourceSummary } from '@/lib/songs/song-source';
 import { deleteFile } from '@/storage';
 import { and, eq, sql } from 'drizzle-orm';
@@ -75,6 +77,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
     const [row] = await db
       .select({
         id: song.id,
+        isPublished: song.isPublished,
         audioKey: song.audioKey,
         coverImageKey: song.coverImageKey,
         processingStatus: latestAttempt.processingStatus,
@@ -115,6 +118,11 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
         { success: false, error: 'Song state changed; wait for generation to finish and try again' },
         { status: 409 }
       );
+    }
+
+    if (row.isPublished) {
+      revalidatePublicSongs();
+      await notifyIndexNow(getSongIndexNowPaths([id]));
     }
 
     const storageKeys = [deleted.audioKey, deleted.coverImageKey].filter((key): key is string => !!key);

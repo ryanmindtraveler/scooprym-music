@@ -7,8 +7,9 @@ import { song, songCreationRun } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { auth } from '@/lib/auth/auth';
 import { recordPublicationWorkflow } from '@/lib/creation/song-creation-workflow';
+import { getSongIndexNowPaths, notifyIndexNow } from '@/lib/seo/indexnow';
 import { Routes } from '@/routes';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 
@@ -57,7 +58,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
     }
 
     const now = new Date();
-    await db
+    const changed = await db
       .update(song)
       .set({
         isPublished,
@@ -65,7 +66,15 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
         scheduledAt: null,
         updatedAt: now,
       })
-      .where(eq(song.id, songId));
+      .where(
+        and(
+          eq(song.id, songId),
+          isPublished ? or(eq(song.isPublished, false), isNull(song.isPublished)) : eq(song.isPublished, true)
+        )
+      )
+      .returning({ id: song.id });
+
+    if (changed.length === 0) return { success: true };
 
     await recordPublicationWorkflow(songId, isPublished ? 'published' : 'publish_ready', {
       action: isPublished ? 'published' : 'unpublished',
@@ -76,6 +85,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.Dashboard);
     revalidatePublicSongs();
+    await notifyIndexNow(getSongIndexNowPaths([songId]));
 
     return {
       success: true,
@@ -127,10 +137,17 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
       return { success: false, error: 'The song must pass the product check before scheduling' };
     }
 
-    await db
+    const [previous] = await db
+      .select({ isPublished: song.isPublished })
+      .from(song)
+      .where(eq(song.id, songId))
+      .limit(1);
+
+    const changed = await db
       .update(song)
       .set({ isPublished: false, publishedAt: null, scheduledAt, updatedAt: new Date() })
-      .where(eq(song.id, songId));
+      .where(eq(song.id, songId))
+      .returning({ id: song.id });
     await recordPublicationWorkflow(songId, 'publish_ready', {
       action: 'scheduled',
       scheduledAt: scheduledAt.toISOString(),
@@ -139,6 +156,9 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.AdminDashboard);
     revalidatePublicSongs();
+    if (previous?.isPublished && changed.length > 0) {
+      await notifyIndexNow(getSongIndexNowPaths([songId]));
+    }
     return { success: true };
   } catch (error) {
     console.error('scheduleSongPublishAction error:', error);

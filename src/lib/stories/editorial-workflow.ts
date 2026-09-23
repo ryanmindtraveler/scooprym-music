@@ -1,6 +1,8 @@
 import { getDb } from '@/db';
 import { song, storyCandidate } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { getSongIndexNowPaths, notifyIndexNow } from '@/lib/seo/indexnow';
+import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
 import { PUBLIC_STORY_CANDIDATE_LIMIT } from '@/lib/stories/story-voting';
 import { scanAndStoreRadar } from '@/lib/story-radar/scan';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
@@ -105,6 +107,11 @@ export async function publishDueSongs(now = new Date()) {
       )
     )
     .returning({ id: song.id });
+
+  if (published.length > 0) {
+    revalidatePublicSongs();
+    await notifyIndexNow(getSongIndexNowPaths(published.map((row) => row.id)));
+  }
 
   return { published: published.length };
 }
