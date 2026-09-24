@@ -1,0 +1,73 @@
+/* 左侧信息可收缩并独立滚动，始终为唱片和控制栏留出空间。 */
+.station {
+  min-height: 0;
+}
+
+.info {
+  min-height: 0;
+  flex: 0 1 auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 35%) transparent;
+}
+
+.vinylSection {
+  min-height: 0;
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  margin-top: clamp(0.75rem, 2dvh, 1.5rem);
+  gap: clamp(0.75rem, 1.6dvh, 1.25rem);
+}
+
+.vinyl {
+  width: clamp(320px, min(42dvh, 32vw), 560px);
+  height: clamp(320px, min(42dvh, 32vw), 560px);
+}
+
+.controls {
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) and (max-height: 1200px) {
+  .vinyl {
+    width: clamp(190px, min(34dvh, 26vw), 380px);
+    height: clamp(190px, min(34dvh, 26vw), 380px);
+  }
+}
+
+@media (min-width: 768px) and (max-height: 960px) {
+  .vinyl {
+    width: clamp(190px, min(32dvh, 24vw), 340px);
+    height: clamp(190px, min(32dvh, 24vw), 340px);
+  }
+}
+
+@media (min-width: 768px) and (max-height: 900px) {
+  .vinyl {
+    width: clamp(170px, min(22dvh, 20vw), 220px);
+    height: clamp(170px, min(22dvh, 20vw), 220px);
+  }
+
+  .tonearm {
+    top: -0.75rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .info {
+    overflow: visible;
+  }
+
+  .vinylSection {
+    gap: 1.25rem;
+  }
+
+  .vinyl {
+    width: clamp(210px, 62vw, 300px);
+    height: clamp(210px, 62vw, 300px);
+  }
+
+  .tonearm {
+    top: -0.75rem;
+  }
+}

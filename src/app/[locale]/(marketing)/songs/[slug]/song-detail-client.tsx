@@ -22,6 +22,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
 import type { Song } from '@/types/song';
+import styles from './song-detail-layout.module.css';
 
 interface SongDetailClientProps {
   song: Song;
@@ -126,7 +127,7 @@ export function SongDetailClient({
   const secondaryAccent = secondary || '#ec4899';
 
   return (
-    <div className="relative flex w-full flex-col selection:bg-indigo-500/30 bg-[#f8fafc] dark:bg-[#07070c] no-scrollbar overflow-hidden">
+    <div className="relative flex w-full flex-col selection:bg-indigo-500/30 bg-[#f8fafc] dark:bg-[#07070c] no-scrollbar overflow-x-clip">
       {/* === APPLE MUSIC STYLE ADAPTIVE AMBIENT MESH GRADIENT === */}
       <div
         className="pointer-events-none fixed -top-48 left-1/4 size-[720px] rounded-full blur-[170px] transition-all duration-1000 opacity-25 dark:opacity-35 animate-[aurora_16s_ease-in-out_infinite]"
@@ -143,10 +144,15 @@ export function SongDetailClient({
       <div className="absolute inset-0 z-0 opacity-[0.025] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat mix-blend-overlay" />
 
       {/* === IMMERSIVE SPLIT LAYOUT === */}
-      <div className="relative z-10 flex min-h-dvh w-full max-w-[2200px] flex-col mx-auto pt-20 md:flex-row md:pt-24">
+      <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-[2200px] flex-col pt-20 md:flex-row">
         {/* LEFT: Sticky Vinyl Station (Fixed in place while scrolling page) */}
-        <div className="relative flex h-auto w-full flex-col justify-start overflow-visible p-6 md:sticky md:top-24 md:h-[calc(100vh-120px)] md:w-[45%] md:self-start md:p-8 lg:w-[40%] xl:w-[35%]">
-          <div className="relative z-20 w-full text-left mb-6 md:mb-10 pl-2">
+        <div
+          className={cn(
+            'relative flex h-auto w-full flex-col p-5 md:sticky md:top-20 md:h-[calc(100dvh-9rem)] md:w-[45%] md:self-start md:p-5 lg:w-[40%] xl:w-[35%]',
+            styles.station
+          )}
+        >
+          <div className={cn('relative z-20 mb-3 w-full pl-2 text-left', styles.info)}>
             {/* Breadcrumb Navigation */}
             <nav aria-label="breadcrumb" className="mb-3">
               <ol className="flex items-center text-xs font-semibold text-slate-400 dark:text-slate-500">
@@ -168,7 +174,7 @@ export function SongDetailClient({
               </ol>
             </nav>
 
-            <div className="mb-5">
+            <div className="mb-3">
               <div
                 className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-0.5 text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-300"
                 style={{
@@ -206,7 +212,7 @@ export function SongDetailClient({
               if (tags.length === 0) return null;
 
               return (
-                <div className="flex flex-wrap gap-2 mt-2 mb-6">
+                <div className="mt-2 mb-3 flex flex-wrap gap-2">
                   {tags.map((tag, i) => (
                     <span
                       key={i}
@@ -225,14 +231,28 @@ export function SongDetailClient({
             {/* News Background Inset Card - Frosted Glass */}
             {(song.newsSummary || getSourceUrl(song.sourceUrl)) && (
               <article className="group/text relative mt-5 w-full max-w-lg rounded-2xl border border-white/90 bg-white/75 p-5 text-left shadow-[0_12px_36px_rgba(15,23,42,0.04)] ring-1 ring-slate-900/4 backdrop-blur-3xl transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-white/6 dark:ring-white/10">
-                <div className="mb-2 flex items-center gap-2">
-                  <NewspaperIcon className="size-3.5 text-indigo-500" style={{ color: accentColor }} />
-                  <span
-                    className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none"
-                    style={{ color: accentColor }}
-                  >
-                    Background
-                  </span>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <div className="flex items-center gap-2">
+                    <NewspaperIcon className="size-3.5 text-indigo-500" style={{ color: accentColor }} />
+                    <span
+                      className="text-[11px] font-black tracking-[0.2em] text-indigo-600 dark:text-indigo-400 uppercase select-none"
+                      style={{ color: accentColor }}
+                    >
+                      Background
+                    </span>
+                  </div>
+                  {getSourceUrl(song.sourceUrl) && (
+                    <a
+                      href={getSourceUrl(song.sourceUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto inline-flex items-center gap-1.5 text-right text-xs font-black text-indigo-600 hover:text-pink-600 underline decoration-indigo-300 underline-offset-4 transition dark:text-indigo-300"
+                      style={{ color: accentColor }}
+                    >
+                      Read the original report
+                      <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
+                    </a>
+                  )}
                 </div>
                 <h2 className="text-pretty font-serif text-base sm:text-lg font-black leading-[1.3] tracking-tight text-slate-900 dark:text-white">
                   {searchHeadline}
@@ -242,23 +262,11 @@ export function SongDetailClient({
                     {storyContext}
                   </p>
                 )}
-                {getSourceUrl(song.sourceUrl) && (
-                  <a
-                    href={getSourceUrl(song.sourceUrl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3.5 inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 hover:text-pink-600 underline decoration-indigo-300 underline-offset-4 transition dark:text-indigo-300"
-                    style={{ color: accentColor }}
-                  >
-                    Read the original report
-                    <ExternalLink className="size-3" aria-hidden="true" />
-                  </a>
-                )}
               </article>
             )}
           </div>
 
-          <div className="relative z-10 w-full flex flex-col items-center gap-8 h-full justify-start md:justify-center">
+          <div className={cn('relative z-10 flex w-full flex-col items-center', styles.vinylSection)}>
             {/* 2. CENTERPIECE: Vinyl Player */}
             <div className="relative group cursor-pointer shrink-0" onClick={handlePlay}>
               {/* Dynamic Progress/Glow Ring */}
@@ -289,10 +297,11 @@ export function SongDetailClient({
               {/* Vinyl Disc */}
               <div
                 className={cn(
-                  'relative size-[300px] md:size-[420px] lg:size-[520px] rounded-full shadow-2xl bg-neutral-950 overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.01] ring-2 ring-white/20',
+                  'relative rounded-full shadow-2xl bg-neutral-950 overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.01] ring-2 ring-white/20',
                   'border-10 border-neutral-900',
                   'before:absolute before:inset-0 before:rounded-full before:bg-linear-to-tr before:from-transparent before:via-white/10 before:to-transparent before:z-20 before:pointer-events-none',
-                  'after:absolute after:inset-3 after:rounded-full after:border-40 after:border-neutral-900/80 after:z-10'
+                  'after:absolute after:inset-3 after:rounded-full after:border-40 after:border-neutral-900/80 after:z-10',
+                  styles.vinyl
                 )}
                 style={{
                   animation: isThisSongPlaying ? 'spin 6s linear infinite' : 'none',
@@ -346,6 +355,7 @@ export function SongDetailClient({
               <div
                 className={cn(
                   'absolute -top-8 -right-16 w-48 h-64 z-50 pointer-events-none transition-transform duration-1000 ease-in-out origin-[20%_10%]',
+                  styles.tonearm,
                   isThisSongPlaying ? 'rotate-25' : 'rotate-0'
                 )}
               >
@@ -370,6 +380,7 @@ export function SongDetailClient({
             <div
               className={cn(
                 'w-full max-w-md backdrop-blur-3xl p-2.5 pl-3.5 rounded-full border shadow-[0_16px_40px_rgba(15,23,42,0.06)] flex items-center gap-4 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl group/rail relative',
+                styles.controls,
                 isThisSongPlaying
                   ? 'bg-white/85 dark:bg-zinc-900/80 border-white/90 dark:border-white/15'
                   : 'bg-white/75 dark:bg-zinc-900/70 border-white/80 dark:border-white/10'
@@ -436,7 +447,7 @@ export function SongDetailClient({
         </div>
 
         {/* RIGHT: Lyrics and comments stay visible together on wide screens. */}
-        <div className="grid h-auto w-full min-h-0 grid-rows-[70vh_65vh] overflow-hidden bg-transparent md:sticky md:top-24 md:h-[calc(100vh-120px)] md:w-[55%] md:self-start md:grid-rows-[45%_55%] lg:w-[60%] xl:w-[65%] xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] xl:grid-rows-1 xl:overflow-visible">
+        <div className="grid h-auto w-full min-h-0 grid-rows-[70vh_65vh] overflow-hidden bg-transparent md:sticky md:top-20 md:h-[calc(100dvh-9rem)] md:w-[55%] md:self-start md:grid-rows-[45%_55%] lg:w-[60%] xl:w-[65%] xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] xl:grid-rows-1 xl:overflow-visible">
           <div className="relative flex min-h-0 items-center justify-center overflow-hidden p-6 md:p-8 xl:p-10">
             <FormattedLyricsView
               lyrics={song.lyrics}

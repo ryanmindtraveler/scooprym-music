@@ -1,9 +1,10 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { getDb } from '@/db';
-import { storyCandidate, storyRadarScan } from '@/db/schema';
+import { storyCandidate, storyCandidateTombstone, storyRadarScan } from '@/db/schema';
 import { and, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import { collectStoryRadarCandidates } from './index';
+import { expiredNewInboxCondition, getNewInboxCutoff, isWithinNewInboxRetention } from './retention';
 import type { RadarScanSummary } from './types';
 
 export class RadarScanInProgressError extends Error {
@@ -63,19 +64,47 @@ export async function scanAndStoreRadar(now = new Date()) {
   const ownsScan = and(eq(storyRadarScan.id, id), eq(storyRadarScan.status, 'running'));
   try {
     const collection = await collectStoryRadarCandidates();
+    const cutoff = getNewInboxCutoff(now);
+    const freshCandidates = collection.candidates.filter((candidate) => isWithinNewInboxRetention(candidate, cutoff));
     let inserted = 0;
     let updated = 0;
+    let deleted = 0;
     await db.transaction(async (tx) => {
       // 验证租约并锁住扫描记录，避免旧执行者覆盖接管后的结果。
       const [lease] = await tx.select({ id: storyRadarScan.id }).from(storyRadarScan).where(ownsScan).for('update');
       if (!lease) throw new Error('Scan lease expired');
-      for (let start = 0; start < collection.candidates.length; start += 100) {
-        const batch = collection.candidates.slice(start, start + 100).map((candidate) => ({
-          ...candidate,
-          id: randomUUID(),
-          matchedTerms: JSON.stringify(candidate.matchedTerms),
-          updatedAt: now,
-        }));
+      const removed = await tx
+        .delete(storyCandidate)
+        .where(expiredNewInboxCondition(cutoff))
+        .returning({ sourceUrl: storyCandidate.sourceUrl });
+      deleted = removed.length;
+      for (let start = 0; start < removed.length; start += 100) {
+        await tx
+          .insert(storyCandidateTombstone)
+          .values(removed.slice(start, start + 100).map(({ sourceUrl }) => ({ sourceUrl, deletedAt: now })))
+          .onConflictDoNothing();
+      }
+      for (let start = 0; start < freshCandidates.length; start += 100) {
+        const candidates = freshCandidates.slice(start, start + 100);
+        const tombstones = await tx
+          .select({ sourceUrl: storyCandidateTombstone.sourceUrl })
+          .from(storyCandidateTombstone)
+          .where(
+            inArray(
+              storyCandidateTombstone.sourceUrl,
+              candidates.map((candidate) => candidate.sourceUrl)
+            )
+          );
+        const blockedUrls = new Set(tombstones.map((row) => row.sourceUrl));
+        const batch = candidates
+          .filter((candidate) => !blockedUrls.has(candidate.sourceUrl))
+          .map((candidate) => ({
+            ...candidate,
+            id: randomUUID(),
+            matchedTerms: JSON.stringify(candidate.matchedTerms),
+            updatedAt: now,
+          }));
+        if (!batch.length) continue;
         const created = await tx
           .insert(storyCandidate)
           .values(batch)
@@ -130,6 +159,7 @@ export async function scanAndStoreRadar(now = new Date()) {
       discovered: collection.candidates.length,
       inserted,
       updated,
+      deleted,
       stored: inserted + updated,
     };
   } catch (error) {

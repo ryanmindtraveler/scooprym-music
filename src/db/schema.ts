@@ -269,6 +269,12 @@ export const storyCandidate = scooprymSchema.table(
   })
 );
 
+/** 已清理候选的来源链接，防止无发表日期的旧报道在后续扫描中重新入库。 */
+export const storyCandidateTombstone = scooprymSchema.table('story_candidate_tombstone', {
+  sourceUrl: text('source_url').primaryKey(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /**
  * 用户对新闻雷达候选话题的投票记录。
  * 每位用户每天最多选择三个候选话题；同一天修改选择时，会整体替换当天的投票集合。

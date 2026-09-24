@@ -5,6 +5,7 @@ import { getSongIndexNowPaths, notifyIndexNow } from '@/lib/seo/indexnow';
 import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
 import { PUBLIC_STORY_CANDIDATE_LIMIT } from '@/lib/stories/story-voting';
 import { scanAndStoreRadar } from '@/lib/story-radar/scan';
+import { MIN_PASSING_RELEVANCE_SCORE } from '@/lib/story-radar/score-policy';
 import { and, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 
 const FRESH_WINDOW_MS = 72 * 60 * 60 * 1_000;
@@ -47,7 +48,7 @@ export async function refreshEditorialRadar(now = new Date()) {
         and(
           eq(storyCandidate.status, 'new'),
           sql`${storyCandidate.matchedTerms} <> '[]'`,
-          sql`${storyCandidate.relevanceScore} > 0`,
+          gte(storyCandidate.relevanceScore, MIN_PASSING_RELEVANCE_SCORE),
           gte(storyCandidate.publishedAt, cutoff),
           lte(storyCandidate.publishedAt, now)
         )

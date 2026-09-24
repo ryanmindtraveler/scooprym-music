@@ -66,6 +66,25 @@ function setup(server = false) {
   );
 }
 describe('热点雷达已生成入口', () => {
+  it('New Inbox 只显示达到 50 分的新闻，低分新闻仍可从 All 查看', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {}))
+    );
+    render(
+      <StoryRadar
+        candidates={[
+          { ...base, id: 'low', status: 'new', relevanceScore: 49, sourceTitle: 'Low score news', generatedSongs: [] },
+          { ...base, id: 'pass', status: 'new', relevanceScore: 50, sourceTitle: 'Passing news', generatedSongs: [] },
+        ]}
+      />
+    );
+    expect(screen.getByText('Low score news')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /New Inbox/ }));
+    expect(screen.queryByText('Low score news')).toBeNull();
+    expect(screen.getByText('Passing news')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /New Inbox/ }).textContent).toContain('1');
+  });
   it.each(RADAR_STATUSES.filter((status) => status !== 'all'))(
     '从第二页切换到 %s 时重置页码并保留筛选',
     async (status) => {

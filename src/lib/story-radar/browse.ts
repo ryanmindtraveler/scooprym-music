@@ -1,8 +1,9 @@
 import 'server-only';
 import { getDb } from '@/db';
 import { storyCandidate as candidate } from '@/db/schema';
-import { and, count, desc, eq, gt, ilike, not, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, gte, ilike, not, or, sql } from 'drizzle-orm';
 import { RADAR_STATUSES, type RadarBrowseParams, type RadarStatus } from './browse-params';
+import { MIN_PASSING_RELEVANCE_SCORE } from './score-policy';
 
 // 与已生成歌曲查询使用相同的完成判定，不能把中间音频当作成品。
 const generated = sql`exists (
@@ -27,11 +28,13 @@ const producing = and(
 function statusCondition(status: RadarStatus) {
   return status === 'all'
     ? undefined
-    : status === 'generated'
-      ? generated
-      : status === 'adopted'
-        ? producing
-        : eq(candidate.status, status);
+    : status === 'new'
+      ? and(eq(candidate.status, 'new'), gte(candidate.relevanceScore, MIN_PASSING_RELEVANCE_SCORE))
+      : status === 'generated'
+        ? generated
+        : status === 'adopted'
+          ? producing
+          : eq(candidate.status, status);
 }
 
 export async function getRadarTotals() {
@@ -61,7 +64,9 @@ export async function getRadarCandidatePage(params: RadarBrowseParams) {
         )
       : undefined,
     params.review ? and(eq(candidate.status, 'new'), sql`coalesce(${candidate.matchedTerms}, '[]') = '[]'`) : undefined,
-    params.hideLow && params.status !== 'dismissed' ? gt(candidate.relevanceScore, 20) : undefined
+    params.hideLow && params.status !== 'dismissed'
+      ? gte(candidate.relevanceScore, MIN_PASSING_RELEVANCE_SCORE)
+      : undefined
   );
   const fields = Object.fromEntries(
     RADAR_STATUSES.map((status) => [

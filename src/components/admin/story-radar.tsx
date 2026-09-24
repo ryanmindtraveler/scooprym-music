@@ -8,6 +8,7 @@ import { type RadarBrowseView, radarBrowseSearch } from '@/lib/story-radar/brows
 import { getStoryFreshness } from '@/lib/story-radar/classifier';
 import { groupSimilarCoverage } from '@/lib/story-radar/coverage';
 import { type RadarGeneratedSong, groupRadarSongs } from '@/lib/story-radar/generated-song-view';
+import { MIN_PASSING_RELEVANCE_SCORE } from '@/lib/story-radar/score-policy';
 import type { GoogleTrendSignal, StoryCandidateStatus, StoryRadarCategory } from '@/lib/story-radar/types';
 import { cn } from '@/lib/utils';
 import {
@@ -136,7 +137,7 @@ export function StoryRadar({
     if (status === 'all') return true;
     if (status === 'generated') return isCandidateGenerated(candidate);
     if (status === 'shortlisted') return candidate.status === 'shortlisted';
-    if (status === 'new') return candidate.status === 'new';
+    if (status === 'new') return candidate.status === 'new' && candidate.relevanceScore >= MIN_PASSING_RELEVANCE_SCORE;
     if (status === 'adopted') {
       // 制作中：仅包含正在制作中或失败的新闻；已成功生成音乐的新闻不在“制作中”重复显示
       if (isCandidateGenerated(candidate)) return false;
@@ -216,7 +217,8 @@ export function StoryRadar({
   const filteredCandidates = useMemo(() => {
     if (browse) return candidates;
     const filtered = candidates.filter((candidate) => {
-      if (hideLowScore && activeStatus !== 'dismissed' && candidate.relevanceScore <= 20) return false;
+      if (hideLowScore && activeStatus !== 'dismissed' && candidate.relevanceScore < MIN_PASSING_RELEVANCE_SCORE)
+        return false;
       if (reviewOnly && (candidate.status !== 'new' || candidate.matchedTerms.length > 0)) return false;
       const matchesCategory = activeCategory === 'all' || candidate.category === activeCategory;
       if (!matchesCategory || !matchesStatus(candidate, activeStatus)) return false;
@@ -278,7 +280,7 @@ export function StoryRadar({
     const categoryMatched = candidates.filter((c) => activeCategory === 'all' || c.category === activeCategory);
     return {
       all: categoryMatched.length,
-      new: categoryMatched.filter((c) => c.status === 'new').length,
+      new: categoryMatched.filter((c) => c.status === 'new' && c.relevanceScore >= MIN_PASSING_RELEVANCE_SCORE).length,
       shortlisted: categoryMatched.filter((c) => c.status === 'shortlisted').length,
       adopted: categoryMatched.filter((c) => !isCandidateGenerated(c) && (c.status === 'adopted' || !!jobs[c.id]))
         .length,
@@ -572,7 +574,7 @@ export function StoryRadar({
         </label>
         <label className="flex cursor-pointer items-center gap-2">
           <input type="checkbox" checked={hideLowScore} onChange={(event) => setHideLowScore(event.target.checked)} />
-          {zh ? '仅看契合主题 (分数 > 20)' : 'Hide Low-Score / Noise'}
+          {zh ? '仅看及格新闻 (分数 ≥ 50)' : 'Hide Low-Score / Noise (< 50)'}
         </label>
         <label className="flex cursor-pointer items-center gap-2">
           <input type="checkbox" checked={reviewOnly} onChange={(event) => setReviewOnly(event.target.checked)} />

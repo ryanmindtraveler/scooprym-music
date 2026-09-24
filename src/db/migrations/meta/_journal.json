@@ -288,6 +288,13 @@
       "when": 1789171200000,
       "tag": "0040_restore_legacy_song_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790208000000,
+      "tag": "0041_story_candidate_tombstone",
+      "breakpoints": true
     }
   ]
 }

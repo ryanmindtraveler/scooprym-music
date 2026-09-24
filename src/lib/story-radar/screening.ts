@@ -4,6 +4,7 @@ import { storyCandidate as candidate } from '@/db/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { screenStoryCandidatesWithAI } from './ai-screener';
+import { MIN_PASSING_RELEVANCE_SCORE } from './score-policy';
 import type { ScreeningState } from './screening-state';
 
 export const screeningRequestSchema = z
@@ -67,7 +68,10 @@ export async function screenRadar(input: z.infer<typeof screeningRequestSchema>)
   for (const row of claimed) {
     const result = results.get(row.id);
     const error = failures.get(row.id) || (!result ? 'AI returned no evaluation' : undefined);
-    const dismiss = !!result && input.autoDismiss && (result.action === 'dismiss' || result.relevanceScore < 20);
+    const dismiss =
+      !!result &&
+      input.autoDismiss &&
+      (result.action === 'dismiss' || result.relevanceScore < MIN_PASSING_RELEVANCE_SCORE);
     const completedAt = new Date();
     const state: ScreeningState = {
       ...row.state,
