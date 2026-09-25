@@ -3,7 +3,6 @@
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
@@ -60,15 +59,6 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
 
   // 公开卡片仅展示编辑摘要，不回退到原始抓取素材或制作提示词。
   const description = item.newsSummary?.trim() ? getNewsCardSummary(item) : item.title;
-
-  let formattedDate = 'Recent';
-  try {
-    if (item.createdAt) {
-      formattedDate = formatBusinessDate(item.createdAt, { month: 'short', day: 'numeric' });
-    }
-  } catch (e) {
-    // Fallback
-  }
 
   const songUrl = `/songs/${getSongCanonicalSlug(item)}`;
 
@@ -210,8 +200,6 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
               <div className="flex items-center gap-1">
                 <Eye className="size-3" /> {item.plays || 0}
               </div>
-              <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-              <span>{formattedDate}</span>
             </div>
           </div>
         </div>

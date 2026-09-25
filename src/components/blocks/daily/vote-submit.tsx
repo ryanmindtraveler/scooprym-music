@@ -60,14 +60,6 @@ const categoryConfigs: Record<string, { label: string; emoji: string; badgeClass
   },
 };
 
-function formatStoryAge(publishedAt: string | null) {
-  if (!publishedAt) return 'Fresh now';
-  const elapsedHours = Math.max(0, Math.floor((Date.now() - new Date(publishedAt).getTime()) / 3_600_000));
-  if (elapsedHours < 1) return 'Just in';
-  if (elapsedHours < 24) return `${elapsedHours}h ago`;
-  return `${Math.floor(elapsedHours / 24)}d ago`;
-}
-
 function formatResetCountdown(resetsAt: string | null, now: number) {
   if (!resetsAt) return 'at midnight PT';
   const remainingSeconds = Math.max(0, Math.floor((new Date(resetsAt).getTime() - now) / 1_000));
@@ -441,10 +433,6 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                               >
                                 <span>{categoryInfo.emoji}</span>
                                 <span>{categoryInfo.label}</span>
-                              </span>
-                              <span className="text-slate-400 dark:text-slate-500">·</span>
-                              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-400">
-                                {formatStoryAge(candidate.publishedAt)}
                               </span>
                               {isSavedVote && showResults && (
                                 <span className="rounded-md border border-[#1a1523] bg-[#ffe600] px-1.5 py-0.5 text-[10px] font-black text-[#1a1523] shadow-[1.5px_1.5px_0_#1a1523]">

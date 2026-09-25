@@ -2,7 +2,6 @@
 
 import { getSourceUrl } from '@/lib/urls/source-url';
 
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary, getNewsDescription } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
@@ -10,7 +9,6 @@ import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { ArrowUpRight, Disc3, ExternalLink, Flame, Globe, Music2, Pause, Play, Sparkles, Volume2 } from 'lucide-react';
 import Image from 'next/image';
-import { useMemo } from 'react';
 import { toast } from 'sonner';
 
 interface DailyHomeProps {
@@ -131,10 +129,6 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
   const featured = songs[0];
   // 首页今日区固定为 1 首左侧主打加 3 首右侧内容。
   const todayDrops = songs.slice(1, 4);
-  const dateLabel = useMemo(
-    () => formatBusinessDate(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }),
-    []
-  );
 
   const isActive = (song: Song) => currentSong?.id === song.id && isPlaying;
 
@@ -189,12 +183,6 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                   <span className="relative inline-flex size-2.5 rounded-full bg-[#d80d63]" />
                 </span>
                 {freshnessLabel}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/70 px-4.5 py-2 text-xs sm:text-sm font-bold text-slate-800 backdrop-blur-md shadow-sm dark:bg-slate-900/70 dark:text-slate-200">
-                <Sparkles className="size-4 text-[#d80d63]" />
-                {dateLabel}
               </span>
             </div>
           </div>
@@ -391,10 +379,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                     <div className="flex flex-col justify-between p-4 sm:p-5.5">
                       <div>
                         {/* Meta row */}
-                        <div className="flex items-center justify-between gap-2 text-xs">
-                          <span className="font-black uppercase tracking-widest text-[#d80d63]">
-                            {formatBusinessDate(song.publishedAt || song.createdAt, { month: 'short', day: 'numeric' })}
-                          </span>
+                        <div className="flex items-center justify-end gap-2 text-xs">
                           {getSourceUrl(song.sourceUrl) && (
                             <a
                               href={getSourceUrl(song.sourceUrl)}

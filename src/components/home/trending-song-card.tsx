@@ -3,12 +3,11 @@
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
-import { Clock, Loader2, Music2, Pause, Play } from 'lucide-react';
+import { Loader2, Music2, Pause, Play } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TrendingSongCardProps {
@@ -135,12 +134,6 @@ export function TrendingSongCard({
 
         <div className="absolute bottom-3 right-3 flex gap-2 z-10">
           <div className="flex items-center gap-3 text-xs font-semibold text-white/90 drop-shadow-md">
-            <div className="flex items-center gap-1">
-              <Clock className="size-3.5" />
-              <span>
-                {song.createdAt ? formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric' }) : 'Now'}
-              </span>
-            </div>
             <div className="flex items-center gap-1">
               <Play className="size-3.5 fill-current" />
               <span>{plays}</span>

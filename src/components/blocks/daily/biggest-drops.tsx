@@ -4,7 +4,6 @@ import { Marquee } from '@/components/magicui/marquee';
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary, getWeeklyBiggestDrops } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
@@ -49,15 +48,6 @@ function DropPortraitCard({
 }) {
   const songUrl = getSongUrl(song);
   const description = song.newsSummary?.trim() ? getNewsCardSummary(song) : song.title;
-
-  let formattedDate = 'Recent';
-  try {
-    if (song.createdAt) {
-      formattedDate = formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric' });
-    }
-  } catch (e) {
-    // Fallback
-  }
 
   const playsCount = (song.weeklyPlays ?? 0) > 0 ? song.weeklyPlays : song.plays || 1;
 
@@ -215,8 +205,6 @@ function DropPortraitCard({
             <Eye className="size-3 text-slate-400" />
             <span>{playsCount}</span>
           </div>
-          <span className="size-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-          <span className="text-slate-400">{formattedDate}</span>
         </div>
       </div>
     </div>

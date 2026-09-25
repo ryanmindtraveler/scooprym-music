@@ -14,7 +14,6 @@ import { useActionPermission } from '@/hooks/auth/use-permission';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { getNewsCardSummary } from '@/lib/songs/song-editorial';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
@@ -127,14 +126,6 @@ export function SongDetailView({
     navigator.clipboard.writeText(url);
     toast.success('Link copied to clipboard');
   };
-
-  const formattedDate = useMemo(() => {
-    try {
-      return formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return '';
-    }
-  }, [song.createdAt]);
 
   const tags =
     song.prompt
@@ -321,8 +312,6 @@ export function SongDetailView({
                   >
                     AI
                   </Badge>
-                  <span>•</span>
-                  <span>{formattedDate}</span>
                 </div>
               </div>
 

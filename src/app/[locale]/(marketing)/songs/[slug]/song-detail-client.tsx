@@ -11,7 +11,6 @@ import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { LocaleLink } from '@/i18n/navigation';
 import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
-import { formatBusinessDate } from '@/lib/shared/business-time';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
@@ -115,14 +114,6 @@ export function SongDetailClient({
     }
   };
 
-  const formattedDate = useMemo(() => {
-    try {
-      return formatBusinessDate(song.createdAt, { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return '';
-    }
-  }, [song.createdAt]);
-
   const accentColor = primary || '#6366f1';
   const secondaryAccent = secondary || '#ec4899';
 
@@ -189,11 +180,6 @@ export function SongDetailClient({
               <h1 className="max-w-xl text-balance font-serif text-2xl font-black leading-[1.08] tracking-tight text-slate-950 drop-shadow-xs dark:text-white sm:text-3xl md:text-3xl lg:text-[2.25rem]">
                 {song.title}
               </h1>
-              {formattedDate && (
-                <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
-                  Published {formattedDate}
-                </p>
-              )}
             </div>
 
             {/* Style Tags - Clean Modern Frosted Pill Style */}
