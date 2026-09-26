@@ -75,6 +75,7 @@ export function SongDetailView({
     if (autoPlay && song.audioUrl && song.audioUrl !== 'processing' && currentSong?.id !== song.id) {
       play({
         id: song.id,
+        seoSlug: song.seoSlug,
         title: song.title,
         audioUrl: song.audioUrl,
         coverImageUrl: song.coverImageUrl,
@@ -108,6 +109,7 @@ export function SongDetailView({
       if (!song.audioUrl) return;
       play({
         id: song.id,
+        seoSlug: song.seoSlug,
         title: song.title,
         audioUrl: song.audioUrl,
         coverImageUrl: song.coverImageUrl,
@@ -230,6 +232,7 @@ export function SongDetailView({
             )}
             <ShareButton
               songId={song.id}
+              seoSlug={song.seoSlug}
               songTitle={song.title}
               newsSummary={song.newsSummary}
               sourceText={song.sourceText}

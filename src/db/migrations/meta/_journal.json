@@ -295,6 +295,13 @@
       "when": 1790208000000,
       "tag": "0041_story_candidate_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790380800000,
+      "tag": "0042_song_seo_slug",
+      "breakpoints": true
     }
   ]
 }

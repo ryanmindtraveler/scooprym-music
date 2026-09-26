@@ -72,7 +72,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
           isPublished ? or(eq(song.isPublished, false), isNull(song.isPublished)) : eq(song.isPublished, true)
         )
       )
-      .returning({ id: song.id });
+      .returning({ id: song.id, seoSlug: song.seoSlug });
 
     if (changed.length === 0) return { success: true };
 
@@ -85,7 +85,7 @@ export async function updateSongPublishAction(songId: string, isPublished: boole
     revalidatePath(Routes.AdminSongs);
     revalidatePath(Routes.Dashboard);
     revalidatePublicSongs();
-    await notifyIndexNow(getSongIndexNowPaths([songId]));
+    await notifyIndexNow(getSongIndexNowPaths([songId], { [songId]: changed[0].seoSlug }));
 
     return {
       success: true,
@@ -147,7 +147,7 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
       .update(song)
       .set({ isPublished: false, publishedAt: null, scheduledAt, updatedAt: new Date() })
       .where(eq(song.id, songId))
-      .returning({ id: song.id });
+      .returning({ id: song.id, seoSlug: song.seoSlug });
     await recordPublicationWorkflow(songId, 'publish_ready', {
       action: 'scheduled',
       scheduledAt: scheduledAt.toISOString(),
@@ -157,7 +157,7 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
     revalidatePath(Routes.AdminDashboard);
     revalidatePublicSongs();
     if (previous?.isPublished && changed.length > 0) {
-      await notifyIndexNow(getSongIndexNowPaths([songId]));
+      await notifyIndexNow(getSongIndexNowPaths([songId], { [songId]: changed[0].seoSlug }));
     }
     return { success: true };
   } catch (error) {

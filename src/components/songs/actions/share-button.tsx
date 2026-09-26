@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 
 interface ShareButtonProps {
   songId: string;
+  seoSlug?: string | null;
   songTitle: string;
   newsSummary?: string | null;
   sourceText?: string | null;
@@ -18,21 +19,13 @@ interface ShareButtonProps {
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-export function ShareButton({
-  songId,
-  songTitle,
-  newsSummary,
-  sourceText,
-  className,
-  variant = 'ghost',
-  size = 'icon',
-}: ShareButtonProps) {
+export function ShareButton({ songId, seoSlug, className, variant = 'ghost', size = 'icon' }: ShareButtonProps) {
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
 
     // 分享链接与详情页、站点地图使用同一规范地址。
-    const slug = getSongCanonicalSlug({ id: songId, title: songTitle, newsSummary, sourceText });
+    const slug = getSongCanonicalSlug({ id: songId, seoSlug });
     const url = `${getCanonicalBaseUrl()}/songs/${slug}`;
     try {
       await navigator.clipboard.writeText(url);

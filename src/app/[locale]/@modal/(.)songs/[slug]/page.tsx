@@ -1,11 +1,14 @@
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
+import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
+import { getLegacySongSlugRedirect } from '@/lib/songs/song-seo';
+import { getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import type { Locale } from 'next-intl';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 
 interface SongDetailPageProps {
   params: Promise<{
@@ -19,6 +22,10 @@ export const dynamic = 'force-dynamic';
 export default async function SongDetailInterceptPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
   const { slug } = resolvedParams;
+  const legacyTarget = getLegacySongSlugRedirect(slug);
+  if (legacyTarget) {
+    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
+  }
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -28,7 +35,7 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
   const [song] = await db
     .select()
     .from(songTable)
-    .where(and(eq(songTable.id, id), eq(songTable.isPublished, true)));
+    .where(and(or(eq(songTable.id, id), eq(songTable.seoSlug, slug)), eq(songTable.isPublished, true)));
 
   if (!song) {
     notFound();
@@ -40,7 +47,7 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
     const [fav] = await db
       .select()
       .from(songFavorite)
-      .where(and(eq(songFavorite.songId, id), eq(songFavorite.userId, userId)));
+      .where(and(eq(songFavorite.songId, song.id), eq(songFavorite.userId, userId)));
     isFavorite = !!fav;
   }
 

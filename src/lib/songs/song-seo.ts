@@ -1,11 +1,40 @@
+import { slugify } from '@/lib/utils';
 import type { Song } from '@/types/song';
 import { cleanLyricsForDisplay } from '../music/lyrics-utils';
+import legacyStorySongSlugs from './legacy-story-song-slugs.json';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
 
-type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'> & Partial<Pick<Song, 'lyrics' | 'prompt'>>;
-type SongIdentity = Pick<Song, 'id'>;
+type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'> &
+  Partial<Pick<Song, 'storyId' | 'lyrics' | 'prompt'>>;
+type SongIdentity = Pick<Song, 'id'> & Partial<Pick<Song, 'seoSlug'>>;
 type PublicDatedSong = Pick<Song, 'createdAt'> & Partial<Pick<Song, 'publishedAt'>>;
 export type SongRecordingVersion = { number: number; total: number };
+
+const legacySongSlugRedirects = new Map(legacyStorySongSlugs.map(({ old, slug }) => [old, slug]));
+
+export function getLegacySongSlugRedirect(slug: string) {
+  return legacySongSlugRedirects.get(slug);
+}
+
+/** 早期作品的摘要是完整句子，单独给搜索标题使用精简的事件描述。 */
+const legacyStorySeoTopics: Record<string, string> = {
+  '0238dcd1-6d25-4424-acc3-c7c4dc0a085b': 'Jasveen Sangha and the Matthew Perry ketamine case',
+  '0321d2ed-c599-434b-966b-a3ddfd191e0a': 'Taylor Swift and Travis Kelce hotel wedding rumor',
+  '361ba154-ed23-44e9-b2a9-bb73a9b8ff67': "Andy Cohen's CNN New Year's Eve remarks",
+  '4f9df063-e4b4-4100-97cd-377fcc3034c8': 'Tom Brady, Alix Earle and the NHL Winter Classic',
+  '5b802e73-cf2d-4e6b-a25d-5af09d1643d0': "Dax Shepard and Kristen Bell's New Year celebration",
+  '5ccdaff4-3a70-46cb-a4a8-4f52d96939e4': 'Virginia liquor store raccoon break-in',
+  '71a02ee2-afb2-4c38-82a8-667e594d4a5e': "Gene Simmons' comments on Ace Frehley's death",
+  '7a044e76-92eb-4bdb-aaae-2d9f3691910d': 'Corporate hourly fee satire',
+  '7cbbe13c-5cd1-42bf-9520-3f371096af11': 'G Herbo and Taina Williams engagement',
+  '8155fdcb-1ef0-456e-9a9b-a7b4c7a52d68': 'Sydney Sweeney Bond Girl casting rumor',
+  '874cf370-e018-4e0d-b7fd-c73e7347845a': "Brooklyn Beckham and Nicola Peltz's New Year's Eve",
+  '8b31dbe4-f50d-4fb3-adfb-6abdb81062b9': 'Donald Trump and Elon Musk Mar-a-Lago dinner',
+  '9b00f64a-c6e6-475d-b3c3-c1650dcae4c5': '$1.7 million luxury motorhome',
+  'd9e0eab7-21d0-485e-84c3-2a906c2c2df5': 'Timothée Chalamet and Kylie Jenner at the Critics Choice Awards',
+  'f44581e9-015e-422a-a3eb-ea118b6abffb': 'Hailee Steinfeld and Josh Allen Baby Beau hint',
+  'fccb884e-bbcd-4247-9503-e190efb346d0': 'Ellen DeGeneres and Portia de Rossi U.S. visit',
+};
 
 /** 路由和国际化重写可能保留百分号编码，比较规范路径前统一解码一次。 */
 export function decodeSongSlug(slug: string) {
@@ -68,37 +97,40 @@ export function getSongSearchHeadline(song: SeoSong) {
   return truncateAtWord(headline || song.title || 'The internet did what?', 150);
 }
 
+/** 首句优先，避免详情页把自造歌名排在真实事件之前。 */
+export function getSongSeoTopic(song: SeoSong) {
+  const legacyTopic = song.storyId ? legacyStorySeoTopics[song.storyId] : undefined;
+  if (legacyTopic && song.newsSummary?.trim()) return legacyTopic;
+  const headline = getNewsTitle(song as Song, { truncate: false }).trim() || song.title;
+  const firstClause = headline.split(/[,;—–]/, 1)[0]?.trim() || '';
+  return (firstClause.length >= 28 ? firstClause : headline).replace(/[.!?]+$/, '');
+}
+
+/** 仅用于首次分配固定 slug，不随新闻摘要或歌名的后续编辑重新计算。 */
+export function getSongSeoSlugBase(song: SeoSong) {
+  const topic = getSongSeoTopic(song);
+  const shortened = topic.length > 90 ? topic.slice(0, 91).replace(/\s+\S*$/, '') : topic;
+  return `${slugify(shortened)}-funny-song`;
+}
+
 export function getSongStoryContext(song: SeoSong) {
   const context = getNewsDescription(song as Song);
   return context.startsWith('A strange true story') ? '' : context;
 }
 
 export function getSongCanonicalSlug<T extends SongIdentity>(song: T) {
-  // UUID 是歌曲创建后唯一不变的公开身份。标题、摘要和歌词都允许编辑，
-  // 因此不能再参与 canonical URL；历史标题型地址仍可从末尾 UUID 解析并 308 归并。
-  return song.id;
+  return song.seoSlug || song.id;
 }
 
-export function getSongSeoTitle(song: SeoSong, version?: SongRecordingVersion) {
-  const headline = getSongSearchHeadline(song);
-  const title = truncateAtWord(song.title, 55);
-  const style = getSongPrimaryStyle(song);
-  const titleStyle = style ? `${style.charAt(0).toLocaleUpperCase()}${style.slice(1)}` : '';
-  const recordingLabel = version ? `Recording ${version.number}/${version.total}` : '';
-  const qualifiers = [titleStyle, recordingLabel].filter(Boolean).join(' · ');
-  const titleWithStyle = qualifiers ? `${title} (${qualifiers})` : title;
-  return truncateAtWord(
-    headline === song.title
-      ? `${titleWithStyle} — Listen & Lyrics`
-      : `${titleWithStyle} — ${truncateAtWord(headline, 65)}`,
-    100
-  );
+export function getSongSeoTitle(song: SeoSong) {
+  const topic = getSongSeoTopic(song);
+  return topic === song.title ? `Funny Song — ${song.title}` : `${topic} Song — ${song.title}`;
 }
 
 export function getSongSeoDescription(song: SeoSong, version?: SongRecordingVersion) {
   const style = getSongPrimaryStyle(song);
   const hook = getSongLyricHook(song);
-  const recording = style ? `${style} meme song` : 'meme song';
+  const recording = style ? `${style} funny song` : 'funny song';
   const opening = hook ? ` opening with “${hook}”` : '';
   const versionLead = version ? ` recording ${version.number} of ${version.total},` : '';
 

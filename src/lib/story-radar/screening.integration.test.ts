@@ -32,31 +32,27 @@ describe.runIf(process.env.RUN_DATABASE_TESTS === '1')('筛选数据库并发合
       .transaction(async (tx) => {
         mocks.getDb.mockReturnValue(tx);
         const ids = [randomUUID(), randomUUID()];
-        await tx
-          .insert(schema.storyCandidate)
-          .values(
-            ids.map((id) => ({
-              id,
-              sourceUrl: `https://example.com/test-${id}`,
-              sourceTitle: 'Test headline',
-              sourceDomain: 'example.com',
-              category: 'internet_chaos',
-              relevanceScore: 7,
-              matchedTerms: '[]',
-            }))
-          );
-        mocks.screen
-          .mockReset()
-          .mockImplementation(async (items: Array<{ id: string }>) => ({
-            evaluations: items.map((item) => ({
-              id: item.id,
-              relevanceScore: 87,
-              category: 'internet_chaos',
-              fitReason: 'Good fit',
-              action: 'keep',
-            })),
-            failures: [],
-          }));
+        await tx.insert(schema.storyCandidate).values(
+          ids.map((id) => ({
+            id,
+            sourceUrl: `https://example.com/test-${id}`,
+            sourceTitle: 'Test headline',
+            sourceDomain: 'example.com',
+            category: 'internet_chaos',
+            relevanceScore: 7,
+            matchedTerms: '[]',
+          }))
+        );
+        mocks.screen.mockReset().mockImplementation(async (items: Array<{ id: string }>) => ({
+          evaluations: items.map((item) => ({
+            id: item.id,
+            relevanceScore: 87,
+            category: 'internet_chaos',
+            fitReason: 'Good fit',
+            action: 'keep',
+          })),
+          failures: [],
+        }));
         await check(tx, ids);
         throw rollback;
       })

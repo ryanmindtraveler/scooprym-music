@@ -384,6 +384,8 @@ export const song = scooprymSchema.table(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
+    // 发布时固定的可读网址，标题与新闻摘要后续编辑不改变它。
+    seoSlug: text('seo_slug'),
     lyrics: text('lyrics'),
     audioUrl: text('audio_url').notNull(),
     audioKey: text('audio_key'),
@@ -405,6 +407,7 @@ export const song = scooprymSchema.table(
     songCreatedAtIdx: index('song_created_at_idx').on(table.createdAt),
     songScheduledAtIdx: index('song_scheduled_at_idx').on(table.scheduledAt),
     songPublishedAtIdx: index('song_published_at_idx').on(table.publishedAt),
+    songSeoSlugUniqueIdx: uniqueIndex('song_seo_slug_unique_idx').on(table.seoSlug),
   })
 );
 

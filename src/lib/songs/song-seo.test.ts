@@ -6,7 +6,9 @@ import {
   getSongPublicDate,
   getSongSearchHeadline,
   getSongSeoDescription,
+  getSongSeoSlugBase,
   getSongSeoTitle,
+  getSongSeoTopic,
 } from './song-seo';
 
 const song = {
@@ -34,12 +36,12 @@ describe('歌曲详情 SEO', () => {
     expect(first).toContain('Wig Off, Gloves On');
     expect(second).toContain('Disney Legend Legacy');
     expect(first).not.toBe(second);
-    expect(first.length).toBeLessThanOrEqual(101);
+    expect(first).not.toContain('…');
   });
   it('缺失摘要显示真实歌名但不迁移历史规范地址', () => {
     const item = { ...song, title: 'Billionaire Buffet', newsSummary: null };
     expect(getSongSearchHeadline(item)).toBe('Billionaire Buffet');
-    expect(getSongSeoTitle(item)).toBe('Billionaire Buffet — Listen & Lyrics');
+    expect(getSongSeoTitle(item)).toBe('Funny Song — Billionaire Buffet');
     expect(getSongCanonicalSlug(item)).toBe(item.id);
     expect(getSongSeoDescription(item)).not.toContain('inspired by this story');
   });
@@ -48,9 +50,25 @@ describe('歌曲详情 SEO', () => {
     expect(getSongSearchHeadline(song)).toBe("Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata'.");
   });
 
-  it('URL 只使用不可变歌曲标识', () => {
-    expect(getSongCanonicalSlug(song)).toBe(song.id);
+  it('已分配的纯文字 slug 不随摘要改变，旧数据仍能使用 UUID', () => {
+    const persisted = { ...song, seoSlug: 'antonio-banderas-automata-funny-song' };
+    expect(getSongCanonicalSlug(persisted)).toBe('antonio-banderas-automata-funny-song');
+    expect(getSongCanonicalSlug({ ...persisted, newsSummary: 'Updated summary' })).toBe(persisted.seoSlug);
     expect(getSongCanonicalSlug({ id: song.id })).toBe(song.id);
+  });
+
+  it('事件先于自造歌名，slug 不包含省略号', () => {
+    const item = {
+      ...song,
+      title: 'Naomi Said Yes (HeidiFest)',
+      newsSummary: "Heidi Klum hosted her own pre-Oktoberfest bash, HeidiFest, at Munich's Hofbräuhaus.",
+    };
+    expect(getSongSeoTopic(item)).toBe('Heidi Klum hosted her own pre-Oktoberfest bash');
+    expect(getSongSeoSlugBase(item)).toBe('heidi-klum-hosted-her-own-pre-oktoberfest-bash-funny-song');
+    expect(getSongSeoTitle(item)).toBe(
+      'Heidi Klum hosted her own pre-Oktoberfest bash Song — Naomi Said Yes (HeidiFest)'
+    );
+    expect(getSongSeoTitle(item)).not.toContain('…');
   });
 
   it('迁移和任务恢复的 updatedAt 不会伪装成公开内容更新', () => {
@@ -77,15 +95,14 @@ describe('歌曲详情 SEO', () => {
       lyrics: '[Intro]\nBlue Bentley back on the block',
     };
 
-    expect(getSongSeoTitle(acoustic)).not.toBe(getSongSeoTitle(boomBap));
+    expect(getSongSeoTitle(acoustic)).toBe(getSongSeoTitle(boomBap));
     expect(getSongSeoDescription(acoustic)).toContain('acoustic trap');
     expect(getSongSeoDescription(acoustic)).toContain('Yo, Drake bought the Bentley back');
     expect(getSongSeoDescription(acoustic)).not.toBe(getSongSeoDescription(boomBap));
-    expect(getSongSeoTitle(acoustic).length).toBeLessThanOrEqual(101);
     expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(159);
   });
 
-  it('同名同曲风的多个录音使用稳定版本号区分元数据', () => {
+  it('同名录音的页面标题遵循固定公式，描述保留版本号', () => {
     const item = {
       ...song,
       title: 'Prison Blues',
@@ -95,11 +112,11 @@ describe('歌曲详情 SEO', () => {
     const first = { number: 1, total: 2 };
     const second = { number: 2, total: 2 };
 
-    expect(getSongSeoTitle(item, first)).toContain('Recording 1/2');
-    expect(getSongSeoTitle(item, first)).not.toBe(getSongSeoTitle(item, second));
+    expect(getSongSeoTitle(item)).toBe(
+      "Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata' Song — Prison Blues"
+    );
     expect(getSongSeoDescription(item, first)).toContain('recording 1 of 2');
     expect(getSongSeoDescription(item, first)).not.toBe(getSongSeoDescription(item, second));
-    expect(getSongSeoTitle(item, first).length).toBeLessThanOrEqual(101);
     expect(getSongSeoDescription(item, first).length).toBeLessThanOrEqual(159);
   });
 

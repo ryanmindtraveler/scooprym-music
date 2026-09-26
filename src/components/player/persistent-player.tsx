@@ -97,6 +97,7 @@ export function PersistentPlayer() {
 
         <ShareButton
           songId={currentSong.id}
+          seoSlug={currentSong.seoSlug}
           songTitle={currentSong.title}
           newsSummary={currentSong.newsSummary}
           sourceText={currentSong.newsContent}

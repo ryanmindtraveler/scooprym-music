@@ -20,6 +20,7 @@ function scrollToSection(id: 'today' | 'gallery') {
 function toPlayerSong(song: Song) {
   return {
     id: song.id,
+    seoSlug: song.seoSlug,
     title: song.title,
     audioUrl: song.audioUrl || '',
     coverImageUrl: song.coverImageUrl,

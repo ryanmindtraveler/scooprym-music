@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 export interface Song {
   id: string;
+  seoSlug?: string | null;
   title: string;
   artist?: string;
   audioUrl: string;

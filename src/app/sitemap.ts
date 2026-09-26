@@ -52,6 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const songs = await db
       .select({
         id: songTable.id,
+        seoSlug: songTable.seoSlug,
         title: songTable.title,
         newsSummary: storyTable.newsSummary,
         sourceText: storyTable.sourceText,

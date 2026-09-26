@@ -107,11 +107,16 @@ export async function publishDueSongs(now = new Date()) {
         lte(song.scheduledAt, now)
       )
     )
-    .returning({ id: song.id });
+    .returning({ id: song.id, seoSlug: song.seoSlug });
 
   if (published.length > 0) {
     revalidatePublicSongs();
-    await notifyIndexNow(getSongIndexNowPaths(published.map((row) => row.id)));
+    await notifyIndexNow(
+      getSongIndexNowPaths(
+        published.map((row) => row.id),
+        Object.fromEntries(published.map((row) => [row.id, row.seoSlug]))
+      )
+    );
   }
 
   return { published: published.length };

@@ -77,6 +77,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
     const [row] = await db
       .select({
         id: song.id,
+        seoSlug: song.seoSlug,
         isPublished: song.isPublished,
         audioKey: song.audioKey,
         coverImageKey: song.coverImageKey,
@@ -122,7 +123,7 @@ export async function DELETE(_req: Request, props: { params: Promise<{ id: strin
 
     if (row.isPublished) {
       revalidatePublicSongs();
-      await notifyIndexNow(getSongIndexNowPaths([id]));
+      await notifyIndexNow(getSongIndexNowPaths([id], { [id]: row.seoSlug }));
     }
 
     const storageKeys = [deleted.audioKey, deleted.coverImageKey].filter((key): key is string => !!key);

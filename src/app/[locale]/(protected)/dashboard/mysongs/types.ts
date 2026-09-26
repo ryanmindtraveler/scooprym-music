@@ -1,6 +1,7 @@
 /** 用户控制台歌曲列表项。 */
 export interface SongItem {
   id: string;
+  seoSlug?: string | null;
   title: string;
   createdAt: Date;
   durationSec: number | null;

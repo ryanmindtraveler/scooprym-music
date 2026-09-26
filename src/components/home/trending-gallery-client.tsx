@@ -76,6 +76,7 @@ export function TrendingGalleryClient({
         id: song.id,
         title: song.title,
         audioUrl: song.audioUrl,
+        seoSlug: song.seoSlug,
         coverImageUrl: song.coverImageUrl,
         artist: 'AI Generated',
         newsSummary: song.newsSummary || undefined,

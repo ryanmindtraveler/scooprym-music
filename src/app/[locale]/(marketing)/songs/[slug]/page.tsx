@@ -9,6 +9,7 @@ import { constructMetadata } from '@/lib/seo/metadata';
 import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
+  getLegacySongSlugRedirect,
   getSongCanonicalSlug,
   getSongPublicDate,
   getSongSearchHeadline,
@@ -20,7 +21,7 @@ import { getSourceUrl } from '@/lib/urls/source-url';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, inArray, ne, notInArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import Link from 'next/link';
@@ -38,6 +39,10 @@ interface SongDetailPageProps {
 export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = decodeSongSlug(resolvedParams.slug);
+  const legacyTarget = getLegacySongSlugRedirect(slug);
+  if (legacyTarget) {
+    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
+  }
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -55,7 +60,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        eq(songTable.id, id),
+        or(eq(songTable.id, id), eq(songTable.seoSlug, slug)),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
           'failed_generation',
@@ -88,7 +93,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const recordingVersion = await getPublishedSongRecordingVersion(db, song);
 
   return constructMetadata({
-    title: getSongSeoTitle(song, recordingVersion),
+    title: getSongSeoTitle(song),
     description: getSongSeoDescription(song, recordingVersion),
     image: song.coverImageUrl || undefined,
     locale: routing.defaultLocale,
@@ -101,6 +106,10 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
   const slug = decodeSongSlug(resolvedParams.slug);
+  const legacyTarget = getLegacySongSlugRedirect(slug);
+  if (legacyTarget) {
+    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
+  }
   const id = getIdFromSlug(slug);
 
   const db = await getDb();
@@ -118,7 +127,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        eq(songTable.id, id),
+        or(eq(songTable.id, id), eq(songTable.seoSlug, slug)),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
           'failed_generation',
@@ -157,13 +166,13 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       ? db
           .select({ id: songFavorite.id })
           .from(songFavorite)
-          .where(and(eq(songFavorite.songId, id), eq(songFavorite.userId, userId)))
+          .where(and(eq(songFavorite.songId, song.id), eq(songFavorite.userId, userId)))
           .limit(1)
       : Promise.resolve([]),
     db
       .select({ total: count() })
       .from(songComment)
-      .where(and(eq(songComment.songId, id), eq(songComment.status, 'visible'))),
+      .where(and(eq(songComment.songId, song.id), eq(songComment.status, 'visible'))),
     db
       .select({
         id: songComment.id,
@@ -175,18 +184,18 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       })
       .from(songComment)
       .innerJoin(user, eq(user.id, songComment.userId))
-      .where(and(eq(songComment.songId, id), eq(songComment.status, 'visible')))
+      .where(and(eq(songComment.songId, song.id), eq(songComment.status, 'visible')))
       .orderBy(desc(songComment.createdAt))
       .limit(12),
     // 仅同一新闻下已公开、已完成且有音频的作品；每次请求读取发布状态。
     db
-      .select({ id: songTable.id, title: songTable.title })
+      .select({ id: songTable.id, title: songTable.title, seoSlug: songTable.seoSlug })
       .from(songTable)
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
           eq(songTable.storyId, song.storyId),
-          ne(songTable.id, id),
+          ne(songTable.id, song.id),
           eq(songTable.isPublished, true),
           inArray(latestAttempt.processingStatus, ['completed', 'completed_without_cover']),
           ne(songTable.audioUrl, ''),
@@ -297,7 +306,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
             {relatedSongs.map((related) => (
               <li key={related.id}>
                 <Link
-                  href={`/songs/${getSongCanonicalSlug({ ...related, newsSummary: song.newsSummary, sourceText: null })}`}
+                  href={`/songs/${getSongCanonicalSlug(related)}`}
                   prefetch={false}
                   className="block rounded-xl border border-slate-200 p-5 font-semibold underline underline-offset-4 hover:border-pink-500 dark:border-zinc-700"
                 >

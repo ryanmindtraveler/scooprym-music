@@ -1,5 +1,6 @@
 'use client';
 
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
@@ -62,7 +63,7 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
 
       <ol className="divide-y divide-slate-200/75">
         {songs.map((song, index) => {
-          const songUrl = `/songs/${song.id}`;
+          const songUrl = `/songs/${getSongCanonicalSlug(song)}`;
           const isCurrentSong = currentSong?.id === song.id;
           const isCurrentSongPlaying = isCurrentSong && isPlaying;
           const summary = song.newsSummary?.trim() || song.sourceText?.trim() || t('openStory');
@@ -80,6 +81,7 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
               id: song.id,
               title: song.title,
               audioUrl: song.audioUrl,
+              seoSlug: song.seoSlug,
               coverImageUrl: song.coverImageUrl,
               artist: 'ScoopRYM',
               newsSummary: song.newsSummary || undefined,

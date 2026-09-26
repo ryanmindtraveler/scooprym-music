@@ -422,6 +422,7 @@ export function SongDetailClient({
                 )}
                 <ShareButton
                   songId={song.id}
+                  seoSlug={song.seoSlug}
                   songTitle={song.title}
                   newsSummary={song.newsSummary}
                   sourceText={song.sourceText}

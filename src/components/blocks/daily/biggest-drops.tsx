@@ -11,7 +11,7 @@ import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { Eye, Loader2, Music2, Pause, Play, Sparkles, Trophy } from 'lucide-react';
 import Image from 'next/image';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface BiggestDropsProps {
@@ -25,6 +25,7 @@ function getSongUrl(song: Song) {
 function toPlayerSong(song: Song) {
   return {
     id: song.id,
+    seoSlug: song.seoSlug,
     title: song.title,
     audioUrl: song.audioUrl || '',
     coverImageUrl: song.coverImageUrl,
@@ -108,6 +109,7 @@ function DropPortraitCard({
           <div className="pointer-events-auto">
             <ShareButton
               songId={song.id}
+              seoSlug={song.seoSlug}
               songTitle={song.title}
               newsSummary={song.newsSummary}
               sourceText={song.sourceText}
@@ -213,6 +215,11 @@ function DropPortraitCard({
 
 export function BiggestDrops({ songs }: BiggestDropsProps) {
   const { currentSong, isPlaying, play, pause } = usePlayerStore();
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   // 排除前 4 条（今日精选区），从曲库中获取周榜及补充歌曲
   const rawBiggestSongs = useMemo(() => getWeeklyBiggestDrops(songs.slice(4), 20), [songs]);
 
@@ -283,7 +290,7 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
               This week’s chart is waiting for its first plays.
             </div>
           ) : (
-            <Marquee pauseOnHover repeat={2} className="py-2 [--duration:55s] [--gap:1.75rem]">
+            <Marquee pauseOnHover repeat={hasMounted ? 2 : 1} className="py-2 [--duration:55s] [--gap:1.75rem]">
               {denseSongs.map((song, idx) => (
                 <DropPortraitCard
                   key={`biggest-single-${song.id}-${idx}`}

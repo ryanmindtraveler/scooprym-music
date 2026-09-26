@@ -5,18 +5,14 @@ import { SectionWaveDivider } from '@/components/blocks/daily/section-wave-frame
 import { VoteSubmitSection } from '@/components/blocks/daily/vote-submit';
 import GallerySection from '@/components/blocks/gallery/gallery';
 import HeroSection from '@/components/blocks/hero/hero';
-import { JsonLd } from '@/components/seo/json-ld';
 import { getDb } from '@/db';
-import { songPlay, songReaction, song as songTable, story as storyTable, user } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
-import { routing } from '@/i18n/routing';
+import { songPlay, songReaction } from '@/db/schema';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { getBusinessDayStart } from '@/lib/shared/business-time';
+import { getHomeChartCandidates, getHomeGalleryPage } from '@/lib/songs/home-gallery';
 import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
-import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
-import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, gte, inArray, notInArray, sql } from 'drizzle-orm';
+import { and, count, gte, inArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -42,70 +38,16 @@ export async function generateMetadata({
   });
 }
 
-interface HomePageProps {
-  params: Promise<{ locale: Locale }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function HomePage(props: HomePageProps) {
-  const params = await props.params;
-  const { locale } = params;
-  const tHome = await getTranslations({ locale, namespace: 'HomePage' });
-
+export default async function HomePage() {
   const db = await getDb();
-  const latestAttempt = createLatestGenerationAttemptQuery(db);
-  const failedStatuses: string[] = [
-    'failed_generation',
-    'processing_queue_failed',
-    'failed_audio_upload',
-    'failed_internal_error',
-    'failed_credit_deduction',
-  ];
-
-  // Find songs where userId is in the list of admin users
-  // "The gallery must show admin role user's songs automatically"
-  let adminSongRows: Array<{
-    song: typeof songTable.$inferSelect;
-    story: typeof storyTable.$inferSelect;
-    prompt: string | null;
-    processingStatus: string | null;
-  }> = [];
-  adminSongRows = await db
-    .select({
-      song: songTable,
-      story: storyTable,
-      prompt: latestAttempt.prompt,
-      processingStatus: latestAttempt.processingStatus,
-    })
-    .from(songTable)
-    .innerJoin(user, eq(songTable.userId, user.id))
-    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-    .where(
-      and(
-        eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, failedStatuses)
-      )
-    )
-    // 数据维护时间不能把历史歌曲推到最新发布之前。
-    .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
-    .limit(100);
-
-  const adminSongs = adminSongRows.map((row) => ({
-    ...row.song,
-    prompt: row.prompt,
-    processingStatus: row.processingStatus,
-    sourceUrl: row.story.sourceUrl,
-    sourceText: row.story.sourceText,
-    newsSummary: row.story.newsSummary,
-  }));
+  // 首页只传 Gallery 第一页的 20 首卡片数据；周榜与播放队列使用精简字段。
+  const [galleryPage, chartCandidates] = await Promise.all([getHomeGalleryPage(1), getHomeChartCandidates()]);
 
   const now = new Date();
   const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const songIds = adminSongs.map((song) => song.id);
+  const songIds = chartCandidates.map((song) => song.id);
   const [weeklyPlayRows, reactionRows] =
-    adminSongs.length > 0
+    chartCandidates.length > 0
       ? await Promise.all([
           db
             .select({
@@ -139,13 +81,11 @@ export default async function HomePage(props: HomePageProps) {
     }
   }
 
-  const serializedSongs = adminSongs.map((song) => ({
+  const serializedSongs = chartCandidates.map((song) => ({
     ...song,
-    createdAt: song.createdAt ? song.createdAt.toISOString() : new Date().toISOString(),
-    updatedAt: song.updatedAt ? song.updatedAt.toISOString() : new Date().toISOString(),
     weeklyPlays: weeklyPlaysBySong.get(song.id) || 0,
     topReaction: topReactionBySong.get(song.id) || null,
-  })) as unknown as Song[];
+  })) as Song[];
 
   // Today 区按正式发布时间排序，并保证同一 Story 只出现一个歌曲版本。
   const uniqueStorySongs = serializedSongs.filter((song, index, songs) => {
@@ -158,7 +98,10 @@ export default async function HomePage(props: HomePageProps) {
     return Boolean(publishedAt && publishedAt >= businessDayStart && publishedAt <= now);
   });
   const freshSongIds = new Set(freshTodaySongs.map((song) => song.id));
-  const dailySongs = [...freshTodaySongs, ...uniqueStorySongs.filter((song) => !freshSongIds.has(song.id))].slice(0, 4);
+  const detailedSongsById = new Map(galleryPage.songs.map((song) => [song.id, song]));
+  const dailySongs = [...freshTodaySongs, ...uniqueStorySongs.filter((song) => !freshSongIds.has(song.id))]
+    .slice(0, 4)
+    .map((song) => ({ ...song, ...detailedSongsById.get(song.id) }));
   const freshnessLabel =
     freshTodaySongs.length >= 4
       ? 'Fresh Today'
@@ -166,36 +109,10 @@ export default async function HomePage(props: HomePageProps) {
         ? `${Math.min(freshTodaySongs.length, 4)} New Today`
         : 'Latest Drops';
 
-  // Prepare Structured Data (JSON-LD) for the Gallery
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: `${tHome('title')} ${tHome('gallery.title')}`,
-    description: tHome('gallery.descriptionLong'),
-    numberOfItems: serializedSongs.length,
-    itemListElement: serializedSongs.map((song, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      item: {
-        '@type': 'MusicRecording',
-        name: song.title,
-        image: song.coverImageUrl || undefined,
-        datePublished: song.createdAt,
-        url: getUrlWithLocale(`/songs/${getSongCanonicalSlug(song)}`, routing.defaultLocale),
-        byArtist: {
-          '@type': 'MusicGroup',
-          name: 'ScoopRYM',
-          url: getCanonicalBaseUrl(),
-        },
-      },
-    })),
-  };
-
   return (
     <>
-      <JsonLd data={jsonLd} />
       <div className="flex flex-col">
-        <HeroSection featuredSong={serializedSongs[0]} songs={serializedSongs} />
+        <HeroSection featuredSong={galleryPage.songs[0]} songs={serializedSongs} />
         <SectionWaveDivider from="hero" to="today" />
         <DailyHome songs={dailySongs} freshnessLabel={freshnessLabel} hasNewToday={freshTodaySongs.length > 0} />
         <SectionWaveDivider from="today" to="biggest" />
@@ -203,7 +120,7 @@ export default async function HomePage(props: HomePageProps) {
         <SectionWaveDivider from="biggest" to="paper" />
         <VoteSubmitSection mode="vote" />
         <SectionWaveDivider from="paper" to="gallery" />
-        <GallerySection songs={serializedSongs} />
+        <GallerySection songs={galleryPage.songs} total={galleryPage.total} />
         <SectionWaveDivider from="gallery" to="submit" />
         <VoteSubmitSection mode="submit" />
         <SectionWaveDivider from="submit" to="paper" />

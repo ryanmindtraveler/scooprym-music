@@ -164,6 +164,7 @@ function SongRowBase({
             <LikeButton songId={item.id} initialIsLiked={isLiked} className="size-8 sm:size-9" />
             <ShareButton
               songId={item.id}
+              seoSlug={item.seoSlug}
               songTitle={item.title}
               newsSummary={item.newsSummary}
               sourceText={item.sourceText}

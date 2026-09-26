@@ -41,6 +41,7 @@ export default async function DashboardCommentsPage({
         content: songComment.content,
         createdAt: songComment.createdAt,
         songId: song.id,
+        seoSlug: song.seoSlug,
         songTitle: song.title,
         coverImageUrl: song.coverImageUrl,
         newsSummary: story.newsSummary,

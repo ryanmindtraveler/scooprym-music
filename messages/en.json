@@ -1,8 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM — Daily Meme Songs from Viral Moments",
-    "description": "The wildest headlines, messiest drama, and hottest gossip—turned into songs you can listen to, laugh at, and share.",
+    "title": "Daily Funny Songs & Comedy Rap from Viral Moments | ScoopRYM",
+    "description": "The wildest headlines, messiest celebrity gossip, and hottest drama — turned into sharp parody tracks you can listen to, laugh at, and share.",
     "keywords": "daily meme songs, viral moments, headline songs, drama songs, gossip songs, musical satire, entertainment news, comedy music"
   },
   "Common": {
@@ -1217,18 +1217,18 @@
   },
   "HomePage": {
     "title": "ScoopRYM",
-    "description": "The wildest headlines, messiest drama, and hottest gossip—turned into songs you can listen to, laugh at, and share.",
+    "description": "The wildest headlines, messiest celebrity gossip, and hottest drama — turned into sharp parody tracks you can listen to, laugh at, and share.",
     "hero": {
-      "title": "Daily Meme Songs from Viral Moments",
-      "description": "The wildest headlines, messiest drama, and hottest gossip—turned into songs you can listen to, laugh at, and share.",
-      "semanticTitle": "ScoopRYM: Daily Meme Songs from Viral Moments",
-      "subtitle": "Daily Meme Songs from Viral Moments",
-      "titlePrimary": "Daily Meme Songs",
+      "title": "Daily Funny Songs from Viral Moments",
+      "description": "The wildest headlines, messiest celebrity gossip, and hottest drama — turned into sharp parody tracks you can listen to, laugh at, and share.",
+      "semanticTitle": "ScoopRYM: Daily Funny Songs from Viral Moments",
+      "subtitle": "Daily Funny Songs from Viral Moments",
+      "titlePrimary": "Daily Funny Songs",
       "titleSecondary": "from Viral Moments",
       "descriptionHeadlines": "The wildest headlines",
-      "descriptionDrama": "messiest drama",
-      "descriptionGossip": "hottest gossip",
-      "descriptionLineTwo": "—turned into songs you can listen to, laugh at, and share.",
+      "descriptionDrama": "messiest celebrity gossip",
+      "descriptionGossip": "hottest drama",
+      "descriptionLineTwo": "— turned into sharp parody tracks you can listen to, laugh at, and share.",
       "cta": "Play Today’s Drop",
       "playNow": "Play Now",
       "pause": "Pause",

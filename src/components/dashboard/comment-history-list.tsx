@@ -1,5 +1,6 @@
 'use client';
 
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { Routes } from '@/routes';
 import { format, formatDistanceToNow } from 'date-fns';
 import { enUS } from 'date-fns/locale';
@@ -13,6 +14,7 @@ export interface CommentHistoryItem {
   content: string;
   createdAt: Date | string;
   songId: string;
+  seoSlug?: string | null;
   songTitle: string;
   coverImageUrl: string | null;
   newsSummary: string | null;
@@ -58,7 +60,7 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
 
       <ol className="divide-y divide-slate-200/75">
         {comments.map((comment, index) => {
-          const songUrl = `/songs/${comment.songId}`;
+          const songUrl = `/songs/${getSongCanonicalSlug({ id: comment.songId, seoSlug: comment.seoSlug })}`;
           const context = comment.newsSummary?.trim() || comment.sourceText?.trim() || t('openStory');
           const commentedAt = new Date(comment.createdAt);
 

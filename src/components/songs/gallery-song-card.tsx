@@ -33,6 +33,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
     } else if (item.audioUrl) {
       const toPlayerSong = (song: Song) => ({
         id: song.id,
+        seoSlug: song.seoSlug,
         title: song.title,
         audioUrl: song.audioUrl || '',
         coverImageUrl: song.coverImageUrl,
@@ -44,6 +45,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
       play(
         {
           id: item.id,
+          seoSlug: item.seoSlug,
           title: item.title,
           audioUrl: item.audioUrl!,
           coverImageUrl: item.coverImageUrl,
@@ -118,6 +120,7 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
             <div className="pointer-events-auto">
               <ShareButton
                 songId={item.id}
+                seoSlug={item.seoSlug}
                 songTitle={item.title}
                 newsSummary={item.newsSummary}
                 sourceText={item.sourceText}

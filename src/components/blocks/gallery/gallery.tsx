@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
@@ -12,31 +11,75 @@ import type { Song } from '@/types/song';
 
 interface GallerySectionProps {
   songs?: Song[];
+  total?: number;
   initialSelectedSong?: Song | null;
 }
 
 // 桌面端每页固定呈现 5 列 × 4 行；较小屏幕沿用响应式列数，但分页总量保持 20。
 const GALLERY_PAGE_SIZE = 20;
 
-export default function GallerySection({ songs = [], initialSelectedSong = null }: GallerySectionProps) {
+export default function GallerySection({
+  songs = [],
+  total = songs.length,
+  initialSelectedSong = null,
+}: GallerySectionProps) {
   const t = useTranslations('HomePage.gallery');
   const sectionRef = useRef<HTMLElement>(null);
   const [selectedSong, setSelectedSong] = useState<Song | null>(initialSelectedSong);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageItems, setPageItems] = useState(songs);
+  const [totalSongs, setTotalSongs] = useState(total);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [isOpeningSong, setIsOpeningSong] = useState(false);
+  const [songError, setSongError] = useState(false);
+  const requestId = useRef(0);
 
-  const displayItems = songs.length > 0 ? songs : [];
-  const totalPages = Math.max(1, Math.ceil(displayItems.length / GALLERY_PAGE_SIZE));
+  const displayItems = pageItems;
+  const totalPages = Math.max(1, Math.ceil(totalSongs / GALLERY_PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageStart = (safeCurrentPage - 1) * GALLERY_PAGE_SIZE;
-  const pageItems = displayItems.slice(pageStart, pageStart + GALLERY_PAGE_SIZE);
 
-  const goToPage = (page: number) => {
+  const goToPage = async (page: number) => {
     const nextPage = Math.min(Math.max(page, 1), totalPages);
-    if (nextPage === safeCurrentPage) return;
+    if (nextPage === safeCurrentPage || isLoading) return;
 
-    setCurrentPage(nextPage);
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    sectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    const activeRequest = ++requestId.current;
+    setIsLoading(true);
+    setLoadError(false);
+    try {
+      const response = await fetch(`/api/public/gallery?page=${nextPage}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Gallery page unavailable');
+      const result: { songs: Song[]; total: number } = await response.json();
+      if (!Array.isArray(result.songs)) throw new Error('Invalid gallery response');
+      if (activeRequest !== requestId.current) return;
+      setPageItems(result.songs);
+      setTotalSongs(result.total);
+      setCurrentPage(nextPage);
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      sectionRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    } catch {
+      if (activeRequest === requestId.current) setLoadError(true);
+    } finally {
+      if (activeRequest === requestId.current) setIsLoading(false);
+    }
+  };
+
+  const openSong = async (song: Song) => {
+    if (isOpeningSong) return;
+    setIsOpeningSong(true);
+    setSongError(false);
+    try {
+      const response = await fetch(`/api/public/gallery/${encodeURIComponent(song.id)}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error('Song unavailable');
+      const result: { song: Song } = await response.json();
+      if (!result.song?.id) throw new Error('Invalid song response');
+      setSelectedSong(result.song);
+    } catch {
+      setSongError(true);
+    } finally {
+      setIsOpeningSong(false);
+    }
   };
 
   return (
@@ -68,10 +111,6 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
           >
             {t('title')}
           </motion.h2>
-          <Link href="/songs" className="mt-6 inline-flex font-bold underline underline-offset-4">
-            Browse all published songs →
-          </Link>
-
           <motion.p
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -92,13 +131,8 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             key={safeCurrentPage}
             className="mt-12 grid gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           >
-            {pageItems.map((item) => (
-              <GallerySongCard
-                key={item.id}
-                item={item}
-                onSelect={(song) => setSelectedSong(song)}
-                queue={displayItems}
-              />
+            {displayItems.map((item) => (
+              <GallerySongCard key={item.id} item={item} onSelect={openSong} queue={displayItems} />
             ))}
           </div>
         )}
@@ -111,8 +145,8 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
             <p className="text-sm font-bold text-slate-700">
               {t('pagination.showing', {
                 start: pageStart + 1,
-                end: Math.min(pageStart + GALLERY_PAGE_SIZE, displayItems.length),
-                total: displayItems.length,
+                end: Math.min(pageStart + GALLERY_PAGE_SIZE, totalSongs),
+                total: totalSongs,
               })}
             </p>
 
@@ -120,7 +154,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
               <button
                 type="button"
                 onClick={() => goToPage(safeCurrentPage - 1)}
-                disabled={safeCurrentPage === 1}
+                disabled={safeCurrentPage === 1 || isLoading}
                 className="inline-flex h-11 items-center gap-1.5 rounded-full border border-slate-950/15 bg-white/60 px-4 text-sm font-black text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-35"
               >
                 <ChevronLeft className="size-4" aria-hidden="true" />
@@ -132,6 +166,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
                   key={page}
                   type="button"
                   onClick={() => goToPage(page)}
+                  disabled={isLoading}
                   aria-current={page === safeCurrentPage ? 'page' : undefined}
                   aria-label={t('pagination.page', { page })}
                   className={`flex size-11 items-center justify-center rounded-full text-sm font-black shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 ${
@@ -147,7 +182,7 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
               <button
                 type="button"
                 onClick={() => goToPage(safeCurrentPage + 1)}
-                disabled={safeCurrentPage === totalPages}
+                disabled={safeCurrentPage === totalPages || isLoading}
                 className="inline-flex h-11 items-center gap-1.5 rounded-full border border-slate-950/15 bg-white/60 px-4 text-sm font-black text-slate-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-35"
               >
                 <span className="hidden sm:inline">{t('pagination.next')}</span>
@@ -155,6 +190,26 @@ export default function GallerySection({ songs = [], initialSelectedSong = null 
               </button>
             </div>
           </nav>
+        )}
+        {isLoading && (
+          <p role="status" className="mt-4 text-center text-sm font-semibold text-slate-700">
+            Loading songs…
+          </p>
+        )}
+        {loadError && (
+          <p role="alert" className="mt-4 text-center text-sm font-semibold text-rose-700">
+            Could not load songs. Please try again.
+          </p>
+        )}
+        {isOpeningSong && (
+          <p role="status" className="mt-4 text-center text-sm font-semibold text-slate-700">
+            Opening song…
+          </p>
+        )}
+        {songError && (
+          <p role="alert" className="mt-4 text-center text-sm font-semibold text-rose-700">
+            Could not open this song. Please try again.
+          </p>
         )}
       </div>
     </section>
