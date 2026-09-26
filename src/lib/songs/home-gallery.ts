@@ -115,6 +115,7 @@ export async function getHomeChartCandidates() {
     .select({
       id: songTable.id,
       seoSlug: songTable.seoSlug,
+      seoTopic: songTable.seoTopic,
       storyId: songTable.storyId,
       title: songTable.title,
       createdAt: songTable.createdAt,
@@ -139,6 +140,47 @@ export async function getHomeChartCandidates() {
     )
     .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
     .limit(100);
+
+  return rows.map((row) => ({
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+  })) as Song[];
+}
+
+/** 累计播放榜独立查询全部已发布歌曲，避免只在最新 100 首中挑选。 */
+export async function getAllTimeChartCandidates() {
+  const db = getDb();
+  const latestAttempt = createLatestGenerationAttemptQuery(db);
+  const rows = await db
+    .select({
+      id: songTable.id,
+      seoSlug: songTable.seoSlug,
+      storyId: songTable.storyId,
+      title: songTable.title,
+      createdAt: songTable.createdAt,
+      publishedAt: songTable.publishedAt,
+      durationSec: songTable.durationSec,
+      plays: songTable.plays,
+      audioUrl: songTable.audioUrl,
+      coverImageUrl: songTable.coverImageUrl,
+      newsSummary: storyTable.newsSummary,
+      sourceUrl: storyTable.sourceUrl,
+    })
+    .from(songTable)
+    .innerJoin(user, eq(songTable.userId, user.id))
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+    .where(
+      and(
+        eq(user.role, 'admin'),
+        eq(songTable.isPublished, true),
+        notInArray(latestAttempt.processingStatus, failedStatuses),
+        sql`${songTable.plays} > 0`
+      )
+    )
+    .orderBy(desc(songTable.plays), desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`))
+    .limit(20);
 
   return rows.map((row) => ({
     ...row,

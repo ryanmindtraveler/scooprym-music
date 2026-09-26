@@ -72,27 +72,16 @@ export function getNewsDescription(song: Song) {
   return '';
 }
 
-/**
- * 周榜使用滚动最近 7 天的真实播放记录排序；周播放量相同时，
- * 累计播放量更高的内容优先，最后以发布时间作为稳定排序依据。
- * 如果周播放量记录不足，自动从曲库中补充高热度歌曲，确保数量充实。
- */
-export function getWeeklyBiggestDrops(songs: Song[], limit = 16) {
-  const sorted = [...songs].sort((first, second) => {
-    const weeklyDifference = (second.weeklyPlays ?? 0) - (first.weeklyPlays ?? 0);
-    if (weeklyDifference !== 0) return weeklyDifference;
-
-    const totalDifference = second.plays - first.plays;
-    if (totalDifference !== 0) return totalDifference;
-
-    return new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime();
-  });
-
-  const withWeeklyPlays = sorted.filter((song) => (song.weeklyPlays ?? 0) > 0);
-  if (withWeeklyPlays.length >= limit) return withWeeklyPlays.slice(0, limit);
-
-  // 如果带周播放量的歌曲不足，自动补充其余已发布歌曲
-  const seenIds = new Set(withWeeklyPlays.map((s) => s.id));
-  const remaining = sorted.filter((s) => !seenIds.has(s.id));
-  return [...withWeeklyPlays, ...remaining].slice(0, limit);
+/** 累计播放榜只按公开歌曲的总播放量排序，同分时以发布时间稳定排序。 */
+export function getAllTimeBiggestDrops(songs: Song[], limit = 20) {
+  return [...songs]
+    .sort((first, second) => {
+      const playDifference = second.plays - first.plays;
+      if (playDifference !== 0) return playDifference;
+      return (
+        new Date(second.publishedAt || second.createdAt).getTime() -
+        new Date(first.publishedAt || first.createdAt).getTime()
+      );
+    })
+    .slice(0, limit);
 }

@@ -6,13 +6,13 @@ import { VoteSubmitSection } from '@/components/blocks/daily/vote-submit';
 import GallerySection from '@/components/blocks/gallery/gallery';
 import HeroSection from '@/components/blocks/hero/hero';
 import { getDb } from '@/db';
-import { songPlay, songReaction } from '@/db/schema';
+import { songReaction } from '@/db/schema';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { getBusinessDayStart } from '@/lib/shared/business-time';
-import { getHomeChartCandidates, getHomeGalleryPage } from '@/lib/songs/home-gallery';
+import { getAllTimeChartCandidates, getHomeChartCandidates, getHomeGalleryPage } from '@/lib/songs/home-gallery';
 import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
 import type { Song } from '@/types/song';
-import { and, count, gte, inArray } from 'drizzle-orm';
+import { count, inArray } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
@@ -49,36 +49,27 @@ export async function generateMetadata({
 
 export default async function HomePage() {
   const db = await getDb();
-  // 首页只传 Gallery 第一页的 20 首卡片数据；周榜与播放队列使用精简字段。
-  const [galleryPage, chartCandidates] = await Promise.all([getHomeGalleryPage(1), getHomeChartCandidates()]);
+  // 首页只传 Gallery 第一页的 20 首卡片数据；累计播放榜与播放队列使用精简字段。
+  const [galleryPage, chartCandidates, allTimeChartSongs] = await Promise.all([
+    getHomeGalleryPage(1),
+    getHomeChartCandidates(),
+    getAllTimeChartCandidates(),
+  ]);
 
   const now = new Date();
-  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const songIds = chartCandidates.map((song) => song.id);
-  const [weeklyPlayRows, reactionRows] =
+  const reactionRows =
     chartCandidates.length > 0
-      ? await Promise.all([
-          db
-            .select({
-              songId: songPlay.songId,
-              count: count(),
-            })
-            .from(songPlay)
-            .where(and(inArray(songPlay.songId, songIds), gte(songPlay.createdAt, weekStart)))
-            .groupBy(songPlay.songId),
-          db
-            .select({
-              songId: songReaction.songId,
-              reactionType: songReaction.reactionType,
-              count: count(),
-            })
-            .from(songReaction)
-            .where(inArray(songReaction.songId, songIds))
-            .groupBy(songReaction.songId, songReaction.reactionType),
-        ])
-      : [[], []];
-
-  const weeklyPlaysBySong = new Map(weeklyPlayRows.map((row) => [row.songId, Number(row.count) || 0]));
+      ? await db
+          .select({
+            songId: songReaction.songId,
+            reactionType: songReaction.reactionType,
+            count: count(),
+          })
+          .from(songReaction)
+          .where(inArray(songReaction.songId, songIds))
+          .groupBy(songReaction.songId, songReaction.reactionType)
+      : [];
 
   const topReactionBySong = new Map<string, { type: SongReactionType; count: number }>();
   for (const row of reactionRows) {
@@ -92,7 +83,6 @@ export default async function HomePage() {
 
   const serializedSongs = chartCandidates.map((song) => ({
     ...song,
-    weeklyPlays: weeklyPlaysBySong.get(song.id) || 0,
     topReaction: topReactionBySong.get(song.id) || null,
   })) as Song[];
 
@@ -125,7 +115,7 @@ export default async function HomePage() {
         <SectionWaveDivider from="hero" to="today" />
         <DailyHome songs={dailySongs} freshnessLabel={freshnessLabel} hasNewToday={freshTodaySongs.length > 0} />
         <SectionWaveDivider from="today" to="biggest" />
-        <BiggestDrops songs={serializedSongs} />
+        <BiggestDrops songs={allTimeChartSongs} />
         <SectionWaveDivider from="biggest" to="paper" />
         <VoteSubmitSection mode="vote" />
         <SectionWaveDivider from="paper" to="gallery" />

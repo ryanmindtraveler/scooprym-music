@@ -4,12 +4,12 @@ import { Marquee } from '@/components/magicui/marquee';
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
-import { getNewsCardSummary, getWeeklyBiggestDrops } from '@/lib/songs/song-editorial';
+import { getAllTimeBiggestDrops, getNewsCardSummary } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
-import { Eye, Loader2, Music2, Pause, Play, Sparkles, Trophy } from 'lucide-react';
+import { Headphones, Loader2, Music2, Pause, Play, Sparkles, Trophy } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -49,8 +49,6 @@ function DropPortraitCard({
 }) {
   const songUrl = getSongUrl(song);
   const description = song.newsSummary?.trim() ? getNewsCardSummary(song) : song.title;
-
-  const playsCount = (song.weeklyPlays ?? 0) > 0 ? song.weeklyPlays : song.plays || 1;
 
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -177,7 +175,7 @@ function DropPortraitCard({
           </LocaleLink>
         </div>
 
-        {/* 底部元数据栏: 动效音频波形 + 播放量 + 发布日期 */}
+        {/* 底部元数据栏：动效音频波形与累计播放量。 */}
         <div className="mt-auto flex items-center gap-2 text-[11px] font-medium leading-none text-gray-400 dark:text-gray-500">
           <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
             <div className="flex h-3 items-end gap-0.5">
@@ -204,8 +202,8 @@ function DropPortraitCard({
           </div>
           <span className="size-1 rounded-full bg-gray-300 dark:bg-gray-600" />
           <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-            <Eye className="size-3 text-slate-400" />
-            <span>{playsCount}</span>
+            <Headphones className="size-3 text-slate-400" aria-hidden="true" />
+            <span>{song.plays} Plays</span>
           </div>
         </div>
       </div>
@@ -220,8 +218,7 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
   useEffect(() => {
     setHasMounted(true);
   }, []);
-  // 排除前 4 条（今日精选区），从曲库中获取周榜及补充歌曲
-  const rawBiggestSongs = useMemo(() => getWeeklyBiggestDrops(songs.slice(4), 20), [songs]);
+  const rawBiggestSongs = useMemo(() => getAllTimeBiggestDrops(songs), [songs]);
 
   // 单行模式下，如果卡片数量少，扩充数量保证单行连续滚动充盈饱满
   const denseSongs = useMemo(() => {
@@ -263,18 +260,18 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/20 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-white shadow-xs backdrop-blur-md">
                 <Trophy className="size-3.5 text-amber-300" />
-                Weekly Chart
+                All-Time Hits
               </span>
             </div>
             <h2 className="mt-2.5 text-3xl font-black tracking-tight drop-shadow-xs sm:text-4xl md:text-5xl">
-              The Week on Repeat
+              Most Played Funny Songs
             </h2>
             <p className="mt-2 max-w-lg text-sm sm:text-base font-medium leading-relaxed text-white/90">
-              The meme songs listeners couldn’t stop replaying this week. Hover any card to pause.
+              The funny songs listeners keep coming back to. Hover any card to pause.
             </p>
           </div>
           <p className="max-w-lg text-xs sm:text-sm font-bold uppercase tracking-wider text-white/80 md:text-right">
-            Ranked by listener plays this week
+            Ranked by total plays
           </p>
         </div>
 
@@ -287,7 +284,7 @@ export function BiggestDrops({ songs }: BiggestDropsProps) {
           {denseSongs.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/40 p-10 text-center text-sm font-semibold text-white/90">
               <Sparkles className="mb-2 size-8 text-amber-300" />
-              This week’s chart is waiting for its first plays.
+              The chart is waiting for its first plays.
             </div>
           ) : (
             <Marquee pauseOnHover repeat={hasMounted ? 2 : 1} className="py-2 [--duration:55s] [--gap:1.75rem]">

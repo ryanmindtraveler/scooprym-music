@@ -7,7 +7,6 @@ export interface Song {
   createdAt: Date | string;
   durationSec: number | null;
   plays: number;
-  weeklyPlays?: number;
   audioUrl?: string | null;
   coverImageUrl?: string | null;
   lyrics?: string | null;

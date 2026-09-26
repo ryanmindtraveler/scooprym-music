@@ -34,7 +34,7 @@ export function useFooterLinks(): NestedMenuItem[] {
           external: false,
         },
         {
-          title: 'The Week on Repeat',
+          title: 'Most Played Funny Songs',
           href: '/#biggest',
           external: false,
         },

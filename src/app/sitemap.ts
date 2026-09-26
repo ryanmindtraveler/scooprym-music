@@ -33,8 +33,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Add static routes with hreflang
   sitemapList.push(
     ...staticRoutes.flatMap((route) => {
-      // Prioritize Home and Pricing
-      const priority = route === '/' ? 1.0 : route === '/pricing' ? 0.9 : 0.8;
+      // 内容页高于介绍和政策页；Google 会忽略该字段，但其他消费方仍可读取。
+      const priority =
+        route === '/' ? 1.0 : route === '/songs' ? 0.8 : route === '/about' || route === '/contact' ? 0.4 : 0.3;
       const changeFrequency = (route === '/' ? 'daily' : 'weekly') as 'daily' | 'weekly';
 
       return [routing.defaultLocale].map((locale) => ({

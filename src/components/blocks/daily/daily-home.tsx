@@ -2,8 +2,8 @@
 
 import { getSourceUrl } from '@/lib/urls/source-url';
 
-import { getNewsCardSummary, getNewsDescription } from '@/lib/songs/song-editorial';
-import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
+import { getNewsCardSummary, getNewsDescription, getNewsTitle } from '@/lib/songs/song-editorial';
+import { getSongCanonicalSlug, getSongSeoTopic } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
@@ -55,7 +55,7 @@ function Cover({ song, priority = false, className }: { song: Song; priority?: b
       {song.coverImageUrl ? (
         <Image
           src={song.coverImageUrl}
-          alt={getNewsSummary(song)}
+          alt={`${song.title} cover art`}
           fill
           priority={priority}
           sizes="(min-width: 1024px) 45vw, 95vw"
@@ -165,6 +165,9 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
   }
 
   const leadDescription = getNewsDescription(featured);
+  const leadTopic = getSongSeoTopic(featured);
+  // 旧歌可能缺少短主题；首页卡片只显示预览，详情页的标题与摘要保持原样。
+  const leadHeadline = leadTopic.length > 100 ? getNewsTitle(featured) : leadTopic;
   const leadDomain = getSourceDomain(getSourceUrl(featured.sourceUrl));
 
   return (
@@ -245,16 +248,16 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                     )}
                   </div>
 
-                  {/* Headline Title */}
+                  {/* 主打卡片用简短事件主题作三级标题，避免将整段新闻摘要升为区块标题。 */}
                   <a
                     href={getSongUrl(featured)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block group/title"
                   >
-                    <h2 className="line-clamp-3 text-xl font-black leading-[1.32] tracking-[-0.025em] text-[#201a29] transition-colors group-hover/title:text-[#d80d63] sm:text-2xl lg:text-[1.75rem] xl:text-[2rem] dark:text-[#fffdf8]">
-                      {getNewsSummary(featured)}
-                    </h2>
+                    <h3 className="line-clamp-3 text-xl font-black leading-[1.32] tracking-[-0.025em] text-[#201a29] transition-colors group-hover/title:text-[#d80d63] sm:text-2xl lg:text-[1.75rem] xl:text-[2rem] dark:text-[#fffdf8]">
+                      {leadHeadline}
+                    </h3>
                   </a>
 
                   {/* Editorial Excerpt & Vibe Pill */}

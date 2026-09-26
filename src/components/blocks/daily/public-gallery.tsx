@@ -2,7 +2,7 @@
 
 import { GallerySongCard } from '@/components/songs/gallery-song-card';
 import { LocaleLink } from '@/i18n/navigation';
-import { getWeeklyBiggestDrops } from '@/lib/songs/song-editorial';
+import { getAllTimeBiggestDrops } from '@/lib/songs/song-editorial';
 import type { Song } from '@/types/song';
 import { ArrowRight } from 'lucide-react';
 
@@ -11,8 +11,8 @@ interface PublicGalleryProps {
 }
 
 export function PublicGallery({ songs }: PublicGalleryProps) {
-  const biggestDropIds = new Set(getWeeklyBiggestDrops(songs.slice(4)).map((song) => song.id));
-  // Archive 排除今日四条和周榜内容，避免同一新闻在首页重复出现。
+  const biggestDropIds = new Set(getAllTimeBiggestDrops(songs.slice(4)).map((song) => song.id));
+  // Archive 排除今日四条和累计播放榜内容，避免同一新闻在首页重复出现。
   // 最多展示 18 条，让内容平台具备持续浏览感，同时控制首页图片与音频元数据负载。
   const gallerySongs = songs
     .slice(4)
