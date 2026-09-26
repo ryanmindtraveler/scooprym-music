@@ -302,6 +302,20 @@
       "when": 1790380800000,
       "tag": "0042_song_seo_slug",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790467200000,
+      "tag": "0043_song_seo_topic",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790553600000,
+      "tag": "0044_shorten_long_song_slugs",
+      "breakpoints": true
     }
   ]
 }

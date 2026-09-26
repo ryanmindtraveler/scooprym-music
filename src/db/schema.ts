@@ -17,7 +17,7 @@ export const radarCreationJob = scooprymSchema.table('radar_creation_job', {
   sequence: integer('sequence').notNull().default(0),
   leaseId: text('lease_id'),
   leaseUntil: timestamp('lease_until', { withTimezone: true }),
-  lyricResult: jsonb('lyric_result').$type<{ title: string; lyrics: string; summary: string; sourceText?: string }>(),
+  lyricResult: jsonb('lyric_result').$type<{ title: string; lyrics: string; summary: string; seoTopic?: string; sourceText?: string }>(),
   error: text('error'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -386,6 +386,8 @@ export const song = scooprymSchema.table(
     title: text('title').notNull(),
     // 发布时固定的可读网址，标题与新闻摘要后续编辑不改变它。
     seoSlug: text('seo_slug'),
+    // 创作时固定的简短事件主题，供 title tag 与 slug 共用；不改变可见歌名。
+    seoTopic: text('seo_topic'),
     lyrics: text('lyrics'),
     audioUrl: text('audio_url').notNull(),
     audioKey: text('audio_key'),

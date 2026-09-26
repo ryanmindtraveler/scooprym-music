@@ -194,11 +194,21 @@ const lyricWorkshopPlanSchema = z.object({
  * 精简管线的第一阶段同时完成来源梳理与创意策略规划，避免先分析、再规划的串行瀑布。
  * 即使上游已经提供了摘要，也要求模型返回规范化简报，便于检查点统一恢复。
  */
+const seoTopicSchema = z
+  .string()
+  .trim()
+  .min(12)
+  .max(72)
+  .describe(
+    'A concise factual English search topic (roughly 5-12 words) naming the real person or event. Preserve attribution, denials, rumors and reversals; never turn an allegation into a fact. No artistic song title or Song suffix.'
+  );
+
 const lyricWorkshopPlanningSchema = lyricWorkshopPlanSchema.extend({
   sourceBrief: z.object({
     isValid: z.boolean(),
     validationError: z.string().nullable(),
     title: z.string().trim().min(2).max(120),
+    seoTopic: seoTopicSchema.optional(),
     summary: z
       .string()
       .trim()
@@ -209,6 +219,11 @@ const lyricWorkshopPlanningSchema = lyricWorkshopPlanSchema.extend({
       ),
     angle: z.string().trim().min(8).max(500),
   }),
+});
+
+// 旧检查点可以缺少主题；新生成必须返回主题。
+const lyricWorkshopGenerationSchema = lyricWorkshopPlanningSchema.extend({
+  sourceBrief: lyricWorkshopPlanningSchema.shape.sourceBrief.extend({ seoTopic: seoTopicSchema }),
 });
 
 const lyricEditorialSchema = lyricsDraftSchema.extend({
@@ -406,7 +421,7 @@ ${MEME_CREATIVE_STANDARD}
 ${EDITORIAL_SAFETY_POLICY}
 
 Planning task:
-1. First normalize the source into sourceBrief: validate the material, create a compact title seed, a concise factual summary, and one strong creative angle. When an upstream brief is supplied, preserve its facts and improve only clarity.
+1. First normalize the source into sourceBrief: validate the material, create a compact title seed, a concise factual summary, a short factual seoTopic naming the real person/event, and one strong creative angle. Preserve denials, attribution and uncertainty in seoTopic. When an upstream brief is supplied, preserve its facts and improve only clarity.
 2. Build a compact fact ledger and classify the story as news_absurdity, celebrity_chaos, or internet_weirdness.
 3. Build the three-layer artistic lens: headline facts -> human tension -> cultural mirror.
 4. Choose one concrete symbolic image that can carry the song instead of retelling the article.
@@ -449,7 +464,7 @@ Memory-anchor standard:
             generateObject({
               abortSignal,
               model: getModel(activeProvider, activeModel),
-              schema: lyricWorkshopPlanningSchema,
+              schema: lyricWorkshopGenerationSchema,
               system: workshopSystemPrompt,
               prompt: `${
                 suppliedBrief
@@ -797,6 +812,7 @@ Finalization contract:
 
   return {
     title: finalSongTitle,
+    seoTopic: planningResult.sourceBrief.seoTopic,
     summary: analysis.storyBrief.summary,
     angle: analysis.storyBrief.angle,
     lyrics: finalLyrics,

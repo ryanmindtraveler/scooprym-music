@@ -167,7 +167,13 @@ export async function processRadarCreation(candidateId: string) {
         sourceText: lyrics.source?.text,
         requiresReview: false,
       });
-      result = { title: lyrics.title, summary: lyrics.summary, lyrics: lyrics.lyrics, sourceText: lyrics.source?.text };
+      result = {
+        title: lyrics.title,
+        summary: lyrics.summary,
+        seoTopic: lyrics.seoTopic,
+        lyrics: lyrics.lyrics,
+        sourceText: lyrics.source?.text,
+      };
       await db.update(radarCreationJob).set({ lyricResult: result }).where(owned);
     }
     const response = await submitMusicGeneration(
@@ -177,6 +183,7 @@ export async function processRadarCreation(candidateId: string) {
         title: result.title,
         lyrics: result.lyrics,
         sourceSummary: result.summary,
+        seoTopic: result.seoTopic,
         sourceUrl: job.sourceUrl,
         sourceText: result.sourceText || job.sourceTitle,
         musicDirectionPrompt: production?.direction ?? job.direction,

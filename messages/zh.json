@@ -3,7 +3,7 @@
     "name": "ScoopRYM",
     "title": "ScoopRYM — 每日爆红时刻梗歌",
     "description": "将最离谱的头条、最混乱的闹剧和最劲爆的八卦做成可听、可笑、可分享的歌曲。",
-    "keywords": "headline song, news song, drama song, gossip song, meme song, comedy song, funny song, diss track, battle song, rap battle, AI song generator, text to song, song generator, diss track generator, meme song generator"
+    "keywords": "daily funny songs, comedy rap, headline song, news song, drama song, gossip song, comedy song, viral moments, musical satire"
   },
   "Common": {
     "premium": "付费文章",
@@ -316,11 +316,11 @@
     "categoryUnavailable": "分类归档暂时不可用。"
   },
   "SongsPage": {
-    "title": "爆红时刻 Gallery | ScoopRYM",
-    "description": "浏览由爆红时刻、八卦和网络闹剧改编的每日 meme songs，并查看原始来源与歌词。",
+    "title": "Funny Songs Archive | ScoopRYM",
+    "description": "浏览由爆红时刻、八卦和网络闹剧改编的 funny songs，并查看原始来源与歌词。",
     "heroTitleLeading": "爆红",
     "heroTitleHighlight": "时刻",
-    "heroDescription": "先看事件，再查原始来源、听 meme song，最后留下你的态度。"
+    "heroDescription": "先看事件，再查原始来源、听 funny song，最后留下你的态度。"
   },
   "DocsPage": {
     "toc": "目录",

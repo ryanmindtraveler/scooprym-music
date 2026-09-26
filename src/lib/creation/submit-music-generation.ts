@@ -19,7 +19,7 @@ import {
 } from '@/lib/creation/song-workflow';
 import { mapGenerationError } from '@/lib/music/error-handler';
 import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from '@/lib/music/production-recipe';
-import { getSongSeoSlugBase } from '@/lib/songs/song-seo';
+import { buildSongSeoTopic, getSongSeoSlugBase } from '@/lib/songs/song-seo';
 import { and, desc, eq, like, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
@@ -293,11 +293,19 @@ export async function submitMusicGeneration(rawBody: unknown, actor: { id: strin
           .onConflictDoNothing({ target: storyTable.id });
       }
 
+      const seoTopic = buildSongSeoTopic({
+        id: body.songId,
+        title: effectiveTitle,
+        newsSummary: effectiveSourceSummary,
+        sourceText: body.sourceText,
+        seoTopic: body.seoTopic,
+      });
       const slugBase = getSongSeoSlugBase({
         id: body.songId,
         title: effectiveTitle,
         newsSummary: effectiveSourceSummary,
-        sourceText: null,
+        sourceText: body.sourceText,
+        seoTopic,
       });
       // 同一事件同时创作多个版本时，事务锁保证纯文字 slug 的序号分配不冲突。
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${slugBase}))`);
@@ -319,6 +327,7 @@ export async function submitMusicGeneration(rawBody: unknown, actor: { id: strin
           userId: actor.id,
           title: effectiveTitle,
           seoSlug,
+          seoTopic: seoTopic || null,
           // 保存实际发送给音乐模型的歌词，避免数据库歌词与成品不一致。
           lyrics: lyricCheck.lyrics,
           audioUrl: '',

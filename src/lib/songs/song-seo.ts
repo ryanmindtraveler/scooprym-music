@@ -2,18 +2,25 @@ import { slugify } from '@/lib/utils';
 import type { Song } from '@/types/song';
 import { cleanLyricsForDisplay } from '../music/lyrics-utils';
 import legacyStorySongSlugs from './legacy-story-song-slugs.json';
+import shortenedSongSlugs from './shortened-song-slugs.json';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
 
 type SeoSong = Pick<Song, 'id' | 'title' | 'newsSummary' | 'sourceText'> &
-  Partial<Pick<Song, 'storyId' | 'lyrics' | 'prompt'>>;
+  Partial<Pick<Song, 'storyId' | 'seoTopic' | 'lyrics' | 'prompt'>>;
 type SongIdentity = Pick<Song, 'id'> & Partial<Pick<Song, 'seoSlug'>>;
 type PublicDatedSong = Pick<Song, 'createdAt'> & Partial<Pick<Song, 'publishedAt'>>;
 export type SongRecordingVersion = { number: number; total: number };
 
 const legacySongSlugRedirects = new Map(legacyStorySongSlugs.map(({ old, slug }) => [old, slug]));
+const shortenedSongSlugIds = new Map(shortenedSongSlugs.map(({ old, id }) => [old, id]));
 
 export function getLegacySongSlugRedirect(slug: string) {
   return legacySongSlugRedirects.get(slug);
+}
+
+/** 迁移后的长地址先按歌曲 ID 查库，再跳转到当前规范地址，避免迁移期间出现死链。 */
+export function getShortenedSongSlugId(slug: string) {
+  return shortenedSongSlugIds.get(slug);
 }
 
 /** 早期作品的摘要是完整句子，单独给搜索标题使用精简的事件描述。 */
@@ -61,13 +68,11 @@ function getSongPrimaryStyle(song: SeoSong) {
     .find(Boolean);
   if (!rawStyle) return '';
 
-  return truncateAtWord(
-    rawStyle
-      .replace(/[^\p{L}\p{N}&+'-]+/gu, ' ')
-      .replace(/\s+/g, ' ')
-      .trim(),
-    28
-  );
+  const style = rawStyle
+    .replace(/[^\p{L}\p{N}&+'-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return style.length <= 28 ? style : '';
 }
 
 function getSongLyricHook(song: SeoSong) {
@@ -76,7 +81,7 @@ function getSongLyricHook(song: SeoSong) {
     .map((line) => line.trim())
     .find((line) => line && !/^\[[^\]]+\]$/.test(line));
   if (!hook) return '';
-  return truncateAtWord(hook.replace(/^[(\[][^\])]+[)\]]\s*/, '').trim(), 34);
+  return hook.replace(/^[(\[][^\])]+[)\]]\s*/, '').trim();
 }
 
 /**
@@ -97,8 +102,27 @@ export function getSongSearchHeadline(song: SeoSong) {
   return truncateAtWord(headline || song.title || 'The internet did what?', 150);
 }
 
+/** 优先保存创作阶段核对的短主题；旧工作流回退到完整事件首句。 */
+export function buildSongSeoTopic(song: SeoSong) {
+  const supplied = song.seoTopic?.trim();
+  const summary = song.newsSummary?.trim();
+  const sourceHeadline = song.sourceText?.match(/(?:^|\n)Title:\s*([^\r\n]+)/i)?.[1]?.trim();
+  const headline =
+    supplied || (summary ? getNewsTitle({ ...song, title: '' } as Song, { truncate: false }) : sourceHeadline);
+  if (!headline) return '';
+
+  const cleaned = headline
+    .replace(/^Title:\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[.!?\s]+$/, '')
+    .trim();
+  // 没有人工或模型提供的短主题时，保留完整陈述，避免截掉「否认」「尚未」等关键限定。
+  return cleaned;
+}
+
 /** 首句优先，避免详情页把自造歌名排在真实事件之前。 */
 export function getSongSeoTopic(song: SeoSong) {
+  if (song.seoTopic?.trim()) return song.seoTopic.trim();
   const legacyTopic = song.storyId ? legacyStorySeoTopics[song.storyId] : undefined;
   if (legacyTopic && song.newsSummary?.trim()) return legacyTopic;
   const headline = getNewsTitle(song as Song, { truncate: false }).trim() || song.title;
@@ -109,8 +133,7 @@ export function getSongSeoTopic(song: SeoSong) {
 /** 仅用于首次分配固定 slug，不随新闻摘要或歌名的后续编辑重新计算。 */
 export function getSongSeoSlugBase(song: SeoSong) {
   const topic = getSongSeoTopic(song);
-  const shortened = topic.length > 90 ? topic.slice(0, 91).replace(/\s+\S*$/, '') : topic;
-  return `${slugify(shortened)}-funny-song`;
+  return `${slugify(topic)}-funny-song`;
 }
 
 export function getSongStoryContext(song: SeoSong) {
@@ -131,21 +154,23 @@ export function getSongSeoDescription(song: SeoSong, version?: SongRecordingVers
   const style = getSongPrimaryStyle(song);
   const hook = getSongLyricHook(song);
   const recording = style ? `${style} funny song` : 'funny song';
-  const opening = hook ? ` opening with “${hook}”` : '';
-  const versionLead = version ? ` recording ${version.number} of ${version.total},` : '';
+  const versionLabel = version ? ` (recording ${version.number} of ${version.total})` : '';
+  const article = /^[aeiou]/i.test(recording) ? 'an' : 'a';
+  const introduction = `Hear “${song.title}”${versionLabel}, ${article} ${recording}.`;
+  const headline = song.newsSummary?.trim() ? getNewsTitle(song as Song, { truncate: false }).trim() : '';
+  const story = headline ? ` ${/[.!?]$/.test(headline) ? headline : `${headline}.`}` : '';
+  const lyric = hook ? ` It opens with “${hook}”.` : '';
+  const action = ' Play the track and read the lyrics.';
 
-  if (!song.newsSummary?.trim()) {
-    return truncateAtWord(
-      `Listen to “${song.title},”${versionLead} a ${recording}${opening}. Play the song, read the lyrics, and join the conversation.`,
-      158
-    );
-  }
-  const headline = getSongSearchHeadline(song);
-  const context = getSongStoryContext(song);
-  const lead = context && !context.startsWith('A strange true story') ? `${headline} ${context}` : headline;
-
-  return truncateAtWord(
-    `Hear “${song.title},”${versionLead} a ${recording}${opening}, inspired by: ${lead} Read the lyrics and join the conversation.`,
-    158
-  );
+  // 按完整句子取舍；不能为了固定字符数截断事实或歌词。
+  const candidates = [
+    introduction + story + lyric + action,
+    introduction + story + lyric,
+    introduction + lyric + action,
+    introduction + story + action,
+    introduction + story,
+    introduction + action,
+    introduction,
+  ];
+  return candidates.find((candidate) => candidate.length <= 170) || introduction;
 }

@@ -3,7 +3,12 @@ import { getDb } from '@/db/index';
 import { songFavorite, song as songTable } from '@/db/schema';
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
-import { getLegacySongSlugRedirect } from '@/lib/songs/song-seo';
+import {
+  decodeSongSlug,
+  getLegacySongSlugRedirect,
+  getShortenedSongSlugId,
+  getSongCanonicalSlug,
+} from '@/lib/songs/song-seo';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import { and, eq, or } from 'drizzle-orm';
@@ -21,12 +26,12 @@ export const dynamic = 'force-dynamic';
 
 export default async function SongDetailInterceptPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
-  const { slug } = resolvedParams;
+  const slug = decodeSongSlug(resolvedParams.slug);
   const legacyTarget = getLegacySongSlugRedirect(slug);
   if (legacyTarget) {
     permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
   }
-  const id = getIdFromSlug(slug);
+  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const session = await getSession();
@@ -39,6 +44,11 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
 
   if (!song) {
     notFound();
+  }
+
+  const canonicalSlug = getSongCanonicalSlug(song);
+  if (slug !== canonicalSlug) {
+    permanentRedirect(new URL(getUrlWithLocale(`/songs/${canonicalSlug}`, routing.defaultLocale)).href);
   }
 
   // Check if favorite

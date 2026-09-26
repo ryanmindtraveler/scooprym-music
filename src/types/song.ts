@@ -1,6 +1,7 @@
 export interface Song {
   id: string;
   seoSlug?: string | null;
+  seoTopic?: string | null;
   storyId?: string;
   title: string;
   createdAt: Date | string;

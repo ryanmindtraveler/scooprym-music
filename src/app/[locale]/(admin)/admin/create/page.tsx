@@ -87,6 +87,7 @@ type LyricsGenerationResponse = {
   success?: boolean;
   error?: string;
   title?: string;
+  seoTopic?: string;
   summary?: string;
   lyrics?: string;
   workshop?: LyricWorkshop;
@@ -132,6 +133,7 @@ type WorkflowRunResponse = {
 
 type GenerationContext = {
   newsSummary: string;
+  seoTopic?: string;
   newsContent: string;
   newsLink: string;
   style: string;
@@ -800,6 +802,7 @@ export default function AdminCreateSongPage() {
     const currentTask = state.tasks.find((task) => task.id === state.musicId);
     const generationContext: GenerationContext = {
       newsSummary: safeContextOverride?.newsSummary ?? currentTask?.newsSummary ?? state.newsSummary,
+      seoTopic: safeContextOverride?.seoTopic,
       newsContent: safeContextOverride?.newsContent ?? currentTask?.newsContent ?? state.newsContent,
       newsLink: safeContextOverride?.newsLink ?? currentTask?.newsLink ?? state.newsLink,
       style: safeContextOverride?.style ?? state.musicPrompt ?? currentTask?.style ?? DEFAULT_CUSTOM_VIBE_PROMPT,
@@ -848,6 +851,7 @@ export default function AdminCreateSongPage() {
           sourceText: generationContext.newsContent,
           sourceUrl: generationContext.newsLink,
           sourceSummary: generationContext.newsSummary,
+          seoTopic: generationContext.seoTopic,
           newsSummary: generationContext.newsSummary,
           productionVariantId: generationContext.productionVariantId || undefined,
           useStream: false,
@@ -1129,6 +1133,7 @@ export default function AdminCreateSongPage() {
 
       await handleGenerateMusic(formattedLyrics, generatedTitle, {
         newsSummary: finalSummary,
+        seoTopic: lyricsData.seoTopic,
         newsContent: extractedSourceText || '',
         newsLink: extractedSourceUrl || '',
         style: musicPrompt,

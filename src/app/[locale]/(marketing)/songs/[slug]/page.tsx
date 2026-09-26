@@ -10,6 +10,7 @@ import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
   getLegacySongSlugRedirect,
+  getShortenedSongSlugId,
   getSongCanonicalSlug,
   getSongPublicDate,
   getSongSearchHeadline,
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   if (legacyTarget) {
     permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
   }
-  const id = getIdFromSlug(slug);
+  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);
@@ -110,7 +111,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   if (legacyTarget) {
     permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
   }
-  const id = getIdFromSlug(slug);
+  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);

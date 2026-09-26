@@ -33,6 +33,15 @@ export async function generateMetadata({
   return constructMetadata({
     title: t('title'),
     description: t('description'),
+    keywords: [
+      'daily funny songs',
+      'funny songs from viral moments',
+      'comedy rap songs',
+      'headline songs',
+      'celebrity gossip songs',
+      'musical satire',
+    ],
+    includeDefaultKeywords: false,
     locale,
     pathname: '',
   });

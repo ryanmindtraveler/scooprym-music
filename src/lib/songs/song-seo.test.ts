@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getIdFromSlug } from '../utils';
+import shortenedSongSlugs from './shortened-song-slugs.json';
 import {
+  buildSongSeoTopic,
   decodeSongSlug,
+  getShortenedSongSlugId,
   getSongCanonicalSlug,
   getSongPublicDate,
   getSongSearchHeadline,
@@ -19,6 +22,63 @@ const song = {
 };
 
 describe('歌曲详情 SEO', () => {
+  it('仅迁移明确核对的长地址，旧地址仍能定位原歌曲', () => {
+    expect(shortenedSongSlugs).toHaveLength(17);
+    expect(new Set(shortenedSongSlugs.map(({ slug }) => slug)).size).toBe(shortenedSongSlugs.length);
+    for (const { id, old, slug } of shortenedSongSlugs) {
+      expect(old.length).toBeGreaterThanOrEqual(95);
+      expect(slug.length).toBeLessThan(old.length);
+      expect(getShortenedSongSlugId(old)).toBe(id);
+      expect(getShortenedSongSlugId(slug)).toBeUndefined();
+    }
+  });
+
+  it('创作时固定模型提供的短事件主题，标题与 slug 使用同一主题', () => {
+    const draft = {
+      ...song,
+      id: 'new-song-id',
+      title: 'The Dairy Interrogation',
+      seoTopic: 'Server roasts late diners over vegetarian ice cream',
+      newsSummary:
+        "A server's viral TikTok roasts diners who arrived 20 minutes before closing and asked if the ice cream was vegetarian. The sarcastic reply went viral.",
+    };
+    const seoTopic = buildSongSeoTopic(draft);
+    const created = { ...draft, seoTopic };
+    expect(seoTopic).toBe(draft.seoTopic);
+    expect(seoTopic).toContain('Server');
+    expect(seoTopic).not.toContain('…');
+    expect(getSongSeoTitle(created)).toBe(`${seoTopic} Song — The Dairy Interrogation`);
+    expect(getSongSeoSlugBase(created)).toContain('server');
+  });
+
+  it('旧工作流缺少短主题时保留完整否认事实', () => {
+    const draft = {
+      ...song,
+      seoTopic: undefined,
+      newsSummary:
+        'Dillon Danis says viral photos showing him snorting a white substance are fake. Fans debate the claim.',
+    };
+    const seoTopic = buildSongSeoTopic(draft);
+    expect(seoTopic).toContain('are fake');
+    expect(getSongSeoSlugBase({ ...draft, seoTopic })).toContain('are-fake');
+  });
+
+  it('创作时固定的事件主题不随摘要编辑变化', () => {
+    const created = { ...song, seoTopic: 'Antonio Banderas robot movie' };
+    expect(getSongSeoTitle({ ...created, newsSummary: 'Updated editorial summary.' })).toBe(
+      'Antonio Banderas robot movie Song — Banderas & Robot Soul'
+    );
+    expect(getSongSeoSlugBase({ ...created, newsSummary: 'Updated editorial summary.' })).toBe(
+      'antonio-banderas-robot-movie-funny-song'
+    );
+  });
+
+  it('无事件摘要时不把自造歌名伪装为新闻主题', () => {
+    const original = { ...song, newsSummary: null, sourceText: null };
+    expect(buildSongSeoTopic(original)).toBe('');
+    expect(getSongSeoTitle(original)).toBe('Funny Song — Banderas & Robot Soul');
+  });
+
   it('中文地址编码前后识别为同一个规范 slug', () => {
     const slug = getSongCanonicalSlug({ ...song, newsSummary: '音乐挑战来了' });
     expect(decodeSongSlug(encodeURIComponent(slug))).toBe(slug);
@@ -99,7 +159,7 @@ describe('歌曲详情 SEO', () => {
     expect(getSongSeoDescription(acoustic)).toContain('acoustic trap');
     expect(getSongSeoDescription(acoustic)).toContain('Yo, Drake bought the Bentley back');
     expect(getSongSeoDescription(acoustic)).not.toBe(getSongSeoDescription(boomBap));
-    expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(159);
+    expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(170);
   });
 
   it('同名录音的页面标题遵循固定公式，描述保留版本号', () => {
@@ -117,14 +177,46 @@ describe('歌曲详情 SEO', () => {
     );
     expect(getSongSeoDescription(item, first)).toContain('recording 1 of 2');
     expect(getSongSeoDescription(item, first)).not.toBe(getSongSeoDescription(item, second));
-    expect(getSongSeoDescription(item, first).length).toBeLessThanOrEqual(159);
+    expect(getSongSeoDescription(item, first).length).toBeLessThanOrEqual(170);
   });
 
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {
     expect(getSongSeoTitle(song)).toContain('Antonio Banderas');
     expect(getSongSeoTitle(song)).toContain('Banderas & Robot Soul');
     expect(getSongSeoDescription(song)).toContain('Banderas & Robot Soul');
-    expect(getSongSeoDescription(song).length).toBeLessThanOrEqual(159);
+    expect(getSongSeoDescription(song).length).toBeLessThanOrEqual(170);
+  });
+
+  it('长事件描述只取完整句子，不在事实或否认语句中间截断', () => {
+    const item = {
+      ...song,
+      title: 'The Viral Denial',
+      newsSummary:
+        'Dillon Danis says viral photos showing him snorting a white substance are fake. The online argument continued after his denial.',
+    };
+    const description = getSongSeoDescription(item);
+    expect(description).toContain('The Viral Denial');
+    expect(description).not.toContain('…');
+    expect(description).not.toMatch(/are(?=\.|$)/);
+    if (description.includes('Dillon Danis')) expect(description).toContain('are fake.');
+    expect(description).toMatch(/\.$/);
+  });
+
+  it('HeidiFest 等较短事件能完整出现在描述里', () => {
+    const description = getSongSeoDescription({
+      ...song,
+      title: 'Naomi Said Yes (HeidiFest)',
+      newsSummary: "Heidi Klum hosted her own pre-Oktoberfest bash, HeidiFest, at Munich's Hofbräuhaus.",
+    });
+    expect(description).toContain("at Munich's Hofbräuhaus.");
+    expect(description).not.toContain('…');
+  });
+
+  it('缺少新闻摘要时仍生成自然收尾的独立描述', () => {
+    const description = getSongSeoDescription({ ...song, newsSummary: null, lyrics: null, prompt: null });
+    expect(description).toContain('Banderas & Robot Soul');
+    expect(description).toContain('read the lyrics.');
+    expect(description).not.toContain('…');
   });
 
   it('含加号的旧网址仍能定位歌曲，新规范网址不再包含加号', () => {

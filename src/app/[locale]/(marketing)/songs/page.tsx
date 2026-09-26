@@ -26,17 +26,19 @@ export async function generateMetadata({ params, searchParams }: SongsPageProps)
   const page = parseArchivePage((await searchParams).page);
   if (page === null) notFound();
   return constructMetadata({
-    title: page === 1 ? 'Meme Song Archive' : `Meme Song Archive — Page ${page}`,
+    title: page === 1 ? 'Funny Songs Archive' : `Funny Songs Archive — Page ${page}`,
     description: t('description'),
     keywords: [
-      'daily meme songs',
+      'funny songs archive',
+      'daily funny songs',
+      'comedy rap songs',
       'headline songs',
       'news satire songs',
       'celebrity gossip songs',
       'internet drama songs',
-      'meme song',
       'viral song',
     ],
+    includeDefaultKeywords: false,
     locale,
     pathname: getArchivePagePath(page),
   });
