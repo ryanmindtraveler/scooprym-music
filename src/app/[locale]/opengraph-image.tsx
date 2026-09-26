@@ -12,10 +12,10 @@ export const contentType = 'image/png';
 
 function getOgCopy() {
   return {
-    subtitle: 'Daily Meme Songs from',
+    subtitle: 'Daily Funny Songs from',
     highlight: 'Viral Moments',
     badge: 'Listen · Laugh · Share',
-    alt: 'ScoopRYM — Daily Meme Songs from Viral Moments',
+    alt: 'ScoopRYM — Daily Funny Songs from Viral Moments',
   };
 }
 

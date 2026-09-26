@@ -496,7 +496,7 @@
       }
     },
     "footer": {
-      "tagline": "Daily Meme Songs from Viral Moments.",
+      "tagline": "Daily Funny Songs from Viral Moments.",
       "product": {
         "title": "Product",
         "items": {
@@ -1270,11 +1270,11 @@
       }
     },
     "generator": {
-      "marquee": "THE MEME SONG FACTORY | NO SKILLS NEEDED | VIRAL SONGS INSTANTLY | ",
-      "subtitle": "The Meme Song Factory",
-      "description": "Paste any headline, drama, or gossip story below, and watch AI turn it into a meme song.",
+      "marquee": "THE FUNNY SONG FACTORY | NO SKILLS NEEDED | VIRAL SONGS INSTANTLY | ",
+      "subtitle": "The Funny Song Factory",
+      "description": "Paste any headline, drama, or gossip story below, and watch AI turn it into a funny song.",
       "descriptionExtra": "No complex prompts. Just pick a style. ✨",
-      "headerInputPlaceholder": "Paste any headline, drama, or gossip story below, and watch AI turn it into a meme song",
+      "headerInputPlaceholder": "Paste any headline, drama, or gossip story below, and watch AI turn it into a funny song",
       "left": {
         "label": "Enter Story Content",
         "placeholder": "Paste a headline, drama story, or gossip link here...",
@@ -1318,7 +1318,7 @@
       "title": "Gallery",
       "titleLeading": "Trending Gossip &",
       "titleHighlight": "Headline Songs",
-      "descriptionLong": "Catch up on recent headlines, drama, and gossip, then hear the meme-song take.",
+      "descriptionLong": "Catch up on recent headlines, drama, and gossip, then hear the funny songs they inspired.",
       "empty": "No published Drops yet.",
       "cta": "Show Me More",
       "pagination": {
@@ -1421,10 +1421,10 @@
       "feature-4": "Product Feature Four"
     },
     "features3": {
-      "title": "Turn Chaos into Meme Song",
+      "title": "Turn Chaos into Funny Songs",
       "titleLeading": "Turn Chaos into",
-      "titleHighlight": "Meme Song",
-      "description": "Headlines, gossip, and memes all turn into AI-generated viral Meme Song.",
+      "titleHighlight": "Funny Songs",
+      "description": "Headlines, gossip, and memes all turn into AI-generated funny songs.",
       "cta": "Explore feature",
       "items": {
         "item-1": {
@@ -1433,7 +1433,7 @@
         },
         "item-2": {
           "title": "Entertainment Topics",
-          "description": "Celebrity news, entertainment stories, and pop culture moments remixed into meme songs."
+          "description": "Celebrity news, entertainment stories, and pop culture moments remixed into funny songs."
         },
         "item-3": {
           "title": "Gossip Roast",
@@ -1455,9 +1455,9 @@
     },
     "pricing": {
       "eyebrow": "Unlock Full Potential",
-      "title": "Pricing for AI Meme Song Generation",
+      "title": "Pricing for AI Funny Song Generation",
       "titleLeading": "Pricing for AI",
-      "titleHighlight": "Meme Song Generation",
+      "titleHighlight": "Funny Song Generation",
       "description": "Choose the plan that fits your hustle. Start for free, upgrade for power."
     },
     "faqs": {
@@ -1567,7 +1567,7 @@
     "stats": {
       "title": "Stats",
       "subtitle": "ScoopRYM in numbers",
-      "description": "Start turning headlines, drama, and gossip into AI Meme Song today.",
+      "description": "Start turning headlines, drama, and gossip into AI-generated funny songs today.",
       "items": {
         "item-1": {
           "title": "Stars on GitHub"
@@ -1582,7 +1582,7 @@
     },
     "calltoaction": {
       "title": "Start Building",
-      "description": "Start turning headlines, drama, and gossip into AI Meme Song today.",
+      "description": "Start turning headlines, drama, and gossip into AI-generated funny songs today.",
       "primaryButton": "Get Started",
       "secondaryButton": "See Demo"
     }

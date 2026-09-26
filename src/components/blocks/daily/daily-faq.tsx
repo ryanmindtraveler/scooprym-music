@@ -9,7 +9,7 @@ const faqItems = [
     id: 'what-is-scooprym',
     question: 'What is ScoopRYM?',
     answer:
-      'ScoopRYM turns publicly reported headlines, celebrity drama, internet chaos, and viral moments into original AI-generated meme songs. Each Drop pairs the story with a song made for listening, reacting, and sharing.',
+      'ScoopRYM turns publicly reported headlines, celebrity drama, internet chaos, and viral moments into original AI-generated funny songs. Each Drop pairs the story with a song made for listening, reacting, and sharing.',
     icon: 'music',
   },
   {
@@ -30,7 +30,7 @@ const faqItems = [
     id: 'new-drops',
     question: 'When are new songs published?',
     answer:
-      'There is no fixed daily quota. A new Drop goes live after its source is reviewed and the song is ready. Today’s Drops shows the newest releases, Gallery holds the archive, and Weekly Hits ranks actual plays from the last seven days.',
+      'There is no fixed daily quota. A new Drop goes live after its source is reviewed and the song is ready. Today’s Drops shows the newest releases, Gallery holds the archive, and Most Played Funny Songs ranks total plays.',
     icon: 'calendar-clock',
   },
   {
@@ -87,7 +87,7 @@ export function DailyFaqSection() {
               Frequently Asked Questions
             </h2>
             <p className="mt-3.5 max-w-md text-base sm:text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-              Clear answers about stories, meme songs, community voting, comments, and submissions.
+              Clear answers about stories, funny songs, community voting, comments, and submissions.
             </p>
           </div>
 

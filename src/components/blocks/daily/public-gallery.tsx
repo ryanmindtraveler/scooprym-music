@@ -34,7 +34,7 @@ export function PublicGallery({ songs }: PublicGalleryProps) {
             Gallery
           </h2>
           <p className="mt-4 max-w-2xl text-[0.98rem] font-medium leading-7 text-[#45415a]">
-            Curated chaos. Reported stories, sharp meme-song takes, and the original receipts.
+            Curated chaos. Reported stories, funny songs, and the original receipts.
           </p>
         </div>
 
