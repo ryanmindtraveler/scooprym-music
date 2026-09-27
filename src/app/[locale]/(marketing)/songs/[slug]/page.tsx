@@ -16,6 +16,7 @@ import {
   getSongSearchHeadline,
   getSongSeoDescription,
   getSongSeoTitle,
+  getSongStoredSlug,
   getSongStoryContext,
 } from '@/lib/songs/song-seo';
 import { getSourceUrl } from '@/lib/urls/source-url';
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        or(eq(songTable.id, id), eq(songTable.seoSlug, slug)),
+        or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
           'failed_generation',
@@ -128,7 +129,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        or(eq(songTable.id, id), eq(songTable.seoSlug, slug)),
+        or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
         eq(songTable.isPublished, true),
         notInArray(latestAttempt.processingStatus, [
           'failed_generation',

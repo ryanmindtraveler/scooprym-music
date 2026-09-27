@@ -8,6 +8,7 @@ import {
   getLegacySongSlugRedirect,
   getShortenedSongSlugId,
   getSongCanonicalSlug,
+  getSongStoredSlug,
 } from '@/lib/songs/song-seo';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
@@ -40,7 +41,12 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
   const [song] = await db
     .select()
     .from(songTable)
-    .where(and(or(eq(songTable.id, id), eq(songTable.seoSlug, slug)), eq(songTable.isPublished, true)));
+    .where(
+      and(
+        or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
+        eq(songTable.isPublished, true)
+      )
+    );
 
   if (!song) {
     notFound();

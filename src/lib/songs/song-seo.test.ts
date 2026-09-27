@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getIdFromSlug } from '../utils';
 import shortenedSongSlugs from './shortened-song-slugs.json';
 import {
+  allocateSongSeoSlug,
   buildSongSeoTopic,
   decodeSongSlug,
   getShortenedSongSlugId,
@@ -12,6 +13,7 @@ import {
   getSongSeoSlugBase,
   getSongSeoTitle,
   getSongSeoTopic,
+  getSongStoredSlug,
 } from './song-seo';
 
 const song = {
@@ -69,7 +71,7 @@ describe('歌曲详情 SEO', () => {
       'Antonio Banderas robot movie Song — Banderas & Robot Soul'
     );
     expect(getSongSeoSlugBase({ ...created, newsSummary: 'Updated editorial summary.' })).toBe(
-      'antonio-banderas-robot-movie-funny-song'
+      'antonio-banderas-robot-movie-scooprym'
     );
   });
 
@@ -112,8 +114,10 @@ describe('歌曲详情 SEO', () => {
 
   it('已分配的纯文字 slug 不随摘要改变，旧数据仍能使用 UUID', () => {
     const persisted = { ...song, seoSlug: 'antonio-banderas-automata-funny-song' };
-    expect(getSongCanonicalSlug(persisted)).toBe('antonio-banderas-automata-funny-song');
-    expect(getSongCanonicalSlug({ ...persisted, newsSummary: 'Updated summary' })).toBe(persisted.seoSlug);
+    expect(getSongCanonicalSlug(persisted)).toBe('antonio-banderas-automata-scooprym');
+    expect(getSongCanonicalSlug({ ...persisted, newsSummary: 'Updated summary' })).toBe(
+      'antonio-banderas-automata-scooprym'
+    );
     expect(getSongCanonicalSlug({ id: song.id })).toBe(song.id);
   });
 
@@ -124,11 +128,31 @@ describe('歌曲详情 SEO', () => {
       newsSummary: "Heidi Klum hosted her own pre-Oktoberfest bash, HeidiFest, at Munich's Hofbräuhaus.",
     };
     expect(getSongSeoTopic(item)).toBe('Heidi Klum hosted her own pre-Oktoberfest bash');
-    expect(getSongSeoSlugBase(item)).toBe('heidi-klum-hosted-her-own-pre-oktoberfest-bash-funny-song');
+    expect(getSongSeoSlugBase(item)).toBe('heidi-klum-hosted-her-own-pre-oktoberfest-bash-scooprym');
     expect(getSongSeoTitle(item)).toBe(
       'Heidi Klum hosted her own pre-Oktoberfest bash Song — Naomi Said Yes (HeidiFest)'
     );
     expect(getSongSeoTitle(item)).not.toContain('…');
+  });
+
+  it('事件词最多十五个，历史后缀和录音序号都映射到新网址', () => {
+    const item = {
+      ...song,
+      seoTopic: 'One two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen',
+    };
+    const base = getSongSeoSlugBase(item);
+    expect(base).toBe(
+      'one-two-three-four-five-six-seven-eight-nine-ten-eleven-twelve-thirteen-fourteen-fifteen-scooprym'
+    );
+    expect(getSongCanonicalSlug({ id: song.id, seoSlug: 'heidi-klum-funny-song-2' })).toBe('heidi-klum-scooprym-2');
+    expect(getSongStoredSlug('heidi-klum-scooprym-2')).toBe('heidi-klum-funny-song-2');
+  });
+
+  it('同一新闻从第二首起编号，跳过已占用的地址', () => {
+    const base = 'heidi-klum-heidifest-scooprym';
+    expect(allocateSongSeoSlug(base, [], new Set())).toBe(base);
+    expect(allocateSongSeoSlug(base, [base], new Set([base]))).toBe(`${base}-2`);
+    expect(allocateSongSeoSlug(base, [base, `${base}-2`], new Set([base, `${base}-2`, `${base}-3`]))).toBe(`${base}-4`);
   });
 
   it('迁移和任务恢复的 updatedAt 不会伪装成公开内容更新', () => {

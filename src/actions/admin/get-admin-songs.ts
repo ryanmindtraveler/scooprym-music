@@ -81,6 +81,7 @@ export async function getAdminSongsAction({
       const items = await tx
         .select({
           id: songTable.id,
+          seoSlug: songTable.seoSlug,
           title: songTable.title,
           createdAt: songTable.createdAt,
           audioUrl: songTable.audioUrl,

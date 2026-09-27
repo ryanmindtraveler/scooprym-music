@@ -1,6 +1,7 @@
 'use client';
 
 import type { SongItem } from '@/app/[locale]/(protected)/dashboard/mysongs/types';
+import { SongSourcePreview } from '@/components/admin/song-source-preview';
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { SongRow } from '@/components/songs/song-row';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSchedulePublish, useTogglePublish } from '@/hooks/admin/use-admin-songs';
 import { formatBusinessDateTime, parseBusinessDateTimeInput } from '@/lib/shared/business-time';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
+import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import type { SortingState } from '@tanstack/react-table';
@@ -179,12 +182,14 @@ export function SongsTable({
               onPlayClick={() => handlePlayClick(song)}
               onSongClick={(item) => setSelectedSong(item)}
               hideDefaultActions={true}
+              extraContent={<SongSourcePreview item={song} />}
+              songUrl={`${getCanonicalBaseUrl()}/songs/${getSongCanonicalSlug(song)}`}
               // Admin doesn't have Delete/Like typically, or maybe Like is global?
               // Keeping Like logic simply based on isLiked prop if backend provides it.
               // Admin typically doesn't delete from this view unless requested, keeping clean.
               // Insert 'Publish' toggle.
               actionEnd={
-                <div className="mr-4 flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {schedulingId === song.id ? (
                     <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-background px-2 py-1 shadow-sm">
                       <Input

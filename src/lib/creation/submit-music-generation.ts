@@ -19,8 +19,14 @@ import {
 } from '@/lib/creation/song-workflow';
 import { mapGenerationError } from '@/lib/music/error-handler';
 import { buildDynamicProductionRecipe, formatDynamicProductionRecipe } from '@/lib/music/production-recipe';
-import { buildSongSeoTopic, getSongSeoSlugBase } from '@/lib/songs/song-seo';
-import { and, desc, eq, like, or, sql } from 'drizzle-orm';
+import {
+  allocateSongSeoSlug,
+  buildSongSeoTopic,
+  getSongCanonicalSlug,
+  getSongSeoSlugBase,
+  getSongStoredSlug,
+} from '@/lib/songs/song-seo';
+import { and, asc, desc, eq, like, or, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 type ExistingJob = {
@@ -300,24 +306,43 @@ export async function submitMusicGeneration(rawBody: unknown, actor: { id: strin
         sourceText: body.sourceText,
         seoTopic: body.seoTopic,
       });
+      // 同一新闻使用首个版本的主题，并按该新闻分配连续编号。
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${storyId}))`);
+      const storySongs = await tx
+        .select({ id: songTable.id, seoSlug: songTable.seoSlug, seoTopic: songTable.seoTopic })
+        .from(songTable)
+        .where(eq(songTable.storyId, storyId))
+        .orderBy(asc(songTable.createdAt), asc(songTable.id));
+      const firstSongTopic = storySongs.find((song) => song.seoTopic?.trim())?.seoTopic;
+      const firstSongSlug = storySongs[0]?.seoSlug;
+      const firstSlugTopic = firstSongSlug?.match(/^(.*)-(?:funny-song|scooprym)(?:-\d+)?$/)?.[1];
       const slugBase = getSongSeoSlugBase({
         id: body.songId,
         title: effectiveTitle,
         newsSummary: effectiveSourceSummary,
         sourceText: body.sourceText,
-        seoTopic,
+        seoTopic: firstSongTopic || firstSlugTopic?.replace(/-/g, ' ') || seoTopic,
       });
       // 同一事件同时创作多个版本时，事务锁保证纯文字 slug 的序号分配不冲突。
       await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${slugBase}))`);
+      const storedSlugBase = getSongStoredSlug(slugBase);
       const existingSlugs = await tx
         .select({ seoSlug: songTable.seoSlug })
         .from(songTable)
-        .where(or(eq(songTable.seoSlug, slugBase), like(songTable.seoSlug, `${slugBase}-%`)));
-      const reservedSlugs = new Set(existingSlugs.map((row) => row.seoSlug));
-      let seoSlug = slugBase;
-      for (let suffix = 2; reservedSlugs.has(seoSlug); suffix++) {
-        seoSlug = `${slugBase}-${suffix}`;
-      }
+        .where(
+          or(
+            eq(songTable.seoSlug, slugBase),
+            like(songTable.seoSlug, `${slugBase}-%`),
+            eq(songTable.seoSlug, storedSlugBase),
+            like(songTable.seoSlug, `${storedSlugBase}-%`)
+          )
+        );
+      const reservedSlugs = new Set(existingSlugs.map((row) => getSongCanonicalSlug({ id: '', seoSlug: row.seoSlug })));
+      const seoSlug = allocateSongSeoSlug(
+        slugBase,
+        storySongs.map((row) => getSongCanonicalSlug(row)),
+        reservedSlugs
+      );
 
       const [createdSong] = await tx
         .insert(songTable)

@@ -15,7 +15,13 @@ const legacySongSlugRedirects = new Map(legacyStorySongSlugs.map(({ old, slug })
 const shortenedSongSlugIds = new Map(shortenedSongSlugs.map(({ old, id }) => [old, id]));
 
 export function getLegacySongSlugRedirect(slug: string) {
-  return legacySongSlugRedirects.get(slug);
+  const target = legacySongSlugRedirects.get(slug);
+  return target ? getSongCanonicalSlug({ id: '', seoSlug: target }) : undefined;
+}
+
+/** 历史数据库仍保存 funny-song 后缀；新网址据此反查原记录。 */
+export function getSongStoredSlug(slug: string) {
+  return slug.replace(/-scooprym(?=-\d+$|$)/, '-funny-song');
 }
 
 /** 迁移后的长地址先按歌曲 ID 查库，再跳转到当前规范地址，避免迁移期间出现死链。 */
@@ -133,7 +139,23 @@ export function getSongSeoTopic(song: SeoSong) {
 /** 仅用于首次分配固定 slug，不随新闻摘要或歌名的后续编辑重新计算。 */
 export function getSongSeoSlugBase(song: SeoSong) {
   const topic = getSongSeoTopic(song);
-  return `${slugify(topic)}-funny-song`;
+  const topicWords = slugify(topic).split('-').filter(Boolean).slice(0, 15);
+  return `${topicWords.join('-')}-scooprym`;
+}
+
+/** 同一新闻从第二首起编号；其他新闻占用目标地址时继续递增。 */
+export function allocateSongSeoSlug(base: string, storySlugs: string[], reservedSlugs: Set<string>) {
+  const highest = storySlugs.reduce((number, slug) => {
+    const match = slug.match(/-scooprym-(\d+)$/);
+    return Math.max(number, match ? Number(match[1]) : 1);
+  }, 1);
+  let number = storySlugs.length ? highest + 1 : 1;
+  let candidate = number === 1 ? base : `${base}-${number}`;
+  while (reservedSlugs.has(candidate)) {
+    number += 1;
+    candidate = `${base}-${number}`;
+  }
+  return candidate;
 }
 
 export function getSongStoryContext(song: SeoSong) {
@@ -142,7 +164,7 @@ export function getSongStoryContext(song: SeoSong) {
 }
 
 export function getSongCanonicalSlug<T extends SongIdentity>(song: T) {
-  return song.seoSlug || song.id;
+  return song.seoSlug?.replace(/-funny-song(?=-\d+$|$)/, '-scooprym') || song.id;
 }
 
 export function getSongSeoTitle(song: SeoSong) {

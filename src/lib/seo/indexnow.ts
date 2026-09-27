@@ -1,3 +1,4 @@
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
 
 const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
@@ -51,5 +52,7 @@ export async function notifyIndexNow(paths: string[]) {
 
 /** 歌曲的公开状态变化也会改变首页和歌曲列表。 */
 export function getSongIndexNowPaths(songIds: string[], seoSlugs: Record<string, string | null | undefined> = {}) {
-  return songIds.length > 0 ? ['/', '/songs', ...songIds.map((id) => `/songs/${seoSlugs[id] || id}`)] : [];
+  return songIds.length > 0
+    ? ['/', '/songs', ...songIds.map((id) => `/songs/${getSongCanonicalSlug({ id, seoSlug: seoSlugs[id] })}`)]
+    : [];
 }
