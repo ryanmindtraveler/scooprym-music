@@ -1,11 +1,10 @@
 import { getDb } from '@/db';
-import { songReaction, song as songTable, story as storyTable } from '@/db/schema';
+import { song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { SONG_ARCHIVE_PAGE_SIZE, getArchivePagePath, parseArchivePage } from '@/lib/songs/archive-pagination';
-import { type SongReactionType, isSongReactionType } from '@/lib/songs/song-reactions';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, inArray, ne, notInArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ne, notInArray, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -61,13 +60,6 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     'failed_internal_error',
     'failed_credit_deduction',
   ];
-  let publishedSongRows: Array<{
-    song: typeof songTable.$inferSelect;
-    story: typeof storyTable.$inferSelect;
-    prompt: string | null;
-    processingStatus: string | null;
-  }> = [];
-
   // 计数与分页读取使用完全相同的公开条件，绝不纳入未发布歌曲。
   const [{ total }] = await db
     .select({ total: count() })
@@ -85,12 +77,19 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
   const totalPages = Math.max(1, Math.ceil(total / SONG_ARCHIVE_PAGE_SIZE));
   if (page > totalPages) notFound();
 
-  publishedSongRows = await db
+  // 列表卡片只读取播放、分享和摘要所需字段；歌词及原始新闻留在详情页按需加载。
+  const publishedSongRows = await db
     .select({
-      song: songTable,
-      story: storyTable,
-      prompt: latestAttempt.prompt,
-      processingStatus: latestAttempt.processingStatus,
+      id: songTable.id,
+      seoSlug: songTable.seoSlug,
+      title: songTable.title,
+      createdAt: songTable.createdAt,
+      durationSec: songTable.durationSec,
+      plays: songTable.plays,
+      audioUrl: songTable.audioUrl,
+      coverImageUrl: songTable.coverImageUrl,
+      sourceUrl: storyTable.sourceUrl,
+      newsSummary: storyTable.newsSummary,
     })
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
@@ -108,48 +107,10 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .limit(SONG_ARCHIVE_PAGE_SIZE)
     .offset((page - 1) * SONG_ARCHIVE_PAGE_SIZE);
 
-  const publishedSongs = publishedSongRows.map((row) => ({
-    ...row.song,
-    prompt: row.prompt,
-    processingStatus: row.processingStatus,
-    sourceUrl: row.story.sourceUrl,
-    sourceText: row.story.sourceText,
-    newsSummary: row.story.newsSummary,
-  }));
-  const reactionRows =
-    publishedSongs.length > 0
-      ? await db
-          .select({
-            songId: songReaction.songId,
-            reactionType: songReaction.reactionType,
-            count: count(),
-          })
-          .from(songReaction)
-          .where(
-            inArray(
-              songReaction.songId,
-              publishedSongs.map((song) => song.id)
-            )
-          )
-          .groupBy(songReaction.songId, songReaction.reactionType)
-      : [];
-
-  const topReactionBySong = new Map<string, { type: SongReactionType; count: number }>();
-  for (const row of reactionRows) {
-    if (!isSongReactionType(row.reactionType)) continue;
-    const reactionCount = Number(row.count) || 0;
-    const current = topReactionBySong.get(row.songId);
-    if (!current || reactionCount > current.count) {
-      topReactionBySong.set(row.songId, { type: row.reactionType, count: reactionCount });
-    }
-  }
-
-  const serializedSongs = publishedSongs.map((song) => ({
+  const serializedSongs: Song[] = publishedSongRows.map((song) => ({
     ...song,
-    createdAt: song.createdAt ? song.createdAt.toISOString() : new Date().toISOString(),
-    updatedAt: song.updatedAt ? song.updatedAt.toISOString() : new Date().toISOString(),
-    topReaction: topReactionBySong.get(song.id) || null,
-  })) as unknown as Song[];
+    createdAt: song.createdAt.toISOString(),
+  }));
 
   return (
     <main className="min-h-screen bg-[#f7f5f0] px-4 pt-28 pb-24 text-[#17151f] md:px-6 md:pt-36 2xl:px-8">

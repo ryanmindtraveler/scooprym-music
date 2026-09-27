@@ -83,7 +83,6 @@ export async function getHomeGallerySong(id: string) {
       coverImageUrl: songTable.coverImageUrl,
       prompt: latestAttempt.prompt,
       sourceUrl: storyTable.sourceUrl,
-      sourceText: storyTable.sourceText,
       newsSummary: storyTable.newsSummary,
     })
     .from(songTable)

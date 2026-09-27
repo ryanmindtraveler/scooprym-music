@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   const [row] = await db
     .select({
       song: songTable,
-      story: storyTable,
+      newsSummary: storyTable.newsSummary,
       prompt: latestAttempt.prompt,
       processingStatus: latestAttempt.processingStatus,
     })
@@ -79,9 +79,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
   }
   const song = {
     ...row.song,
-    sourceUrl: row.story.sourceUrl,
-    sourceText: row.story.sourceText,
-    newsSummary: row.story.newsSummary,
+    newsSummary: row.newsSummary,
     prompt: row.prompt,
     processingStatus: row.processingStatus,
   };
@@ -120,7 +118,8 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const [row] = await db
     .select({
       song: songTable,
-      story: storyTable,
+      sourceUrl: storyTable.sourceUrl,
+      newsSummary: storyTable.newsSummary,
       prompt: latestAttempt.prompt,
       processingStatus: latestAttempt.processingStatus,
     })
@@ -146,9 +145,8 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
   }
   const song = {
     ...row.song,
-    sourceUrl: row.story.sourceUrl,
-    sourceText: row.story.sourceText,
-    newsSummary: row.story.newsSummary,
+    sourceUrl: row.sourceUrl,
+    newsSummary: row.newsSummary,
     prompt: row.prompt,
     processingStatus: row.processingStatus,
   };
