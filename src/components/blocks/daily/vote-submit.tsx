@@ -175,16 +175,6 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
     });
   };
 
-  const rankedCandidates =
-    votes.length > 0 && !isEditingVote
-      ? [...candidates].sort(
-          (left, right) =>
-            right.weightedScore - left.weightedScore ||
-            right.voteCount - left.voteCount ||
-            right.relevanceScore - left.relevanceScore
-        )
-      : candidates;
-
   const totalVotes = candidates.reduce((total, candidate) => total + candidate.voteCount, 0);
 
   const submitStory = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -328,7 +318,7 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
               )}
 
               {!isLoading &&
-                rankedCandidates.map((candidate, index) => {
+                candidates.map((candidate, index) => {
                   const isSavedVote = votes.includes(candidate.id);
                   const isDraftVote = draftVotes.includes(candidate.id);
                   const showResults = votes.length > 0 && !isEditingVote;
@@ -484,7 +474,7 @@ export function VoteSubmitSection({ mode }: VoteSubmitSectionProps) {
                   {votes.length > 0 && !isEditingVote ? (
                     <div className="flex items-center gap-2">
                       <Trophy className="size-5 text-amber-500" />
-                      <span>{totalVotes} community votes cast today. Ranked live by activity!</span>
+                      <span>{totalVotes} community votes cast today. Newest stories first.</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2.5">

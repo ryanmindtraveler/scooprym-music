@@ -50,9 +50,16 @@ async function loadTrendingCandidates(db: Awaited<ReturnType<typeof getDb>>) {
     )
     .limit(300);
 
+  // 保留现有候选筛选规则，只把最终展示的十条新闻按发表时间倒序排列。
   const rows = groupSimilarCoverage(rankPublicStoryCandidates(eligibleRows, now, eligibleRows.length))
     .slice(0, PUBLIC_STORY_CANDIDATE_LIMIT)
-    .map((group) => group.primary);
+    .map((group) => group.primary)
+    .sort(
+      (left, right) =>
+        (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0) ||
+        right.relevanceScore - left.relevanceScore ||
+        left.id.localeCompare(right.id)
+    );
 
   if (rows.length === 0) return [];
 
