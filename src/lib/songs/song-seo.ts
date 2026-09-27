@@ -19,8 +19,11 @@ export function getLegacySongSlugRedirect(slug: string) {
   return target ? getSongCanonicalSlug({ id: '', seoSlug: target }) : undefined;
 }
 
-/** 历史数据库仍保存 funny-song 后缀；新网址据此反查原记录。 */
+/** 兼容两种已保存的后缀，以便旧网址跳转到 funny-song 规范地址。 */
 export function getSongStoredSlug(slug: string) {
+  if (/-funny-song(?=-\d+$|$)/.test(slug)) {
+    return slug.replace(/-funny-song(?=-\d+$|$)/, '-scooprym');
+  }
   return slug.replace(/-scooprym(?=-\d+$|$)/, '-funny-song');
 }
 
@@ -140,13 +143,13 @@ export function getSongSeoTopic(song: SeoSong) {
 export function getSongSeoSlugBase(song: SeoSong) {
   const topic = getSongSeoTopic(song);
   const topicWords = slugify(topic).split('-').filter(Boolean).slice(0, 15);
-  return `${topicWords.join('-')}-scooprym`;
+  return `${topicWords.join('-')}-funny-song`;
 }
 
 /** 同一新闻从第二首起编号；其他新闻占用目标地址时继续递增。 */
 export function allocateSongSeoSlug(base: string, storySlugs: string[], reservedSlugs: Set<string>) {
   const highest = storySlugs.reduce((number, slug) => {
-    const match = slug.match(/-scooprym-(\d+)$/);
+    const match = slug.match(/-funny-song-(\d+)$/);
     return Math.max(number, match ? Number(match[1]) : 1);
   }, 1);
   let number = storySlugs.length ? highest + 1 : 1;
@@ -164,7 +167,7 @@ export function getSongStoryContext(song: SeoSong) {
 }
 
 export function getSongCanonicalSlug<T extends SongIdentity>(song: T) {
-  return song.seoSlug?.replace(/-funny-song(?=-\d+$|$)/, '-scooprym') || song.id;
+  return song.seoSlug?.replace(/-scooprym(?=-\d+$|$)/, '-funny-song') || song.id;
 }
 
 export function getSongSeoTitle(song: SeoSong) {

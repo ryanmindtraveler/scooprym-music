@@ -41,7 +41,7 @@ describe('IndexNow 接入', () => {
       urlList: ['https://scooprym.app/songs', 'https://scooprym.app/songs/abc'],
     });
     expect(getSongIndexNowPaths(['a', 'b'])).toEqual(['/', '/songs', '/songs/a', '/songs/b']);
-    expect(getSongIndexNowPaths(['a'], { a: 'story-funny-song' })).toEqual(['/', '/songs', '/songs/story-scooprym']);
+    expect(getSongIndexNowPaths(['a'], { a: 'story-scooprym' })).toEqual(['/', '/songs', '/songs/story-funny-song']);
     expect(getSongIndexNowPaths([])).toEqual([]);
   });
 
