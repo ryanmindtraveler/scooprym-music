@@ -1,6 +1,6 @@
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { getDb } from '@/db/index';
-import { songFavorite, song as songTable } from '@/db/schema';
+import { songFavorite, song as songTable, story as storyTable } from '@/db/schema';
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import {
@@ -38,9 +38,10 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
   const session = await getSession();
   const userId = session?.user?.id;
 
-  const [song] = await db
-    .select()
+  const [row] = await db
+    .select({ song: songTable, newsSummary: storyTable.newsSummary, sourceUrl: storyTable.sourceUrl })
     .from(songTable)
+    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .where(
       and(
         or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
@@ -48,9 +49,12 @@ export default async function SongDetailInterceptPage({ params }: SongDetailPage
       )
     );
 
-  if (!song) {
+  if (!row) {
     notFound();
   }
+
+  // 弹窗与独立详情页读取相同新闻字段，不向公开页面传输原始抓取正文。
+  const song = { ...row.song, newsSummary: row.newsSummary, sourceUrl: row.sourceUrl };
 
   const canonicalSlug = getSongCanonicalSlug(song);
   if (slug !== canonicalSlug) {

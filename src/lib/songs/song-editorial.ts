@@ -60,12 +60,12 @@ export function getNewsTitle(song: Song, options: { truncate?: boolean } = {}) {
   return `${title.slice(0, MAX_HEADLINE_LENGTH - 3).trimEnd()}…`;
 }
 
-export function getNewsDescription(song: Song) {
+export function getNewsDescription(song: Song, options: { truncate?: boolean } = {}) {
   const summary = cleanNewsText(song.newsSummary);
   const summaryFollowUp = splitNewsLead(summary).followUp;
 
   if (summaryFollowUp) {
-    return getNewsCardSummary({ newsSummary: summaryFollowUp });
+    return options.truncate === false ? summaryFollowUp : getNewsCardSummary({ newsSummary: summaryFollowUp });
   }
 
   // 原始抓取素材可能包含导航、广告和媒体链接，不能作为公开背景兜底。

@@ -6,6 +6,7 @@ import { getActiveLyricIndex, parseLrc } from '@/ai/text/utils/lyrics-parser';
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -31,7 +32,6 @@ import {
   Play,
   Share2,
 } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -190,10 +190,9 @@ export function SongDetailView({
       {!isClean && (
         <>
           <div className="absolute inset-0 z-0">
-            <Image
-              src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
+            <SongCoverImage
+              src={song.coverImageUrl}
               alt="bg"
-              fill
               sizes="330px"
               className="object-cover opacity-10 blur-[120px] scale-125 saturate-150"
             />
@@ -261,22 +260,13 @@ export function SongDetailView({
                   }}
                 >
                   <div className="absolute inset-[50px] rounded-full overflow-hidden z-0 bg-black shadow-[inset_0_0_20px_rgba(0,0,0,0.8)]">
-                    <Image
-                      src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                      alt="Cover"
-                      fill
+                    <SongCoverImage
+                      src={song.coverImageUrl}
+                      alt={`Cover art for ${song.title}`}
+                      priority
                       sizes="(min-width: 640px) 330px, 280px"
                       className="object-cover z-10 scale-110"
                     />
-                    {!song.coverImageUrl && (
-                      <div className="absolute inset-0 z-20 bg-black/40 flex items-center justify-center p-4">
-                        <span className="text-[10px] font-black text-center text-white uppercase tracking-wider leading-relaxed">
-                          Content flagged:
-                          <br />
-                          Too hot for AI art
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

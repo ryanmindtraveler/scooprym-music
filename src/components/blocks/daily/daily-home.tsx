@@ -3,7 +3,7 @@
 import { getSourceUrl } from '@/lib/urls/source-url';
 
 import { getNewsCardSummary, getNewsDescription, getNewsTitle } from '@/lib/songs/song-editorial';
-import { getSongCanonicalSlug, getSongSeoTopic } from '@/lib/songs/song-seo';
+import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
@@ -164,10 +164,9 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
     );
   }
 
-  const leadDescription = getNewsDescription(featured);
-  const leadTopic = getSongSeoTopic(featured);
-  // 旧歌可能缺少短主题；首页卡片只显示预览，详情页的标题与摘要保持原样。
-  const leadHeadline = leadTopic.length > 100 ? getNewsTitle(featured) : leadTopic;
+  // 主卡片完整展示已有新闻摘要，首句作为标题，后续文字单独展示。
+  const leadHeadline = getNewsTitle(featured, { truncate: false });
+  const leadDescription = getNewsDescription(featured, { truncate: false });
   const leadDomain = getSourceDomain(getSourceUrl(featured.sourceUrl));
 
   return (
@@ -196,7 +195,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
             {/* Featured / Lead Story Drop (Left Card) */}
             <article
               className={cn(
-                'group/hero flex flex-col overflow-hidden rounded-[2.25rem] border bg-[#fffdf9]/98 backdrop-blur-md shadow-[0_28px_80px_rgba(60,34,82,0.18)] transition-all duration-300 hover:shadow-[0_36px_90px_rgba(216,13,99,0.25)] md:grid md:grid-cols-[1.1fr_0.9fr] dark:border-white/12 dark:bg-[#201a2b]/95',
+                'group/hero flex flex-col overflow-hidden rounded-[2.25rem] border bg-[#fffdf9]/98 backdrop-blur-md shadow-[0_28px_80px_rgba(60,34,82,0.18)] transition-all duration-300 hover:shadow-[0_36px_90px_rgba(216,13,99,0.25)] md:grid md:grid-cols-2 dark:border-white/12 dark:bg-[#201a2b]/95',
                 isActive(featured)
                   ? 'border-[#d80d63] ring-2 ring-[#d80d63]/40'
                   : 'border-white/90 hover:border-[#d80d63]/40'
@@ -220,7 +219,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
               </div>
 
               {/* Story Content Side */}
-              <div className="flex flex-col justify-between p-7 sm:p-8 md:p-9 xl:p-10">
+              <div className="flex flex-col justify-between p-6 sm:p-7 md:p-8 xl:p-9">
                 <div className="space-y-4.5">
                   {/* Top Metadata Row */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3.5 dark:border-white/8">
@@ -248,21 +247,21 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
                     )}
                   </div>
 
-                  {/* 主打卡片用简短事件主题作三级标题，避免将整段新闻摘要升为区块标题。 */}
+                  {/* 主打新闻使用较小字号，不截断首句或限制显示行数。 */}
                   <a
                     href={getSongUrl(featured)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block group/title"
                   >
-                    <h3 className="line-clamp-3 text-xl font-black leading-[1.32] tracking-[-0.025em] text-[#201a29] transition-colors group-hover/title:text-[#d80d63] sm:text-2xl lg:text-[1.75rem] xl:text-[2rem] dark:text-[#fffdf8]">
+                    <h3 className="text-xl font-bold leading-[1.45] tracking-[-0.015em] text-[#201a29] transition-colors group-hover/title:text-[#d80d63] sm:text-[1.375rem] xl:text-2xl dark:text-[#fffdf8]">
                       {leadHeadline}
                     </h3>
                   </a>
 
                   {/* Editorial Excerpt & Vibe Pill */}
                   {leadDescription && (
-                    <p className="line-clamp-3 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                    <p className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
                       {leadDescription}
                     </p>
                   )}

@@ -6,6 +6,7 @@ import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
 import { type SongCommentItem, SongComments } from '@/components/songs/song-comments';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Slider } from '@/components/ui/slider';
 import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
@@ -16,7 +17,6 @@ import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -298,10 +298,11 @@ export function SongDetailClient({
               >
                 {/* Album Art */}
                 <div className="absolute inset-2 md:inset-3 rounded-full overflow-hidden z-0 bg-neutral-800 shadow-inner group-hover:scale-105 transition-transform duration-700">
-                  <Image
-                    src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
-                    alt={`Cover art for ${song.title}, inspired by: ${searchHeadline}`}
-                    fill
+                  <SongCoverImage
+                    src={song.coverImageUrl}
+                    alt={`Cover art for ${song.title}`}
+                    sizes="(max-width: 767px) 62vw, (max-height: 900px) 220px, (max-height: 1200px) 380px, 560px"
+                    priority
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10 pointer-events-none" />
