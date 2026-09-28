@@ -31,7 +31,7 @@ describe('歌曲标题展示', () => {
     ).toBe('[Intro]\nOh my god, you live here?\n\n[Verse 1]\nSuperfan on my mic\n\n[Hook]\nNo other host');
   });
 
-  it('无损恢复被结构化输出压成段落字符串的歌词，并识别 Final Hook', () => {
+  it('历史压缩文本只恢复显式段落，不猜测大小写边界，并识别 Final Hook', () => {
     const source = `[Intro]
 You know damn— (snap) ...shh, not yet.
 [Verse 1]
@@ -39,13 +39,21 @@ Carpet glowing gold, twenty years of Hannah toldMiley on the mic, calling her su
 [Bridge]
 But here's the detail the gasp can't hideFive years back, same driveway, mic insideShe sat her down and interviewed herAt that house — she knew the doorbell[Final Hook]So Miley leaned in, let the crowd erupt:'You know damn well where I live!'`;
     const result = normalizeStructuredLyrics(source);
-    const sungLines = result.split('\n').filter((line) => line && !/^\[[^\]]+\]$/.test(line));
-
-    expect(result).toContain('hide\nFive years back');
-    expect(result).toContain('interviewed her\nAt that house');
+    expect(result).toContain('hideFive years back');
+    expect(result).toContain('interviewed herAt that house');
     expect(result).toContain('[Hook]\nSo Miley leaned in, let the crowd erupt:');
-    expect(result).not.toContain('toldMiley');
-    expect(sungLines.length).toBeGreaterThanOrEqual(8);
+    expect(result).toContain('toldMiley');
+  });
+
+  it('不拆开专名，也不按十二词硬切完整乐句', () => {
+    const line = 'HeidiFest and TikTok watched her jump like it owed her money and she still did not catch it';
+    expect(normalizeStructuredLyrics(`[Verse 1]\n${line}`)).toBe(`[Verse 1]\n${line}`);
+  });
+
+  it('保留原有呼吸断句并满足重复规范化幂等性', () => {
+    const lyrics =
+      '[Verse 1]\nHeidiFest filled the room\nAnd she still did not catch it!\n\n[Hook]\nMy bouquet, your debut';
+    expect(normalizeStructuredLyrics(normalizeStructuredLyrics(lyrics))).toBe(lyrics);
   });
 
   it('旧任务没有工作坊数据时从歌词首个可唱 Hook 提炼歌名', () => {

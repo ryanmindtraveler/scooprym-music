@@ -63,6 +63,13 @@ export function inspectSongLyrics(value: string | null | undefined): SongLyricsC
   if (/(?:<br\s*\/?>|&lt;br\s*\/?&gt;)/i.test(lyrics)) {
     issues.push('Lyrics still contain HTML line-break markup after normalization.');
   }
+  // 制作说明和残留 JSON 不属于可演唱正文，不能仅靠行数检查放行。
+  if (/(?:\[\s*production\s+notes\s*\]|^\s*production\s+notes\s*:)/im.test(lyrics)) {
+    issues.push('Lyrics contain non-sung production notes.');
+  }
+  if (/[{}]/.test(lyrics)) {
+    issues.push('Lyrics contain leftover structured output delimiters.');
+  }
 
   return {
     passed: issues.length === 0,

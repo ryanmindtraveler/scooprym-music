@@ -30,6 +30,12 @@ describe('inspectSongProduct', () => {
   it('正常歌词中的 risks 单词和呼应不误拦截', () => {
     expect(inspectSongLyrics(`${validSong.lyrics}\nWe take risks (so high!)`).passed).toBe(true);
   });
+  it.each(['\n[Production Notes]\nTuba bass on the downbeat.', '\nProduction Notes: hard cut', '\nNo ink, no case! }'])(
+    '拒绝制作说明和结构残留：%s',
+    (suffix) => {
+      expect(inspectSongLyrics(`${validSong.lyrics}${suffix}`).passed).toBe(false);
+    }
+  );
   it('通过完整的待发布成品', () => {
     expect(inspectSongProduct(validSong)).toMatchObject({ passed: true, issues: [] });
   });

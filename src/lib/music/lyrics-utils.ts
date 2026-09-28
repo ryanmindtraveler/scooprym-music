@@ -51,38 +51,15 @@ function normalizeSectionName(value: string) {
 }
 
 /**
- * 部分结构化输出供应商会保留段落标签，却把段落中的所有歌词压成一个字符串。
- * 这里只补回换行，不增加、删除或改写任何歌词文字，确保音频输入与编辑稿语义一致。
+ * 只清理空白，不猜测已经丢失的演唱断句。
+ * 大小写拆词会破坏 HeidiFest、TikTok 等专名，按词数折行会切断语义和节奏。
+ * 新生成通过逐行数组保留断句；不自动改写历史压缩文本，展示层不制造假换行。
  */
-function restoreCollapsedLyricLines(value: string) {
-  const repairedBoundaries = value
-    // 例如 `doorRang`、`creepy'Her`：原换行在 JSON 结构化过程中丢失。
-    .replace(/(?<=[\p{Ll}\p{N}'’”])(?=\p{Lu}\p{Ll})/gu, '\n')
+function trimLyricLines(value: string) {
+  return value
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
-  const restored: string[] = [];
-
-  for (const line of repairedBoundaries) {
-    const words = line.split(/\s+/).filter(Boolean);
-    if (words.length <= 16) {
-      restored.push(line);
-      continue;
-    }
-
-    let current: string[] = [];
-    for (const word of words) {
-      current.push(word);
-      const naturalPause = /[,;:.!?][”’'"]?$/.test(word);
-      if ((current.length >= 5 && naturalPause) || current.length >= 12) {
-        restored.push(current.join(' '));
-        current = [];
-      }
-    }
-    if (current.length > 0) restored.push(current.join(' '));
-  }
-
-  return restored;
 }
 
 /**
@@ -111,7 +88,7 @@ export function normalizeStructuredLyrics(value: string | null | undefined): str
     }
 
     const compactLine = line.replace(/[ \t]+/g, ' ');
-    normalized.push(...restoreCollapsedLyricLines(compactLine));
+    normalized.push(...trimLyricLines(compactLine));
   }
 
   return normalized
