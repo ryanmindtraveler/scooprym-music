@@ -2,13 +2,13 @@
 
 import { getSourceUrl } from '@/lib/urls/source-url';
 
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { getNewsCardSummary, getNewsDescription, getNewsTitle } from '@/lib/songs/song-editorial';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { ArrowUpRight, Disc3, ExternalLink, Flame, Globe, Music2, Pause, Play, Sparkles, Volume2 } from 'lucide-react';
-import Image from 'next/image';
 import { toast } from 'sonner';
 
 interface DailyHomeProps {
@@ -53,12 +53,15 @@ function Cover({ song, priority = false, className }: { song: Song; priority?: b
   return (
     <div className={cn('relative overflow-hidden bg-slate-900', className)}>
       {song.coverImageUrl ? (
-        <Image
+        <SongCoverImage
           src={song.coverImageUrl}
           alt={`${song.title} cover art`}
-          fill
           priority={priority}
-          sizes="(min-width: 1024px) 45vw, 95vw"
+          sizes={
+            priority
+              ? '(min-width: 1856px) 520px, (min-width: 1024px) 29vw, (min-width: 768px) 46vw, 95vw'
+              : '(min-width: 1280px) 190px, (min-width: 640px) 170px, 135px'
+          }
           className="object-cover transition-transform duration-500 ease-out group-hover/media:scale-[1.03] motion-reduce:transition-none motion-reduce:transform-none"
         />
       ) : (

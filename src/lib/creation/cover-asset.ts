@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { dataUrlToImageBuffer, generateCoverWithRetry } from '@/ai/image/lib/cover-generation';
 import { getDb } from '@/db';
 import { coverAssetCheckpoint } from '@/db/schema';
-import { readImageDimensions } from '@/lib/creation/song-product-check';
+import { optimizeCover } from '@/lib/creation/optimize-cover';
 import { uploadFile } from '@/storage';
 import { and, eq, isNull, lt, or } from 'drizzle-orm';
 
@@ -66,19 +66,20 @@ export async function prepareCoverAsset(input: CoverInput) {
       await save({ imageSource: source });
     }
     stage = 'download';
-    const { buffer, mime, extension } = await dataUrlToImageBuffer(source, signal);
-    const dimensions = readImageDimensions(buffer, mime);
+    const { buffer, mime } = await dataUrlToImageBuffer(source, signal);
     // 远程地址可能过期；下载后保存原始字节，上传失败不会再次调用模型。
     stage = 'checkpoint';
     if (!source.startsWith('data:')) {
       await save({ imageSource: `data:${mime};base64,${buffer.toString('base64')}` });
     }
+    stage = 'compression';
+    const optimized = await optimizeCover(buffer);
     stage = 'upload';
-    const asset = await uploadFile(buffer, `cover.${extension}`, mime, undefined, {
-      objectKey: `song-covers/${input.userId}/${id}.${extension}`,
+    const asset = await uploadFile(optimized.buffer, 'cover.webp', optimized.mime, undefined, {
+      objectKey: `song-covers/${input.userId}/${id}.webp`,
       requestTimeoutMs: 20_000,
     });
-    const result = { ...asset, dimensions };
+    const result = { ...asset, dimensions: optimized.dimensions };
     stage = 'checkpoint';
     // 上传成功后移除大字段，保留结果供歌曲最终写库失败时恢复。
     await save({ imageSource: null, uploadedAsset: result });

@@ -1,6 +1,7 @@
 'use client';
 
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
 import { getNewsCardSummary } from '@/lib/songs/song-editorial';
@@ -9,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { motion } from 'framer-motion';
 import { Eye, Loader2, Music2, Pause, Play } from 'lucide-react';
-import Image from 'next/image';
 
 import type { Song } from '@/types/song';
 
@@ -84,20 +84,18 @@ export function GallerySongCard({ item, queue = [], onSelect, priority = false }
           >
             <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
             {item.coverImageUrl ? (
-              <Image
+              <SongCoverImage
                 src={item.coverImageUrl}
                 alt={item.title}
-                fill
                 priority={priority}
                 sizes="(min-width: 2040px) 360px, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="object-cover transition-transform duration-700 group-hover:scale-105 z-10"
               />
             ) : (
               <div className="relative size-full bg-zinc-100 dark:bg-zinc-800 z-10">
-                <Image
+                <SongCoverImage
                   src="/images/funny-censored-fallback.png"
                   alt="Censored"
-                  fill
                   sizes="(min-width: 2040px) 360px, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                   className="object-cover opacity-80"
                 />

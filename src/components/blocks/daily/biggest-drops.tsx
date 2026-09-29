@@ -2,6 +2,7 @@
 
 import { Marquee } from '@/components/magicui/marquee';
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Badge } from '@/components/ui/badge';
 import { LocaleLink } from '@/i18n/navigation';
 import { getAllTimeBiggestDrops, getNewsCardSummary } from '@/lib/songs/song-editorial';
@@ -10,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import type { Song } from '@/types/song';
 import { Headphones, Loader2, Music2, Pause, Play, Sparkles, Trophy } from 'lucide-react';
-import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -74,19 +74,17 @@ function DropPortraitCard({
           className="relative block size-full cursor-pointer overflow-hidden"
         >
           {song.coverImageUrl ? (
-            <Image
+            <SongCoverImage
               src={song.coverImageUrl}
               alt={song.title}
-              fill
               sizes="(min-width: 640px) 330px, 300px"
               className="object-cover transition-transform duration-700 group-hover/card:scale-105"
             />
           ) : (
             <div className="relative size-full bg-zinc-100 dark:bg-zinc-800">
-              <Image
+              <SongCoverImage
                 src="/images/funny-censored-fallback.png"
                 alt="Censored"
-                fill
                 sizes="(min-width: 640px) 330px, 300px"
                 className="object-cover opacity-80"
               />
