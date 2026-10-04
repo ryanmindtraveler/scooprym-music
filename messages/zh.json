@@ -318,8 +318,8 @@
   "SongsPage": {
     "title": "Funny Songs Archive | ScoopRYM",
     "description": "浏览由爆红时刻、八卦和网络闹剧改编的 funny songs，并查看原始来源与歌词。",
-    "heroTitleLeading": "爆红",
-    "heroTitleHighlight": "时刻",
+    "heroTitleLeading": "Funny Songs",
+    "heroTitleHighlight": "Archive",
     "heroDescription": "先看事件，再查原始来源、听 funny song，最后留下你的态度。"
   },
   "DocsPage": {
