@@ -85,7 +85,13 @@ export async function getRadarCandidatePage(params: RadarBrowseParams) {
     .select()
     .from(candidate)
     .where(and(base, statusCondition(params.status)))
-    .orderBy(desc(candidate.relevanceScore), sql`${candidate.publishedAt} desc nulls last`, candidate.id)
+    .orderBy(
+      // 首页精选按新闻发布时间分页，其余列表保留匹配分数优先。
+      ...(params.status === 'shortlisted'
+        ? [sql`${candidate.publishedAt} desc nulls last`, desc(candidate.relevanceScore)]
+        : [desc(candidate.relevanceScore), sql`${candidate.publishedAt} desc nulls last`]),
+      candidate.id
+    )
     .limit(params.size)
     .offset((page - 1) * params.size);
   return { candidates, params: { ...params, page }, counts, total };

@@ -232,13 +232,14 @@ export function StoryRadar({
       );
     });
 
-    // 严格按照匹配分数从大到小降序排列；若分数相同，按发布时间最新优先
+    // 首页精选优先展示最新新闻，缺失时间排在最后；其余列表保留分数优先。
     return filtered.sort((a, b) => {
+      const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      if (activeStatus === 'shortlisted' && timeA !== timeB) return timeB - timeA;
       if (b.relevanceScore !== a.relevanceScore) {
         return b.relevanceScore - a.relevanceScore;
       }
-      const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
       return timeB - timeA;
     });
   }, [browse, activeCategory, activeStatus, candidates, generated, jobs, searchQuery, reviewOnly, hideLowScore]);
@@ -248,16 +249,17 @@ export function StoryRadar({
       ? groupSimilarCoverage(filteredCandidates)
       : filteredCandidates.map((candidate) => ({ primary: candidate, articles: [candidate] }));
 
-    // 确保分组卡片列表也严格按照 primary.relevanceScore 从大到小降序排列
+    // 分组卡片与分页排序保持一致，首页精选以最新报道作为分组主记录。
     return groups.sort((a, b) => {
+      const timeA = a.primary.publishedAt ? new Date(a.primary.publishedAt).getTime() : 0;
+      const timeB = b.primary.publishedAt ? new Date(b.primary.publishedAt).getTime() : 0;
+      if (activeStatus === 'shortlisted' && timeA !== timeB) return timeB - timeA;
       if (b.primary.relevanceScore !== a.primary.relevanceScore) {
         return b.primary.relevanceScore - a.primary.relevanceScore;
       }
-      const timeA = a.primary.publishedAt ? new Date(a.primary.publishedAt).getTime() : 0;
-      const timeB = b.primary.publishedAt ? new Date(b.primary.publishedAt).getTime() : 0;
       return timeB - timeA;
     });
-  }, [filteredCandidates, groupCoverage]);
+  }, [filteredCandidates, groupCoverage, activeStatus]);
 
   // 状态或筛选条件切换时，自动重置回第一页
   useEffect(() => {
@@ -582,7 +584,13 @@ export function StoryRadar({
         </label>
         <span>
           {filteredCandidates.length} {zh ? '篇新闻' : 'articles'} · {coverageGroups.length} {zh ? '个分组' : 'groups'}{' '}
-          ({zh ? '已按匹配分数从大到小排列' : 'Sorted by match score desc'})
+          (
+          {activeStatus === 'shortlisted'
+            ? 'Sorted by publication time: newest first'
+            : zh
+              ? '已按匹配分数从大到小排列'
+              : 'Sorted by match score desc'}
+          )
         </span>
       </div>
       {/* 候选新闻列表 */}
