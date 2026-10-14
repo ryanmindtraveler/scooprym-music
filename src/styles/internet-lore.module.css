@@ -7,9 +7,10 @@
 
 .archiveContainer {
   /* 品牌色彩与设计令牌（默认浅色冷调纸感） */
-  --lore-bg: #f8f9fa;
-  --lore-surface: #ffffff;
-  --lore-surface-subtle: #f1f3f5;
+  --lore-bg: oklch(0.982 0.005 190);
+  --lore-surface: oklch(0.997 0.002 190);
+  --lore-surface-subtle: oklch(0.96 0.008 190);
+  --lore-hero: oklch(0.945 0.035 190);
   --lore-ink: #16151d;
   --lore-ink-muted: #5e606a;
   --lore-ink-light: #696d78;
@@ -32,6 +33,10 @@
   --lore-touch-target: 44px;
 
   background-color: var(--lore-bg);
+  background-image: radial-gradient(at 0% 0%, rgba(230, 0, 92, 0.025) 0px, transparent 40%),
+    radial-gradient(at 100% 50%, rgba(13, 148, 136, 0.03) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(255, 214, 0, 0.025) 0px, transparent 40%);
+  background-attachment: fixed;
   color: var(--lore-ink);
   font-family: var(--lore-font-body);
   min-height: 100vh;
@@ -47,20 +52,24 @@
    与透明导航栏完美契合，保证背景暗沉而文字、焦点高对比可读
    -------------------------------------------------------------------------- */
 [class~="dark"] .archiveContainer {
-  --lore-bg: #0e0e13;
-  --lore-surface: #15151c;
-  --lore-surface-subtle: #1c1c25;
-  --lore-ink: #f1f2f6;
-  --lore-ink-muted: #9fa2b0;
-  --lore-ink-light: #999cac;
+  --lore-bg: #0b0c10;
+  --lore-surface: #12131a;
+  --lore-surface-subtle: #191a24;
+  --lore-hero: #151622;
+  --lore-ink: #f3f4f6;
+  --lore-ink-muted: #9ca3af;
+  --lore-ink-light: #6b7280;
   --lore-border: rgba(255, 255, 255, 0.08);
   --lore-border-strong: rgba(255, 255, 255, 0.15);
   --lore-pink: #ff3377;
   --lore-pink-hover: #ff4d88;
   --lore-yellow: #ffd600;
   --lore-yellow-ink: #16151d;
-  --lore-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  --lore-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --lore-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --lore-shadow-md: 0 12px 36px rgba(0, 0, 0, 0.6);
+  background-image: radial-gradient(at 10% 10%, rgba(255, 51, 119, 0.06) 0px, transparent 40%),
+    radial-gradient(at 90% 40%, rgba(13, 148, 136, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 90%, rgba(255, 214, 0, 0.04) 0px, transparent 40%);
 }
 
 /* --------------------------------------------------------------------------

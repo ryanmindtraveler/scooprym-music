@@ -1,6 +1,7 @@
 import { SongCoverImage } from '@/components/songs/song-cover-image';
 import type { LoreTopic, LoreTopicPreview } from '@/lib/internet-lore/topics';
-import styles from '@/styles/internet-lore-topics.module.css';
+import styles from '@/styles/internet-lore-exhibition.module.css';
+import colors from '@/styles/internet-lore-hub-color.module.css';
 import archiveStyles from '@/styles/internet-lore.module.css';
 import Link from 'next/link';
 
@@ -13,79 +14,84 @@ export function InternetLoreView({
   previews?: Record<string, LoreTopicPreview>;
 }) {
   return (
-    <div className={archiveStyles.archiveContainer}>
-      {/* 紧凑的一行两区刊物标头 */}
+    <div className={`${archiveStyles.archiveContainer} ${colors.page}`}>
+      {/* 将标题、说明与分类入口组织成同一个阅读区域。 */}
       <header className={styles.hubHeader}>
-        <div className={styles.hubHeaderInner}>
-          <div className={styles.hubTitleCol}>
-            <h1 className={styles.hubTitle}>Internet Lore</h1>
-          </div>
-          <div className={styles.hubIntroCol}>
+        <div className={`${styles.hubHeaderInner} ${colors.hero}`}>
+          <div className={styles.hubHeaderContent}>
+            <div className={`${styles.hubBadge} ${colors.badge}`}>✨ THE ORIGINAL ARCHIVE</div>
+            <h1 className={`${styles.hubTitle} ${colors.title}`}>
+              Internet <span className={colors.highlight}>Lore</span>
+            </h1>
             <p className={styles.hubSubtitle}>
-              Six original collections of internet culture, absurd setups and parody ideas from the ScoopRYM archive.
+              The stories, memes and everyday chaos that inspired our original parody songs.
             </p>
+            <div className={styles.hubPillsRow}>
+              <span className={`${styles.hubFeaturePill} ${colors.pill}`}>🎵 6 Curated Collections</span>
+              <span className={`${styles.hubFeaturePill} ${colors.pill}`}>📰 54 Cultural Themes</span>
+              <span className={`${styles.hubFeaturePill} ${colors.pill}`}>⚡ Original Parody Tracks</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* 六大专题平面内容单元 (3列 × 2行 紧凑排布) */}
+      {/* 专题配图固定来自旧栏目，歌曲封面不充当分类入口。 */}
       <section className={styles.topicsSection} aria-label="Internet Lore Topics">
         <div className={styles.topicsGrid}>
-          {topics.map((topic) => {
+          {topics.map((topic, index) => {
             const preview = previews[topic.slug];
-            const coverAlt = preview?.coverImageUrl
-              ? `${preview.title} — original song artwork`
-              : `${topic.title} topic artwork`;
 
             return (
               <article key={topic.slug} className={styles.topicArticle}>
                 <Link
                   href={`/internet-lore/${topic.slug}`}
-                  className={styles.topicCard}
+                  className={`${styles.topicCard} ${colors.card}`}
+                  data-topic={topic.slug}
                   aria-label={`Explore ${topic.title}`}
                 >
-                  {/* 公开原作封面或旧专题配图 */}
                   <div className={styles.topicMediaWrapper}>
+                    <span className={`${styles.topicIndexBadge} ${colors.indexBadge}`}>
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                     <div className={styles.coverRatioBox}>
                       <SongCoverImage
-                        src={preview?.coverImageUrl ?? `/images/features/${topic.slug}.webp`}
-                        alt={coverAlt}
-                        sizes="(min-width: 1240px) 381px, (min-width: 1080px) 31vw, (min-width: 768px) 48vw, 92vw"
+                        src={`/images/features/${topic.slug}.webp`}
+                        alt={`${topic.title} topic artwork`}
+                        sizes="(min-width: 1400px) 416px, (min-width: 1080px) 31vw, (min-width: 640px) 46vw, 92vw"
                         className={styles.topicCoverImage}
-                        priority={false}
+                        priority={index === 0}
                       />
                     </div>
                   </div>
 
-                  {/* 正常文流小字说明 (绝不覆盖图片) */}
-                  {preview?.coverImageUrl && <span className={styles.artworkCaption}>Original song artwork</span>}
-
-                  {/* 标题与同排右侧细箭头 */}
                   <div className={styles.topicTitleRow}>
-                    <h3 className={styles.topicTitle}>{topic.title}</h3>
-                    <span className={styles.topicArrow} aria-hidden="true">
+                    <h2 className={`${styles.topicTitle} ${colors.cardTitle}`}>{topic.title}</h2>
+                    <span className={`${styles.topicArrow} ${colors.arrow}`} aria-hidden="true">
                       →
                     </span>
                   </div>
 
-                  {/* 专题精练描述 (14-15px, 2-3行) */}
-                  <p className={styles.topicDesc}>{topic.description}</p>
-                  {typeof preview?.themeCount === 'number' ? (
-                    <span className={styles.topicCount}>
-                      {preview.themeCount} original themes
-                      {!!preview.archiveCount && ` · ${preview.archiveCount} archived tracks`}
-                    </span>
-                  ) : typeof preview?.archiveCount === 'number' ? (
-                    <span className={styles.topicCount}>
-                      {preview.archiveCount > 0
-                        ? `${preview.archiveCount} original tracks · ${preview.songCount ?? 0} available`
-                        : 'Original collection unavailable'}
-                    </span>
-                  ) : typeof preview?.songCount === 'number' ? (
-                    <span className={styles.topicCount}>
-                      {preview.songCount} {preview.songCount === 1 ? 'song' : 'songs'}
-                    </span>
-                  ) : null}
+                  <p className={`${styles.topicDesc} ${colors.description}`}>{topic.description}</p>
+                  <div className={`${styles.topicMeta} ${colors.meta}`}>
+                    {typeof preview?.themeCount === 'number' && (
+                      <span className={`${styles.topicCount} ${colors.count}`}>
+                        {preview.themeCount} original themes
+                      </span>
+                    )}
+                    {typeof preview?.songCount === 'number' && (
+                      <span
+                        className={
+                          preview.songCount > 0
+                            ? `${styles.topicAvailable} ${colors.available}`
+                            : `${styles.topicPending} ${colors.pending}`
+                        }
+                      >
+                        {preview.songCount > 0
+                          ? `${preview.songCount} ${preview.songCount === 1 ? 'song' : 'songs'} to play`
+                          : 'Recordings not restored yet'}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               </article>
             );
@@ -93,7 +99,7 @@ export function InternetLoreView({
         </div>
       </section>
 
-      {/* 底部区：轻量曲库导航与低声量原创戏仿声明 */}
+      {/* 保留原作说明与 Gallery 导航。 */}
       <footer className={styles.hubFooter}>
         <div className={styles.hubFooterInner}>
           <div className={styles.quickCatalogLinks}>

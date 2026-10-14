@@ -1,0 +1,1250 @@
+/* ==========================================================================
+   ScoopRYM Internet Lore Exhibition & Topics Module
+   现代数字音乐文化专刊美学体系：
+   - 动态氛围渐变、微光与毛玻璃 (Glassmorphism & Ambient Glow)
+   - 现代卡片微交互、流畅上浮与发光边框
+   - 顶级流媒体风格的音轨播放条与对称网格排版
+   - 浅色/深色双主题精细校准，字重规范 (400/500/600/700)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   容器与主布局
+   -------------------------------------------------------------------------- */
+.hubHeader,
+.topicsSection,
+.topicHeader,
+.featuredSection,
+.articleBodySection,
+.relatedSection,
+.hubFooter {
+  padding-inline: clamp(1rem, 3.5vw, 2.5rem);
+  box-sizing: border-box;
+}
+
+.hubHeaderInner,
+.topicsGrid,
+.topicHeaderInner,
+.featuredContainer,
+.backgroundDisclosure,
+.relatedContainer,
+.hubFooterInner {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   1. 汇总页 Hero 区域 (Internet Lore Hub Header)
+   -------------------------------------------------------------------------- */
+.hubHeader {
+  padding-top: 1rem;
+  padding-bottom: 2.5rem;
+}
+
+.hubHeaderInner {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(2rem, 4vw, 3.5rem) clamp(1.5rem, 3.5vw, 3rem);
+  border-radius: 24px;
+  background: linear-gradient(
+      135deg,
+      rgba(230, 0, 92, 0.05) 0%,
+      rgba(13, 148, 136, 0.06) 45%,
+      rgba(255, 214, 0, 0.06) 100%
+    ), var(--lore-surface);
+  border: 1px solid var(--lore-border-strong);
+  box-shadow: var(--lore-shadow-md);
+}
+
+/* 背景环境微光光晕 */
+.hubHeaderInner::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 92, 0.12) 0%, rgba(255, 214, 0, 0.08) 50%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hubHeaderInner::after {
+  content: "";
+  position: absolute;
+  bottom: -50px;
+  left: 20%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.1) 0%, transparent 70%);
+  filter: blur(36px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hubHeaderContent {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+}
+
+.hubBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(230, 0, 92, 0.08);
+  border: 1px solid rgba(230, 0, 92, 0.2);
+  color: var(--lore-pink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.hubTitle {
+  margin: 0;
+  color: var(--lore-ink);
+  font-family: var(--lore-font-title);
+  font-size: clamp(2.75rem, 5.5vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.hubSubtitle {
+  max-width: 62ch;
+  margin: 1.25rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.hubPillsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hubFeaturePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 8px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   2. 汇总页专题网格 (Internet Lore Topics Grid)
+   -------------------------------------------------------------------------- */
+.topicsSection {
+  padding-bottom: 4rem;
+}
+
+.topicsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.topicArticle {
+  min-width: 0;
+  display: flex;
+}
+
+.topicCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  color: var(--lore-ink);
+  text-decoration: none;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: var(--lore-shadow);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.topicCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(230, 0, 92, 0.25);
+  border-color: rgba(230, 0, 92, 0.35);
+}
+
+[class~="dark"] .topicCard:hover {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 51, 119, 0.4);
+  border-color: rgba(255, 51, 119, 0.5);
+}
+
+.topicMediaWrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--lore-surface-subtle);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.coverRatioBox {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  overflow: hidden;
+}
+
+.topicCoverImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.topicCard:hover .topicCoverImage {
+  transform: scale(1.05);
+}
+
+.topicIndexBadge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(14, 14, 19, 0.75);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+}
+
+.topicTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.15rem;
+}
+
+.topicTitle {
+  margin: 0;
+  font-family: var(--lore-font-title);
+  font-size: clamp(1.25rem, 1.6vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: var(--lore-ink);
+  transition: color 0.2s ease;
+}
+
+.topicCard:hover .topicTitle {
+  color: var(--lore-pink);
+}
+
+.topicArrow {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink);
+  font-size: 0.95rem;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, color 0.2s ease;
+}
+
+.topicCard:hover .topicArrow {
+  transform: translateX(4px);
+  background: var(--lore-pink);
+  color: #ffffff;
+  border-color: var(--lore-pink);
+}
+
+.topicDesc {
+  margin: 0.65rem 0 1.25rem;
+  color: var(--lore-ink-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.topicMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--lore-border);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.topicCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--lore-ink-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.topicAvailable {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #ffd600 0%, #ffc000 100%);
+  color: #16151d;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  box-shadow: 0 2px 8px rgba(255, 214, 0, 0.3);
+}
+
+.topicAvailable::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16151d;
+  display: inline-block;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+.topicPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink-light);
+  font-weight: 500;
+  font-size: 0.775rem;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. 专题内页 Hero 与导航 (Internet Lore Topic View)
+   -------------------------------------------------------------------------- */
+.topicHeader {
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+.breadcrumbNav {
+  margin-bottom: 1rem;
+}
+
+.breadcrumbLink {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.breadcrumbLink:hover {
+  color: var(--lore-pink);
+  border-color: var(--lore-pink);
+  transform: translateX(-2px);
+}
+
+.topicHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 380px);
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(1.5rem, 3.5vw, 2.75rem);
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(230, 0, 92, 0.05) 0%, rgba(13, 148, 136, 0.06) 50%, var(--lore-surface) 100%);
+  border: 1px solid var(--lore-border-strong);
+  box-shadow: var(--lore-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.topicHero::before {
+  content: "";
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(230, 0, 92, 0.12) 0%, transparent 70%);
+  filter: blur(36px);
+  pointer-events: none;
+}
+
+.topicHeroCopy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.topicBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background: rgba(230, 0, 92, 0.08);
+  border: 1px solid rgba(230, 0, 92, 0.2);
+  color: var(--lore-pink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+
+.topicHeaderTitle {
+  margin: 0;
+  color: var(--lore-ink);
+  font-family: var(--lore-font-title);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  overflow-wrap: break-word;
+}
+
+.topicHeaderSubtitle {
+  max-width: 62ch;
+  margin: 1.15rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.65;
+}
+
+.topicHeroArtwork {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+[class~="dark"] .topicHeroArtwork {
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* 顶部六专题胶囊切换器 (Segmented Navigation) */
+.topicNavigation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  margin-top: 1.5rem;
+  padding: 0.4rem;
+  border-radius: 14px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+  scrollbar-width: none;
+}
+
+.topicNavigation::-webkit-scrollbar {
+  display: none;
+}
+
+.topicNavigationLink {
+  display: inline-flex;
+  min-height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1.15rem;
+  border-radius: 10px;
+  color: var(--lore-ink-muted);
+  font-size: 0.90625rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.topicNavigationLink:hover {
+  color: var(--lore-ink);
+  background: var(--lore-surface-subtle);
+}
+
+.topicNavigationLink[aria-current="page"] {
+  background: var(--lore-pink);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(230, 0, 92, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   4. 案例与音轨展示区域 (Internet Lore Archive / Featured Section)
+   -------------------------------------------------------------------------- */
+.featuredSection {
+  padding-bottom: 3rem;
+}
+
+.archiveLead {
+  margin-bottom: 1.75rem;
+}
+
+.catalogHeading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.featuredSectionTitle {
+  margin: 0;
+  font-family: var(--lore-font-title);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: var(--lore-ink);
+}
+
+.catalogCount {
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-pink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.archiveAvailability,
+.archiveIntro {
+  max-width: 80ch;
+  margin: 0.75rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: 0.96875rem;
+  line-height: 1.65;
+}
+
+/* 快速跳转折叠面板 */
+.archiveIndexDisclosure {
+  margin-bottom: 1.5rem;
+  padding: 0.25rem 1rem;
+  border-radius: 12px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+  transition: border-color 0.2s ease;
+}
+
+.archiveIndexDisclosure[open] {
+  border-color: rgba(230, 0, 92, 0.3);
+}
+
+.archiveIndexToggle,
+.backgroundToggle {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--lore-ink);
+  font-size: 0.90625rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.archiveIndexToggle::-webkit-details-marker,
+.backgroundToggle::-webkit-details-marker {
+  display: none;
+}
+
+.archiveIndexCount {
+  margin-left: auto;
+  color: var(--lore-ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.archiveIndexIndicator {
+  color: var(--lore-pink);
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.archiveIndexDisclosure[open] .archiveIndexIndicator {
+  transform: rotate(180deg);
+}
+
+.archiveIndex {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0 1rem;
+  border-top: 1px solid var(--lore-border);
+}
+
+.archiveIndexLink {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  color: var(--lore-ink-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.archiveIndexLink:hover {
+  color: var(--lore-pink);
+  background: var(--lore-surface-subtle);
+}
+
+.archiveIndexLink span {
+  color: var(--lore-pink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.775rem;
+}
+
+/* 核心条目容器：有歌（列表行）或无歌（对称精美卡片网格） */
+.archiveEntries {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+/* 当无歌曲时（未恢复录音的 5 个专题），采用精巧的 3 列对称网格排版 */
+.themeEntries {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.themeEntries .archiveEntry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.35rem;
+  border-radius: 14px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.themeEntries .archiveEntry:hover {
+  transform: translateY(-2px);
+  border-color: rgba(230, 0, 92, 0.3);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.08);
+}
+
+.themeEntries .archiveTrack {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--lore-border);
+  width: 100%;
+}
+
+/* 故事和歌曲在同一内容列内，操作紧跟摘要。 */
+.archiveEntry {
+  display: grid;
+  grid-template-columns: 2.125rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+  scroll-margin-top: 110px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.archiveEntry:hover {
+  border-color: rgba(230, 0, 92, 0.25);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.06);
+}
+
+.archiveEntry.additionalEntry {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.archiveNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(230, 0, 92, 0.08);
+  color: var(--lore-pink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.archiveEntryBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.archiveEntryTitle {
+  margin: 0;
+  color: var(--lore-ink);
+  font-family: var(--lore-font-title);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.archivePremise {
+  max-width: 68ch;
+  margin: 0.45rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: 0.90625rem;
+  line-height: 1.6;
+}
+
+.archiveTrack {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.875rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+/* 播放控件作为内容操作，不再单独套一层宽盒子。 */
+.catalogPlayer {
+  flex: 1 1 13rem;
+  width: auto;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.catalogPlayer > span:first-child {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--lore-yellow);
+  color: var(--lore-yellow-ink);
+  transition: transform 0.18s ease;
+}
+
+.catalogPlayer:hover:not(:disabled) > span:first-child {
+  transform: scale(1.08);
+}
+
+.catalogPlayer svg {
+  width: 15px;
+  height: 15px;
+}
+
+.catalogPlayer > span:last-child > span:last-child {
+  font-size: 0.90625rem;
+  font-weight: 700;
+}
+
+.catalogPlayer[aria-pressed="true"] {
+  background: transparent;
+  color: var(--lore-ink);
+}
+
+.catalogPlayer[aria-pressed="true"] > span:first-child {
+  background: #16151d;
+  color: #ffd600;
+}
+
+[class~="dark"] .catalogPlayer[aria-pressed="true"] > span:first-child {
+  background: #ffd600;
+  color: #16151d;
+}
+
+.catalogPlayer:hover:not(:disabled) {
+  background: transparent;
+}
+
+.trackLinks {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding-inline: 0;
+}
+
+.songStoryLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  color: var(--lore-pink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.songStoryLink:hover {
+  background: transparent;
+  color: var(--lore-pink-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.trackDuration {
+  color: var(--lore-ink-muted);
+  font-size: 0.775rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: var(--lore-surface-subtle);
+}
+
+.archiveTrackLabel {
+  display: block;
+  color: var(--lore-ink-light);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.archiveTrackTitle {
+  display: block;
+  margin-block: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--lore-ink);
+}
+
+.archiveTrackStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink-muted);
+  font-size: 0.775rem;
+  font-weight: 500;
+}
+
+.archiveNote {
+  margin: 1.5rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   5. 背景深度介绍与 Parody Angles (Article Body Section)
+   -------------------------------------------------------------------------- */
+.articleBodySection {
+  padding-bottom: 2.5rem;
+}
+
+.backgroundDisclosure {
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+  transition: border-color 0.2s ease;
+}
+
+.backgroundDisclosure[open] {
+  border-color: rgba(230, 0, 92, 0.3);
+}
+
+.backgroundToggle {
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.disclosureIndicator {
+  color: var(--lore-pink);
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 0.22s ease;
+}
+
+.backgroundDisclosure[open] .disclosureIndicator {
+  transform: rotate(45deg);
+}
+
+.articleBodyContainer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 3rem;
+  padding-block: 1.25rem 1rem;
+  border-top: 1px solid var(--lore-border);
+  margin-top: 0.5rem;
+}
+
+.proseBlock {
+  min-width: 0;
+}
+
+.proseParagraph {
+  max-width: 72ch;
+  margin: 0 0 1.15rem;
+  color: var(--lore-ink-muted);
+  font-size: 0.96875rem;
+  line-height: 1.8;
+}
+
+.proseParagraph:last-child {
+  margin-bottom: 0;
+}
+
+.anglesBlock {
+  min-width: 0;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+}
+
+.anglesSectionTitle {
+  margin: 0 0 1rem;
+  font-family: var(--lore-font-title);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--lore-pink);
+}
+
+.anglesList {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.angleRow {
+  min-width: 0;
+  padding: 0.85rem;
+  border-radius: 8px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+}
+
+.angleTitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--lore-ink);
+}
+
+.angleText {
+  margin: 0.35rem 0 0;
+  color: var(--lore-ink-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.storiesContainer {
+  margin-bottom: 2.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. 底部“其他五大专题”推荐 (Related Section)
+   -------------------------------------------------------------------------- */
+.relatedSection {
+  padding-bottom: 2.5rem;
+}
+
+.relatedContainer {
+  padding: 1.75rem 2rem;
+  border-radius: 18px;
+  background: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  box-shadow: var(--lore-shadow);
+}
+
+.relatedRow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.relatedPrompt {
+  font-family: var(--lore-font-title);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--lore-ink);
+}
+
+.relatedLinkList {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relatedLinkList li {
+  min-width: 0;
+}
+
+.relatedInlineLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0.65rem 0.95rem;
+  border-radius: 10px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.relatedInlineLink:hover {
+  background: var(--lore-surface);
+  border-color: var(--lore-pink);
+  color: var(--lore-pink);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(230, 0, 92, 0.15);
+}
+
+.relatedLinkArrow {
+  color: var(--lore-pink);
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.relatedInlineLink:hover .relatedLinkArrow {
+  transform: translateX(3px);
+}
+
+/* --------------------------------------------------------------------------
+   7. 底部指引与免责声明 (Hub Footer)
+   -------------------------------------------------------------------------- */
+.hubFooter {
+  padding-top: 1rem;
+  padding-bottom: 2rem;
+}
+
+.hubFooterInner {
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--lore-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+}
+
+.quickCatalogLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.85rem;
+}
+
+.catalogPrompt {
+  color: var(--lore-ink-muted);
+  font-size: 0.90625rem;
+  font-weight: 500;
+}
+
+.footerInlineLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  background: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  color: var(--lore-pink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.footerInlineLink:hover {
+  background: var(--lore-pink);
+  color: #ffffff;
+  border-color: var(--lore-pink);
+}
+
+.linkDot {
+  color: var(--lore-ink-muted);
+}
+
+.quietDisclaimer {
+  max-width: 82ch;
+  margin: 0;
+  color: var(--lore-ink-muted);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+/* 可访问性与焦点状态 */
+.topicCard:focus-visible,
+.breadcrumbLink:focus-visible,
+.topicNavigationLink:focus-visible,
+.archiveIndexToggle:focus-visible,
+.archiveIndexLink:focus-visible,
+.songStoryLink:focus-visible,
+.backgroundToggle:focus-visible,
+.relatedInlineLink:focus-visible,
+.footerInlineLink:focus-visible {
+  outline: 2px solid var(--lore-pink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   响应式断点适配
+   -------------------------------------------------------------------------- */
+@media (max-width: 1120px) {
+  .archiveEntries:not(.themeEntries) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .topicsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .themeEntries {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .relatedLinkList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 899px) {
+  .archiveEntry {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 1rem;
+  }
+  .archiveTrack {
+    gap: 0.5rem 0.75rem;
+  }
+  .topicHero {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.75rem;
+  }
+  .topicHeroArtwork {
+    max-height: 240px;
+  }
+  .articleBodyContainer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .archiveIndex {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .relatedLinkList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .topicsGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .themeEntries {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .archiveIndex {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .relatedLinkList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .archiveEntry {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topicCoverImage,
+  .topicArrow,
+  .topicCard,
+  .relatedInlineLink,
+  .archiveEntry {
+    transition: none;
+  }
+  .topicCard:hover .topicCoverImage,
+  .topicCard:hover .topicArrow,
+  .topicCard:hover {
+    transform: none;
+  }
+}

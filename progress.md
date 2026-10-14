@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-10-14 09:49_
+_Last updated: 2026-10-14 20:43_
 
 ## Pinned
 - 2026-09-21 17:05：最终语言与 URL 业务边界：公开站只允许英文无前缀 URL；任何公开 `/zh/*`（包括歌曲、登录、About 等）必须永久归并到英文规范地址。中文仅允许登录后的 `/zh/admin/*` 与 `/zh/dashboard/*` 两类后台页面。后台跳向公开站的链接必须直接使用 `/` 或 `/songs/{UUID}`，禁止生成 `/zh/songs`、`/en` 或标题型歌曲 URL。本条纠正并取代 2026-09-21 15:58“管理后台也不得生成中文页面”的错误记录。
@@ -42,6 +42,8 @@ _Last updated: 2026-10-14 09:49_
 - 2026-07-21 11:37：Gallery 内容扩容保持现有业务流程与卡片结构不变，继续以新闻标题为信息优先级，并保留封面、播放、来源和歌词入口。
 
 - 2026-10-14 09:45：用户确定公开歌曲分为 Gallery 与 Internet Lore 两种发布栏目；两类已发布作品均有独立 `/songs/{UUID}` 详情、播放、互动和可收录页面。专题歌曲必须排除 Gallery、首页 Today／推荐及全部榜单，只在所选专题展示；发布状态与栏目归属分别管理。
+
+- 2026-10-14 20:43：用户明确 Internet Lore 歌曲卡片不要另加底部整行操作栏；桌面播放按钮和 Song details 放歌名旁，手机操作与 Original song 编号同排，歌名独占其下方完整文本宽度，后续卡片调整必须遵守此布局边界。
 
 ## Decisions
 - 2026-09-21 17:05：语言架构最终确定为“公开站英文单语 + 登录后中文后台”：公开规范 URL 一律无语言前缀，公开 `/zh/*` 永久归并英文；`/zh` 仅为 `/zh/admin/*` 与 `/zh/dashboard/*` 提供中文后台。后台所有公开导航与歌曲链接直接生成 `/`、`/songs/{UUID}`，不得携带 `/zh`、`/en` 或标题 slug。本决策纠正并取代 2026-09-21 15:58“后台统一英文”的决策描述；已退出路由的 410 边界不变。
@@ -193,6 +195,8 @@ _Last updated: 2026-10-14 09:49_
 
 - 2026-10-14 09:45：用户已授权实现后台 Gallery／Internet Lore 两种栏目，并将找回的九首原歌发布到 `absurd-social-phenomena`。此授权取代此前“先完善页面，保持九首未发布”的阶段性选择；不授权用当前曲库填补其他五专题的缺失原歌，也不生成替代旧作。实际发布必须先确认线上新版已支持栏目隔离。
 
+- 2026-10-14 18:59：用户已纠正专题的封面与详情表现：专题应显示原歌封面，以真实歌名为主标题；封面、歌名和 Song details 均打开独立 canonical `/songs/{slug}` 完整详情，播放使用单独按钮。先前把“不进首页／Gallery”解释成“专题无封面”属于误解，相关旧记录保留供审计但不再是现行要求；Gallery、首页与榜单排除规则继续有效。
+
 ## TODO
 - [P1][DONE][#35] 最终语言边界纠正已提交并完成生产验收：提交 `edb9174` 与 `d3268f5` 落实公开站英文无前缀、公开 `/zh/*` 永久归并、仅登录后的 `/zh/admin/*` 与 `/zh/dashboard/*` 保留中文，以及后台公开链接统一 `/` 或 `/songs/{UUID}`。生产公开 SEO 审计 206/206、0 failures；sitemap 无 `/zh`、`/en`、`http` URL；真实登录 Chrome 验证 zh dashboard/admin 为中文、`publicZhLeakCount=0`，歌曲链接均为 UUID。（2026-09-21 17:05）
 - [P1][DONE][#34] 全站单语言英文架构已完成：移除 `zh` i18n 配置、中文消息与内容、语言切换及弃用双语 features 配置，公开页/认证/后台不再生成中文页面；保留历史 `/zh`、`/en` 的 308 英文归并与退出路由 410。风格推荐接口及提示固定英文。验证完成：content 生成、`tsc`、lint、全量 Vitest 86 个文件 503 项全部通过（含真实数据库事务回滚集成测试，0 跳过）、production build 成功；本地生产请求 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均为 308，`/zh/docs` 为 410；首页无 zh hreflang 与中文文案，sitemap 无 `/zh`。（2026-09-21 16:18）
@@ -226,10 +230,30 @@ _Last updated: 2026-10-14 09:49_
 - [P1][DONE][#22] 逐项风格审查修复的最终 `tsc --noEmit` 以 exit 0 通过。（2026-09-04 20:17）
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
-- [P0][DOING][#36] 完成发布栏目新版本上线及九首原歌定向公开：schema／后台／查询隔离已实现，迁移 0045 已定向应用，48 项相关测试、TypeScript 与完整 `pnpm build` 已通过；线上 Gallery API 必须返回 `publicationChannelsVersion=1` 后才允许执行发布脚本 `--apply`，目前线上版本字段仍为空。随后验收专题试听、九个独立详情、sitemap 与首页／Gallery／榜单排除。当前九首仍未发布，不得将回滚预检或后台保存栏目视为正式发布完成。（2026-10-14 09:49）
+- [P0][DONE][#36] 发布栏目新版本已正式上线，九首原歌均通过真实 Google 管理员后台逐首发布为 Internet Lore／`absurd-social-phenomena`，使用原 ID，未替换同名歌曲。提交 `f80996e19c172c4904f8352d7249ae9d9af8bdd9`、Vercel `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd` READY，`scooprym.app` 的 Gallery API 栏目版本为 1。线上及 localhost 九详情／九音频 HEAD 均 200，sitemap 包含九规范详情；首页 API 仍 79，Gallery、首页及近期／累计榜均排除九首，其他 259 首与原资产未变。Chrome 实际播放及原歌队列 Next 通过，390×844 无横向溢出且九个播放按钮可见；最终播放器已关闭，本地开发服务器保持运行。（2026-10-14 10:23）
 - [P1][OPEN][#37] 继续找回娱乐话题、八卦抓马、新闻戏仿、网络梗、日常反差喜剧五专题的原歌关联或其他备份；19 份已查 Git 版本未找到明确固定绑定，禁止同主题／同名的当前歌曲补位。（2026-10-14 09:45）
 
+- [P1][DONE][#38] Internet Lore 本轮 UI 与最终验收完成：14 项相关测试、TypeScript、Biome、CSS 引用与完整 build 通过，无后续代码改动。标准开发服务重启后真实 Google 管理员重新加载并逐一导航六专题，当前态与 H1 一致、各九原主题；荒诞类九播放按钮，其余五类为零。Bardstown 实播至 0:56／1:04，Next 实际切换原歌 The Gavel and the Gas（0:49），随后暂停并关闭播放器；键盘索引／背景折叠及九锚点通过。桌面、390×844 手机、深色查看通过，三张有效截图已保存，服务保持运行。本轮 UI 仍仅本地修改，未提交、推送或部署；试听按原接口记录真实播放统计。（2026-10-14 11:22）
+
+- [P1][DONE][#39] 原歌封面卡片与完整详情导航最终验收完成：14 项测试、TypeScript 与五文件 Biome 通过。真实 Chrome 九个原封面正常解码，封面／歌名／Song details 三入口 canonical 正确，点击 Bardstown 封面打开包含 h1／封面／歌词的独立完整歌曲页；独立播放暂停正常，已关闭播放器。390px 手机卡宽 346.23、页面宽 378≤390，九封面和九详情入口可见且无横向溢出；桌面／手机／详情三张截图已保存。用户纠正的现行要求是专题显示原歌封面、以真实歌名为主；本轮仅本地修改、未部署。（2026-10-14 19:01）
+
 ## Done
+- 2026-10-14 20:43：按指定位置完成卡片操作内联：移除页脚、分隔线及底部留白，LoreSongPlayer 增加可选 iconOnly，仅改外观，保留完整歌名 Play／Pause ARIA 和队列；手机窄屏详情箭头保留完整可访问名称。九原封面及封面／歌名／详情三入口 canonical 独立页面、歌曲过滤、发布与原音频保持。三文件 Biome、TypeScript、两文件五项测试通过；真实 Chrome 3 播放后 Pause／Next 正常，390px 页面宽 378 无溢出，长歌名读图通过。结束已关闭播放器和意外打开的 TanStack 面板，恢复 2535px 桌面；服务运行、本地 UI 未部署，由 Codex 直接修正，未宣称 Gemini 生成。（evidence: `F:/CodexHome/audits/lore-inline-actions-2026-10-14/desktop.png`、`mobile.png`）
+- 2026-10-14 19:31：针对汇总页色彩暗淡反馈，对照真实 Chrome 3 的 Gallery／首页，仅为 InternetLoreView 叠加作用域配色：暖白底、明黄 Hero、洋红 Lore，六专题按 slug 使用紫／橙／粉／黄／青／绿统一边框、底色、标题、序号和箭头，歌曲可用状态文案保持准确；未改内页、详情或发布数据。Gemini 3.8 high 本次 60 秒超时，CLI 虽报 SUCCESS 但响应为空、解析失败，无可用代码，由 Codex 实现。两文件 Biome、TypeScript、汇总页两项测试通过；390px 页面宽 378、无溢出、六链接正确，深色颜色实测通过，恢复 Light 与默认桌面尺寸。桌面与真实 390px 手机截图已保存；本地服务保持运行，UI 未部署。（evidence: `src/styles/internet-lore-hub-color.module.css`；`F:/CodexHome/audits/lore-hub-color-2026-10-14/desktop.png`、`mobile.png`）
+- 2026-10-14 19:01：[#39] 原歌封面及完整详情修正的最终检查通过：五文件 Biome 无修改通过，14 项测试及 TypeScript 已通过；390px 手机 `cardWidth=346.23`、`pageWidth=378≤viewport390`，无横向溢出，九真实封面和九明确详情入口在 DOM。默认桌面展示原封面、真实歌名和次级故事标题，独立 Play track／Song details 操作；真实封面点击进入 Bardstown 完整歌曲页，h1、封面、歌词可见。默认桌面尺寸已恢复，播放器已暂停关闭，专题标签页保留。（evidence: `F:/CodexHome/audits/lore-song-cards-2026-10-14/mobile.png`、`desktop.png`、`detail.png`；主流程真实 Chrome 与检查验证）
+- 2026-10-14 18:59：按用户纠正恢复专题原歌封面及以歌名为主的卡片：新增 server `LoreSongCard`，复用 SongCoverImage 与 LoreSongPlayer；卡片设置 `showTitle=false` 避免重复歌名，原主题转为次级故事说明。封面、歌名和 Song details 使用普通 a 打开独立 canonical 完整详情，避开既有 `@modal/(.)songs` 拦截；单独播放按钮保留，不修改全站 modal、详情实现、数据库、歌曲关联或栏目过滤。（evidence: `src/components/internet-lore/lore-song-card.tsx`、`lore-song-player.tsx`；主流程实现核验）
+- 2026-10-14 18:59：14 项既有测试（含本轮原封面数据与三个详情入口 canonical 核验）及 `tsc --noEmit` 通过；真实 Chrome 3 的九个原封面均 `complete=true` 且 `naturalWidth>0`，点击 Bardstown 封面到独立完整详情，封面与歌词可见。专题独立播放／暂停正常，队列 Next song 可用，结束已关闭播放器。最终 Biome 与手机验收仍待完成。（evidence: `F:/CodexHome/audits/lore-song-cards-2026-10-14/detail.png`；主流程测试与真实 Chrome 验证）
+- 2026-10-14 18:45：按用户截图反馈修正 Internet Lore 播放区排版：歌曲操作嵌入每条故事正文下方，原九首桌面两列、1120px 以下单列；播放与 canonical 歌词详情链接位于同一内容块，移除右侧孤立播放器列、分离 Lyrics 链接及嵌套灰底盒子，使用 44px 黄圆按钮，继续不显示歌曲封面。原歌曲 ID、队列、栏目／专题过滤及详情链接规则未变。（evidence: `src/components/internet-lore/internet-lore-archive.tsx`、`src/styles/internet-lore-exhibition.module.css`）
+- 2026-10-14 18:45：本次两个文件 Biome、`tsc --noEmit` 与现有六文件 14 项测试通过。既有 Chrome profile 3 的带扩展浏览器实测 The Bardstown Bender 播放到 0:17／1:04，随后暂停、关闭；390px 手机九卡片、九详情链接，无横向溢出。娱乐专题保留九历史主题、零歌曲且没有伪播放按钮，本地 `localhost:3000` 服务继续运行。（evidence: 主流程真实浏览器及测试验证；`F:/CodexHome/audits/lore-actions-layout-2026-10-14/mobile.png`、`desktop.png`，记录时两文件已存在）
+- 2026-10-14 11:22：[#38] 标准开发服务重启后的最终导航与内容验收完成，真实 Google 登录 Chrome 再次显示 Ryan Gong／Admin；六专题 `aria-current` 与 H1 一致，每页九个原主题，荒诞社会现象九播放按钮，其他五页零播放按钮。键盘 Enter 可开关主题索引及 About this collection，九个索引均指向存在条目，背景原文及 Parody Angles 保留可展开，结束时两个 details 均关闭。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/navigation-checks.json`；主流程真实 Chrome 验收）
+- 2026-10-14 11:22：真实新界面播放验证完成：The Bardstown Bender 进度达 0:56／1:04，点击 Next 实际切换原歌 The Gavel and the Gas（总时长 0:49），随后暂停、关闭并确认 `playerOpen=false`。最终桌面专题、汇总与手机截图均已保存；浏览器恢复浅色、正常尺寸与页面顶部，开发服务器继续运行。14 项相关测试、TypeScript、Biome 与完整 build 均通过，之后没有代码变更；本轮 UI 没有提交、推送或部署。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/topic-desktop.png`、`hub-desktop.png`、`topic-mobile.png`；主流程真实播放器验收）
+- 2026-10-14 11:12：本轮 UI 完整 `pnpm build` 已成功退出 0，编译、类型检查、29 个静态页生成与构建追踪均完成；Internet Lore 汇总 5kB、专题 6.9kB。标准 dev-with-queue 已重启，包装进程 39556，日志保存在 F 盘；浏览器恢复浅色与正常尺寸。最终稳定版本试听、切歌和六页导航仍待验证，本轮 UI 未部署。（evidence: 主流程构建退出结果；`F:/CodexHome/logs/scooprym_music/lore-ui-redesign-dev.stdout.log`、`lore-ui-redesign-dev.stderr.log`）
+- 2026-10-14 11:11：Internet Lore 汇总及六内页的本地 UI 调整已实现：汇总固定专题插图，分别展示真实可播放歌曲数与原主题数；内页整合专题图与标题，加入六专题当前态导航。有音频的原九首采用一行一故事与右侧黄圈播放条、既有 canonical 歌词详情链接；无歌主题双列文字陈列、手机单列，背景与创作角度保留并折叠。未改查询、数据库、发布状态、关联、播放器逻辑或 Gallery 隔离规则。（evidence: `src/components/internet-lore/internet-lore-view.tsx`、`internet-lore-topic-view.tsx`、`internet-lore-archive.tsx`；`src/styles/internet-lore-exhibition.module.css`）
+- 2026-10-14 11:11：本轮 UI 的 14 项界面／播放器测试、`tsc --noEmit`、Biome 和 CSS 类引用完整性检查通过；完整 build 的编译与类型阶段通过，页面生成仍运行中，尚无最终成功结果。真实 Google 登录 Chrome 查看有歌／无歌专题桌面、390×844 手机与深色模式；手机 document/body 宽 378≤390、九个播放按钮，首个播放按钮高 64px 且在首屏。汇总桌面与专题手机截图已保存，深色查看完成但截图保存失败。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/hub-desktop.png`、`topic-mobile.png`；主流程测试及真实 Chrome 验证）
+- 2026-10-14 10:23：本地最终核验通过，`verification-local.json` 记录时间为 `2026-10-14T02:20:05Z`：localhost 九首已发布、九规范详情与九音频 HEAD 均 200，原资产及其他 259 首未变；首页 Gallery API 仍为 79，九首不进入 Gallery、首页或榜单，sitemap 包含全部九详情。本地开发服务器继续运行于 `http://localhost:3000`。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/verification-local.json`）
+- 2026-10-14 10:23：真实 Google 登录 Chrome 的最终线上验收完成：The Bardstown Bender 播放到 0:28／1:04，再切换到原版 Al Dente Felony 成功，最终关闭播放器；390×844 移动端无横向溢出、九个播放按钮可见。最终桌面图 `lore-live-desktop-final.png`、移动图 `lore-live-mobile.png` 与真实后台栏目图 `admin-publication-settings.png` 保存于同一审计目录。生产提交、部署及分支保持前次状态，没有新部署。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/` 中最终截图；主流程真实 Chrome 验收）
+- 2026-10-14 10:12：[#36] 发布源码已从隔离工作区保存并推送 `codex/song-publication-channels`，提交 `f80996e19c172c4904f8352d7249ae9d9af8bdd9`；正式 Vercel 项目 `scooprym-music` 部署 `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd` READY，`scooprym.app` 新版本及栏目版本 1 生效。随后真实已登录 Google 管理员在后台按九个明确原 ID 逐首点击发布，全部为 Internet Lore／荒诞社会现象，后台动作刷新公开缓存和 sitemap；未通过 CLI 直接 SQL 绕过后台。主工作区仍为 master，原未提交修改保留，发布分支尚未合并 master。（evidence: commit `f80996e19c172c4904f8352d7249ae9d9af8bdd9`；Vercel `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd`；`F:/CodexHome/audits/lore-publication-2026-10-14/ui-publication.json`）
+- 2026-10-14 10:12：线上完成核验：九个规范详情 200、九音频 HEAD 200，原音频／歌词／封面哈希不变，其他 259 首公开、排期、歌词与音频未变。首页 Gallery API 总数仍为 79；`/songs` 两页及近期／累计播放榜查询均无九首，sitemap 包含全部九规范详情；六专题歌数为 9／0／0／0／0／0，原九顺序稳定。真实 Chrome 中 The Bardstown Bender 播放到 0:28／1:04 后暂停，Next 切换到原始 Al Dente Felony 而非 Gallery 歌曲；九项播放按钮与详情入口可见。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/verification-production.json`、`admin-publication-settings.png`、`lore-live-desktop.png`；真实管理员浏览器验证）
 - 2026-10-14 09:49：发布栏目完整 `pnpm build` 已成功，48 项相关测试与 `tsc --noEmit` 通过。localhost 首页 Gallery API 返回栏目版本 1、总数 79；线上同 API 总数仍为 79、版本字段为空，尚未上线新版。独立 `/songs` Gallery 原基线为 84，首页 API 沿用原规则排除非管理员作者的五首而为 79，不能用两者总数不同推断本轮丢歌。（evidence: 主流程构建、测试及本地／线上 API 验证）
 - 2026-10-14 09:45：发布栏目基础已实现：`publication_channel` 默认 `gallery`；Gallery 的 `lore_topic_slug` 必须为空，Internet Lore 必须为固定六专题之一。迁移 0045 已单独应用共享数据库，12 项事务约束测试通过，268 首原公开状态未变；未运行全部待迁移或推进 Drizzle 游标。（evidence: `src/db/migrations/0045_song_publication_channel.sql`、`src/lib/songs/publication-channel.ts`；主流程迁移与事务验证）
 - 2026-10-14 09:45：后台栏目对话框、管理员动作及共享事务发布服务已实现；公开歌曲的栏目筛选与独立详情分开，专题查询按明确栏目／专题归属，保留原九首顺序，不按关键词匹配。48 项相关回归与 TypeScript 通过；真实已登录 Google 管理员成功保存 The Bardstown Bender 为 Internet Lore／荒诞社会现象，但没有公开该歌曲。（evidence: `src/components/admin/song-publication-settings.tsx`、`src/lib/songs/publication-service.ts`、`src/lib/internet-lore/queries.ts`；主流程后台验证）
@@ -594,6 +618,18 @@ _Last updated: 2026-10-14 09:49_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-10-14 19:01：原歌封面卡片与手机／Biome 最终证据已补齐，#39 为 DONE；旧“专题无封面”明确属于已纠正误解，仅保留作历史审计，不继续列为验收条件。本轮本地 UI 未部署，之前九首公开及首页／Gallery／榜单隔离、其他五类原歌待找回状态保持。
+- 2026-10-14 18:59：用户纠正了之前“无歌曲封面”的错误理解；本次把专题卡片展示封面及完整详情作为现行验收，旧无封面表现和旧验证保留为历史，不当成限制。九首已发布及其 Gallery／首页／榜单排除不变，其他五专题原关联仍待找回；本轮 UI 未部署，项目继续运行，真实试听会产生原有播放统计。
+- 2026-10-14 18:59：本次 Gemini 3.8 high 账号调用模型可用，但等待 180 秒后 timeout、ERROR 且无产物；本轮失败原因是超时，不能沿用前几轮“地区限制”的描述，代码由 Codex 实现。390px 手机验证正在进行，不因截图文件已出现而提前宣称通过。本次只更新 progress.md 与历史专题规划，不改代码、数据库、歌曲发布栏目业务文档或提交。
+- 2026-10-14 18:45：本轮播放区修正仅本地 UI 修改，未部署；之前九首已发布、其余五类原歌关联待找回的状态保持。Gemini 3.8 Flash High 本轮调用仍因 `FAILED_PRECONDITION` 地区限制失败，没有生成代码，界面由 Codex 实现；不能宣称 Gemini 制作成功。真实试听沿现有接口记录播放统计，不把表现层未改业务规则写成所有数据完全不变。本次只更新进度与历史专题 UI 文档，不修改源码、数据库、歌曲发布栏目业务文档或提交。
+- 2026-10-14 11:22：新界面的最终导航、试听／切歌、折叠与服务重启后重载证据已补齐，#38 更新为 DONE，早先待验收快照保留。线上上一轮已发布九首的规则与发布状态保持；本轮没有业务查询、数据库结构、关联或发布逻辑改动，但真实试听会按原接口更新播放统计，不能写成所有数据完全没变。
+- 2026-10-14 11:11：本轮 UI 调整仅为本地修改，未提交／推送／部署；之前已正式公开的九首与发布栏目隔离继续保持。最终新 UI 的完整 build、试听／切歌及服务器重启验证待主流程补证据，不用上一轮发布验收代替本轮验收，也不虚构深色截图保存路径。
+- 2026-10-14 11:11：Gemini 3.8 默认 high 标识存在，但正式请求 `e4c7790d68b4485b920f081c5e947d1e`、会话 `5f6e7131-f904-4b71-b58c-4d118b522516` 返回地区限制 `FAILED_PRECONDITION` 400、ERROR，无产物。按用户此前继续制作授权，主流程沿用品牌规范及 frontend-design／impeccable 完成界面，不宣称 Gemini 制作成功。此次记录只更新 progress.md 与历史专题规划文档，不改歌曲发布栏目业务文档、代码、数据库或提交。
+- 2026-10-14 10:23：补充证据已完成此前 10:12 尚待补充的手机与本地验收；旧快照保留原文，当前状态以最终 `verification-local.json`、线上桌面／手机截图及真实播放结果为准。#36 保持 DONE，#37 原五类歌曲待找回不变；本次只更新三个负责文档，不新增待办，不改代码、数据库或提交。
+- 2026-10-14 10:12：此前 09:45／09:49“等待新版上线、九首未公开”的快照已由实际生产发布取代；历史条目保留原文。#36 完成，#37 的其他五专题原歌仍待找回，不能将九首公开说成六类原歌全部恢复。本轮手机与本地最终验收仍在补充，没有完成证据。
+- 2026-10-14 10:12：已知版本兼容顺序：如回退到不支持发布栏目的旧应用，必须先通过后台下架专题歌曲，再回退代码，否则旧查询会把全部 `isPublished=true` 歌曲读入 Gallery／首页／榜单。源码发布分支尚未合并 master；后续上线须包含本轮栏目逻辑，不能从旧 master 直接覆盖已部署新版。
+- 2026-10-14 10:12：URL 历史冲突：2026-09-21 与 2026-10-14 09:45 的受保护记录写 `/songs/{UUID}`，实际本轮已上线并验收的九个规范详情为 `/songs/{slug}`（既有 SEO 路径），sitemap 与真实链接一致。保留 Pinned 原文用于审计，操作文档以公共规范路径生成器的现行输出为准，不手拼 UUID 或为换栏目创建新地址。
+- 2026-10-14 10:12：其他歌曲初次比较曾出现八小时时间戳误报；统一为与修改前相同的驱动解码后，259 首验证未变，差异不代表实际数据库改动。音频 HEAD 成功不等于九首均完整试听；真实试听证据为 Bardstown 的播放进度及 Next 队列切换。Gemini 地区限制仍失败，没有本轮生成界面。
 - 2026-10-14 09:45：最新发布授权已取代 2026-10-14“保持九首未发布”的阶段性指令；历史页面验收及当时未发布的记录保留原文，不把历史状态当成当前永久约束。当前执行快照仍是九首未公开，仅 The Bardstown Bender 已保存专题归属，其他八首待定向归属并发布；尚无新版上线或正式发布成功证据。
 - 2026-10-14 09:45：本地与线上共用数据库，直接把原歌改为已发布会被尚未识别栏目的旧线上代码读入首页或 Gallery；执行顺序必须为新代码上线并验证栏目版本 → 定向九首事务发布 → 线上排除及详情／播放验收。不得以本地页面隔离成功代替线上版本检查。
 - 2026-10-14 09:45：Gemini 3.8 运行 `15bd5e1db6e3401599a95213e256a482` 因地区限制失败，没有界面产物；本轮后台控件由主流程沿用现有组件完成，不能宣称 Gemini 生成。操作说明见 `docs/歌曲发布栏目.md`；本次记录只改三个授权文档，不改业务代码、数据库或提交。

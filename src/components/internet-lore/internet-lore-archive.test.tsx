@@ -69,6 +69,7 @@ describe('原专题主题与未发布作品的展示边界', () => {
       plays: 0,
       durationSec: 60,
       audioUrl: 'https://example.com/original.mp3',
+      coverImageUrl: 'https://original.r2.dev/cover.jpg',
       publicationChannel: 'internet_lore',
       loreTopicSlug: topic.slug,
     };
@@ -90,6 +91,16 @@ describe('原专题主题与未发布作品的展示边界', () => {
     expect(screen.getByRole('button', { name: 'Play The Bardstown Bender' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play Raccoon on the Run' })).toBeNull();
     expect(player.mock.calls[0][0].queue).toEqual([original]);
-    expect(screen.getByRole('link', { name: 'Lyrics & story →' }).getAttribute('href')).toBe('/songs/original-raccoon');
+    const card = screen.getByRole('article', { name: original.title });
+    expect(
+      within(card)
+        .getByRole('img', { name: `${original.title} cover art` })
+        .getAttribute('src')
+    ).toBe(original.coverImageUrl);
+    for (const name of [original.title, `View ${original.title} details`, `Song details: ${original.title}`]) {
+      const link = within(card).getByRole('link', { name });
+      expect(link.getAttribute('href')).toBe('/songs/original-raccoon');
+      expect(link.tagName).toBe('A');
+    }
   });
 });

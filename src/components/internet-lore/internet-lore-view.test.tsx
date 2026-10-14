@@ -32,7 +32,7 @@ describe('Internet Lore 六专题入口', () => {
     expect(container.querySelector('a[href^="/features/"]')).toBeNull();
   });
 
-  it('封面取自对应公开作品；缺少预览时仍保留六个专题入口', () => {
+  it('专题始终使用自己的配图，播放数量取真实公开作品数量', () => {
     render(
       <InternetLoreView
         topics={internetLoreTopics}
@@ -47,12 +47,14 @@ describe('Internet Lore 六专题入口', () => {
     );
     const topics = screen.getByRole('region', { name: 'Internet Lore Topics' });
     const memeLink = within(topics).getByRole('link', { name: 'Explore Meme Culture' });
-    expect(within(memeLink).getByRole('img', { name: 'Haywire — original song artwork' }).getAttribute('src')).toBe(
-      'https://public-covers.r2.dev/haywire.webp'
+    const imageUrl = new URL(
+      within(memeLink).getByRole('img', { name: 'Meme Culture topic artwork' }).getAttribute('src')!,
+      'http://localhost:3000'
     );
+    expect(imageUrl.searchParams.get('url') ?? imageUrl.pathname).toBe('/images/features/meme-culture.webp');
     expect(within(topics).getAllByRole('article')).toHaveLength(6);
-    expect(within(topics).getAllByText('Original song artwork')).toHaveLength(1);
-    expect(within(memeLink).getByText('32 songs')).toBeTruthy();
+    expect(within(topics).queryByText('Original song artwork')).toBeNull();
+    expect(within(memeLink).getByText('32 songs to play')).toBeTruthy();
     expect(within(topics).getByRole('link', { name: 'Explore Gossip & Drama' }).getAttribute('href')).toBe(
       '/internet-lore/gossip-roast'
     );

@@ -19,7 +19,19 @@ function toPlayerSong(song: Song) {
 }
 
 /** 接入现有全站播放器，避免栏目另建音频实例。 */
-export function LoreSongPlayer({ song, queue = [], className }: { song: Song; queue?: Song[]; className?: string }) {
+export function LoreSongPlayer({
+  song,
+  queue = [],
+  className,
+  showTitle = true,
+  iconOnly = false,
+}: {
+  song: Song;
+  queue?: Song[];
+  className?: string;
+  showTitle?: boolean;
+  iconOnly?: boolean;
+}) {
   const currentSong = usePlayerStore((state) => state.currentSong);
   const isPlaying = usePlayerStore((state) => state.isPlaying);
   const isLoading = usePlayerStore((state) => state.isLoading);
@@ -45,12 +57,14 @@ export function LoreSongPlayer({ song, queue = [], className }: { song: Song; qu
       <span className={styles.playerIcon} aria-hidden="true">
         {isCurrent && isLoading ? <Loader2 className={styles.loadingIcon} /> : active ? <Pause /> : <Play />}
       </span>
-      <span className={styles.playerCopy}>
-        <span className={styles.playerAction}>
-          {isCurrent && isLoading ? 'Loading track' : active ? 'Pause track' : 'Play track'}
+      {!iconOnly && (
+        <span className={styles.playerCopy}>
+          <span className={styles.playerAction}>
+            {isCurrent && isLoading ? 'Loading track' : active ? 'Pause track' : 'Play track'}
+          </span>
+          {showTitle && <span className={styles.playerTitle}>{song.title}</span>}
         </span>
-        <span className={styles.playerTitle}>{song.title}</span>
-      </span>
+      )}
     </button>
   );
 }
