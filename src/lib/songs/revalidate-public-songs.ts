@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 export function revalidatePublicSongs() {
   revalidatePath('/');
   revalidatePath('/songs');
+  revalidatePath('/internet-lore');
+  revalidatePath('/[locale]/(marketing)/internet-lore/[slug]', 'page');
   revalidatePath('/[locale]', 'layout');
   revalidatePath('/sitemap.xml');
 }

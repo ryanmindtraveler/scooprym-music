@@ -15,6 +15,8 @@ export interface SongItem {
   sourceUrl?: string | null;
   newsSummary?: string | null;
   isPublished?: boolean;
+  publicationChannel?: import('@/lib/songs/publication-channel').SongPublicationChannel;
+  loreTopicSlug?: string | null;
   scheduledAt?: Date | null;
   publishedAt?: Date | null;
   processingStatus?: string | null;

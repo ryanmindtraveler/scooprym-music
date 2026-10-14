@@ -66,7 +66,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
 
           {/* footer links */}
           {footerLinks?.map((section) => (
-            <div key={section.title} className="col-span-1 md:col-span-1 items-start">
+            <div key={section.title} className="col-span-1 md:col-span-1 items-start min-w-0">
               <span className="text-xs font-black uppercase tracking-widest text-[#d80d63] dark:text-pink-400">
                 {section.title}
               </span>
@@ -78,7 +78,7 @@ export function Footer({ className }: React.HTMLAttributes<HTMLElement>) {
                         <LocaleLink
                           href={item.href || '#'}
                           target={item.external ? '_blank' : undefined}
-                          className="text-sm text-slate-600 hover:text-[#d80d63] transition-colors font-semibold dark:text-slate-400 dark:hover:text-pink-400"
+                          className="text-sm text-slate-600 hover:text-[#d80d63] transition-colors font-semibold dark:text-slate-400 dark:hover:text-pink-400 [overflow-wrap:anywhere]"
                         >
                           {item.title}
                         </LocaleLink>

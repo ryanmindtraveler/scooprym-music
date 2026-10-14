@@ -3,6 +3,7 @@ import { song as songTable, story as storyTable } from '@/db/schema';
 import { createLatestGenerationAttemptQuery } from '@/db/song-query';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
+import { internetLoreTopics } from '@/lib/internet-lore/topics';
 import { getSongCanonicalSlug, getSongPublicDate } from '@/lib/songs/song-seo';
 import { and, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
 
@@ -18,7 +19,17 @@ export const revalidate = 3600;
 /**
  * static routes for sitemap, you may change the routes for your own
  */
-const staticRoutes = ['/', '/songs', '/about', '/contact', '/privacy', '/terms', '/cookie'];
+const staticRoutes = [
+  '/',
+  '/songs',
+  '/internet-lore',
+  ...internetLoreTopics.map((topic) => `/internet-lore/${topic.slug}`),
+  '/about',
+  '/contact',
+  '/privacy',
+  '/terms',
+  '/cookie',
+];
 
 /**
  * Generate a sitemap for the website with hreflang support

@@ -1,6 +1,7 @@
 'use client';
 
 import type { SongItem } from '@/app/[locale]/(protected)/dashboard/mysongs/types';
+import { SongPublicationSettings } from '@/components/admin/song-publication-settings';
 import { SongSourcePreview } from '@/components/admin/song-source-preview';
 import { SongDetailDialog } from '@/components/songs/song-detail-dialog';
 import { SongRow } from '@/components/songs/song-row';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSchedulePublish, useTogglePublish } from '@/hooks/admin/use-admin-songs';
+import { useSaveSongPlacement, useSchedulePublish, useTogglePublish } from '@/hooks/admin/use-admin-songs';
 import { formatBusinessDateTime, parseBusinessDateTimeInput } from '@/lib/shared/business-time';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { getCanonicalBaseUrl } from '@/lib/urls/urls';
@@ -61,6 +62,7 @@ export function SongsTable({
 }: SongsTableProps) {
   const { currentSong, isPlaying: globalIsPlaying, play, pause } = usePlayerStore();
   const { mutate: togglePublish } = useTogglePublish();
+  const placementMutation = useSaveSongPlacement();
   const { mutate: schedulePublish, isPending: isScheduling } = useSchedulePublish();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [schedulingId, setSchedulingId] = useState<string | null>(null);
@@ -190,6 +192,18 @@ export function SongsTable({
               // Insert 'Publish' toggle.
               actionEnd={
                 <div className="flex flex-wrap items-center gap-2">
+                  <SongPublicationSettings
+                    songId={song.id}
+                    songTitle={song.title}
+                    placement={{
+                      publicationChannel: song.publicationChannel || 'gallery',
+                      loreTopicSlug: song.loreTopicSlug || null,
+                    }}
+                    isPending={placementMutation.isPending}
+                    onSave={async (placement) => {
+                      await placementMutation.mutateAsync({ songId: song.id, placement });
+                    }}
+                  />
                   {schedulingId === song.id ? (
                     <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-background px-2 py-1 shadow-sm">
                       <Input

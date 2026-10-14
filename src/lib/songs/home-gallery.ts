@@ -1,6 +1,6 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable, user } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { createLatestGenerationAttemptQuery, galleryPublicationCondition } from '@/db/song-query';
 import type { Song } from '@/types/song';
 import { and, count, desc, eq, notInArray, sql } from 'drizzle-orm';
 
@@ -19,7 +19,7 @@ export async function getHomeGalleryPage(page: number) {
   const latestAttempt = createLatestGenerationAttemptQuery(db);
   const publicFilter = and(
     eq(user.role, 'admin'),
-    eq(songTable.isPublished, true),
+    galleryPublicationCondition(),
     notInArray(latestAttempt.processingStatus, failedStatuses)
   );
 
@@ -62,7 +62,7 @@ export async function getHomeGalleryPage(page: number) {
     publishedAt: row.publishedAt?.toISOString() ?? null,
   })) as Song[];
 
-  return { songs, total: Number(totalRow?.total ?? 0), page };
+  return { songs, total: Number(totalRow?.total ?? 0), page, publicationChannelsVersion: 1 };
 }
 
 export async function getHomeGallerySong(id: string) {
@@ -93,7 +93,7 @@ export async function getHomeGallerySong(id: string) {
       and(
         eq(songTable.id, id),
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
+        galleryPublicationCondition(),
         notInArray(latestAttempt.processingStatus, failedStatuses)
       )
     )
@@ -133,7 +133,7 @@ export async function getHomeChartCandidates() {
     .where(
       and(
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
+        galleryPublicationCondition(),
         notInArray(latestAttempt.processingStatus, failedStatuses)
       )
     )
@@ -173,7 +173,7 @@ export async function getAllTimeChartCandidates() {
     .where(
       and(
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
+        galleryPublicationCondition(),
         notInArray(latestAttempt.processingStatus, failedStatuses),
         sql`${songTable.plays} > 0`
       )

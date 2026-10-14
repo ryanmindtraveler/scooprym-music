@@ -1,6 +1,6 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { createLatestGenerationAttemptQuery, galleryPublicationCondition } from '@/db/song-query';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { SONG_ARCHIVE_PAGE_SIZE, getArchivePagePath, parseArchivePage } from '@/lib/songs/archive-pagination';
 import type { Song } from '@/types/song';
@@ -25,7 +25,7 @@ export async function generateMetadata({ params, searchParams }: SongsPageProps)
   const page = parseArchivePage((await searchParams).page);
   if (page === null) notFound();
   return constructMetadata({
-    title: page === 1 ? 'Funny Songs Archive' : `Funny Songs Archive — Page ${page}`,
+    title: page === 1 ? 'Funny Songs Gallery' : `Funny Songs Gallery — Page ${page}`,
     description: t('description'),
     keywords: [
       'funny songs archive',
@@ -68,7 +68,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        eq(songTable.isPublished, true),
+        galleryPublicationCondition(),
         ne(songTable.audioUrl, 'pending-stream'),
         ne(songTable.audioUrl, ''),
         notInArray(latestAttempt.processingStatus, failedStatuses)
@@ -96,7 +96,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
     .where(
       and(
-        eq(songTable.isPublished, true),
+        galleryPublicationCondition(),
         ne(songTable.audioUrl, 'pending-stream'),
         ne(songTable.audioUrl, ''),
         notInArray(latestAttempt.processingStatus, failedStatuses)
@@ -129,7 +129,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
 
         <SongsClientWrapper songs={serializedSongs} />
         {totalPages > 1 && (
-          <nav aria-label="Song archive pages" className="mt-12 flex flex-wrap justify-center gap-3">
+          <nav aria-label="Song gallery pages" className="mt-12 flex flex-wrap justify-center gap-3">
             {page > 1 && (
               <Link prefetch={false} href={getArchivePagePath(page - 1)} className="rounded-lg border px-4 py-3">
                 Previous

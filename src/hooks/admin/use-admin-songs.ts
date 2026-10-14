@@ -1,5 +1,10 @@
 import { getAdminSongsAction } from '@/actions/admin/get-admin-songs';
-import { scheduleSongPublishAction, updateSongPublishAction } from '@/actions/admin/update-song-publish';
+import {
+  scheduleSongPublishAction,
+  updateSongPlacementAction,
+  updateSongPublishAction,
+} from '@/actions/admin/update-song-publish';
+import type { SongPublicationPlacement } from '@/lib/songs/publication-channel';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SortingState } from '@tanstack/react-table';
 import { toast } from 'sonner';
@@ -88,5 +93,21 @@ export function useTogglePublish() {
     onError: (error) => {
       toast.error(error.message);
     },
+  });
+}
+
+export function useSaveSongPlacement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ songId, placement }: { songId: string; placement: SongPublicationPlacement }) => {
+      const result = await updateSongPlacementAction(songId, placement);
+      if (!result.success) throw new Error(result.error || 'Failed to save publication placement');
+      return result;
+    },
+    onSuccess: async () => {
+      toast.success('Publication placement saved');
+      await queryClient.invalidateQueries({ queryKey: adminSongsKeys.all });
+    },
+    onError: (error) => toast.error(error.message),
   });
 }

@@ -1,0 +1,497 @@
+/* ==========================================================================
+   ScoopRYM Internet Lore Base CSS Module
+   设计语言：高品质互联网文化专刊，冷调白/淡青灰纸感，深紫黑文字。
+   保留 LoreStories 与 LoreSongPlayer 依赖的所有 38 个类名。
+   字重严格限制在 400/500/600/700，禁用 800/900。
+   ========================================================================== */
+
+.archiveContainer {
+  /* 品牌色彩与设计令牌（默认浅色冷调纸感） */
+  --lore-bg: #f8f9fa;
+  --lore-surface: #ffffff;
+  --lore-surface-subtle: #f1f3f5;
+  --lore-ink: #16151d;
+  --lore-ink-muted: #5e606a;
+  --lore-ink-light: #696d78;
+  --lore-border: rgba(22, 21, 29, 0.08);
+  --lore-border-strong: rgba(22, 21, 29, 0.16);
+  --lore-pink: #e6005c;
+  --lore-pink-hover: #c4004e;
+  --lore-yellow: #ffd600;
+  --lore-yellow-ink: #16151d;
+  --lore-shadow: 0 4px 16px rgba(22, 21, 29, 0.04);
+  --lore-shadow-md: 0 8px 24px rgba(22, 21, 29, 0.06);
+
+  /* 排版与间距令牌 */
+  --lore-font-title: var(--font-bricolage-grotesque, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --lore-font-body: var(--font-noto-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --lore-radius-sm: 6px;
+  --lore-radius-md: 8px;
+  --lore-radius-lg: 12px;
+  --lore-radius-pill: 9999px;
+  --lore-touch-target: 44px;
+
+  background-color: var(--lore-bg);
+  color: var(--lore-ink);
+  font-family: var(--lore-font-body);
+  min-height: 100vh;
+  width: 100%;
+  /* 针对 70px fixed 导航，顶部收紧至约 96-100px */
+  padding-top: max(96px, 6.25rem);
+  padding-bottom: 3.5rem;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   标准 CSS 深色模式适配（不使用 :global）
+   与透明导航栏完美契合，保证背景暗沉而文字、焦点高对比可读
+   -------------------------------------------------------------------------- */
+[class~="dark"] .archiveContainer {
+  --lore-bg: #0e0e13;
+  --lore-surface: #15151c;
+  --lore-surface-subtle: #1c1c25;
+  --lore-ink: #f1f2f6;
+  --lore-ink-muted: #9fa2b0;
+  --lore-ink-light: #999cac;
+  --lore-border: rgba(255, 255, 255, 0.08);
+  --lore-border-strong: rgba(255, 255, 255, 0.15);
+  --lore-pink: #ff3377;
+  --lore-pink-hover: #ff4d88;
+  --lore-yellow: #ffd600;
+  --lore-yellow-ink: #16151d;
+  --lore-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --lore-shadow-md: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   LoreStories 组件容器与案例卡片样式
+   文字先于曲目，双栏或纵向自然流转
+   -------------------------------------------------------------------------- */
+.entriesSection {
+  width: 100%;
+  padding: 0 1.25rem 3rem;
+  box-sizing: border-box;
+}
+
+.entriesContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  min-width: 0;
+}
+
+.storyArticle {
+  background-color: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  border-radius: var(--lore-radius-lg);
+  padding: clamp(1.25rem, 3.5vw, 2.5rem);
+  box-shadow: var(--lore-shadow);
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.articleLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  min-width: 0;
+}
+
+@media (min-width: 992px) {
+  .articleLayout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+    gap: 3rem;
+    align-items: start;
+  }
+}
+
+.storyContentPane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.categoryBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lore-pink);
+}
+
+.eraBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--lore-ink-light);
+}
+
+.storyTitle {
+  font-family: var(--lore-font-title);
+  font-size: clamp(1.375rem, 2.8vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.875rem;
+  color: var(--lore-ink);
+  overflow-wrap: break-word;
+}
+
+.storySummary {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--lore-ink);
+  margin: 0 0 1.125rem;
+  overflow-wrap: break-word;
+}
+
+.paragraphsBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+  min-width: 0;
+}
+
+.storyParagraph {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--lore-ink-muted);
+  margin: 0;
+  overflow-wrap: break-word;
+}
+
+.sourcesFooter {
+  border-top: 1px solid var(--lore-border);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  min-width: 0;
+}
+
+.sourcesHeading {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lore-ink-light);
+  margin: 0 0 0.625rem;
+}
+
+.sourcesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.sourceItem {
+  margin: 0;
+  min-width: 0;
+}
+
+.sourceLink {
+  min-height: var(--lore-touch-target);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--lore-ink);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: color 0.18s ease;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sourceLink:hover {
+  color: var(--lore-pink);
+}
+
+.sourceLink:focus-visible {
+  outline: 2px solid var(--lore-pink);
+  outline-offset: 3px;
+  border-radius: var(--lore-radius-sm);
+}
+
+.sourceTitle {
+  overflow-wrap: break-word;
+}
+
+.sourceIcon {
+  font-size: 0.85rem;
+  color: var(--lore-ink-light);
+}
+
+/* --------------------------------------------------------------------------
+   LoreStories 右侧唱片区与紧凑卡片
+   -------------------------------------------------------------------------- */
+.songPane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.soundtrackHeader {
+  display: flex;
+  align-items: center;
+}
+
+.soundtrackBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--lore-pink);
+}
+
+.recordCard {
+  background-color: var(--lore-surface-subtle);
+  border: 1px solid var(--lore-border);
+  border-radius: var(--lore-radius-md);
+  padding: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.coverWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--lore-radius-sm);
+  overflow: hidden;
+  background-color: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+}
+
+.coverImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.playerWrapper {
+  width: 100%;
+  min-width: 0;
+}
+
+.songPlayerControl {
+  width: 100%;
+  min-width: 0;
+}
+
+.songActionWrapper {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.songDetailLink {
+  min-height: var(--lore-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.875rem;
+  background-color: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  border-radius: var(--lore-radius-sm);
+  color: var(--lore-ink);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.18s ease;
+  min-width: 0;
+}
+
+.songDetailLink:hover {
+  border-color: var(--lore-border-strong);
+  color: var(--lore-pink);
+}
+
+.songDetailLink:focus-visible {
+  outline: 2px solid var(--lore-pink);
+  outline-offset: 3px;
+}
+
+/* 缺歌占位 */
+.unavailableCard {
+  background-color: var(--lore-surface-subtle);
+  border: 1px dashed var(--lore-border-strong);
+  border-radius: var(--lore-radius-md);
+  padding: 1.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.unavailableIcon {
+  font-size: 1.5rem;
+  color: var(--lore-ink-light);
+}
+
+.unavailableNotice {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--lore-ink-muted);
+}
+
+.unavailableLink {
+  min-height: var(--lore-touch-target);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--lore-pink);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.unavailableLink:focus-visible {
+  outline: 2px solid var(--lore-pink);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   LoreSongPlayer 共享播放器控件六大局部样式
+   -------------------------------------------------------------------------- */
+.playerButton {
+  min-height: var(--lore-touch-target);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  background-color: var(--lore-surface);
+  border: 1px solid var(--lore-border);
+  border-radius: var(--lore-radius-sm);
+  color: var(--lore-ink);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.playerButton:hover:not(:disabled) {
+  border-color: var(--lore-border-strong);
+}
+
+.playerButton:focus-visible {
+  outline: 2px solid var(--lore-pink);
+  outline-offset: 3px;
+}
+
+.playerButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 播放活跃状态 (仅在此处注入明亮黄色) */
+.playerButton[aria-pressed="true"] {
+  background-color: var(--lore-yellow);
+  color: var(--lore-yellow-ink);
+  border-color: var(--lore-yellow);
+}
+
+.playerButton[aria-pressed="true"] .playerAction {
+  color: rgba(22, 21, 29, 0.8);
+}
+
+.playerButton[aria-pressed="true"] .playerIcon {
+  background-color: var(--lore-yellow-ink);
+  color: var(--lore-yellow);
+}
+
+.playerIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: var(--lore-radius-pill);
+  background-color: var(--lore-surface-subtle);
+  color: var(--lore-ink);
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.playerIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.playerCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.playerAction {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--lore-ink-light);
+  line-height: 1.2;
+}
+
+.playerTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: inherit;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.loadingIcon {
+  animation: loreSpin 1s linear infinite;
+}
+
+@keyframes loreSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playerButton,
+  .playerIcon,
+  .sourceLink,
+  .songDetailLink {
+    transition: none;
+  }
+  .loadingIcon {
+    animation: none;
+  }
+}

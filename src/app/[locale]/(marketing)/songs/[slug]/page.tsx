@@ -6,6 +6,7 @@ import { createLatestGenerationAttemptQuery, getPublishedSongRecordingVersion } 
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
+import { getPublicationLoreTopic } from '@/lib/songs/publication-channel';
 import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
@@ -266,9 +267,16 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     },
   };
 
+  const loreTopic =
+    song.publicationChannel === 'internet_lore' ? getPublicationLoreTopic(song.loreTopicSlug) : undefined;
   const breadcrumbs = [
     { name: 'Home', item: getUrlWithLocale('/', routing.defaultLocale) },
-    { name: 'Gallery', item: getUrlWithLocale('/songs', routing.defaultLocale) },
+    ...(loreTopic
+      ? [
+          { name: 'Internet Lore', item: getUrlWithLocale('/internet-lore', routing.defaultLocale) },
+          { name: loreTopic.title, item: getUrlWithLocale(`/internet-lore/${loreTopic.slug}`, routing.defaultLocale) },
+        ]
+      : [{ name: 'Gallery', item: getUrlWithLocale('/songs', routing.defaultLocale) }]),
     { name: searchHeadline, item: canonicalUrl },
   ];
 

@@ -1,5 +1,6 @@
 
 import { sql } from 'drizzle-orm';
+import type { SongPublicationChannel } from '@/lib/songs/publication-channel';
 import { boolean, check, index, integer, jsonb, pgSchema, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const scooprymSchema = pgSchema('scooprym');
@@ -400,6 +401,8 @@ export const song = scooprymSchema.table(
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     isAdminGenerated: boolean('is_admin_generated').default(false),
     isPublished: boolean('is_published').default(false),
+    publicationChannel: text('publication_channel').$type<SongPublicationChannel>().notNull().default('gallery'),
+    loreTopicSlug: text('lore_topic_slug'),
     scheduledAt: timestamp('scheduled_at'),
     publishedAt: timestamp('published_at'),
   },
@@ -409,6 +412,12 @@ export const song = scooprymSchema.table(
     songCreatedAtIdx: index('song_created_at_idx').on(table.createdAt),
     songScheduledAtIdx: index('song_scheduled_at_idx').on(table.scheduledAt),
     songPublishedAtIdx: index('song_published_at_idx').on(table.publishedAt),
+    songPublicationPlacementIdx: index('song_publication_placement_idx').on(table.isPublished, table.publicationChannel, table.loreTopicSlug),
+    songPublicationPlacementCheck: check('song_publication_placement_check', sql`(
+      (${table.publicationChannel} = 'gallery' and ${table.loreTopicSlug} is null)
+      or (${table.publicationChannel} = 'internet_lore' and ${table.loreTopicSlug} is not null
+        and ${table.loreTopicSlug} in ('absurd-social-phenomena', 'entertainment-topics', 'gossip-roast', 'news-parody', 'meme-culture', 'comedy-drill'))
+    )`),
     songSeoSlugUniqueIdx: uniqueIndex('song_seo_slug_unique_idx').on(table.seoSlug),
   })
 );

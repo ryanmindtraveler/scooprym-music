@@ -2,12 +2,27 @@ import { getDb } from '@/db';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import { getSongSearchHeadline, type SongRecordingVersion } from '@/lib/songs/song-seo';
 import { getSourceUrl } from '@/lib/urls/source-url';
-import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
+import { lorePublicationTopics } from '@/lib/songs/publication-channel';
+
+/** 首页、Gallery 和所有榜单统一排除专题栏目。详情与个人收藏仍读取全部公开歌曲。 */
+export function galleryPublicationCondition() {
+  return and(eq(songTable.isPublished, true), eq(songTable.publicationChannel, 'gallery'));
+}
+
+/** 专题关联来自管理员明确保存的栏目与专题，不从当前曲库按关键词猜测。 */
+export function lorePublicationCondition(slug?: string) {
+  return and(
+    eq(songTable.isPublished, true),
+    eq(songTable.publicationChannel, 'internet_lore'),
+    slug ? eq(songTable.loreTopicSlug, slug) : inArray(songTable.loreTopicSlug, lorePublicationTopics.map((topic) => topic.slug))
+  );
+}
 
 /**
  * 每首歌曲只暴露最近一次生成记录，避免一首歌重试后在列表查询中出现多行。
  */
-export function createLatestGenerationAttemptQuery(db: ReturnType<typeof getDb>) {
+export function createLatestGenerationAttemptQuery(db: Pick<ReturnType<typeof getDb>, 'select'>) {
   return db
     .select({
       id: generationAttempt.id,

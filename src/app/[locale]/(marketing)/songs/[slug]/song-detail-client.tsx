@@ -12,6 +12,7 @@ import { useSongLike } from '@/hooks/songs/use-song-like';
 import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { LocaleLink } from '@/i18n/navigation';
 import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
+import { getPublicationLoreTopic } from '@/lib/songs/publication-channel';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
@@ -58,6 +59,8 @@ export function SongDetailClient({
   viewer,
 }: SongDetailClientProps) {
   const tNavbar = useTranslations('Marketing.navbar');
+  const loreTopic =
+    song.publicationChannel === 'internet_lore' ? getPublicationLoreTopic(song.loreTopicSlug) : undefined;
 
   // Global Player Store
   const { currentSong, isPlaying: globalIsPlaying, togglePlay, play, duration } = usePlayerStore();
@@ -146,7 +149,7 @@ export function SongDetailClient({
           <div className={cn('relative z-20 mb-3 w-full pl-2 text-left', styles.info)}>
             {/* Breadcrumb Navigation */}
             <nav aria-label="breadcrumb" className="mb-3">
-              <ol className="flex items-center text-xs font-semibold text-slate-400 dark:text-slate-500">
+              <ol className="flex flex-wrap items-center gap-y-1 text-xs font-semibold text-slate-400 dark:text-slate-500">
                 <li>
                   <LocaleLink href="/" className="hover:text-indigo-600 transition-colors">
                     {tNavbar('home.title')}
@@ -154,10 +157,28 @@ export function SongDetailClient({
                 </li>
                 <li className="mx-2 text-slate-300 dark:text-slate-700">/</li>
                 <li>
-                  <LocaleLink href="/#gallery" className="hover:text-indigo-600 transition-colors">
-                    {tNavbar('gallery.title')}
+                  <LocaleLink
+                    href={loreTopic ? '/internet-lore' : '/songs'}
+                    className="hover:text-indigo-600 transition-colors"
+                  >
+                    {loreTopic ? 'Internet Lore' : 'Gallery'}
                   </LocaleLink>
                 </li>
+                {loreTopic && (
+                  <>
+                    <li className="mx-2 text-slate-300 dark:text-slate-700" aria-hidden="true">
+                      /
+                    </li>
+                    <li>
+                      <LocaleLink
+                        href={`/internet-lore/${loreTopic.slug}`}
+                        className="hover:text-indigo-600 transition-colors"
+                      >
+                        {loreTopic.title}
+                      </LocaleLink>
+                    </li>
+                  </>
+                )}
                 <li className="mx-2 text-slate-300 dark:text-slate-700">/</li>
                 <li className="max-w-[200px] truncate font-medium text-slate-900 dark:text-slate-200">
                   {searchHeadline}
