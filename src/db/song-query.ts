@@ -2,7 +2,16 @@ import { getDb } from '@/db';
 import { generationAttempt, song as songTable, story as storyTable } from '@/db/schema';
 import { getSongSearchHeadline, type SongRecordingVersion } from '@/lib/songs/song-seo';
 import { getSourceUrl } from '@/lib/urls/source-url';
-import { and, asc, desc, eq, notInArray, sql } from 'drizzle-orm';
+import { type SQLWrapper, and, asc, desc, eq, inArray, notInArray, sql } from 'drizzle-orm';
+
+/** 详情、歌曲目录与 sitemap 共用索引边界，只允许已发布且有成品音频的歌曲。 */
+export function publicSongIndexCondition(processingStatus: SQLWrapper) {
+  return and(
+    eq(songTable.isPublished, true),
+    inArray(processingStatus, ['completed', 'completed_without_cover']),
+    sql`${songTable.audioUrl} ~ '^https?://'`
+  );
+}
 
 /**
  * 每首歌曲只暴露最近一次生成记录，避免一首歌重试后在列表查询中出现多行。

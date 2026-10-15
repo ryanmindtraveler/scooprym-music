@@ -1,6 +1,5 @@
 import { slugify } from '@/lib/utils';
 import type { Song } from '@/types/song';
-import { cleanLyricsForDisplay } from '../music/lyrics-utils';
 import legacyStorySongSlugs from './legacy-story-song-slugs.json';
 import shortenedSongSlugs from './shortened-song-slugs.json';
 import { getNewsDescription, getNewsTitle } from './song-editorial';
@@ -82,15 +81,6 @@ function getSongPrimaryStyle(song: SeoSong) {
     .replace(/\s+/g, ' ')
     .trim();
   return style.length <= 28 ? style : '';
-}
-
-function getSongLyricHook(song: SeoSong) {
-  const hook = cleanLyricsForDisplay(song.lyrics)
-    .split('\n')
-    .map((line) => line.trim())
-    .find((line) => line && !/^\[[^\]]+\]$/.test(line));
-  if (!hook) return '';
-  return hook.replace(/^[(\[][^\])]+[)\]]\s*/, '').trim();
 }
 
 /**
@@ -175,27 +165,18 @@ export function getSongSeoTitle(song: SeoSong) {
   return topic === song.title ? `Funny Song — ${song.title}` : `${topic} Song — ${song.title}`;
 }
 
-export function getSongSeoDescription(song: SeoSong, version?: SongRecordingVersion) {
+/** 在可见正文和摘要中一致说明歌曲身份及取材对象，不用歌词开场挤掉事件。 */
+export function getSongIntroduction(song: SeoSong) {
   const style = getSongPrimaryStyle(song);
-  const hook = getSongLyricHook(song);
   const recording = style ? `${style} funny song` : 'funny song';
-  const versionLabel = version ? ` (recording ${version.number} of ${version.total})` : '';
   const article = /^[aeiou]/i.test(recording) ? 'an' : 'a';
-  const introduction = `Hear “${song.title}”${versionLabel}, ${article} ${recording}.`;
-  const headline = song.newsSummary?.trim() ? getNewsTitle(song as Song, { truncate: false }).trim() : '';
-  const story = headline ? ` ${/[.!?]$/.test(headline) ? headline : `${headline}.`}` : '';
-  const lyric = hook ? ` It opens with “${hook}”.` : '';
-  const action = ' Play the track and read the lyrics.';
+  const topic = song.seoTopic?.trim() || getNewsTitle(song as Song, { truncate: false }).trim() || song.title;
+  const subject = topic && topic !== song.title ? ` Inspired by: ${topic.replace(/[.!?]+$/, '')}.` : '';
+  return `“${song.title}” is ${article} ${recording}.${subject}`;
+}
 
-  // 按完整句子取舍；不能为了固定字符数截断事实或歌词。
-  const candidates = [
-    introduction + story + lyric + action,
-    introduction + story + lyric,
-    introduction + lyric + action,
-    introduction + story + action,
-    introduction + story,
-    introduction + action,
-    introduction,
-  ];
-  return candidates.find((candidate) => candidate.length <= 170) || introduction;
+export function getSongSeoDescription(song: SeoSong, version?: SongRecordingVersion) {
+  const versionLabel = version ? ` (recording ${version.number} of ${version.total})` : '';
+  // 搜索摘要可由 Google 按展示宽度截取，不为固定字符预算丢弃人物、事件或否认限定。
+  return `${getSongIntroduction(song)}${versionLabel ? ` Listen${versionLabel}.` : ''} Play the track and read the lyrics.`;
 }

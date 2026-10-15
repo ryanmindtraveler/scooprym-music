@@ -1,10 +1,10 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { createLatestGenerationAttemptQuery, publicSongIndexCondition } from '@/db/song-query';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { SONG_ARCHIVE_PAGE_SIZE, getArchivePagePath, parseArchivePage } from '@/lib/songs/archive-pagination';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, ne, notInArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
@@ -53,27 +53,13 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);
 
-  const failedStatuses = [
-    'failed_generation',
-    'processing_queue_failed',
-    'failed_audio_upload',
-    'failed_internal_error',
-    'failed_credit_deduction',
-  ];
   // 计数与分页读取使用完全相同的公开条件，绝不纳入未发布歌曲。
   const [{ total }] = await db
     .select({ total: count() })
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-    .where(
-      and(
-        eq(songTable.isPublished, true),
-        ne(songTable.audioUrl, 'pending-stream'),
-        ne(songTable.audioUrl, ''),
-        notInArray(latestAttempt.processingStatus, failedStatuses)
-      )
-    );
+    .where(publicSongIndexCondition(latestAttempt.processingStatus));
   const totalPages = Math.max(1, Math.ceil(total / SONG_ARCHIVE_PAGE_SIZE));
   if (page > totalPages) notFound();
 
@@ -94,14 +80,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-    .where(
-      and(
-        eq(songTable.isPublished, true),
-        ne(songTable.audioUrl, 'pending-stream'),
-        ne(songTable.audioUrl, ''),
-        notInArray(latestAttempt.processingStatus, failedStatuses)
-      )
-    )
+    .where(publicSongIndexCondition(latestAttempt.processingStatus))
     // 与首页 Gallery 一致：按发布/创建时间排序，维护旧数据不影响新旧顺序。
     .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
     .limit(SONG_ARCHIVE_PAGE_SIZE)

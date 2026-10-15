@@ -2,7 +2,11 @@ import { BreadcrumbJsonLd, JsonLd } from '@/components/seo/json-ld';
 import type { SongCommentItem } from '@/components/songs/song-comments';
 import { getDb } from '@/db';
 import { songComment, songFavorite, song as songTable, story as storyTable, user } from '@/db/schema';
-import { createLatestGenerationAttemptQuery, getPublishedSongRecordingVersion } from '@/db/song-query';
+import {
+  createLatestGenerationAttemptQuery,
+  getPublishedSongRecordingVersion,
+  publicSongIndexCondition,
+} from '@/db/song-query';
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
@@ -23,7 +27,7 @@ import { getSourceUrl } from '@/lib/urls/source-url';
 import { getCanonicalBaseUrl, getUrlWithLocale } from '@/lib/urls/urls';
 import { getIdFromSlug } from '@/lib/utils';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, inArray, ne, notInArray, or } from 'drizzle-orm';
+import { and, count, desc, eq, ne, or, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import type { Locale } from 'next-intl';
 import Link from 'next/link';
@@ -63,13 +67,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     .where(
       and(
         or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, [
-          'failed_generation',
-          'processing_queue_failed',
-          'failed_audio_upload',
-          'failed_credit_deduction',
-        ])
+        publicSongIndexCondition(latestAttempt.processingStatus)
       )
     )
     .limit(1);
@@ -129,13 +127,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     .where(
       and(
         or(eq(songTable.id, id), eq(songTable.seoSlug, slug), eq(songTable.seoSlug, getSongStoredSlug(slug))),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, [
-          'failed_generation',
-          'processing_queue_failed',
-          'failed_audio_upload',
-          'failed_credit_deduction',
-        ])
+        publicSongIndexCondition(latestAttempt.processingStatus)
       )
     )
     .limit(1);
@@ -187,22 +179,30 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       .where(and(eq(songComment.songId, song.id), eq(songComment.status, 'visible')))
       .orderBy(desc(songComment.createdAt))
       .limit(12),
-    // 仅同一新闻下已公开、已完成且有音频的作品；每次请求读取发布状态。
+    // 同题优先，也推荐同曲风作品；始终限制公开状态、完成状态和成品音频。
     db
       .select({ id: songTable.id, title: songTable.title, seoSlug: songTable.seoSlug })
       .from(songTable)
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
-          eq(songTable.storyId, song.storyId),
+          or(
+            eq(songTable.storyId, song.storyId),
+            song.prompt?.trim()
+              ? sql`trim(split_part(lower(${latestAttempt.prompt}), ',', 1)) = ${song.prompt.split(',')[0].trim().toLowerCase()}`
+              : sql`false`
+          ),
           ne(songTable.id, song.id),
-          eq(songTable.isPublished, true),
-          inArray(latestAttempt.processingStatus, ['completed', 'completed_without_cover']),
-          ne(songTable.audioUrl, ''),
-          ne(songTable.audioUrl, 'pending-stream')
+          publicSongIndexCondition(latestAttempt.processingStatus)
         )
       )
-      .orderBy(desc(songTable.publishedAt), desc(songTable.createdAt), desc(songTable.id)),
+      .orderBy(
+        desc(sql`case when ${songTable.storyId} = ${song.storyId} then 1 else 0 end`),
+        desc(songTable.publishedAt),
+        desc(songTable.createdAt),
+        desc(songTable.id)
+      )
+      .limit(24),
     getPublishedSongRecordingVersion(db, song),
   ]);
   const relatedSongs = selectRelatedSongs(song, relatedRows);
@@ -300,7 +300,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       {relatedSongs.length > 0 && (
         <section aria-labelledby="related-songs-heading" className="mx-auto max-w-5xl px-6 py-12">
           <h2 id="related-songs-heading" className="text-2xl font-bold">
-            More songs from this story
+            More Funny Songs to Explore
           </h2>
           <ul className="mt-6 grid gap-4 sm:grid-cols-2">
             {relatedSongs.map((related) => (
@@ -310,7 +310,7 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
                   prefetch={false}
                   className="block rounded-xl border border-slate-200 p-5 font-semibold underline underline-offset-4 hover:border-pink-500 dark:border-zinc-700"
                 >
-                  {related.title}
+                  {related.title} — Funny Song
                 </Link>
               </li>
             ))}

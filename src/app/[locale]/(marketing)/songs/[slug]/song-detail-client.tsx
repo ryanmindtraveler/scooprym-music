@@ -13,6 +13,7 @@ import { useImageColors } from '@/hooks/ui/use-image-colors';
 import { LocaleLink } from '@/i18n/navigation';
 import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
+import { getSongIntroduction } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2, Sparkles } from 'lucide-react';
@@ -180,6 +181,9 @@ export function SongDetailClient({
               <h1 className="max-w-xl text-balance font-serif text-2xl font-black leading-[1.08] tracking-tight text-slate-950 drop-shadow-xs dark:text-white sm:text-3xl md:text-3xl lg:text-[2.25rem]">
                 {song.title}
               </h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                {getSongIntroduction(song)} Play the track and read the lyrics below.
+              </p>
             </div>
 
             {/* Style Tags - Clean Modern Frosted Pill Style */}

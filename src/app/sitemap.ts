@@ -1,10 +1,10 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { createLatestGenerationAttemptQuery, publicSongIndexCondition } from '@/db/song-query';
 import { getLocalePathname } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { getSongCanonicalSlug, getSongPublicDate } from '@/lib/songs/song-seo';
-import { and, desc, eq, isNotNull, ne, notInArray } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import type { MetadataRoute } from 'next';
 import type { Locale } from 'next-intl';
@@ -63,20 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from(songTable)
       .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(
-        and(
-          eq(songTable.isPublished, true),
-          notInArray(latestAttempt.processingStatus, [
-            'failed_generation',
-            'processing_queue_failed',
-            'failed_audio_upload',
-            'failed_credit_deduction',
-          ]),
-          isNotNull(songTable.audioUrl),
-          ne(songTable.audioUrl, 'pending-stream'),
-          ne(songTable.audioUrl, '')
-        )
-      )
+      .where(publicSongIndexCondition(latestAttempt.processingStatus))
       .orderBy(desc(songTable.createdAt))
       .limit(5000); // Increased limit to 5000
 

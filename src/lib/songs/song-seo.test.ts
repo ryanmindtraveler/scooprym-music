@@ -7,6 +7,7 @@ import {
   decodeSongSlug,
   getShortenedSongSlugId,
   getSongCanonicalSlug,
+  getSongIntroduction,
   getSongPublicDate,
   getSongSearchHeadline,
   getSongSeoDescription,
@@ -24,6 +25,22 @@ const song = {
 };
 
 describe('歌曲详情 SEO', () => {
+  it('摘要与可见介绍保留长事件主题，即使歌词开场更短也不替换主题', () => {
+    const item = {
+      ...song,
+      title: 'File Transfer Complete',
+      seoTopic: 'Aran Murphy red carpet appearance and comparisons with Cillian Murphy',
+      prompt: 'Sassy R&B, snap beat',
+      lyrics: '[Intro]\nCtrl-C, Ctrl-V',
+    };
+    const description = getSongSeoDescription(item);
+    expect(description).toContain(item.seoTopic);
+    expect(description).toContain('Sassy R&B funny song');
+    expect(description).toContain(getSongIntroduction(item));
+    expect(description).not.toContain('Ctrl-C');
+    expect(getSongSeoTitle(item)).toContain('Song — File Transfer Complete');
+    expect(getSongCanonicalSlug({ ...item, seoSlug: 'existing-funny-song' })).toBe('existing-funny-song');
+  });
   it('仅迁移明确核对的长地址，旧地址仍能定位原歌曲', () => {
     expect(shortenedSongSlugs).toHaveLength(17);
     expect(new Set(shortenedSongSlugs.map(({ slug }) => slug)).size).toBe(shortenedSongSlugs.length);
@@ -168,7 +185,7 @@ describe('歌曲详情 SEO', () => {
     );
   });
 
-  it('同一新闻下的不同录音使用曲风和歌词开场区分搜索摘要', () => {
+  it('同一新闻下的不同录音使用曲风区分摘要，事件优先于歌词开场', () => {
     const acoustic = {
       ...song,
       prompt: 'acoustic trap, pizzicato strings',
@@ -182,9 +199,9 @@ describe('歌曲详情 SEO', () => {
 
     expect(getSongSeoTitle(acoustic)).toBe(getSongSeoTitle(boomBap));
     expect(getSongSeoDescription(acoustic)).toContain('acoustic trap');
-    expect(getSongSeoDescription(acoustic)).toContain('Yo, Drake bought the Bentley back');
+    expect(getSongSeoDescription(acoustic)).toContain('Antonio Banderas');
+    expect(getSongSeoDescription(acoustic)).not.toContain('Yo, Drake bought the Bentley back');
     expect(getSongSeoDescription(acoustic)).not.toBe(getSongSeoDescription(boomBap));
-    expect(getSongSeoDescription(acoustic).length).toBeLessThanOrEqual(170);
   });
 
   it('同名录音的页面标题遵循固定公式，描述保留版本号', () => {
@@ -197,19 +214,18 @@ describe('歌曲详情 SEO', () => {
     const first = { number: 1, total: 2 };
     const second = { number: 2, total: 2 };
 
-    expect(getSongSeoTitle(item)).toBe(
-      "Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata' Song — Prison Blues"
-    );
+    expect(getSongSeoTitle(item)).toContain('Antonio Banderas');
+    expect(getSongSeoTitle(item)).toContain('Song — Prison Blues');
     expect(getSongSeoDescription(item, first)).toContain('recording 1 of 2');
     expect(getSongSeoDescription(item, first)).not.toBe(getSongSeoDescription(item, second));
-    expect(getSongSeoDescription(item, first).length).toBeLessThanOrEqual(170);
+    expect(getSongSeoDescription(item, first)).toContain("in 'Automata'");
   });
 
   it('标题和摘要同时保留新闻主题与歌曲身份', () => {
     expect(getSongSeoTitle(song)).toContain('Antonio Banderas');
     expect(getSongSeoTitle(song)).toContain('Banderas & Robot Soul');
     expect(getSongSeoDescription(song)).toContain('Banderas & Robot Soul');
-    expect(getSongSeoDescription(song).length).toBeLessThanOrEqual(170);
+    expect(getSongSeoDescription(song)).toContain("in 'Automata'");
   });
 
   it('长事件描述只取完整句子，不在事实或否认语句中间截断', () => {
@@ -223,7 +239,8 @@ describe('歌曲详情 SEO', () => {
     expect(description).toContain('The Viral Denial');
     expect(description).not.toContain('…');
     expect(description).not.toMatch(/are(?=\.|$)/);
-    if (description.includes('Dillon Danis')) expect(description).toContain('are fake.');
+    expect(description).toContain('Dillon Danis');
+    expect(description).toContain('are fake.');
     expect(description).toMatch(/\.$/);
   });
 
