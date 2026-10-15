@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ putObject: vi.fn(), config: vi.fn() }));
+const mocks = vi.hoisted(() => ({ putObject: vi.fn(), config: vi.fn(), cachedUpload: vi.fn() }));
+vi.mock('./cached-upload', () => ({ uploadCachedObject: mocks.cachedUpload }));
 vi.mock('s3mini', () => ({
   s3mini: class {
     constructor(config: unknown) {
@@ -14,6 +15,7 @@ describe('存储上传重试', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mocks.putObject.mockReset();
+    mocks.cachedUpload.mockReset();
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -36,6 +38,23 @@ describe('存储上传重试', () => {
     contentType: 'image/png',
     folder: 'song-covers/admin',
   };
+
+  it('版本化封面传递缓存元数据，临时失败仍使用原有重试', async () => {
+    mocks.cachedUpload
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(new Response('', { status: 200 }));
+    const pending = provider().uploadFile({
+      ...params,
+      objectKey: 'song-covers/version/w160.webp',
+      cacheControl: 'public, max-age=31536000, immutable',
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    await pending;
+    expect(mocks.cachedUpload).toHaveBeenCalledTimes(2);
+    expect(mocks.cachedUpload.mock.calls[0]).toEqual(mocks.cachedUpload.mock.calls[1]);
+    expect(mocks.cachedUpload.mock.calls[0][4]).toBe('public, max-age=31536000, immutable');
+    expect(mocks.putObject).not.toHaveBeenCalled();
+  });
 
   it('断连后上传同一份内容到同一个 key', async () => {
     mocks.putObject

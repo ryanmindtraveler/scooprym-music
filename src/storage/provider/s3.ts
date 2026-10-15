@@ -10,6 +10,7 @@ import {
   type UploadFileParams,
   type UploadFileResult,
 } from '../types';
+import { uploadCachedObject } from './cached-upload';
 
 /**
  * Amazon S3 storage provider implementation using s3mini
@@ -112,7 +113,17 @@ export class S3Provider implements StorageProvider {
       // 一次上传的所有重试使用相同 key 与文件内容，避免断连后产生多份对象或重复生成封面。
       for (let attempt = 1; attempt <= 3; attempt += 1) {
         try {
-          const response = await s3.putObject(key, fileContent, contentType);
+          // 旧 SDK 不支持对象缓存元数据；仅带缓存策略的新封面使用官方推荐的签名客户端。
+          const response = params.cacheControl
+            ? await uploadCachedObject(
+                this.config,
+                key,
+                fileContent,
+                contentType,
+                params.cacheControl,
+                params.requestTimeoutMs
+              )
+            : await s3.putObject(key, fileContent, contentType);
           if (!response.ok) {
             throw Object.assign(new UploadError(`Storage upload returned HTTP ${response.status}`), {
               statusCode: response.status,

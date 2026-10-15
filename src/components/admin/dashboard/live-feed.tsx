@@ -1,5 +1,6 @@
 'use client';
 
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
 import { ArrowRight, Music, Pause, Play, Radio, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { LiveSong } from './types';
 
@@ -77,10 +77,9 @@ export function LiveSongFeed({ songs }: { songs: LiveSong[] }) {
                   {/* 专辑封面 */}
                   <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted shadow-2xs">
                     {song.coverImageUrl ? (
-                      <Image
+                      <SongCoverImage
                         src={song.coverImageUrl}
                         alt={song.title}
-                        fill
                         sizes="44px"
                         className="object-cover transition-transform group-hover:scale-105"
                       />

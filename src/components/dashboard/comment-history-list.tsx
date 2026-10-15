@@ -1,12 +1,12 @@
 'use client';
 
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { Routes } from '@/routes';
 import { format, formatDistanceToNow } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, MessageSquareText, Music2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import Link from 'next/link';
 
 export interface CommentHistoryItem {
@@ -79,10 +79,9 @@ export function CommentHistoryList({ comments, startIndex = 0 }: CommentHistoryL
                 rel="noopener noreferrer"
                 className="relative size-[62px] overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-900/5 lg:size-[68px]"
               >
-                <Image
+                <SongCoverImage
                   src={comment.coverImageUrl || '/images/funny-censored-fallback.png'}
                   alt=""
-                  fill
                   sizes="68px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />

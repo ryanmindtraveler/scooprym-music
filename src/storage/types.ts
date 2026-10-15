@@ -46,6 +46,8 @@ export interface UploadFileParams {
   /** 服务端恢复上传使用固定对象标识。 */
   objectKey?: string;
   requestTimeoutMs?: number;
+  /** 仅为版本化、内容不变的对象指定长期缓存。 */
+  cacheControl?: string;
 }
 
 /**

@@ -3,6 +3,7 @@
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { getUrlWithLocale } from '@/lib/urls/urls';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
@@ -48,16 +49,18 @@ export function TrendingSongCard({
       {/* Cover Image Area */}
       <div className="relative aspect-4/3 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
         {song.coverImageUrl ? (
-          <img
+          <SongCoverImage
             src={song.coverImageUrl}
             alt={song.title}
+            sizes="(max-width: 767px) 90vw, (max-width: 1280px) 45vw, 380px"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
         ) : (
           <div className="relative flex h-full w-full items-center justify-center bg-slate-200 dark:bg-slate-800">
-            <img
-              src="/images/funny-censored-fallback.png"
+            <SongCoverImage
+              src={null}
               alt="No Cover"
+              sizes="380px"
               className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-500" />

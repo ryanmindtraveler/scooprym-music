@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
 
   /* config options here */
   devIndicators: false,
+  async headers() {
+    return [
+      {
+        source: '/:asset(logo-[a-z0-9-]+\\.(?:webp|png))',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+    ];
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

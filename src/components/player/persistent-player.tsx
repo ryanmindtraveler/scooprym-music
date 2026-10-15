@@ -1,11 +1,11 @@
 'use client';
 
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { Slider } from '@/components/ui/slider';
 import { useLocalePathname } from '@/i18n/navigation';
 import { usePlayerStore } from '@/store';
 import { Pause, Play, SkipBack, SkipForward, X } from 'lucide-react';
-import Image from 'next/image';
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -37,10 +37,9 @@ export function PersistentPlayer() {
     >
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div className="relative size-11 shrink-0 overflow-hidden rounded-xl bg-white/10 sm:size-12">
-          <Image
+          <SongCoverImage
             src={currentSong.coverImageUrl || '/images/funny-censored-fallback.png'}
             alt=""
-            fill
             sizes="48px"
             className="object-cover"
           />

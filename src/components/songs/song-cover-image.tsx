@@ -1,5 +1,6 @@
 'use client';
 
+import { getCoverSources, isDirectCover } from '@/lib/images/cover-variants';
 import { Disc3 } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -18,14 +19,10 @@ export function SongCoverImage(props: SongCoverImageProps) {
 }
 
 function CoverImage({ src, alt, sizes, className, priority = false }: SongCoverImageProps) {
-  const [stage, setStage] = useState<'optimized' | 'original' | 'placeholder'>(() => {
-    try {
-      const url = new URL(src || '');
-      return url.protocol === 'https:' && url.hostname.endsWith('.r2.dev') ? 'original' : 'optimized';
-    } catch {
-      return 'optimized';
-    }
-  });
+  const sources = getCoverSources(src || '');
+  const [stage, setStage] = useState<'optimized' | 'direct' | 'original' | 'placeholder'>(() =>
+    isDirectCover(sources.src) ? 'direct' : 'optimized'
+  );
 
   if (!src?.trim() || src === '/images/funny-censored-fallback.png' || stage === 'placeholder') {
     return (
@@ -39,6 +36,24 @@ function CoverImage({ src, alt, sizes, className, priority = false }: SongCoverI
     );
   }
 
+  if (stage === 'direct' || stage === 'original') {
+    return (
+      <img
+        src={stage === 'original' ? src : sources.src}
+        srcSet={stage === 'direct' ? sources.srcSet : undefined}
+        sizes={stage === 'direct' && sources.srcSet ? sizes : undefined}
+        alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'auto'}
+        decoding="async"
+        className={`absolute inset-0 size-full ${className || ''}`}
+        onError={() =>
+          setStage(stage === 'direct' && (sources.srcSet || sources.src !== src) ? 'original' : 'placeholder')
+        }
+      />
+    );
+  }
+
   return (
     <Image
       src={src}
@@ -46,9 +61,8 @@ function CoverImage({ src, alt, sizes, className, priority = false }: SongCoverI
       fill
       sizes={sizes}
       priority={priority}
-      unoptimized={stage === 'original'}
       className={className}
-      onError={() => setStage((current) => (current === 'optimized' ? 'original' : 'placeholder'))}
+      onError={() => setStage('original')}
     />
   );
 }

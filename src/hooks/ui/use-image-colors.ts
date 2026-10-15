@@ -1,5 +1,6 @@
 'use client';
 
+import { getSmallCoverSource } from '@/lib/images/cover-variants';
 import { useEffect, useState } from 'react';
 
 export interface ImageColors {
@@ -55,11 +56,12 @@ export function useImageColors(imageUrl: string | null | undefined): ImageColors
 
         // Proxy the URL to bypass CORS if it's an external http/https link
         // We exclude local paths (starting with /) and data URLs (starting with data:)
-        let targetUrl = imageUrl!;
+        const smallImageUrl = getSmallCoverSource(imageUrl!);
+        let targetUrl = smallImageUrl;
         const isExternal = imageUrl?.startsWith('http') && !imageUrl?.includes(window.location.origin);
 
         if (isExternal) {
-          targetUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl || '')}`;
+          targetUrl = `/api/proxy-image?url=${encodeURIComponent(smallImageUrl)}`;
         }
 
         // node-vibrant can extract from the proxied URL

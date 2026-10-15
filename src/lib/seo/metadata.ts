@@ -97,9 +97,9 @@ export function constructMetadata({
       // site: '@ScoopRYM', // Recommended to use a handle, not a URL
     },
     icons: {
-      icon: '/logo.png',
-      shortcut: '/logo.png',
-      apple: '/logo.png',
+      icon: '/logo-icon-f18fb9105029.png',
+      shortcut: '/logo-icon-f18fb9105029.png',
+      apple: '/logo-apple-b41f3d91418b.png',
     },
     metadataBase: new URL(getCanonicalBaseUrl()),
     manifest: `${getCanonicalBaseUrl()}/manifest.webmanifest`,

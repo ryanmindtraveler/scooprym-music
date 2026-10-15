@@ -21,8 +21,8 @@ export const websiteConfig: WebsiteConfig = {
   metadata: {
     images: {
       ogImage: '/og.png',
-      logoLight: '/logo.png',
-      logoDark: '/logo-dark.png',
+      logoLight: '/logo-808e80e8250d.webp',
+      logoDark: '/logo-dark-808e80e8250d.webp',
     },
     social: {
       // github: 'https://github.com/MkSaaSHQ',

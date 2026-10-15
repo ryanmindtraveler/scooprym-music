@@ -1,4 +1,5 @@
 import { websiteConfig } from '@/config/website';
+import { getCoverFamilyKeys } from '@/lib/images/cover-variants';
 import { storageConfig } from './config/storage-config';
 import { S3Provider } from './provider/s3';
 import type { StorageConfig, StorageProvider, UploadFileParams, UploadFileResult } from './types';
@@ -54,7 +55,7 @@ export const uploadFile = async (
   filename: string,
   contentType: string,
   folder?: string,
-  options?: Pick<UploadFileParams, 'objectKey' | 'requestTimeoutMs'>
+  options?: Pick<UploadFileParams, 'objectKey' | 'requestTimeoutMs' | 'cacheControl'>
 ): Promise<UploadFileResult> => {
   const provider = getStorageProvider();
   return provider.uploadFile({ file, filename, contentType, folder, ...options });
@@ -68,5 +69,5 @@ export const uploadFile = async (
  */
 export const deleteFile = async (key: string): Promise<void> => {
   const provider = getStorageProvider();
-  return provider.deleteFile(key);
+  await Promise.all(getCoverFamilyKeys(key).map((assetKey) => provider.deleteFile(assetKey)));
 };

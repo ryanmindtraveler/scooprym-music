@@ -1,5 +1,6 @@
 'use client';
 
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import { getSongCanonicalSlug } from '@/lib/songs/song-seo';
 import { Routes } from '@/routes';
 import { usePlayerStore } from '@/store';
@@ -8,7 +9,6 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { ArrowUpRight, Clock3, Headphones, Music2, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import Link from 'next/link';
 
 export interface RecentListeningSong extends Song {
@@ -105,10 +105,9 @@ export function RecentListeningList({ songs, startIndex = 0, mode = 'recent' }: 
                 rel="noopener noreferrer"
                 className="relative size-[68px] overflow-hidden rounded-2xl bg-slate-200 ring-1 ring-slate-900/5 md:size-[76px]"
               >
-                <Image
+                <SongCoverImage
                   src={song.coverImageUrl || '/images/funny-censored-fallback.png'}
                   alt=""
-                  fill
                   sizes="76px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />

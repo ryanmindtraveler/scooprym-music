@@ -4,6 +4,7 @@ import type { SongItem } from '@/app/[locale]/(protected)/dashboard/mysongs/type
 import { DownloadButton } from '@/components/songs/actions/download-button';
 import { LikeButton } from '@/components/songs/actions/like-button';
 import { ShareButton } from '@/components/songs/actions/share-button';
+import { SongCoverImage } from '@/components/songs/song-cover-image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,18 +95,19 @@ function SongRowBase({
         <div className="relative group/cover shrink-0">
           <div
             className={cn(
-              'flex items-center justify-center rounded-xl bg-linear-to-br from-indigo-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800 text-indigo-400 dark:text-indigo-300 overflow-hidden shadow-sm border border-white/50 dark:border-white/5',
+              'relative flex items-center justify-center rounded-xl bg-linear-to-br from-indigo-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-800 text-indigo-400 dark:text-indigo-300 overflow-hidden shadow-sm border border-white/50 dark:border-white/5',
               extraContent ? 'size-20 sm:size-24' : 'size-14'
             )}
           >
-            {item.coverImageUrl ? (
-              <img src={item.coverImageUrl} alt={item.title} className="size-full object-cover" loading="lazy" />
-            ) : (
-              <div className="relative size-full">
-                <img src="/images/funny-censored-fallback.png" alt="Censored" className="size-full object-cover" />
-                <div className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[8px] font-bold text-center text-white/90 uppercase tracking-tighter">
-                  Too Hot for AI
-                </div>
+            <SongCoverImage
+              src={item.coverImageUrl}
+              alt={item.title}
+              sizes={extraContent ? '(min-width: 640px) 96px, 80px' : '56px'}
+              className="object-cover"
+            />
+            {!item.coverImageUrl && (
+              <div className="absolute inset-x-0 bottom-0 bg-black/60 py-0.5 text-[8px] font-bold text-center text-white/90 uppercase tracking-tighter">
+                Too Hot for AI
               </div>
             )}
 
