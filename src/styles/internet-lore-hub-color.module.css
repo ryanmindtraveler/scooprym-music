@@ -1,0 +1,177 @@
+/* 汇总页独立配色，不影响专题内页与歌曲详情。 */
+.page.page {
+  background: #f7f5f0;
+}
+
+.page .hero {
+  background: #ffe16a;
+  border-color: #edc13d;
+  box-shadow: 0 8px 24px rgb(131 83 0 / 8%);
+}
+
+.page .hero::before,
+.page .hero::after {
+  content: none;
+}
+
+.page .title {
+  color: #17151f;
+}
+
+.page .highlight {
+  color: #b90851;
+}
+
+.page .hero p {
+  color: #493529;
+}
+
+.page .badge {
+  background: #b90851;
+  border-color: #b90851;
+  color: #fff;
+}
+
+.page .pill {
+  background: #fff6cd;
+  border-color: #c79920;
+  color: #493529;
+}
+
+.page .card {
+  --topic-accent: #6320b7;
+  --topic-bright: #893deb;
+  --topic-fill: #eee3ff;
+  --topic-border: #ccb3f0;
+  box-sizing: border-box;
+  background: var(--topic-fill);
+  border-color: var(--topic-border);
+  border-top: 5px solid var(--topic-bright);
+}
+
+.page .card[data-topic="entertainment-topics"] {
+  --topic-accent: #a53e09;
+  --topic-bright: #f07823;
+  --topic-fill: #ffead5;
+  --topic-border: #f1c198;
+}
+
+.page .card[data-topic="gossip-roast"] {
+  --topic-accent: #b90851;
+  --topic-bright: #ed287d;
+  --topic-fill: #ffe2ee;
+  --topic-border: #efb3cd;
+}
+
+.page .card[data-topic="news-parody"] {
+  --topic-accent: #86500a;
+  --topic-bright: #e7b615;
+  --topic-fill: #fff2c0;
+  --topic-border: #e6d07e;
+}
+
+.page .card[data-topic="meme-culture"] {
+  --topic-accent: #006d86;
+  --topic-bright: #06abc8;
+  --topic-fill: #d2f4fc;
+  --topic-border: #8bd0df;
+}
+
+.page .card[data-topic="comedy-drill"] {
+  --topic-accent: #186c42;
+  --topic-bright: #29a761;
+  --topic-fill: #e0f4d8;
+  --topic-border: #a9d59c;
+}
+
+.page .card:hover {
+  border-color: var(--topic-accent);
+  border-top-color: var(--topic-bright);
+  box-shadow: 0 12px 28px rgb(23 21 31 / 10%);
+}
+
+.page .cardTitle,
+.page .card:hover .cardTitle,
+.page .count {
+  color: var(--topic-accent);
+}
+
+.page .indexBadge,
+.page .arrow,
+.page .card:hover .arrow {
+  background: var(--topic-accent);
+  border-color: var(--topic-accent);
+  color: #fff;
+}
+
+.page .description {
+  color: #49434f;
+}
+
+.page .meta {
+  border-top-color: var(--topic-border);
+}
+
+.page .pending {
+  background: rgb(255 255 255 / 65%);
+  border-color: var(--topic-border);
+  color: var(--topic-accent);
+}
+
+.page .available {
+  background: #ffd600;
+  color: #17151f;
+}
+
+[class~="dark"] .page.page {
+  background: #100d16;
+}
+
+[class~="dark"] .page .hero {
+  background: #372a10;
+  border-color: #9f7521;
+}
+
+[class~="dark"] .page .title {
+  color: #fff4d3;
+}
+
+[class~="dark"] .page .highlight {
+  color: #ff70a7;
+}
+
+[class~="dark"] .page .hero p,
+[class~="dark"] .page .pill {
+  color: #f5e2b1;
+}
+
+[class~="dark"] .page .pill {
+  background: #4a3918;
+  border-color: #9f7521;
+}
+
+[class~="dark"] .page .card {
+  background: color-mix(in srgb, var(--topic-bright) 16%, #15121d);
+  border-color: color-mix(in srgb, var(--topic-bright) 55%, #15121d);
+  border-top-color: var(--topic-bright);
+}
+
+[class~="dark"] .page .cardTitle,
+[class~="dark"] .page .card:hover .cardTitle,
+[class~="dark"] .page .count {
+  color: color-mix(in srgb, var(--topic-bright) 40%, #fff);
+}
+
+[class~="dark"] .page .description {
+  color: #d4cfdc;
+}
+
+[class~="dark"] .page .meta {
+  border-top-color: color-mix(in srgb, var(--topic-bright) 35%, #15121d);
+}
+
+[class~="dark"] .page .pending {
+  background: rgb(255 255 255 / 7%);
+  border-color: rgb(255 255 255 / 20%);
+  color: #eee6f4;
+}

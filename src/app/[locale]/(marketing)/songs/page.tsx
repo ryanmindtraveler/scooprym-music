@@ -1,6 +1,10 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable } from '@/db/schema';
-import { createLatestGenerationAttemptQuery, publicSongIndexCondition } from '@/db/song-query';
+import {
+  createLatestGenerationAttemptQuery,
+  galleryPublicationCondition,
+  publicSongIndexCondition,
+} from '@/db/song-query';
 import { constructMetadata } from '@/lib/seo/metadata';
 import { SONG_ARCHIVE_PAGE_SIZE, getArchivePagePath, parseArchivePage } from '@/lib/songs/archive-pagination';
 import type { Song } from '@/types/song';
@@ -25,7 +29,7 @@ export async function generateMetadata({ params, searchParams }: SongsPageProps)
   const page = parseArchivePage((await searchParams).page);
   if (page === null) notFound();
   return constructMetadata({
-    title: page === 1 ? 'Funny Songs Archive' : `Funny Songs Archive — Page ${page}`,
+    title: page === 1 ? 'Funny Songs Gallery' : `Funny Songs Gallery — Page ${page}`,
     description: t('description'),
     keywords: [
       'funny songs archive',
@@ -59,7 +63,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-    .where(publicSongIndexCondition(latestAttempt.processingStatus));
+    .where(and(galleryPublicationCondition(), publicSongIndexCondition(latestAttempt.processingStatus)));
   const totalPages = Math.max(1, Math.ceil(total / SONG_ARCHIVE_PAGE_SIZE));
   if (page > totalPages) notFound();
 
@@ -80,7 +84,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
     .from(songTable)
     .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
     .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-    .where(publicSongIndexCondition(latestAttempt.processingStatus))
+    .where(and(galleryPublicationCondition(), publicSongIndexCondition(latestAttempt.processingStatus)))
     // 与首页 Gallery 一致：按发布/创建时间排序，维护旧数据不影响新旧顺序。
     .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
     .limit(SONG_ARCHIVE_PAGE_SIZE)
@@ -108,7 +112,7 @@ export default async function SongsPage({ params, searchParams }: SongsPageProps
 
         <SongsClientWrapper songs={serializedSongs} />
         {totalPages > 1 && (
-          <nav aria-label="Song archive pages" className="mt-12 flex flex-wrap justify-center gap-3">
+          <nav aria-label="Song gallery pages" className="mt-12 flex flex-wrap justify-center gap-3">
             {page > 1 && (
               <Link prefetch={false} href={getArchivePagePath(page - 1)} className="rounded-lg border px-4 py-3">
                 Previous

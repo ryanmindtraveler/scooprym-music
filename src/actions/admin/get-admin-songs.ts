@@ -87,6 +87,8 @@ export async function getAdminSongsAction({
           audioUrl: songTable.audioUrl,
           coverImageUrl: songTable.coverImageUrl,
           isPublished: songTable.isPublished,
+          publicationChannel: songTable.publicationChannel,
+          loreTopicSlug: songTable.loreTopicSlug,
           scheduledAt: songTable.scheduledAt,
           publishedAt: songTable.publishedAt,
           plays: songTable.plays,

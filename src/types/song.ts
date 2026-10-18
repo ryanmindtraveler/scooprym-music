@@ -2,6 +2,8 @@ export interface Song {
   id: string;
   seoSlug?: string | null;
   seoTopic?: string | null;
+  publicationChannel?: import('@/lib/songs/publication-channel').SongPublicationChannel;
+  loreTopicSlug?: string | null;
   storyId?: string;
   title: string;
   createdAt: Date | string;

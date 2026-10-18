@@ -1,26 +1,22 @@
 import { getDb } from '@/db';
 import { song as songTable, story as storyTable, user } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import {
+  createLatestGenerationAttemptQuery,
+  galleryPublicationCondition,
+  publicSongIndexCondition,
+} from '@/db/song-query';
 import type { Song } from '@/types/song';
-import { and, count, desc, eq, notInArray, sql } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 
 export const HOME_GALLERY_PAGE_SIZE = 20;
-
-const failedStatuses = [
-  'failed_generation',
-  'processing_queue_failed',
-  'failed_audio_upload',
-  'failed_internal_error',
-  'failed_credit_deduction',
-];
 
 export async function getHomeGalleryPage(page: number) {
   const db = getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);
   const publicFilter = and(
     eq(user.role, 'admin'),
-    eq(songTable.isPublished, true),
-    notInArray(latestAttempt.processingStatus, failedStatuses)
+    galleryPublicationCondition(),
+    publicSongIndexCondition(latestAttempt.processingStatus)
   );
 
   const [[totalRow], rows] = await Promise.all([
@@ -62,7 +58,7 @@ export async function getHomeGalleryPage(page: number) {
     publishedAt: row.publishedAt?.toISOString() ?? null,
   })) as Song[];
 
-  return { songs, total: Number(totalRow?.total ?? 0), page };
+  return { songs, total: Number(totalRow?.total ?? 0), page, publicationChannelsVersion: 1 };
 }
 
 export async function getHomeGallerySong(id: string) {
@@ -93,8 +89,8 @@ export async function getHomeGallerySong(id: string) {
       and(
         eq(songTable.id, id),
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, failedStatuses)
+        galleryPublicationCondition(),
+        publicSongIndexCondition(latestAttempt.processingStatus)
       )
     )
     .limit(1);
@@ -133,8 +129,8 @@ export async function getHomeChartCandidates() {
     .where(
       and(
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, failedStatuses)
+        galleryPublicationCondition(),
+        publicSongIndexCondition(latestAttempt.processingStatus)
       )
     )
     .orderBy(desc(sql`coalesce(${songTable.publishedAt}, ${songTable.createdAt})`), desc(songTable.id))
@@ -173,8 +169,8 @@ export async function getAllTimeChartCandidates() {
     .where(
       and(
         eq(user.role, 'admin'),
-        eq(songTable.isPublished, true),
-        notInArray(latestAttempt.processingStatus, failedStatuses),
+        galleryPublicationCondition(),
+        publicSongIndexCondition(latestAttempt.processingStatus),
         sql`${songTable.plays} > 0`
       )
     )

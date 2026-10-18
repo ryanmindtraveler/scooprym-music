@@ -44,6 +44,11 @@ export function useFooterLinks(): NestedMenuItem[] {
           external: false,
         },
         {
+          title: 'Internet Lore',
+          href: '/internet-lore',
+          external: false,
+        },
+        {
           title: 'Send a Story',
           href: '/#desk',
           external: false,

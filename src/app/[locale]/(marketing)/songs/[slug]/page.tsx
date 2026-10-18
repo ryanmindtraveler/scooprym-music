@@ -10,6 +10,7 @@ import {
 import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import { constructMetadata } from '@/lib/seo/metadata';
+import { getPublicationLoreTopic } from '@/lib/songs/publication-channel';
 import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
@@ -179,13 +180,14 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
       .where(and(eq(songComment.songId, song.id), eq(songComment.status, 'visible')))
       .orderBy(desc(songComment.createdAt))
       .limit(12),
-    // 同题优先，也推荐同曲风作品；始终限制公开状态、完成状态和成品音频。
+    // 同题优先，也推荐同曲风作品；始终限制公开状态、完成状态及所属栏目。
     db
       .select({ id: songTable.id, title: songTable.title, seoSlug: songTable.seoSlug })
       .from(songTable)
       .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
       .where(
         and(
+          eq(songTable.publicationChannel, song.publicationChannel ?? 'gallery'),
           or(
             eq(songTable.storyId, song.storyId),
             song.prompt?.trim()
@@ -266,9 +268,16 @@ export default async function SongDetailPage({ params }: SongDetailPageProps) {
     },
   };
 
+  const loreTopic =
+    song.publicationChannel === 'internet_lore' ? getPublicationLoreTopic(song.loreTopicSlug) : undefined;
   const breadcrumbs = [
     { name: 'Home', item: getUrlWithLocale('/', routing.defaultLocale) },
-    { name: 'Gallery', item: getUrlWithLocale('/songs', routing.defaultLocale) },
+    ...(loreTopic
+      ? [
+          { name: 'Internet Lore', item: getUrlWithLocale('/internet-lore', routing.defaultLocale) },
+          { name: loreTopic.title, item: getUrlWithLocale(`/internet-lore/${loreTopic.slug}`, routing.defaultLocale) },
+        ]
+      : [{ name: 'Gallery', item: getUrlWithLocale('/songs', routing.defaultLocale) }]),
     { name: searchHeadline, item: canonicalUrl },
   ];
 

@@ -1,28 +1,12 @@
 'use client';
 
-import { Routes } from '@/routes';
 import type { NestedMenuItem } from '@/types';
-import { useTranslations } from 'next-intl';
 
 /**
- * Get navbar config with translations
- *
- * NOTICE: used in client components only
- *
- * docs:
- * https://scooprym.com/docs/config/navbar
- *
- * @returns The navbar config with translated titles and descriptions
+ * 桌面和移动端共用的公开导航；Logo 负责返回首页。
  */
 export function useNavbarLinks(): NestedMenuItem[] {
-  const t = useTranslations('Marketing.navbar');
-
   return [
-    {
-      title: t('home.title'),
-      href: Routes.Root,
-      external: false,
-    },
     {
       title: 'Today',
       href: '/#today',
@@ -39,8 +23,8 @@ export function useNavbarLinks(): NestedMenuItem[] {
       external: false,
     },
     {
-      title: 'Send a Story',
-      href: '/#desk',
+      title: 'Internet Lore',
+      href: '/internet-lore',
       external: false,
     },
   ];
