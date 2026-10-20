@@ -3,29 +3,21 @@
 import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
 
 import { getDb } from '@/db';
-import { song, songCreationRun } from '@/db/schema';
-import { createLatestGenerationAttemptQuery } from '@/db/song-query';
+import { song } from '@/db/schema';
 import { auth } from '@/lib/auth/auth';
 import { recordPublicationWorkflow } from '@/lib/creation/song-creation-workflow';
 import { getSongIndexNowPaths, notifyIndexNow } from '@/lib/seo/indexnow';
 import { songPublicationPlacementSchema } from '@/lib/songs/publication-channel';
-import { SongPublicationError, setSongPublication, setSongPublicationPlacement } from '@/lib/songs/publication-service';
+import {
+  SongPublicationError,
+  assertSongReadyForPublication,
+  setSongPublication,
+  setSongPublicationPlacement,
+} from '@/lib/songs/publication-service';
 import { Routes } from '@/routes';
-import { and, desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-
-async function hasPassedProductCheck(songId: string) {
-  const db = await getDb();
-  const [run] = await db
-    .select({ currentStage: songCreationRun.currentStage })
-    .from(songCreationRun)
-    .where(eq(songCreationRun.songId, songId))
-    .orderBy(desc(songCreationRun.createdAt))
-    .limit(1);
-  // 旧歌曲没有创作运行记录，继续沿用 generation_attempt 的兼容门禁。
-  return !run || ['publish_ready', 'published'].includes(run.currentStage);
-}
 
 export async function updateSongPublishAction(songId: string, isPublished: boolean) {
   if (typeof songId !== 'string' || !songId || typeof isPublished !== 'boolean')
@@ -115,32 +107,23 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
       return { success: false, error: 'Choose a future publish time' };
     }
 
-    const latestAttempt = createLatestGenerationAttemptQuery(db);
-    const [readySong] = await db
-      .select({ id: song.id, processingStatus: latestAttempt.processingStatus })
-      .from(song)
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, song.id), eq(latestAttempt.rowNumber, 1)))
-      .where(eq(song.id, songId))
-      .limit(1);
-
-    if (!readySong || !['completed', 'completed_without_cover'].includes(readySong.processingStatus || '')) {
-      return { success: false, error: 'Only completed songs can be scheduled' };
-    }
-    if (!(await hasPassedProductCheck(songId))) {
-      return { success: false, error: 'The song must pass the product check before scheduling' };
-    }
-
     const [previous] = await db
       .select({ isPublished: song.isPublished })
       .from(song)
       .where(eq(song.id, songId))
       .limit(1);
 
-    const changed = await db
-      .update(song)
-      .set({ isPublished: false, publishedAt: null, scheduledAt, updatedAt: new Date() })
-      .where(eq(song.id, songId))
-      .returning({ id: song.id, seoSlug: song.seoSlug });
+    const changed = await db.transaction(async (tx) => {
+      const [current] = await tx.select().from(song).where(eq(song.id, songId)).for('update');
+      if (!current) throw new SongPublicationError('Song not found');
+      await assertSongReadyForPublication(tx, songId, current);
+
+      return tx
+        .update(song)
+        .set({ isPublished: false, publishedAt: null, scheduledAt, updatedAt: new Date() })
+        .where(eq(song.id, songId))
+        .returning({ id: song.id, seoSlug: song.seoSlug });
+    });
     await recordPublicationWorkflow(songId, 'publish_ready', {
       action: 'scheduled',
       scheduledAt: scheduledAt.toISOString(),
@@ -155,6 +138,9 @@ export async function scheduleSongPublishAction(songId: string, scheduledAtValue
     return { success: true };
   } catch (error) {
     console.error('scheduleSongPublishAction error:', error);
-    return { success: false, error: 'Failed to schedule publication' };
+    return {
+      success: false,
+      error: error instanceof SongPublicationError ? error.message : 'Failed to schedule publication',
+    };
   }
 }

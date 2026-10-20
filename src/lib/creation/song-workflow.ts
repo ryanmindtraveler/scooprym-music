@@ -485,7 +485,7 @@ export async function runPersistedSongProductCheck({
   coverDimensions = null,
 }: {
   songId: string;
-  userId: string;
+  userId?: string;
   attemptId?: string;
   coverFallback?: boolean;
   coverDimensions?: { width: number; height: number } | null;
@@ -494,6 +494,7 @@ export async function runPersistedSongProductCheck({
   const attemptFilter = attemptId
     ? and(eq(generationAttempt.songId, songId), eq(generationAttempt.id, attemptId))
     : eq(generationAttempt.songId, songId);
+  const whereClause = userId ? and(attemptFilter, eq(songTable.userId, userId)) : attemptFilter;
   const [record] = await db
     .select({
       attemptId: generationAttempt.id,
@@ -510,8 +511,8 @@ export async function runPersistedSongProductCheck({
     })
     .from(generationAttempt)
     .innerJoin(songTable, eq(songTable.id, generationAttempt.songId))
-    .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-    .where(and(attemptFilter, eq(songTable.userId, userId)))
+    .leftJoin(storyTable, eq(storyTable.id, songTable.storyId))
+    .where(whereClause)
     .orderBy(desc(generationAttempt.createdAt), desc(generationAttempt.id))
     .limit(1);
   if (!record) throw new Error('Song product assets do not exist');
@@ -522,7 +523,7 @@ export async function runPersistedSongProductCheck({
     await db
       .update(songTable)
       .set({ lyrics: normalizedLyrics, updatedAt: new Date() })
-      .where(and(eq(songTable.id, songId), eq(songTable.userId, userId)));
+      .where(userId ? and(eq(songTable.id, songId), eq(songTable.userId, userId)) : eq(songTable.id, songId));
   }
 
   const workflowRun = await getWorkflowRunBySongId(songId);

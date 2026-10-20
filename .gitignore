@@ -172,3 +172,4 @@ Thumbs.db
 # UIUX design
 .agent
 .shared
+.dsh-acl-recovery/

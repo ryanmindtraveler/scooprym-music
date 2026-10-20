@@ -17,11 +17,16 @@ export function uploadCachedObject(
     service: 's3',
     retries: 0,
   });
+  const contentLength = typeof body === 'string' ? Buffer.byteLength(body) : (body.byteLength ?? body.length);
   return client.fetch(
     `${config.endpoint?.replace(/\/$/, '')}/${config.bucketName}/${key.split('/').map(encodeURIComponent).join('/')}`,
     {
       method: 'PUT',
-      headers: { 'Content-Type': contentType, 'Cache-Control': cacheControl },
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': cacheControl,
+        'Content-Length': String(contentLength),
+      },
       body: typeof body === 'string' ? body : Uint8Array.from(body).buffer,
       signal: AbortSignal.timeout(timeoutMs),
     }

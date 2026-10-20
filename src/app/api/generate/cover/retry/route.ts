@@ -10,8 +10,11 @@ import {
   startWorkflowStage,
 } from '@/lib/creation/song-creation-workflow';
 import { runPersistedSongProductCheck } from '@/lib/creation/song-workflow';
+import { revalidatePublicSongs } from '@/lib/songs/revalidate-public-songs';
+import { Routes } from '@/routes';
 import { deleteFile } from '@/storage';
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -63,9 +66,13 @@ export async function POST(req: NextRequest) {
         processingStatus: latestAttempt.processingStatus,
       })
       .from(songTable)
-      .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-      .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
-      .where(and(eq(songTable.id, songId), eq(songTable.userId, userId)))
+      .leftJoin(storyTable, eq(storyTable.id, songTable.storyId))
+      .leftJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+      .where(
+        session.user.role === 'admin'
+          ? eq(songTable.id, songId)
+          : and(eq(songTable.id, songId), eq(songTable.userId, userId))
+      )
       .limit(1);
 
     if (!song) {
@@ -125,7 +132,7 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(songTable.id, songId),
-          eq(songTable.userId, userId),
+          session.user.role === 'admin' ? sql`true` : eq(songTable.userId, userId),
           expectedCoverKey,
           sql`not exists (
             select 1
@@ -158,6 +165,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 如果此前处于 failed_cover 状态，更新为 completed
+    await db
+      .update(generationAttempt)
+      .set({
+        processingStatus: 'completed',
+        processingError: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(generationAttempt.songId, songId), eq(generationAttempt.processingStatus, 'failed_cover')));
+
     if (song.coverImageKey && song.coverImageKey !== uploadResult.key) {
       await deleteFile(song.coverImageKey).catch((error) => {
         console.error('[Cover Retry] Failed to remove previous cover:', error);
@@ -172,9 +189,13 @@ export async function POST(req: NextRequest) {
     }
     const productCheck = await runPersistedSongProductCheck({
       songId,
-      userId,
+      userId: song.userId,
       coverDimensions,
     });
+
+    revalidatePath(Routes.AdminSongs);
+    revalidatePath(Routes.Dashboard);
+    revalidatePublicSongs();
 
     return NextResponse.json({
       success: true,

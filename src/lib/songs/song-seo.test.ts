@@ -129,6 +129,17 @@ describe('歌曲详情 SEO', () => {
     expect(getSongSearchHeadline(song)).toBe("Antonio Banderas pivots from swashbuckling to sci-fi in 'Automata'.");
   });
 
+  it('超长标题在标点处截断时不留下游离标点', () => {
+    // 截断点正好落在「Samuel,;」这类脏数据上时，旧实现会输出 `Samuel,;…`。
+    for (const tail of [',;', ' ,;', '.,;', '-', '—']) {
+      const newsSummary = `${'w'.repeat(147 - tail.length)}${tail} Samuel`;
+      const headline = getSongSearchHeadline({ ...song, newsSummary });
+      expect(headline).toMatch(/…$/);
+      expect(headline).not.toMatch(/[,:;–—-]…$/);
+      expect(headline).not.toMatch(/\s…$/);
+    }
+  });
+
   it('已分配的纯文字 slug 不随摘要改变，旧数据仍能使用 UUID', () => {
     const persisted = { ...song, seoSlug: 'antonio-banderas-automata-funny-song' };
     expect(getSongCanonicalSlug(persisted)).toBe('antonio-banderas-automata-funny-song');

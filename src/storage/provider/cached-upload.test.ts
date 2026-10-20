@@ -25,6 +25,7 @@ describe('签名上传缓存元数据', () => {
     expect(request.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
     expect(request.headers.get('Authorization')).toContain('AWS4-HMAC-SHA256');
     expect(request.headers.get('Content-Type')).toBe('image/webp');
+    expect(request.headers.get('Content-Length')).toBe(String(Buffer.from('test image').length));
     expect(await request.text()).toBe('test image');
   });
 });

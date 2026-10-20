@@ -74,8 +74,8 @@ export async function getAdminSongsAction({
         .select({ count: count() })
         .from(songTable)
         .innerJoin(userTable, eq(songTable.userId, userTable.id))
-        .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-        .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+        .leftJoin(storyTable, eq(storyTable.id, songTable.storyId))
+        .leftJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
         .where(and(...whereConditions));
 
       const items = await tx
@@ -95,6 +95,8 @@ export async function getAdminSongsAction({
           durationSec: songTable.durationSec,
           lyrics: songTable.lyrics,
           prompt: latestAttempt.prompt,
+          processingStatus: latestAttempt.processingStatus,
+          processingError: latestAttempt.processingError,
           newsSummary: storyTable.newsSummary,
           sourceText: storyTable.sourceText,
           sourceUrl: storyTable.sourceUrl,
@@ -102,8 +104,8 @@ export async function getAdminSongsAction({
         })
         .from(songTable)
         .innerJoin(userTable, eq(songTable.userId, userTable.id))
-        .innerJoin(storyTable, eq(storyTable.id, songTable.storyId))
-        .innerJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
+        .leftJoin(storyTable, eq(storyTable.id, songTable.storyId))
+        .leftJoin(latestAttempt, and(eq(latestAttempt.songId, songTable.id), eq(latestAttempt.rowNumber, 1)))
         .where(and(...whereConditions))
         .limit(pageSize)
         .offset(offset)

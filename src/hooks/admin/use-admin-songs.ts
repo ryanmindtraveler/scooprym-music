@@ -111,3 +111,29 @@ export function useSaveSongPlacement() {
     onError: (error) => toast.error(error.message),
   });
 }
+
+export function useRetrySongCover() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (songId: string) => {
+      const res = await fetch('/api/generate/cover/retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to regenerate cover');
+      }
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Cover image regenerated successfully!');
+      queryClient.invalidateQueries({ queryKey: adminSongsKeys.all });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to regenerate cover');
+    },
+  });
+}

@@ -60,13 +60,26 @@ export function decodeSongSlug(slug: string) {
   }
 }
 
+/** 标题截断后不能以逗号、分号或连接号收尾，否则会出现 `Samuel,;` 这类游离标点。 */
+const TRAILING_NOISE_PATTERN = /[,:;–—-]$/;
+
+function stripTrailingNoise(value: string) {
+  let head = value;
+  // 反复剥离：一个逗号后面可能还跟着分号，单次替换会留下残余标点。
+  for (let guard = 0; guard < 4 && head.length > 0; guard += 1) {
+    if (!TRAILING_NOISE_PATTERN.test(head.charAt(head.length - 1))) break;
+    head = head.slice(0, -1);
+  }
+  return head.trimEnd();
+}
+
 function truncateAtWord(value: string, maxLength: number) {
   if (value.length <= maxLength) return value;
 
   const shortened = value.slice(0, maxLength + 1);
   const lastSpace = shortened.lastIndexOf(' ');
   const end = lastSpace > Math.floor(maxLength * 0.65) ? lastSpace : maxLength;
-  return `${shortened.slice(0, end).replace(/[,:;\s-]+$/, '')}…`;
+  return `${stripTrailingNoise(shortened.slice(0, end))}…`;
 }
 
 function getSongPrimaryStyle(song: SeoSong) {

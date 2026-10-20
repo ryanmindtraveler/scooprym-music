@@ -1,5 +1,5 @@
 # Project: Scooprym Music
-_Last updated: 2026-09-21 17:10_
+_Last updated: 2026-10-18 20:42_
 
 ## Pinned
 - 2026-09-21 17:05：最终语言与 URL 业务边界：公开站只允许英文无前缀 URL；任何公开 `/zh/*`（包括歌曲、登录、About 等）必须永久归并到英文规范地址。中文仅允许登录后的 `/zh/admin/*` 与 `/zh/dashboard/*` 两类后台页面。后台跳向公开站的链接必须直接使用 `/` 或 `/songs/{UUID}`，禁止生成 `/zh/songs`、`/en` 或标题型歌曲 URL。本条纠正并取代 2026-09-21 15:58“管理后台也不得生成中文页面”的错误记录。
@@ -40,6 +40,10 @@ _Last updated: 2026-09-21 17:10_
 - 2026-07-21 11:02：首页 Hero 区域保持现状，不纳入本轮内容平台重设计。
 - 2026-07-21 11:31：本轮 Hero taste 精修的业务边界仅限首页 Hero 表现层，不修改内容平台业务流程。
 - 2026-07-21 11:37：Gallery 内容扩容保持现有业务流程与卡片结构不变，继续以新闻标题为信息优先级，并保留封面、播放、来源和歌词入口。
+
+- 2026-10-14 09:45：用户确定公开歌曲分为 Gallery 与 Internet Lore 两种发布栏目；两类已发布作品均有独立 `/songs/{UUID}` 详情、播放、互动和可收录页面。专题歌曲必须排除 Gallery、首页 Today／推荐及全部榜单，只在所选专题展示；发布状态与栏目归属分别管理。
+
+- 2026-10-14 20:43：用户明确 Internet Lore 歌曲卡片不要另加底部整行操作栏；桌面播放按钮和 Song details 放歌名旁，手机操作与 Original song 编号同排，歌名独占其下方完整文本宽度，后续卡片调整必须遵守此布局边界。
 
 ## Decisions
 - 2026-09-21 17:05：语言架构最终确定为“公开站英文单语 + 登录后中文后台”：公开规范 URL 一律无语言前缀，公开 `/zh/*` 永久归并英文；`/zh` 仅为 `/zh/admin/*` 与 `/zh/dashboard/*` 提供中文后台。后台所有公开导航与歌曲链接直接生成 `/`、`/songs/{UUID}`，不得携带 `/zh`、`/en` 或标题 slug。本决策纠正并取代 2026-09-21 15:58“后台统一英文”的决策描述；已退出路由的 410 边界不变。
@@ -189,6 +193,10 @@ _Last updated: 2026-09-21 17:10_
 - 2026-08-22 16:09：异步生成确定以歌曲记录作为持久任务，采用 `queued → processing` 原子认领；QStash 载荷只携带 `songId`，工作器从数据库读取可信输入，并以客户端 UUID、队列去重键及状态机共同保证幂等。
 - 2026-08-22 16:09：前端生成任务确定在发起请求前使用客户端 UUID 本地登记，并通过服务端歌曲记录恢复响应丢失、刷新或慢任务状态，避免重复创建与跨用户任务串扰。
 
+- 2026-10-14 09:45：用户已授权实现后台 Gallery／Internet Lore 两种栏目，并将找回的九首原歌发布到 `absurd-social-phenomena`。此授权取代此前“先完善页面，保持九首未发布”的阶段性选择；不授权用当前曲库填补其他五专题的缺失原歌，也不生成替代旧作。实际发布必须先确认线上新版已支持栏目隔离。
+
+- 2026-10-14 18:59：用户已纠正专题的封面与详情表现：专题应显示原歌封面，以真实歌名为主标题；封面、歌名和 Song details 均打开独立 canonical `/songs/{slug}` 完整详情，播放使用单独按钮。先前把“不进首页／Gallery”解释成“专题无封面”属于误解，相关旧记录保留供审计但不再是现行要求；Gallery、首页与榜单排除规则继续有效。
+
 ## TODO
 - [P1][DONE][#35] 最终语言边界纠正已提交并完成生产验收：提交 `edb9174` 与 `d3268f5` 落实公开站英文无前缀、公开 `/zh/*` 永久归并、仅登录后的 `/zh/admin/*` 与 `/zh/dashboard/*` 保留中文，以及后台公开链接统一 `/` 或 `/songs/{UUID}`。生产公开 SEO 审计 206/206、0 failures；sitemap 无 `/zh`、`/en`、`http` URL；真实登录 Chrome 验证 zh dashboard/admin 为中文、`publicZhLeakCount=0`，歌曲链接均为 UUID。（2026-09-21 17:05）
 - [P1][DONE][#34] 全站单语言英文架构已完成：移除 `zh` i18n 配置、中文消息与内容、语言切换及弃用双语 features 配置，公开页/认证/后台不再生成中文页面；保留历史 `/zh`、`/en` 的 308 英文归并与退出路由 410。风格推荐接口及提示固定英文。验证完成：content 生成、`tsc`、lint、全量 Vitest 86 个文件 503 项全部通过（含真实数据库事务回滚集成测试，0 跳过）、production build 成功；本地生产请求 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均为 308，`/zh/docs` 为 410；首页无 zh hreflang 与中文文案，sitemap 无 `/zh`。（2026-09-21 16:18）
@@ -222,7 +230,45 @@ _Last updated: 2026-09-21 17:10_
 - [P1][DONE][#22] 逐项风格审查修复的最终 `tsc --noEmit` 以 exit 0 通过。（2026-09-04 20:17）
 - [P1][DOING][#23] 收集热点雷达入队超时修复的第二轮最终 TypeScript 结果；首轮通过，最新检查仍在收尾。（2026-09-04 20:47）
 
+- [P0][DONE][#36] 发布栏目新版本已正式上线，九首原歌均通过真实 Google 管理员后台逐首发布为 Internet Lore／`absurd-social-phenomena`，使用原 ID，未替换同名歌曲。提交 `f80996e19c172c4904f8352d7249ae9d9af8bdd9`、Vercel `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd` READY，`scooprym.app` 的 Gallery API 栏目版本为 1。线上及 localhost 九详情／九音频 HEAD 均 200，sitemap 包含九规范详情；首页 API 仍 79，Gallery、首页及近期／累计榜均排除九首，其他 259 首与原资产未变。Chrome 实际播放及原歌队列 Next 通过，390×844 无横向溢出且九个播放按钮可见；最终播放器已关闭，本地开发服务器保持运行。（2026-10-14 10:23）
+- [P1][OPEN][#37] 继续找回娱乐话题、八卦抓马、新闻戏仿、网络梗、日常反差喜剧五专题的原歌关联或其他备份；19 份已查 Git 版本未找到明确固定绑定，禁止同主题／同名的当前歌曲补位。（2026-10-14 09:45）
+
+- [P1][DONE][#38] Internet Lore 本轮 UI 与最终验收完成：14 项相关测试、TypeScript、Biome、CSS 引用与完整 build 通过，无后续代码改动。标准开发服务重启后真实 Google 管理员重新加载并逐一导航六专题，当前态与 H1 一致、各九原主题；荒诞类九播放按钮，其余五类为零。Bardstown 实播至 0:56／1:04，Next 实际切换原歌 The Gavel and the Gas（0:49），随后暂停并关闭播放器；键盘索引／背景折叠及九锚点通过。桌面、390×844 手机、深色查看通过，三张有效截图已保存，服务保持运行。本轮 UI 仍仅本地修改，未提交、推送或部署；试听按原接口记录真实播放统计。（2026-10-14 11:22）
+
+- [P1][DONE][#39] 原歌封面卡片与完整详情导航已完成验证，并于 21:30 随汇总配色及内联操作布局正式上线：提交 `5e64f943014b89497bd1374f0e82e52399a6033b`，生产部署 `dpl_CX4mJqn481eor9kKwqk9HE8r1r7a` READY、`scooprym.app`／www 生效。此前封面解码、三入口完整 canonical 详情和390px手机验收通过；发布检查 26 项回归、17 文件 Biome 通过，正式构建由 Vercel 完成。线上九真实封面／播放／详情正确、Gallery 排除九首，真实歌曲自动续播通过；“仅本地未部署”是先前快照，当前 UI 已在线。（2026-10-14 21:30）
+
+
 ## Done
+- [P0][DONE][#40] 2026-10-18 20:42：Internet Lore 生产回退已修复并完成正式验收。合并提交 `11573b6c586121a3cb9972540ab31fefec4b8659` 已推送 `origin/master`；生产部署 `dpl_7yirRF5EGFha1xfU7fKgZcEkNd9o` READY，`scooprym.app`／`www.scooprym.app` 别名正确、aliasError=null。线上发布检查 49 项及两页曲库全部 passed；sitemap 108 页全部 HTTP 200、canonical 与可索引检查通过，原 101 个规范地址全部保留；Gallery API 四页 80 首全部排除原九首。真实 Google 管理员 Ryan Gong 在 Chrome 验证九封面加载、Bardstown 播放至 0:17／1:04、Next 切换原 Al Dente 并播放至 0:15／0:49，随后暂停并关闭播放器，浏览器 errors=[]。原九首公开状态、栏目、专题、发布时间及音频／歌词哈希前后完全一致，未执行迁移或重复发布；试听按既有 API 记录正常播放统计。10 月 15 日 SEO 与图片优化保留；本地完整构建、78 项唯一测试、17 项 prebuild 源码守卫和本地 49 项发布检查通过。技术恢复已验收，Google 抓取、曝光、点击及增长恢复尚未证实。（evidence: `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/repair-completion.json`、同目录 `repair-deployment.json`、`public-release-production.json`、`seo-production-after-repair.json`、`release-data-verification.json`、`lore-preflight-before.json`／`lore-preflight-after.json`、`repair-live-topic.png`、`repair-live-playing.png`）
+- 2026-10-18 20:39：完成本次修复的完整本地生产构建与页面验收：`pnpm build` 退出 0，29 个静态页生成、类型检查与构建追踪全部通过；`127.0.0.1:3107` 生产预览运行，`scripts/verify-public-release.mjs` 的 49 项检查及两页曲库全部 passed。真实 Google 登录 Chrome 确认荒诞专题九个原歌条目、九张封面完整解码，点击 Bardstown 封面到原 canonical 完整详情，H1／背景／歌词与 Lore 面包屑正确，浏览器 error 为空。此结果更新 20:36 时本地完整构建尚未完成的状态，生产部署仍待最终验收。（evidence: `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/public-release-local.json`、同目录 `repair-local-topic.png`）
+- 2026-10-18 20:36：完成 Lore 与 10 月 15 日主线的真实合并并推送 `origin/master`：合并提交 `11573b6c586121a3cb9972540ab31fefec4b8659` 的双亲为 `aef274c5b4cdf629689e59dd682b3d07f4c29706` 与 `5e64f943014b89497bd1374f0e82e52399a6033b`，Lore 祖先检查退出 0。59 个源码文件包含专题、发布栏目及其迁移，原图片、song-seo、metadata 相关文件差异为空；首页四处查询、Lore 与录音版本查询统一使用 `publicSongIndexCondition`。78 项唯一测试及独立 TypeScript 检查通过，17 项 source-only 构建守卫已接入 prebuild；完整 build 和生产部署仍在进行，不记为已完成。（evidence: 合并提交、`lore-preflight-before.json`、`public-release-confirmed-before.json`、`release-source-backup/` 及同目录 worker fixture 报告，目录 `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/`）
+- 2026-10-18 20:17：本轮已使用现有 Google 登录 Chrome 成功读取 Search Console，恢复此前 10 月 10–18 日多次失败的数据观察。2026-07-17 至 10-16 自然搜索为 262 次曝光、4 次点击、CTR 1.5%、平均位置 9.4；09-19 至 10-16 为 184 次曝光、3 次点击，对比 08-22 至 09-18 的 34 次曝光、1 次点击已有改善，但绝对体量仍极小。10 月 12 日域级索引报告为 183 已收录、395 未收录，包含旧址与主动退出页，不能直接计算当前有效页面收录率。10 月 17 日 sitemap 读取成功、发现 101 页；本轮线上地图内 101 页（94 首歌曲、7 个其他页面、0 个 Lore 页面）HTTP 200、canonical 与可索引基础检查全部通过，不能据此声称 Google 已收录或存在搜索需求。（evidence: `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/seo-diagnosis-evidence.json`、同目录 `seo-live-audit.json`、`gsc-28day-comparison.txt`／`.png`）
+- 2026-10-18 20:17：已证实近期发布回退：10 月 14 日独立分支 `codex/internet-lore-ui` 的 `5e64f943014b89497bd1374f0e82e52399a6033b` 曾正式上线，但未合入 master；当前生产明确为 10 月 15 日 master 图片优化提交 `aef274c5b4cdf629689e59dd682b3d07f4c29706`，Vercel `dpl_9iUgCbCvhXaUULUsUendNPAgGUTz`。两提交互非祖先，共同祖先为 `e95352414f1c1cbb89c33c48357a1dd55544dc0a`；当前生产树缺失 Lore 路由、导航、7 个 sitemap 条目、栏目服务与 Gallery 隔离，真实登录 Chrome 访问 `/internet-lore` 显示 404。历史上线记录仍成立，应描述为后续版本覆盖已上线功能，不能写成 Lore 从未上线；近期回退不能解释此前三个月全部低曝光。（evidence: 同目录 `seo-diagnosis-evidence.json`、`lore-current-404.png`；Vercel 生产元数据与 Git 祖先／文件树核对）
+- 2026-10-18 20:17：已读取当前 GSC 外链与 GA4：GSC 报告外链 1059 条，全部指向首页，报告不是全网完整清单，数量不代表质量或有效引流，不能继续引用 9 月 17 条旧值。GA 属性 `529274494` 在 09-20 至 10-17 为 64 个活跃用户、100 次页面浏览；`song_play_start` 为 4 次／3 用户，`song_play_qualified` 为 1 次／1 用户，`song_play_complete` 为 1 次／1 用户；完整 9 行事件表没有 `song_share`。当前确实接收到播放事件，不能沿用旧记录宣称埋点损坏；这些 All Users 聚合值不是同一首歌的严格漏斗，且与 GSC 时间和来源口径不同。（evidence: 同目录 `seo-diagnosis-evidence.json`、`gsc-links.txt`）
+- 2026-10-18 20:17：本轮用户询问长期曝光与点击低迷原因，已完成搜索、生产版本、页面基础条件与实际收听的只读诊断及证据保存。未修改应用代码、数据库、作品、外部设置或部署；仅保存审计证据与本地进度，不将建议记为已实施修复。（evidence: 同目录 `seo-diagnosis-evidence.json`）
+- 2026-10-14 21:32：发布 worktree 已通过管理工具归档，附件类型为 archived_worktree，可按原 root 身份恢复；主工作区分支／源码未移动，远端 `codex/internet-lore-ui` 最新为 `5e64f94`。本地3000／PID 39708 继续 Listen，主 .env 保留。真实线上 `live-topic.png` 已保存，显示九首原歌卡片、歌名旁播放与 Song details、无底部操作栏；播放器暂停关闭，浏览器保留线上专题页，Gallery total／checked 均为 80。（evidence: 主流程管理工具归档／附件及端口核查；`F:/CodexHome/audits/lore-ui-release-2026-10-14/live-topic.png`）
+- 2026-10-14 21:30：按用户“没问题就提交部署”授权，从线上 `f80996e` 建立独立 F 盘 worktree，提交并推送 `codex/internet-lore-ui`：`5e64f943014b89497bd1374f0e82e52399a6033b`（`fix(lore): 优化汇总配色与歌曲卡片布局`）。相对线上仅 14 个 UI／测试／文档文件，后台／数据库／路由／歌曲服务／导航消息无新增 diff；主工作区保留、仍 master。预览 `dpl_EgK4NLtuicyT7hJWjHMgzqEqsGRK` 和生产 `dpl_CX4mJqn481eor9kKwqk9HE8r1r7a` 均 READY，生产 target／Git SHA 一致、aliasError=null、正式域及 www 生效；26 项回归、17 文件 Biome 通过。Windows worktree 跨盘依赖使本地 webpack 构建失败，未当作通过，Vercel 预览及生产正式构建成功。（evidence: `F:/CodexHome/audits/lore-ui-release-2026-10-14/deployment.json`；commit `5e64f943014b89497bd1374f0e82e52399a6033b`）
+- 2026-10-14 21:30：生产汇总与六专题七页均 200，各专题九原主题；荒诞页九真实封面／九播放／九 canonical 详情，其余五页无假歌曲，Gallery 全部 80 条排除原九，Bardstown 独立详情 200。Chrome 3 真实管理员已看到亮色汇总与新卡片，Bardstown 播完自动续播原 Al Dente Felony，观察至 0:21／0:49 后暂停关闭。汇总线上图已保存，专题图当时待补；其他五专题原歌仍待找回。（evidence: 同审计目录 `production-verification.json`、`live-hub.png`；真实 Chrome 播放验证）
+- 2026-10-14 20:43：按指定位置完成卡片操作内联：移除页脚、分隔线及底部留白，LoreSongPlayer 增加可选 iconOnly，仅改外观，保留完整歌名 Play／Pause ARIA 和队列；手机窄屏详情箭头保留完整可访问名称。九原封面及封面／歌名／详情三入口 canonical 独立页面、歌曲过滤、发布与原音频保持。三文件 Biome、TypeScript、两文件五项测试通过；真实 Chrome 3 播放后 Pause／Next 正常，390px 页面宽 378 无溢出，长歌名读图通过。结束已关闭播放器和意外打开的 TanStack 面板，恢复 2535px 桌面；服务运行、本地 UI 未部署，由 Codex 直接修正，未宣称 Gemini 生成。（evidence: `F:/CodexHome/audits/lore-inline-actions-2026-10-14/desktop.png`、`mobile.png`）
+- 2026-10-14 19:31：针对汇总页色彩暗淡反馈，对照真实 Chrome 3 的 Gallery／首页，仅为 InternetLoreView 叠加作用域配色：暖白底、明黄 Hero、洋红 Lore，六专题按 slug 使用紫／橙／粉／黄／青／绿统一边框、底色、标题、序号和箭头，歌曲可用状态文案保持准确；未改内页、详情或发布数据。Gemini 3.8 high 本次 60 秒超时，CLI 虽报 SUCCESS 但响应为空、解析失败，无可用代码，由 Codex 实现。两文件 Biome、TypeScript、汇总页两项测试通过；390px 页面宽 378、无溢出、六链接正确，深色颜色实测通过，恢复 Light 与默认桌面尺寸。桌面与真实 390px 手机截图已保存；本地服务保持运行，UI 未部署。（evidence: `src/styles/internet-lore-hub-color.module.css`；`F:/CodexHome/audits/lore-hub-color-2026-10-14/desktop.png`、`mobile.png`）
+- 2026-10-14 19:01：[#39] 原歌封面及完整详情修正的最终检查通过：五文件 Biome 无修改通过，14 项测试及 TypeScript 已通过；390px 手机 `cardWidth=346.23`、`pageWidth=378≤viewport390`，无横向溢出，九真实封面和九明确详情入口在 DOM。默认桌面展示原封面、真实歌名和次级故事标题，独立 Play track／Song details 操作；真实封面点击进入 Bardstown 完整歌曲页，h1、封面、歌词可见。默认桌面尺寸已恢复，播放器已暂停关闭，专题标签页保留。（evidence: `F:/CodexHome/audits/lore-song-cards-2026-10-14/mobile.png`、`desktop.png`、`detail.png`；主流程真实 Chrome 与检查验证）
+- 2026-10-14 18:59：按用户纠正恢复专题原歌封面及以歌名为主的卡片：新增 server `LoreSongCard`，复用 SongCoverImage 与 LoreSongPlayer；卡片设置 `showTitle=false` 避免重复歌名，原主题转为次级故事说明。封面、歌名和 Song details 使用普通 a 打开独立 canonical 完整详情，避开既有 `@modal/(.)songs` 拦截；单独播放按钮保留，不修改全站 modal、详情实现、数据库、歌曲关联或栏目过滤。（evidence: `src/components/internet-lore/lore-song-card.tsx`、`lore-song-player.tsx`；主流程实现核验）
+- 2026-10-14 18:59：14 项既有测试（含本轮原封面数据与三个详情入口 canonical 核验）及 `tsc --noEmit` 通过；真实 Chrome 3 的九个原封面均 `complete=true` 且 `naturalWidth>0`，点击 Bardstown 封面到独立完整详情，封面与歌词可见。专题独立播放／暂停正常，队列 Next song 可用，结束已关闭播放器。最终 Biome 与手机验收仍待完成。（evidence: `F:/CodexHome/audits/lore-song-cards-2026-10-14/detail.png`；主流程测试与真实 Chrome 验证）
+- 2026-10-14 18:45：按用户截图反馈修正 Internet Lore 播放区排版：歌曲操作嵌入每条故事正文下方，原九首桌面两列、1120px 以下单列；播放与 canonical 歌词详情链接位于同一内容块，移除右侧孤立播放器列、分离 Lyrics 链接及嵌套灰底盒子，使用 44px 黄圆按钮，继续不显示歌曲封面。原歌曲 ID、队列、栏目／专题过滤及详情链接规则未变。（evidence: `src/components/internet-lore/internet-lore-archive.tsx`、`src/styles/internet-lore-exhibition.module.css`）
+- 2026-10-14 18:45：本次两个文件 Biome、`tsc --noEmit` 与现有六文件 14 项测试通过。既有 Chrome profile 3 的带扩展浏览器实测 The Bardstown Bender 播放到 0:17／1:04，随后暂停、关闭；390px 手机九卡片、九详情链接，无横向溢出。娱乐专题保留九历史主题、零歌曲且没有伪播放按钮，本地 `localhost:3000` 服务继续运行。（evidence: 主流程真实浏览器及测试验证；`F:/CodexHome/audits/lore-actions-layout-2026-10-14/mobile.png`、`desktop.png`，记录时两文件已存在）
+- 2026-10-14 11:22：[#38] 标准开发服务重启后的最终导航与内容验收完成，真实 Google 登录 Chrome 再次显示 Ryan Gong／Admin；六专题 `aria-current` 与 H1 一致，每页九个原主题，荒诞社会现象九播放按钮，其他五页零播放按钮。键盘 Enter 可开关主题索引及 About this collection，九个索引均指向存在条目，背景原文及 Parody Angles 保留可展开，结束时两个 details 均关闭。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/navigation-checks.json`；主流程真实 Chrome 验收）
+- 2026-10-14 11:22：真实新界面播放验证完成：The Bardstown Bender 进度达 0:56／1:04，点击 Next 实际切换原歌 The Gavel and the Gas（总时长 0:49），随后暂停、关闭并确认 `playerOpen=false`。最终桌面专题、汇总与手机截图均已保存；浏览器恢复浅色、正常尺寸与页面顶部，开发服务器继续运行。14 项相关测试、TypeScript、Biome 与完整 build 均通过，之后没有代码变更；本轮 UI 没有提交、推送或部署。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/topic-desktop.png`、`hub-desktop.png`、`topic-mobile.png`；主流程真实播放器验收）
+- 2026-10-14 11:12：本轮 UI 完整 `pnpm build` 已成功退出 0，编译、类型检查、29 个静态页生成与构建追踪均完成；Internet Lore 汇总 5kB、专题 6.9kB。标准 dev-with-queue 已重启，包装进程 39556，日志保存在 F 盘；浏览器恢复浅色与正常尺寸。最终稳定版本试听、切歌和六页导航仍待验证，本轮 UI 未部署。（evidence: 主流程构建退出结果；`F:/CodexHome/logs/scooprym_music/lore-ui-redesign-dev.stdout.log`、`lore-ui-redesign-dev.stderr.log`）
+- 2026-10-14 11:11：Internet Lore 汇总及六内页的本地 UI 调整已实现：汇总固定专题插图，分别展示真实可播放歌曲数与原主题数；内页整合专题图与标题，加入六专题当前态导航。有音频的原九首采用一行一故事与右侧黄圈播放条、既有 canonical 歌词详情链接；无歌主题双列文字陈列、手机单列，背景与创作角度保留并折叠。未改查询、数据库、发布状态、关联、播放器逻辑或 Gallery 隔离规则。（evidence: `src/components/internet-lore/internet-lore-view.tsx`、`internet-lore-topic-view.tsx`、`internet-lore-archive.tsx`；`src/styles/internet-lore-exhibition.module.css`）
+- 2026-10-14 11:11：本轮 UI 的 14 项界面／播放器测试、`tsc --noEmit`、Biome 和 CSS 类引用完整性检查通过；完整 build 的编译与类型阶段通过，页面生成仍运行中，尚无最终成功结果。真实 Google 登录 Chrome 查看有歌／无歌专题桌面、390×844 手机与深色模式；手机 document/body 宽 378≤390、九个播放按钮，首个播放按钮高 64px 且在首屏。汇总桌面与专题手机截图已保存，深色查看完成但截图保存失败。（evidence: `F:/CodexHome/audits/lore-ui-redesign-2026-10-14/hub-desktop.png`、`topic-mobile.png`；主流程测试及真实 Chrome 验证）
+- 2026-10-14 10:23：本地最终核验通过，`verification-local.json` 记录时间为 `2026-10-14T02:20:05Z`：localhost 九首已发布、九规范详情与九音频 HEAD 均 200，原资产及其他 259 首未变；首页 Gallery API 仍为 79，九首不进入 Gallery、首页或榜单，sitemap 包含全部九详情。本地开发服务器继续运行于 `http://localhost:3000`。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/verification-local.json`）
+- 2026-10-14 10:23：真实 Google 登录 Chrome 的最终线上验收完成：The Bardstown Bender 播放到 0:28／1:04，再切换到原版 Al Dente Felony 成功，最终关闭播放器；390×844 移动端无横向溢出、九个播放按钮可见。最终桌面图 `lore-live-desktop-final.png`、移动图 `lore-live-mobile.png` 与真实后台栏目图 `admin-publication-settings.png` 保存于同一审计目录。生产提交、部署及分支保持前次状态，没有新部署。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/` 中最终截图；主流程真实 Chrome 验收）
+- 2026-10-14 10:12：[#36] 发布源码已从隔离工作区保存并推送 `codex/song-publication-channels`，提交 `f80996e19c172c4904f8352d7249ae9d9af8bdd9`；正式 Vercel 项目 `scooprym-music` 部署 `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd` READY，`scooprym.app` 新版本及栏目版本 1 生效。随后真实已登录 Google 管理员在后台按九个明确原 ID 逐首点击发布，全部为 Internet Lore／荒诞社会现象，后台动作刷新公开缓存和 sitemap；未通过 CLI 直接 SQL 绕过后台。主工作区仍为 master，原未提交修改保留，发布分支尚未合并 master。（evidence: commit `f80996e19c172c4904f8352d7249ae9d9af8bdd9`；Vercel `dpl_4rMSka3Zw4xd2waCWRFhZ5tVFSQd`；`F:/CodexHome/audits/lore-publication-2026-10-14/ui-publication.json`）
+- 2026-10-14 10:12：线上完成核验：九个规范详情 200、九音频 HEAD 200，原音频／歌词／封面哈希不变，其他 259 首公开、排期、歌词与音频未变。首页 Gallery API 总数仍为 79；`/songs` 两页及近期／累计播放榜查询均无九首，sitemap 包含全部九规范详情；六专题歌数为 9／0／0／0／0／0，原九顺序稳定。真实 Chrome 中 The Bardstown Bender 播放到 0:28／1:04 后暂停，Next 切换到原始 Al Dente Felony 而非 Gallery 歌曲；九项播放按钮与详情入口可见。（evidence: `F:/CodexHome/audits/lore-publication-2026-10-14/verification-production.json`、`admin-publication-settings.png`、`lore-live-desktop.png`；真实管理员浏览器验证）
+- 2026-10-14 09:49：发布栏目完整 `pnpm build` 已成功，48 项相关测试与 `tsc --noEmit` 通过。localhost 首页 Gallery API 返回栏目版本 1、总数 79；线上同 API 总数仍为 79、版本字段为空，尚未上线新版。独立 `/songs` Gallery 原基线为 84，首页 API 沿用原规则排除非管理员作者的五首而为 79，不能用两者总数不同推断本轮丢歌。（evidence: 主流程构建、测试及本地／线上 API 验证）
+- 2026-10-14 09:45：发布栏目基础已实现：`publication_channel` 默认 `gallery`；Gallery 的 `lore_topic_slug` 必须为空，Internet Lore 必须为固定六专题之一。迁移 0045 已单独应用共享数据库，12 项事务约束测试通过，268 首原公开状态未变；未运行全部待迁移或推进 Drizzle 游标。（evidence: `src/db/migrations/0045_song_publication_channel.sql`、`src/lib/songs/publication-channel.ts`；主流程迁移与事务验证）
+- 2026-10-14 09:45：后台栏目对话框、管理员动作及共享事务发布服务已实现；公开歌曲的栏目筛选与独立详情分开，专题查询按明确栏目／专题归属，保留原九首顺序，不按关键词匹配。48 项相关回归与 TypeScript 通过；真实已登录 Google 管理员成功保存 The Bardstown Bender 为 Internet Lore／荒诞社会现象，但没有公开该歌曲。（evidence: `src/components/admin/song-publication-settings.tsx`、`src/lib/songs/publication-service.ts`、`src/lib/internet-lore/queries.ts`；主流程后台验证）
+- 2026-10-14 09:45：原九首定向发布脚本的默认事务回滚预检通过，原音频、歌词、封面哈希不变；`--apply` 对共享远程数据库先验证线上 Gallery API 的栏目版本，旧线上代码未隔离栏目时拒绝执行。此项只完成预检，九首尚未正式公开。（evidence: `scripts/publish-original-lore-songs.ts`、`F:/CodexHome/audits/lore-publication-2026-10-14/publication-preflight.json`）
 - 2026-09-21 17:10：已在 Google Search Console 的 `scooprym.app` 属性中删除旧 sitemap 提交记录 `http://scooprym.app/sitemap.xml`；该记录删除前显示 211 页，最后读取时间为 Sep 19, 2026。删除后界面明确显示 “Sitemap removed”，Submitted sitemaps 仅剩 `https://scooprym.app/sitemap.xml`，状态 Success、206 discovered pages、列表 `1-1 of 1`。本次操作只删除 GSC 中的旧提交记录，不删除站点 sitemap 文件、页面或任何线上内容。（evidence: 本轮真实 Google Search Console 操作与删除后页面回读）
 - 2026-09-21 17:05：[#35] 最终语言与 URL 边界已通过提交 `edb9174`、`d3268f5` 实施并完成生产验收：公开站仅使用英文无前缀 URL，公开 `/zh/*` 永久归并英文；中文仅保留在登录后的 `/zh/admin/*`、`/zh/dashboard/*`。后台跳转公开站统一为 `/` 或 `/songs/{UUID}`，不再生成 `/zh/songs`、`/en` 或标题型歌曲 URL。生产 SEO 审计 206/206、0 failures，sitemap 不含 `/zh`、`/en`、`http`；真实登录 Chrome 验证中文 dashboard/admin 正常、`publicZhLeakCount=0`、歌曲链接均为 UUID。（evidence: commits `edb9174`、`d3268f5`；生产公开 SEO 审计；真实登录 Chrome 验收）
 - 2026-09-21 16:18：[#34] 全站仅英文架构变更完成：website i18n 只保留 `en`，已删除 `messages/zh.json`、全部 `*.zh` 内容、语言切换器和已弃用双语 features 配置；公开页、认证、后台与风格推荐链路统一英文。历史 `/zh`、`/en` 仅作 308 英文归并兼容，退出路由保持 410。content 生成、TypeScript、lint、production build 均成功；启用 `RUN_DATABASE_TESTS=1` 后全量 Vitest 86 个文件、503 项全部通过、0 跳过。新增协议/主机/语言前缀一次 308 归并回归；本地生产 HTTP 验证 `/zh`、`/zh/about`、`/zh/admin`、`/zh/auth`、`/zh/songs` 均 308，`/zh/docs` 为 410，首页无 zh hreflang/中文文案且 sitemap 无 `/zh`。（evidence: 本轮代码变更、构建/测试输出与本地生产 HTTP 验证）
@@ -583,6 +629,28 @@ _Last updated: 2026-09-21 17:10_
 - 2026-07-21 11:02：完成桌面端与 390px 移动端浏览器验证，均无横向溢出；Biome、TypeScript 类型检查及 diff check 均通过。（evidence: 浏览器验证；Biome/tsc/diff check）
 
 ## Notes
+- 2026-10-18 20:42：20:36／20:39“专题未恢复、完整构建未完成、部署未 READY、待生产验收”均为当时的过程快照，当前已由 #40 正式完成结果更新；旧记录原文保留用于审计。修复未改原九首发布与内容数据、未执行迁移或重复发布；最终真实管理员试听通过既有 API 写入正常播放统计，因此不得将此前“未写数据库”泛化为整轮数据库完全没有变化。生产 HTTP、canonical、索引许可及真实试听通过，不等于 Google 已重新抓取、搜索曝光／点击或真实增长已经恢复。
+- 2026-10-18 20:36：本轮记录以主流程已完成的合并、推送与检查结果为准；生产恢复待验收，HTTP／路由恢复不能等同 Google 索引、曝光、点击或真实收听增长恢复。只读核对原九首均为 completed、HTTP 音频、Internet Lore／`absurd-social-phenomena` 且已发布；另有 85 首已发布 Gallery 与 175 首未发布作品。本轮未写数据库、执行迁移、重复发布或改变资产／发布时间，未新增人工确认门槛；历史 Pinned／Decisions 与既有未提交记录保留。
+- 2026-10-18 20:17：当前证据支持的主要策略判断是搜索需求承接尚未形成：可见查询多为零散人名、事件与近似拼写，新闻热度及 meme 适配度尚不能证明目标听众的搜索任务。该判断不等于证实产品没有需求；可报告查询仅 15 条，本轮读取前 10 条，隐藏查询及未读条目不能当作不存在。基础抓取条件修复、功能上线、Google 索引生效、获客和实际收听应分别验收，不能用技术检查通过替代增长结果。
+- 2026-10-18 20:17：本轮发现的发布回退与 10 月 14 日已上线记录并不冲突，历史记录保留；10 月 15 日“其他 Internet Lore 改动未混入”的隔离发布最终遗漏了已上线分支。建议整合恢复 Lore 与栏目隔离，同时保留 10 月 15 日 SEO／图片优化，并补关键路由及栏目隔离的跨版本回归；待实施，本轮只读诊断未实施，不能将整站回滚列为已决定方案。
+- 2026-10-18 20:17：后续增长建议是稳定规范 URL 与入口，围绕少量歌曲／专题验证可证明的听歌需求并进行可归因分发试验，以目标查询、内容页点击、有效收听与分享作独立周期验收，同时恢复稳定数据观察。待实施，本轮未开展分发、自动化变更、内容制作或修复部署。
+- 2026-10-14 21:32：上条21:30记录中“发布 worktree 待归档、专题图待补”已完成；归档保留可恢复身份，主 .env 完整保留。自动策略拒绝删除的临时 F 盘 .env 副本状态不变，不代表归档已清除此临时文件。本次只更新进度及两个文档的最新 UI 部署状态，不改代码、数据库或提交。
+- 2026-10-14 21:30：最新 UI 已正式部署，先前“仅本地未部署”记录保留作历史。发布 worktree `F:/CodexHome/worktrees/lore-ui-release/scooprym_music` 当时待管理工具归档；主本地 3000／PID 39708 继续运行。临时构建副本两个依赖安装 session 已停止，没有改依赖版本或锁文件；自动策略拒绝删除自建 node_modules junction 和 `F:/CodexHome/tmp/lore-ui-build-20261014/.env` 副本，未绕过删除，临时 .env 仍在 F 盘且不在 Git／部署源，主 .env 完整保留。本记录不含任何密钥值。
+- 2026-10-14 19:01：原歌封面卡片与手机／Biome 最终证据已补齐，#39 为 DONE；旧“专题无封面”明确属于已纠正误解，仅保留作历史审计，不继续列为验收条件。本轮本地 UI 未部署，之前九首公开及首页／Gallery／榜单隔离、其他五类原歌待找回状态保持。
+- 2026-10-14 18:59：用户纠正了之前“无歌曲封面”的错误理解；本次把专题卡片展示封面及完整详情作为现行验收，旧无封面表现和旧验证保留为历史，不当成限制。九首已发布及其 Gallery／首页／榜单排除不变，其他五专题原关联仍待找回；本轮 UI 未部署，项目继续运行，真实试听会产生原有播放统计。
+- 2026-10-14 18:59：本次 Gemini 3.8 high 账号调用模型可用，但等待 180 秒后 timeout、ERROR 且无产物；本轮失败原因是超时，不能沿用前几轮“地区限制”的描述，代码由 Codex 实现。390px 手机验证正在进行，不因截图文件已出现而提前宣称通过。本次只更新 progress.md 与历史专题规划，不改代码、数据库、歌曲发布栏目业务文档或提交。
+- 2026-10-14 18:45：本轮播放区修正仅本地 UI 修改，未部署；之前九首已发布、其余五类原歌关联待找回的状态保持。Gemini 3.8 Flash High 本轮调用仍因 `FAILED_PRECONDITION` 地区限制失败，没有生成代码，界面由 Codex 实现；不能宣称 Gemini 制作成功。真实试听沿现有接口记录播放统计，不把表现层未改业务规则写成所有数据完全不变。本次只更新进度与历史专题 UI 文档，不修改源码、数据库、歌曲发布栏目业务文档或提交。
+- 2026-10-14 11:22：新界面的最终导航、试听／切歌、折叠与服务重启后重载证据已补齐，#38 更新为 DONE，早先待验收快照保留。线上上一轮已发布九首的规则与发布状态保持；本轮没有业务查询、数据库结构、关联或发布逻辑改动，但真实试听会按原接口更新播放统计，不能写成所有数据完全没变。
+- 2026-10-14 11:11：本轮 UI 调整仅为本地修改，未提交／推送／部署；之前已正式公开的九首与发布栏目隔离继续保持。最终新 UI 的完整 build、试听／切歌及服务器重启验证待主流程补证据，不用上一轮发布验收代替本轮验收，也不虚构深色截图保存路径。
+- 2026-10-14 11:11：Gemini 3.8 默认 high 标识存在，但正式请求 `e4c7790d68b4485b920f081c5e947d1e`、会话 `5f6e7131-f904-4b71-b58c-4d118b522516` 返回地区限制 `FAILED_PRECONDITION` 400、ERROR，无产物。按用户此前继续制作授权，主流程沿用品牌规范及 frontend-design／impeccable 完成界面，不宣称 Gemini 制作成功。此次记录只更新 progress.md 与历史专题规划文档，不改歌曲发布栏目业务文档、代码、数据库或提交。
+- 2026-10-14 10:23：补充证据已完成此前 10:12 尚待补充的手机与本地验收；旧快照保留原文，当前状态以最终 `verification-local.json`、线上桌面／手机截图及真实播放结果为准。#36 保持 DONE，#37 原五类歌曲待找回不变；本次只更新三个负责文档，不新增待办，不改代码、数据库或提交。
+- 2026-10-14 10:12：此前 09:45／09:49“等待新版上线、九首未公开”的快照已由实际生产发布取代；历史条目保留原文。#36 完成，#37 的其他五专题原歌仍待找回，不能将九首公开说成六类原歌全部恢复。本轮手机与本地最终验收仍在补充，没有完成证据。
+- 2026-10-14 10:12：已知版本兼容顺序：如回退到不支持发布栏目的旧应用，必须先通过后台下架专题歌曲，再回退代码，否则旧查询会把全部 `isPublished=true` 歌曲读入 Gallery／首页／榜单。源码发布分支尚未合并 master；后续上线须包含本轮栏目逻辑，不能从旧 master 直接覆盖已部署新版。
+- 2026-10-14 10:12：URL 历史冲突：2026-09-21 与 2026-10-14 09:45 的受保护记录写 `/songs/{UUID}`，实际本轮已上线并验收的九个规范详情为 `/songs/{slug}`（既有 SEO 路径），sitemap 与真实链接一致。保留 Pinned 原文用于审计，操作文档以公共规范路径生成器的现行输出为准，不手拼 UUID 或为换栏目创建新地址。
+- 2026-10-14 10:12：其他歌曲初次比较曾出现八小时时间戳误报；统一为与修改前相同的驱动解码后，259 首验证未变，差异不代表实际数据库改动。音频 HEAD 成功不等于九首均完整试听；真实试听证据为 Bardstown 的播放进度及 Next 队列切换。Gemini 地区限制仍失败，没有本轮生成界面。
+- 2026-10-14 09:45：最新发布授权已取代 2026-10-14“保持九首未发布”的阶段性指令；历史页面验收及当时未发布的记录保留原文，不把历史状态当成当前永久约束。当前执行快照仍是九首未公开，仅 The Bardstown Bender 已保存专题归属，其他八首待定向归属并发布；尚无新版上线或正式发布成功证据。
+- 2026-10-14 09:45：本地与线上共用数据库，直接把原歌改为已发布会被尚未识别栏目的旧线上代码读入首页或 Gallery；执行顺序必须为新代码上线并验证栏目版本 → 定向九首事务发布 → 线上排除及详情／播放验收。不得以本地页面隔离成功代替线上版本检查。
+- 2026-10-14 09:45：Gemini 3.8 运行 `15bd5e1db6e3401599a95213e256a482` 因地区限制失败，没有界面产物；本轮后台控件由主流程沿用现有组件完成，不能宣称 Gemini 生成。操作说明见 `docs/歌曲发布栏目.md`；本次记录只改三个授权文档，不改业务代码、数据库或提交。
 - 2026-09-21 17:05：纠错说明：2026-09-21 15:58 与 16:18 关于“管理后台统一英文”“包括 admin 在内全站仅英文”的记录不再有效；它们是中间实现与错误总结，保留原文仅供审计。当前唯一有效边界是公开站英文无前缀、中文仅限登录后的 `/zh/admin/*` 和 `/zh/dashboard/*`，且后台不得向公开站泄漏任何语言前缀或标题型歌曲 URL。
 - 2026-09-21 15:58：历史记录“2026-09-10 语言边界：只有 admin 允许中文”及其相关实现已被本轮明确决策取代；为保持审计历史不修改原记录。当前有效边界是包括 admin 在内的全站仅英文，`zh` 只作为历史 URL 重定向输入，不再属于应用语言或可生成页面。
 - 2026-09-20 16:18：Needs-Confirmation：建议分离后台运营流量、将已有歌曲行为事件接入 GA，并为推广链接添加 UTM；上述为分析改进建议，尚未实施，不用当前不完整歌曲事件数据推断播放量为零。
@@ -1020,16 +1088,121 @@ _Last updated: 2026-09-21 17:10_
 - 36 项测试、TypeScript、变更文件 Biome、锁文件冻结校验、diff 检查通过。使用已有 Google 登录的 Chrome 验证 localhost:3000，四张 Today 封面全部直连 R2 且解码成功，浏览器错误为空，截图保存在 F:/CodexHome/visualizations/2026/09/29/01a0eba2-efdb-7921-a478-5e27112cdce0/cover-optimized.png。
 - 尚未部署；线上需发布后生效。历史大图直连仍有体积成本，可后续独立迁移，避免假称已有图片均已压缩。
 
+### 2026-10-13 历史网络梗专题盘点与首批页面规划
+- 用户希望通过历史抓马／热门网络梗内页吸引 SEO 流量，并明确本轮先盘点歌曲、确定首批专题和页面结构；补充说明以前已有专题及对应歌曲，后来随网站调整下架。
+- 追溯 2026-03-25 的 `9049f57`，找回六个 `/features/*` 专题及荒诞社会现象页的九条逐案例歌曲关联。九首歌曲均仍存在、最新尝试 completed、当前未发布、没有 source_url；音频 HEAD 全部 200，未逐首试听，不能将存储可访问性等同作品审核通过。
+- 本轮只读快照为 268 条歌曲记录／84 条已发布，按当前曲库公开条件得到 84 首。公开作品 Raccoon on the Run、Take It Back (Swish Archive) 可纳入规划；旧浣熊稿的肯塔基酒厂背景与可核实的弗吉尼亚事件不一致，其他无来源案例继续待核实。
+- 新增 `docs/历史网络梗专题盘点与页面规划.md`，建议新 `/internet-lore` 汇总页及浣熊、Swish、机场睡衣玩笑、Italian Brainrot 四个事件页，围绕来源解释、时间线、迷因传播和真实相关作品组织；地址与架构均为建议，尚未实施或确认发布。未恢复旧功能页、未修改歌曲或发布状态、未调用生成模型、未部署。
+- 证据保存于 `F:/CodexHome/audits/drama-archive-2026-10-13/`；GSC 工具因多账号范围不明确未返回数据，未取得搜索量或流量证据，不声称该选题顺序已按真实搜索需求量验证。
 
-### 2026-10-15 歌曲详情 SEO 修复
-- 保留原有 Title 与固定 URL，description 和可见介绍优先保留事件主题、曲风及播放／歌词用途。
-- 相关推荐扩展到同曲风的已公开作品；统一详情、目录、推荐和 sitemap 的公开成品音频条件。
-- 本提交不包含独立的 Internet Lore 栏目开发；无数据库写入。
-- 从 HEAD 提取本轮修改到隔离目录验证，32 项测试、全项目 TypeScript、Biome 及差异检查通过。
+### 2026-10-13 公开导航调整与 Internet Lore 制作暂缓
+- 用户确认移除顶部 Send a Story，保留对应首页内容模块。桌面和移动端共用的导航配置现为 Today、Weekly Hits、Songs；删除独立 Home 菜单，Logo 继续返回首页，Gallery 导航改名 Songs。
+- 业务边界为公开页面之间的导航，不改变首页 Hero、投稿表单、投稿接口、账户入口、页脚或歌曲发布状态。代码仅修改 `src/config/navbar-config.tsx`。
+- 用户授权 Gemini 3.8 Flash 制作 Internet Lore 汇总页，但账号模式调用被服务端以当前地区不支持 API 使用拒绝，未生成任何页面代码。用户随后明确选择等待 Gemini 恢复、本轮只完成导航；汇总页及其导航入口均未添加，未擅自改用其他模型。
+- 变更文件 Biome、TypeScript 和 diff 检查通过。使用已有 Google 登录及 Codex 插件的 Chrome 验证 localhost:3000：桌面及 390×844 手机菜单均展示三个内容入口，Songs 打开曲库且关闭手机菜单；首页 `#desk` 投稿模块的链接输入、描述输入和 Send to Producers 按钮保留，页脚投稿入口可跳转。未提交表单。
+- 桌面导航与投稿模块同屏截图、手机菜单截图分别为 `F:/CodexHome/audits/drama-archive-2026-10-13/navigation-desktop.png` 和 `navigation-mobile.png`。尚未部署；专题盘点文档已记录制作暂缓决定。
 
+### 2026-10-13 Internet Lore 六专题汇总与专题页
+- 用户要求继续制作，并纠正栏目层级：一级汇总必须是荒诞社会现象、娱乐话题、八卦抓马、新闻戏仿、网络梗、日常反差喜剧。已将早期两案例合集改为 `/internet-lore` 六专题入口；`internet-lore/[slug]` 渲染六个真实专题页，未知专题 404。两案例分别归入荒诞社会现象与娱乐话题；旧 `/features/*` 保持 410。
+- 业务流程为汇总页 → 专题介绍与案例／歌曲 → 规范歌曲详情。`topics.ts` 固定六分类和编辑导读，`content.ts` 保存有来源的案例；`queries.ts` 动态查询当前专题的公开作品。关联六首已发布歌曲，案例曲目与精选区不重复；未发布、无有效音频、最新生成失败的作品不输出，正文仍保留。
+- Gemini 3.8 Flash 在同一会话 `e665168c-96b6-44a2-96ab-562399ad3c09` 重试成功，主导界面及手机／单曲版式修订；最终六专题提案为 `b7837ae020174dc18213798c0b316df2`，歌曲横排修订为 `3bef1de0cd5842fc9f8767b91c3efe47`，记录位于 `F:/CodexHome/tmp/gemini-ui/runs/`。Codex 完成事实稿、数据边界、SEO、全站播放器和集成。没有自动恢复旧九首歌。
+- 桌面／手机导航现为 Today、Weekly Hits、Songs、Internet Lore，顶部 Send a Story 已删除，首页投稿模块与页脚入口保留。页脚邮箱在 320px 发生既有溢出，已允许断行。七个新页加入站点地图，均有英文规范地址、独立标题描述和 CollectionPage／ItemList；专题另有 BreadcrumbList。
+- 正式构建、变更文件 Biome 与 diff 检查通过；相关 78 项测试通过。正式构建 HTTP 验证六专题及六首作品详情全部 200，自引用 canonical 正确，七个 sitemap 地址存在，未知专题 404，旧专题 410，中文公开地址 308。报告：`F:/CodexHome/audits/drama-archive-2026-10-13/six-topics-verification.json`。
+- 使用已有 Google 登录及 Codex 插件的 Chrome 验证桌面和 320／390px；无页面横向滚动，手机四项菜单正确，深浅主题可读，封面正常解码。Haywire 实际加载后按钮显示 Pause track，全站播放器对应同一歌曲，测试后暂停并关闭。试听会通过现有公开接口记录正常播放统计；未改歌曲内容、发布状态、认证或创作流程，未提交投稿、未部署。
+- 截图：`F:/CodexHome/audits/drama-archive-2026-10-13/internet-lore-six-topics-desktop.png`、`internet-lore-six-topics-mobile-menu.png`。专题规划文档已改为六分类结构；后续审核旧歌曲及扩充事件正文仍需单独执行。
 
-### 2026-10-15 图片封面优化
-- 统一封面入口，上传时生成160/480/1024像素WebP，按尺寸直连R2并保留原图回退；版本化资源使用长期缓存。
-- 87张公开历史封面压缩副本已上传并校验，主图总体积139440529→19769472字节，减少85.8%；原图和发布状态保留。
-- Logo改为小尺寸版本，详情取色使用160像素图。58项测试、TypeScript、Biome及冻结锁文件检查通过。
-- 本提交只包含图片优化，不包含工作区其他栏目开发；正式部署由后续发布记录确认。
+### 2026-10-13 Internet Lore 界面重做
+- 用户否定上一版界面，要求改版。保留固定六专题、英文内容、来源、七个路由及作品公开边界；沿用 PRODUCT.md / DESIGN.md 的品牌方向，用 Gemini 3.8 Flash 主导、frontend-design 与 impeccable 辅助。成功提案 `36cf3128c1484c4590ee8fe2f1a5fd9c` 和真实浏览器反馈后的修订 `b4703ce9731c4a719572ecba2602fbe7` 均沿用会话 `e665168c-96b6-44a2-96ab-562399ad3c09`，保存于 F 盘技能运行目录。Gemini 基于 Codex 的视觉描述制作，未宣称直接查看截图。
+- 汇总页改为紧凑的标题／导语横排与三列两行封面索引，平板两列、手机单列；移除厚黑边框、硬阴影、重复 Explore 按钮和标签。原作品封面按 16:10 展示，配图说明处于正常文流，整块入口可点击。1440×1100 实测六个专题的标题与简介全部可见，第二排内容底部约 961px。
+- 汇总页新增一次批量读取的公开封面预览，仅返回作品标题和封面。查询遵循同一公开条件，动态响应下架状态；缺少作品时保留专题入口及封面回退，不展示私有歌曲。新增一项回归覆盖封面与对应专题的关联及无预览时六入口仍可用。
+- 六专题内页统一标题、正文／解读侧栏、案例来源及紧凑试听区；其他五专题改为轻量链接。沿用既有全站播放器功能。修正灰色辅助文字对比度、减弱动态偏好以及空作品提示，不虚称正在创作新歌。
+- 正式构建、变更文件 Biome、diff 检查与 79 项相关测试通过。正式构建 HTTP 验证汇总、六专题与六首歌词详情均 200，六张公开封面、canonical、结构化信息、七个 sitemap 地址正确；未知专题 404、旧路由 410、中文地址 308。报告：`F:/CodexHome/audits/drama-archive-2026-10-13/lore-redesign-verification.json`。
+- 在已有 Google 登录和 Codex 插件的 Chrome 检查 1440px、390px 与 320px：无横向溢出，六张封面完整解码，桌面／手机入口可进入专题，手机菜单保留 Today、Weekly Hits、Songs、Internet Lore，深浅模式可读，最终浏览器错误为空。浅色截图 `internet-lore-redesign-desktop.png`、手机截图 `internet-lore-redesign-mobile.png`、深色截图 `internet-lore-redesign-dark.png` 均位于同一审计目录。测试后恢复浅色和正常浏览器宽度。
+- 更新专题规划文档中的版式和封面预览架构。未改动歌曲内容、发布状态、创作／认证／计费流程或首页投稿模块，未提交投稿、未部署。正式本地预览保持运行，线上需后续发布。
+
+### 2026-10-13 Internet Lore 完整分类歌单补回
+- 用户指出各类原有多首歌曲却看不到。查明最初实现只关联每专题一首精选示例，遗漏较新历史版本的动态分类歌单。追溯 `3b500e8`，旧版 `song-topics.ts` 按标题／摘要匹配公开作品、每专题上限 12 首；这与三月版本的九首显式案例歌关联是两套来源，不能只用九首旧歌解释全部历史内容。
+- 先确定业务流程为汇总 → 完整分类歌单 → 试听／歌词 → 介绍／案例。新增纯分类模块 `song-catalog.ts`，恢复历史关键词并补充现有内容范围；稳定 ID 合并精选作品与案例。日常反差喜剧按事件内容匹配，弃用旧版 Drill 制作风格分类。没有新增数据库分类字段或改变歌曲记录。
+- 当前六类公开曲目数依序为 15／38／23／16／32／23，147 次专题展示去重为 84 首，覆盖本轮全部公开素材。跨类别重叠允许，关键词分类不代表事实审核。查询沿用已发布、有效音频、最新生成未失败的公开条件，不限 12 首；九首旧案例未发布作品继续不公开。
+- 汇总页一次读取公开曲库计算封面与实际数。内页在介绍前服务端渲染完整歌单，桌面两列、手机单列，使用现有封面、摘要和歌词规范链接；全部播放按钮及案例引用共享同一完整专题队列。CollectionPage / ItemList 按歌曲 ID 去重，与可见列表一致。
+- 再次调用 Gemini 3.8 Flash 的运行 `045611bb5e1a452082a745478a9fbcd6` 被地区限制拒绝，没有新 UI 提案。复用上一轮 Gemini 成功实现的样式及共享播放组件完成歌单，不声称本轮列表由 Gemini 生成。
+- 正式构建、变更文件 Biome、diff 检查和 87 项相关测试通过；HTTP 验证六专题歌单、汇总计数和结构化信息一致、全部 84 首规范地址覆盖，抽查每类首曲歌词页均 200；未知专题 404、旧页 410、中文入口 308、七页 sitemap 正常。报告 `F:/CodexHome/audits/drama-archive-2026-10-13/lore-catalog-verification.json`。
+- 已有 Google 登录和 Codex 插件的 Chrome 实测 1440px、390px、320px，无横向溢出。No Agent, All Circus 正常加载并播放，时间从 0:00 前进至 0:05；下一首切换为 Naomi Said Yes (HeidiFest)，歌曲按钮同步；试听后暂停并关闭播放器。歌词链接正常打开对应详情弹窗，最终浏览器错误为空。
+- 截图 `internet-lore-catalog-desktop.png`、`internet-lore-catalog-mobile.png`、`internet-lore-catalog-hub.png` 均保存于同一 F 盘审计目录。专题规划文档同步完整歌单与动态分类架构。本地正式预览保持运行，未部署；未改歌词、音频、发布状态、认证、计费或投稿模块，试听只记录正常播放统计。
+
+### 2026-10-13 纠正 Internet Lore 原歌单恢复范围
+- 用户明确每个内页应放其原有历史歌曲，否定将当前 84 首公开歌曲重新分类的方案；此前“完整分类歌单补回”条目的恢复完成结论撤销。已删除运行时关键词／制作风格匹配和六首新选示例绑定，禁止同主题或同名作品补位。
+- 用户忘记原歌名并要求继续查 Git。检索全部分支、stash、reflog 的 17 个相关版本，再查 git fsck 找出的两份开发快照，共 19 份。自 9049f57 起的固定 archiveSongUrls 明确只用于 absurd-social-phenomena，九个 ID 在开发快照中一致；其余五页的固定关联为空。9 月 3b500e8 的动态公开曲库列表不保存原歌单，不再作为恢复依据。
+- 已将荒诞社会现象原九条关联按旧顺序写回原始 ID 白名单，历史名称可见。数据库原记录仍在、最新生成 completed，当前均未发布；只显示 Archived / Currently unavailable，不提供私人音频、歌词或失效详情链接。其他五类尚未找回原始绑定，页面保留不可用状态，不声称已经全量恢复或歌曲从未存在。
+- queries.ts 汇总与内页只查原 ID，并保持公开门禁；无原绑定时条件为 false，不回退全库。汇总按原始条目／实际可播放分别计数，配图回退旧专题资产，不借用当前歌曲封面。移除两篇新案例与原专题的关联，保留原文件供未来明确扩充。
+- 全量只读核查 268 条记录、84 首公开作品，仅作为库存信息。19 版本关联证据、完整数据库盘点和原歌单验证保存于 F:/CodexHome/audits/drama-archive-2026-10-13/；历史关键词测试报告 lore-catalog-verification.json 已作废为恢复依据。
+- 88 项相关测试、TypeScript、变更文件 Biome、diff 通过。运行中的开发版 HTTP 验证六内页均 200，原九歌名及顺序正确、其他五无假歌曲；当前示例标题不再进入页面或预览，未发布音频／歌词未传输，结构化公开歌曲数为 0。报告 original-lore-verification.json 明确 completeRecovery=false；本轮未重新正式构建。
+- 已有 Google 登录和 Codex 插件的 Chrome 验证桌面及 390px，无横向溢出，浏览器错误为空；截图 internet-lore-original-tracks.png。本地服务保持运行，未改数据库、作品内容、发布状态或部署。剩余工作为找回其余五专题的原绑定或其他备份，以及明确原九首恢复发布范围。
+
+### 2026-10-14 Internet Lore 原专题内容完善，保持九首未发布
+- 用户要求继续完善；针对已确认原九首的恢复试听范围明确选择“先完善页面，保持九首未发布”。本轮不重新询问发布，不更改任何作品、发布或排期数据，不生成替代旧作。
+- 在已保存的 9049f57 六专题源码上恢复每类原九个主题，共 54 项，保留来源标题和原顺序；新增 premise 解释戏仿创作角度，去除旧标题未核实年份，不将旧稿细节当成核实新闻。原九首只绑定原荒诞类对应项，其余五类不生成歌曲 ID，也不按主题匹配当前曲库。
+- 新增 archive-cases.ts 与 InternetLoreArchive。内页改为原主题、创作角度和原歌名紧邻展示，删除重复唱片占位及五页空歌单大框。索引使用原生 details，默认收起，九个页内锚点可抓取且可键盘访问；桌面双列、手机单列，沿用旧专题配图，不把它冒充未发布作品封面。
+- 汇总页每类显示九个原主题，只有荒诞类追加九条原歌信息；主题数不冒充歌曲数。主题页 ItemList 以九个可见 CreativeWork 及其本页锚点输出，不将未发布作品标为 MusicRecording。Google 官方指南与 Schema.org 依据已链接到专题规划文档。
+- 未找到原曲绑定的专题提前返回空歌曲 Map，不创建数据库连接或回退查询当前曲库；共享播放器只接受已公开且在原 ID 白名单内的曲目，本轮实际公开原曲为 0。
+- Gemini 3.8 Flash High 运行 d2a721595ecf497f96db0bd3571edd92 沿用原会话，但服务以地区不支持拒绝，没有源码产物。本轮复用以前成功版本的样式整合内容，未换模型或宣称新组件由 Gemini 制作。辅助采用 frontend-design、impeccable、design-taste-frontend，并按 vercel:react-best-practices 复核组件及数据边界。
+- 94 项相关回归、TypeScript、Biome 与 diff 通过；折叠索引随后五项相关测试通过，最终正式构建通过。正式本地预览 HTTP 验证六页各九主题、54 条顺序与旧主题一致，索引全部可解析、结构化信息与页面一致、当前六首示例完全不进入内容；原九首详情仍 404 且未列入 sitemap，未知专题 404、旧页 410、中文入口 308、七个新地址正常。
+- 只读核对原九首前后发布、排期、更新时间、歌词／音频哈希完全一致，九首均保持未发布。报告 archive-pages-verification.json 和 archive-state-before/after.json 保存于 F:/CodexHome/audits/drama-archive-2026-10-14/，无数据库写入或试听统计。
+- 已有 Google 登录和 Codex 插件的 Chrome 验证 1440px、390px、320px及深浅色，无横向溢出。手机索引打开后可跳到 Italian Brainrot 条目，标题约在导航下方 100px；390px 默认首条位置由约 1285px 提前至 816px。最终恢复浅色和正常视口，浏览器错误为空。普通截图接口多次超时，最终用同一浏览器受支持的 getScreenshot 保存 absurd-archive-desktop-final.png；未生成或假称有最终手机截图。
+- 本地正式预览保持运行，未部署或提交。专题规划文档同步最新状态；其余五类原歌绑定仍未找到，不能将本轮页面完善宣称为所有原歌恢复完成。
+
+### 2026-10-15 11:34 歌曲详情页关键词承接修复
+- 用户明确要求修改此前诊断出的详情页 SEO 问题；后续最终确认保留 Title，getSongSeoTitle 已恢复原公式，限长事件主题 + Funny Song + 歌名方案未进入最终提交。Description、正文介绍、相关推荐及索引边界修复保留。
+- Description 与可见歌名下方介绍统一优先保留事件事实及曲风，不再让歌词片段挤掉事实说明；现有歌曲 URL 与 canonical 保持不变。
+- 相关歌曲优先推荐同题作品，并扩展同栏目、同曲风作品；仅推荐公开、生成完成且有有效音频的歌曲，保持作品公开边界。
+- 变更涉及四个文件，Biome 检查通过；SEO 与 related 相关 30 项测试通过。全项目 TypeScript 类型检查未通过：确认 node_modules/zod 为损坏的目录联接（package.json 不存在），导致多处 Cannot find module 'zod' 及连带类型错误，不能宣称全项目类型检查通过。尚未提交或部署，不能视为线上已生效。
+### 2026-10-15 11:45 继续检查公开歌曲索引与线上 SEO
+- 本轮全量只读检查线上 sitemap 的 108 个地址，含 94 首歌曲：全部返回 200、自指 canonical、单一 H1，未发现缺失或重复 Title／Description；94 页 MusicRecording JSON 有效且音频 URL 有效，没有未来发布日期。70 个标题超过 100 字符，最长 201 字符；90 页没有指向其他歌曲详情的内链，此为线上现状，不冒充本地修复已部署。
+- 分页第 2 页返回 200 且 canonical 自指；越界分页及未知歌曲返回 404 并带 noindex。证据为 F:/CodexHome/audits/seo-2026-10-05/public-pages-2026-10-15.json 与 public-summary-2026-10-15.json。
+- Search Console 读取仍受多账户冲突阻碍，未报告新的 Google 抓取、canonical、曝光、点击或排名数据，不以线上 HTTP 结果代替 Google 索引结论。
+- 已修复本地 zod 4.1.13 空目录：通过官方 pnpm 在 F 盘隔离安装后复制缺失包文件，未修改依赖声明。上一轮修复 zod 后的 TypeScript 检查已通过，更新此前依赖损坏导致的失败状态；新一轮全项目 TypeScript 类型检查最终 exit 0，通过；typecheck-final-2026-10-15.log 为空成功日志。
+- 新增 publicSongIndexCondition，将详情、推荐、Gallery 与 sitemap 的公开条件统一为已发布、生成 completed 或 completed_without_cover 且具有 HTTP 音频地址；未写入数据库。
+- 本轮 35 项测试、Biome 与 diff --check 通过。报告 F:/CodexHome/audits/seo-2026-10-05/继续检查结果-2026-10-15.md 已保存。尚未构建、浏览器验证、提交或部署，线上标题及内链问题仍需部署后复核。
+### 2026-10-15 13:03 歌曲 SEO 修复提交并推送
+- 用户最终确认保留原 Title，getSongSeoTitle 已恢复原公式；最终变更保留事件 Description、可见正文介绍、相关推荐与公开索引条件统一。
+- 已提交并推送 origin/master：9b6fd34，提交说明 fix(seo): 保留事件描述并完善歌曲索引。实际提交从 HEAD 隔离出九个文件，不包含其他 Internet Lore 功能或迁移，其他功能的本地记录保持原状。
+- 提交快照的 32 项测试、全项目 TypeScript、Biome 与 diff 检查通过。部署状态尚未核验，不宣称已上线。
+### 2026-10-15 15:03 图片优化只读检查与 SEO 部署核验
+- 已通过 RyanC 登录 Vercel 只读检查：9 月 15 日至 10 月 15 日本项目图片转换 3028/5000、读取 223057/300000、写入 98212/100000；团队写入 98872，本项目占约 99.3%。近七天本项目为 130 次转换、2544 次读取、4297 次写入。
+- 首页 43 张及 /songs 的 50 张封面均为 R2 直连，抽查返回 200；persistent-player、recent-listening-list、comment-history-list、admin/dashboard/live-feed 仍有四处封面直接使用 next/image。旧 PNG 抽样为 1.78–1.95 MB 且无 Cache-Control，logo 原图为 1.66 MB。
+- 本轮未修改代码、数据或平台设置，优化建议尚未实施，不将检查结论记为已修复。证据：F:/CodexHome/audits/image-2026-10-15/图片优化检查.md、live-image-check.json。
+- 已核验此前 SEO 提交 master 9b6fd34 的生产部署 dpl_E8d513yMr95gjnyugq56KsKyobfF 为 READY，更新此前部署尚未核验状态；本轮仅追加本地记录，未提交。
+### 2026-10-15 15:28 ScoopRYM 图片优化实施
+- 已统一此前四处遗漏封面及歌曲行／趋势卡，预生成 160／480／1024px WebP 副本、内容哈希版本与上传缓存头，保留原图回退；取色使用 160px 副本，并补充小尺寸 Logo。
+- 历史公开 87 个图片地址全部成功上传副本并通过 HEAD 校验：原图共 139440529 字节，主图副本共 19769472 字节，减少 85.8223%；最小图副本共 897682 字节。原图保留，不将副本就绪等同线上已切换。
+- 28 + 30 共 58 项测试通过，三项数据库集成测试未启用；TypeScript、Biome 与冻结锁文件检查通过。使用真实已登录 RyanC 验证本地 3005 的首页、/songs 及歌曲详情，封面正常且均无 /_next/image 图片请求；160px 取色代理返回 200。
+- 初次本地 3005 被 NEXT_PUBLIC_BASE_URL 重定向至 3000 的其他 CueDrama 项目，已通过本次进程环境变量覆盖纠正，未修改 .env；全部代码修改及 R2 写入始终针对 ScoopRYM，未修改其他项目。
+- 证据：F:/CodexHome/audits/image-2026-10-15/优化实施结果.md。图片副本已在 R2 就绪，本轮代码尚未提交或部署，不能宣称线上图片用量已经减少；其他 Internet Lore／发布栏目改动保持原状。
+### 2026-10-15 15:39 图片优化提交与正式上线
+- 图片优化提交 aef274c5b4cdf629689e59dd682b3d07f4c29706 已推送 origin/master；隔离发布仅包含 37 个图片优化文件，progress 采用 HEAD 加本轮记录隔离，其他 Internet Lore／栏目改动未混入并继续保留。隔离版本的 58 项测试、TypeScript、Biome 与冻结锁文件检查通过。
+- Vercel 项目 scooprym-music、团队 team_oRI3e1AWAV47zV83pfUoPkd1 的生产部署 dpl_9iUgCbCvhXaUULUsUendNPAgGUTz 为 READY，关联上述 SHA，别名包含 scooprym.app 与 www.scooprym.app；此前尚未提交部署状态现已更新为正式上线。
+- 线上首页、/songs、歌曲详情均返回 200，HTML 图片中的 /_next/image 请求数为 0，响应式封面分别 43／50／1 张；Logo 及 160／480／1024px 副本均 200，Cache-Control 为一年，160px 取色代理 200。RyanC 真实登录浏览器确认封面正常、首页右侧卡片选择 480px 副本，截图已保存。
+- 证据保存于 F:/CodexHome/audits/image-2026-10-15/deployment.json、production-verification.json、production-home.png、优化实施结果.md。月度累计用量不会清零，尚未据此声称已经观测到额度减少；本次仅更新本地记录，未再次提交。
+
+### 2026-10-18 20:36 Internet Lore 生产回退修复与合并发布中
+- 用户明确授权修复。10 月 14 日已上线的 Lore 独立分支此前未进入 10 月 15 日主线发布；本轮按现行业务边界真正合并两条历史，不把恢复访问当成搜索表现已经改善。
+- 合并提交 `11573b6c586121a3cb9972540ab31fefec4b8659` 已推送 `origin/master`，双亲为图片优化主线 `aef274c5b4cdf629689e59dd682b3d07f4c29706` 与 Lore `5e64f943014b89497bd1374f0e82e52399a6033b`；`git merge-base --is-ancestor` 检查 Lore 为祖先并退出 0。59 个源码文件纳入全部 Lore、发布栏目逻辑及其迁移，图片优化、song-seo、metadata 文件 diff 为空。progress.md 未随源码提交，已有未提交记忆记录继续保留。
+- 首页四处歌曲查询、Lore 与录音版本查询统一 `publicSongIndexCondition`，沿用已发布、有效 HTTP 音频、生成完成与栏目隔离边界。原 74 项回归及新增四项首页回归合计 78 项唯一测试通过，独立 TypeScript 检查通过；完整本地 build 已在约 4.6 分钟完成编译，目前仍处类型检查阶段，不宣称完整构建成功。
+- 17 项 source-only 构建守卫接入 prebuild，健康短 slug 故障注入通过；七个专题页消失、首页或 Gallery 漏歌、跨域重定向、源码缺路由的故障均被拒绝。此为自动发布回归防护，不增加用户或管理员人工确认门槛。
+- Vercel 生产部署 `dpl_7yirRF5EGFha1xfU7fKgZcEkNd9o` 当前 BUILDING；尚未完成正式域名与真实登录浏览器最终验收，不能宣称专题已恢复上线。
+- 只读数据库核查原九首歌曲均 completed、HTTP 音频、Internet Lore／`absurd-social-phenomena` 且已发布；Gallery 已发布 85 首、未发布 175 首。本轮无数据库写入、迁移或重复发布，资产、原始歌曲 ID 与发布时间未改。
+- 证据目录：`F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/`；包括 `lore-preflight-before.json`、`public-release-confirmed-before.json`、`release-source-backup/` 及 worker fixture 报告。待部署和完整验收结果到达后继续更新 #40，当前不将线上恢复记为 Done。
+
+### 2026-10-18 20:39 本地完整构建与真实登录验收通过
+- 完整 `pnpm build` 已退出 0，29 个静态页生成、类型检查及构建追踪均通过，更新 20:36 编译完成后仍等待类型检查的阶段状态。
+- 生产预览 `127.0.0.1:3107` 已运行，`scripts/verify-public-release.mjs` 本地 49 项检查、两个曲库分页全部 passed，报告 `public-release-local.json`。
+- 真实 Google 登录 Chrome 核验荒诞页九个原歌条目和九张封面，图片均 complete 且 naturalWidth > 0；点击 Bardstown 封面进入原 canonical 完整详情，H1、背景、歌词与 Lore 面包屑正确，浏览器 error 为空。截图 `repair-local-topic.png` 已保存。
+- 云端已完成约 2.8 分钟编译，部署尚未 READY，正式域名尚未最终验收；#40 继续 DOING，不把本地通过写为生产修复完成。以上证据保存在本轮 F 盘证据目录，记录操作仅更新 progress.md，未新增提交或推送。
+
+### 2026-10-18 20:42 Internet Lore 修复正式上线与最终验收完成
+- #40 已从 TODO 移入 Done。正式合并提交 `11573b6c586121a3cb9972540ab31fefec4b8659` 的生产部署 `dpl_7yirRF5EGFha1xfU7fKgZcEkNd9o` 为 READY，`scooprym.app` 与 `www.scooprym.app` 别名正确，aliasError=null。此前“待部署／专题未恢复”仅描述当时状态，当前生产回退已恢复。
+- 线上 `scripts/verify-public-release.mjs` 共 49 项检查及两页曲库全部 passed；全 sitemap 108 页 HTTP 200、canonical 与可索引检查全部通过，原 101 个规范地址完整保留。额外核验 `/api/public/gallery` 四页 80 首，全部不含原九首；原歌继续只在 Internet Lore 对应专题公开，10 月 15 日主线 SEO 和图片优化保留。
+- 只读数据库 before／after 对比确认原九首公开状态、栏目、专题、发布时间及音频／歌词哈希完全一致，未执行迁移、重复发布或更改资产。真实管理员试听按既有 API 产生正常播放统计，不能把本轮描述为“数据库完全未动”。
+- 真实 Google 登录 Chrome 用户 Ryan Gong（Admin）确认九张原歌封面加载成功，Bardstown 实际播放至 0:17／1:04，Next 切至原 Al Dente 并播放至 0:15／0:49；随后暂停并关闭播放器，errors=[]。生产专题标签页保留，截图 `repair-live-topic.png` 与 `repair-live-playing.png` 已保存。
+- 本轮临时生产预览 `127.0.0.1:3107` 已在核对进程身份后停止，未影响其他服务。原有 progress.md 未提交记录完整保留，最终仍仅 progress.md 为 dirty；本次记忆更新不提交或推送，不触发额外部署。
+- 总报告 `repair-completion.json`，配套 `repair-deployment.json`、`public-release-production.json`、`seo-production-after-repair.json`、`release-data-verification.json`、`lore-preflight-before.json`／`lore-preflight-after.json` 及截图均位于 `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/`。搜索重新抓取及曝光、点击、收听增长尚未证实，不将此次技术修复记为增长结果已经恢复。
