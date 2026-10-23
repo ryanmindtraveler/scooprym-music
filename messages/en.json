@@ -1,9 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "Daily Funny Songs & Comedy Rap from Viral Moments | ScoopRYM",
-    "description": "The wildest headlines, messiest celebrity gossip, and hottest drama — turned into sharp parody tracks you can listen to, laugh at, and share.",
-    "keywords": "daily funny songs, comedy rap, viral moments, headline songs, drama songs, gossip songs, musical satire, entertainment news"
+    "title": "Daily Funny Songs & Comedy Rap from Viral Headlines - ScoopRYM",
+    "description": "Listen to daily funny songs and viral comedy rap parodying celebrity gossip, internet drama, and crazy headlines. Stream fresh tracks and read full lyrics daily."
   },
   "Common": {
     "premium": "Premium",
@@ -316,7 +315,7 @@
     "morePosts": "More Posts"
   },
   "SongsPage": {
-    "title": "Funny Songs Gallery | ScoopRYM",
+    "title": "Funny Songs Gallery",
     "description": "Browse funny songs inspired by viral headlines, celebrity gossip, and internet drama. Play each track, read the lyrics, and check its original source.",
     "heroTitleLeading": "Funny Songs",
     "heroTitleHighlight": "Gallery",

@@ -31,7 +31,7 @@ export function PublicGallery({ songs }: PublicGalleryProps) {
       <div className="relative z-10 mx-auto max-w-[1760px]">
         <div className="relative pb-7">
           <h2 className="w-fit border-b-[5px] border-[#ef287c] pb-1 text-4xl font-black leading-[0.92] tracking-[-0.065em] text-[#201a29] md:text-5xl">
-            Gallery
+            Funny Song Gallery
           </h2>
           <p className="mt-4 max-w-2xl text-[0.98rem] font-medium leading-7 text-[#45415a]">
             Curated chaos. Reported stories, funny songs, and the original receipts.

@@ -181,7 +181,7 @@ export function DailyHome({ songs, freshnessLabel = 'Latest Drops', hasNewToday 
           <div className="mb-7 flex flex-col gap-3 pb-4 sm:flex-row sm:items-end sm:justify-between md:mb-10">
             <div className="flex flex-wrap items-center gap-3.5">
               <h2 className="text-4xl font-black tracking-tight drop-shadow-xs sm:text-5xl md:text-6xl">
-                {hasNewToday ? 'Today’s Drops' : 'Latest Drops'}
+                {hasNewToday ? 'Today’s Funny Song Drops' : 'Latest Funny Song Drops'}
               </h2>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/20 px-4 py-1.5 text-xs sm:text-sm font-black uppercase tracking-widest text-white shadow-xs backdrop-blur-md">
                 <span className="relative flex size-2.5">

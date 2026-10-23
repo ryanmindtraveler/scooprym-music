@@ -1,9 +1,8 @@
 {
   "Metadata": {
     "name": "ScoopRYM",
-    "title": "ScoopRYM — 每日爆红时刻梗歌",
-    "description": "将最离谱的头条、最混乱的闹剧和最劲爆的八卦做成可听、可笑、可分享的歌曲。",
-    "keywords": "daily funny songs, comedy rap, headline song, news song, drama song, gossip song, comedy song, viral moments, musical satire"
+    "title": "Daily Funny Songs & Comedy Rap from Viral Headlines - ScoopRYM",
+    "description": "将最离谱的头条、最混乱的闹剧和最劲爆的八卦做成可听、可笑、可分享的歌曲。"
   },
   "Common": {
     "premium": "付费文章",
@@ -316,7 +315,7 @@
     "categoryUnavailable": "分类归档暂时不可用。"
   },
   "SongsPage": {
-    "title": "Funny Songs Gallery | ScoopRYM",
+    "title": "Funny Songs Gallery",
     "description": "浏览由爆红时刻、八卦和网络闹剧改编的 funny songs，并查看原始来源与歌词。",
     "heroTitleLeading": "Funny Songs",
     "heroTitleHighlight": "Gallery",

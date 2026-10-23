@@ -127,8 +127,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
             className="relative mb-8 flex flex-col items-center"
           >
             <div className="relative z-10 inline-block px-4 py-4 sm:px-12">
-              <h1 className="sr-only">{semanticTitle ?? 'ScoopRYM'}</h1>
-              <motion.div
+              <motion.h1
                 className="relative z-20 mx-auto pr-[0.14em] font-sans text-6xl font-black italic leading-[0.96] tracking-[-0.07em] sm:text-7xl md:text-[clamp(5rem,5.55vw,7.25rem)]"
                 style={{
                   backgroundImage: 'linear-gradient(to right, #22d3ee, #e879f9, #facc15, #22d3ee)',
@@ -152,7 +151,7 @@ const HeroUI = React.forwardRef<HTMLElement, HeroSectionProps>(
                 transition={{ duration: 8, repeat: Number.POSITIVE_INFINITY, ease: 'linear' }}
               >
                 {title ?? 'ScoopRYM'}
-              </motion.div>
+              </motion.h1>
 
               <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 flex h-24 -translate-x-1/2 items-end gap-2 mix-blend-overlay opacity-50">
                 {waveformHeights.map((height, index) => (

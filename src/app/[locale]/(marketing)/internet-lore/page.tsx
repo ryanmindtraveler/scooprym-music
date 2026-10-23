@@ -10,12 +10,11 @@ import type { CollectionPage, WithContext } from 'schema-dts';
 export const dynamic = 'force-dynamic';
 
 export const metadata = constructMetadata({
-  title: 'Internet Lore: Six Collections of Stories & Parody Songs',
+  title: 'Internet Lore: Stories & Parody Songs Collections',
   description:
     'Explore absurd social phenomena, entertainment, gossip and drama, news parody, meme culture and everyday contrast comedy with original ScoopRYM songs.',
   locale: 'en',
   pathname: '/internet-lore',
-  includeDefaultKeywords: false,
 });
 
 export default async function InternetLorePage() {

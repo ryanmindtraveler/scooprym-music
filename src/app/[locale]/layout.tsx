@@ -37,13 +37,9 @@ export async function generateMetadata({ params }: LocaleLayoutProps) {
     metadataBase: new URL(getCanonicalBaseUrl()),
     title: {
       default: t('title'),
-      template: `%s | ${t('name')}`,
+      template: `%s - ${t('name')}`,
     },
     description: t('description'),
-    keywords: t('keywords', {
-      default:
-        'headline song, news song, drama song, gossip song, meme song, comedy song, funny song, diss track, battle song, rap battle, AI song generator, text to song, song generator, diss track generator, meme song generator',
-    }),
     openGraph: {
       title: t('title'),
       description: t('description'),

@@ -14,7 +14,7 @@ import { LocaleLink } from '@/i18n/navigation';
 import { cleanLyricsForDisplay } from '@/lib/music/lyrics-utils';
 import { getPublicationLoreTopic } from '@/lib/songs/publication-channel';
 import { createEngagementSessionId, recordSongEngagement } from '@/lib/songs/song-engagement-client';
-import { getSongIntroduction } from '@/lib/songs/song-seo';
+import { getSongIntroduction, getSongSeoTopic } from '@/lib/songs/song-seo';
 import { cn } from '@/lib/utils';
 import { usePlayerStore } from '@/store';
 import { Download, ExternalLink, Heart, Newspaper, NewspaperIcon, Pause, Play, Share2, Sparkles } from 'lucide-react';
@@ -199,9 +199,20 @@ export function SongDetailClient({
                 <span className="size-1.5 rounded-full animate-ping" style={{ backgroundColor: accentColor }} />
                 Original Meme Single
               </div>
-              <h1 className="max-w-xl text-balance font-serif text-2xl font-black leading-[1.08] tracking-tight text-slate-950 drop-shadow-xs dark:text-white sm:text-3xl md:text-3xl lg:text-[2.25rem]">
-                {song.title}
-              </h1>
+              {(() => {
+                const topic = getSongSeoTopic(song);
+                const hasTopic = topic && topic !== song.title;
+                return (
+                  <h1 className="max-w-xl text-balance font-serif text-2xl font-black leading-[1.08] tracking-tight text-slate-950 drop-shadow-xs dark:text-white sm:text-3xl md:text-3xl lg:text-[2.25rem]">
+                    <span className="block">{song.title}</span>
+                    {hasTopic && (
+                      <span className="mt-1.5 block font-sans text-base font-bold tracking-normal text-slate-700 dark:text-slate-300 sm:text-lg">
+                        {topic} Funny Song
+                      </span>
+                    )}
+                  </h1>
+                );
+              })()}
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 {getSongIntroduction(song)} Play the track and read the lyrics below.
               </p>

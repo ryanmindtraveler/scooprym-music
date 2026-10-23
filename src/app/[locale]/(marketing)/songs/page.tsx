@@ -31,17 +31,6 @@ export async function generateMetadata({ params, searchParams }: SongsPageProps)
   return constructMetadata({
     title: page === 1 ? 'Funny Songs Gallery' : `Funny Songs Gallery — Page ${page}`,
     description: t('description'),
-    keywords: [
-      'funny songs archive',
-      'daily funny songs',
-      'comedy rap songs',
-      'headline songs',
-      'news satire songs',
-      'celebrity gossip songs',
-      'internet drama songs',
-      'viral song',
-    ],
-    includeDefaultKeywords: false,
     locale,
     pathname: getArchivePagePath(page),
   });

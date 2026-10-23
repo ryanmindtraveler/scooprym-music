@@ -22,7 +22,6 @@ export async function generateMetadata({ params }: TopicPageProps) {
     description: topic.description,
     locale: 'en',
     pathname: `/internet-lore/${topic.slug}`,
-    includeDefaultKeywords: false,
   });
 }
 

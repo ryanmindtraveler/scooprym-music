@@ -17,11 +17,11 @@ export function constructMetadata({
   noIndex = false,
   locale,
   pathname,
-  keywords = [],
-  includeDefaultKeywords = true,
+  keywords,
+  includeDefaultKeywords,
   includeLanguageAlternates = true,
 }: {
-  title?: string;
+  title?: string | { absolute: string };
   description?: string;
   image?: string;
   noIndex?: boolean;
@@ -31,7 +31,11 @@ export function constructMetadata({
   includeDefaultKeywords?: boolean;
   includeLanguageAlternates?: boolean;
 } = {}): Metadata {
-  title = title || defaultMessages.Metadata.title;
+  const resolvedTitle = title || defaultMessages.Metadata.title;
+  const titleString =
+    typeof resolvedTitle === 'object' && resolvedTitle !== null && 'absolute' in resolvedTitle
+      ? resolvedTitle.absolute
+      : resolvedTitle;
   description = description || defaultMessages.Metadata.description;
   image = image || websiteConfig.metadata.images?.ogImage || '/logo.png';
   const ogImageUrl = getImageUrl(image);
@@ -56,42 +60,22 @@ export function constructMetadata({
         ? { canonical: canonicalUrl }
         : undefined;
 
-  const defaultKeywords = [
-    'Headline Song',
-    'News Song',
-    'Drama Song',
-    'Gossip Song',
-    'Meme Song',
-    'Comedy Song',
-    'Funny Song',
-    'Diss Track',
-    'Battle Song',
-    'Rap Battle',
-    'AI Song Generator',
-    'Text to Song',
-    'Song Generator',
-    'Diss Track Generator',
-    'Meme Song Generator',
-    'ScoopRYM',
-  ];
-
   return {
-    title,
+    title: resolvedTitle,
     description,
-    keywords: includeDefaultKeywords ? [...defaultKeywords, ...keywords] : keywords.length > 0 ? keywords : undefined,
     alternates,
     openGraph: {
       type: 'website',
       locale: locale ? getCurrentHreflang(locale).replace('-', '_') : 'en_US',
       url: canonicalUrl,
-      title,
+      title: titleString,
       description,
       siteName: defaultMessages.Metadata.name,
       images: [ogImageUrl.toString()],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: titleString,
       description,
       images: [ogImageUrl.toString()],
       // site: '@ScoopRYM', // Recommended to use a handle, not a URL

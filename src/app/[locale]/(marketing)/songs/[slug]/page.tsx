@@ -97,7 +97,6 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
     image: song.coverImageUrl || undefined,
     locale: routing.defaultLocale,
     pathname: `/songs/${canonicalSlug}`,
-    includeDefaultKeywords: false,
     includeLanguageAlternates: false,
   });
 }
