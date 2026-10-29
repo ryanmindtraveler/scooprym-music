@@ -1,3 +1,7 @@
+import retiredSongSlugs from './retired-song-slugs.json';
+
+const retiredSongs = new Set<string>(retiredSongSlugs);
+
 // 已弃用的产品路由统一退出，避免仅隐藏导航后仍被访问或抓取。
 export const RETIRED_PAGE_PREFIXES = [
   '/features',
@@ -16,6 +20,9 @@ export const RETIRED_API_PATHS = ['/api/chat', '/api/analyze-content', '/api/sea
 
 export function isRetiredRoute(pathname: string): boolean {
   const path = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';
+  // 仅退役已确认无公开替代页的历史别名；歌曲当前地址仍由发布状态决定。
+  const songSlug = path.match(/^\/songs\/([^/]+)$/)?.[1];
+  if (songSlug && retiredSongs.has(songSlug.replace(/-scooprym(?=-\d+$|$)/, '-funny-song'))) return true;
   return [...RETIRED_PAGE_PREFIXES, ...RETIRED_API_PATHS].some(
     (prefix) => path === prefix || path.startsWith(`${prefix}/`)
   );

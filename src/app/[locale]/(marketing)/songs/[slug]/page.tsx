@@ -14,7 +14,7 @@ import { getPublicationLoreTopic } from '@/lib/songs/publication-channel';
 import { selectRelatedSongs } from '@/lib/songs/related-songs';
 import {
   decodeSongSlug,
-  getLegacySongSlugRedirect,
+  getLegacySongSlugId,
   getShortenedSongSlugId,
   getSongCanonicalSlug,
   getSongPublicDate,
@@ -46,11 +46,7 @@ interface SongDetailPageProps {
 export async function generateMetadata({ params }: SongDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = decodeSongSlug(resolvedParams.slug);
-  const legacyTarget = getLegacySongSlugRedirect(slug);
-  if (legacyTarget) {
-    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
-  }
-  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
+  const id = getLegacySongSlugId(slug) || getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);
@@ -104,11 +100,7 @@ export async function generateMetadata({ params }: SongDetailPageProps): Promise
 export default async function SongDetailPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
   const slug = decodeSongSlug(resolvedParams.slug);
-  const legacyTarget = getLegacySongSlugRedirect(slug);
-  if (legacyTarget) {
-    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
-  }
-  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
+  const id = getLegacySongSlugId(slug) || getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const latestAttempt = createLatestGenerationAttemptQuery(db);

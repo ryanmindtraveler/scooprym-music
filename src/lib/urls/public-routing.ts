@@ -19,14 +19,11 @@ export function getPathnameWithoutLocale(pathname: string): string {
 export function getPublicEnglishPath(pathname: string): string | null {
   const localeMatch = pathname.match(/^\/(en|zh)(?=\/|$)/);
   const locale = localeMatch?.[1];
-  let path = getPathnameWithoutLocale(pathname);
+  const path = getPathnameWithoutLocale(pathname);
 
   if (INTERNAL_PATH.test(path)) return null;
   if (isLocalizedBackendPath(path) && locale !== 'en') return null;
 
-  const songMatch = path.match(
-    /^\/songs\/(?:.*-)?([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/?$/i
-  );
-  if (songMatch) path = `/songs/${songMatch[1]}`;
+  // 歌曲旧地址交给详情页直接解析到最终 canonical，避免先跳到 UUID 的中间地址。
   return path;
 }

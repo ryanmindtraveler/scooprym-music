@@ -5,7 +5,7 @@ import { routing } from '@/i18n/routing';
 import { getSession } from '@/lib/auth/server';
 import {
   decodeSongSlug,
-  getLegacySongSlugRedirect,
+  getLegacySongSlugId,
   getShortenedSongSlugId,
   getSongCanonicalSlug,
   getSongStoredSlug,
@@ -28,11 +28,7 @@ export const dynamic = 'force-dynamic';
 export default async function SongDetailInterceptPage({ params }: SongDetailPageProps) {
   const resolvedParams = await params;
   const slug = decodeSongSlug(resolvedParams.slug);
-  const legacyTarget = getLegacySongSlugRedirect(slug);
-  if (legacyTarget) {
-    permanentRedirect(new URL(getUrlWithLocale(`/songs/${legacyTarget}`, routing.defaultLocale)).href);
-  }
-  const id = getShortenedSongSlugId(slug) || getIdFromSlug(slug);
+  const id = getLegacySongSlugId(slug) || getShortenedSongSlugId(slug) || getIdFromSlug(slug);
 
   const db = await getDb();
   const session = await getSession();

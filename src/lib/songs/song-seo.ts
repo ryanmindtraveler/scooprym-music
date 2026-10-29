@@ -10,12 +10,12 @@ type SongIdentity = Pick<Song, 'id'> & Partial<Pick<Song, 'seoSlug'>>;
 type PublicDatedSong = Pick<Song, 'createdAt'> & Partial<Pick<Song, 'publishedAt'>>;
 export type SongRecordingVersion = { number: number; total: number };
 
-const legacySongSlugRedirects = new Map(legacyStorySongSlugs.map(({ old, slug }) => [old, slug]));
+const legacySongSlugIds = new Map(legacyStorySongSlugs.map(({ old, id }) => [old, id]));
 const shortenedSongSlugIds = new Map(shortenedSongSlugs.map(({ old, id }) => [old, id]));
 
-export function getLegacySongSlugRedirect(slug: string) {
-  const target = legacySongSlugRedirects.get(slug);
-  return target ? getSongCanonicalSlug({ id: '', seoSlug: target }) : undefined;
+/** 旧歌曲名直接定位歌曲，再按当前公开状态和规范地址处理。 */
+export function getLegacySongSlugId(slug: string) {
+  return legacySongSlugIds.get(slug.replace(/-scooprym(?=-\d+$|$)/, '-funny-song'));
 }
 
 /** 兼容两种已保存的后缀，以便旧网址跳转到 funny-song 规范地址。 */

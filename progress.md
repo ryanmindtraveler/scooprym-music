@@ -1206,3 +1206,8 @@ _Last updated: 2026-10-18 20:42_
 - 真实 Google 登录 Chrome 用户 Ryan Gong（Admin）确认九张原歌封面加载成功，Bardstown 实际播放至 0:17／1:04，Next 切至原 Al Dente 并播放至 0:15／0:49；随后暂停并关闭播放器，errors=[]。生产专题标签页保留，截图 `repair-live-topic.png` 与 `repair-live-playing.png` 已保存。
 - 本轮临时生产预览 `127.0.0.1:3107` 已在核对进程身份后停止，未影响其他服务。原有 progress.md 未提交记录完整保留，最终仍仅 progress.md 为 dirty；本次记忆更新不提交或推送，不触发额外部署。
 - 总报告 `repair-completion.json`，配套 `repair-deployment.json`、`public-release-production.json`、`seo-production-after-repair.json`、`release-data-verification.json`、`lore-preflight-before.json`／`lore-preflight-after.json` 及截图均位于 `F:/CodexHome/visualizations/2026/10/18/01a14eea-9883-7eb1-a7bc-098a8170af38/`。搜索重新抓取及曝光、点击、收听增长尚未证实，不将此次技术修复记为增长结果已经恢复。
+
+### 2026-10-29 18:33 历史歌曲链接清理
+- 最新只读数据库核对 24 个 legacy 映射，将其中 19 个未发布作品对应的旧别名加入 retired-song-slugs.json，由既有 middleware 返回 410；覆盖 en／zh 前缀、尾斜杠及 scooprym 后缀形式。当前歌曲 URL 继续遵循原发布状态逻辑，未恢复未发布作品。
+- 公开歌曲的旧别名改为按 ID 查库后直接以 308 跳转至当前 canonical，移除标题 UUID → UUID 的中间跳转。
+- 68 项针对性测试通过，格式修正仍在进行；尚未提交或部署，未修改数据库。仅记录本轮事实，不将本地实现视为线上已生效，其他改动保持原状。

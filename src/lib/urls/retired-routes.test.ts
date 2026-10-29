@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { isRetiredRoute, retiredRouteResponse } from './retired-routes';
+import retiredSlugs from './retired-song-slugs.json';
 
 describe('弃用路由边界', () => {
+  it('退役清单覆盖语言和旧后缀变体，但不扩大到当前歌曲地址', () => {
+    for (const slug of retiredSlugs) {
+      expect(isRetiredRoute(`/songs/${slug}`)).toBe(true);
+      expect(isRetiredRoute(`/en/songs/${slug}/`)).toBe(true);
+      expect(isRetiredRoute(`/zh/songs/${slug.replace(/-funny-song$/, '-scooprym')}`)).toBe(true);
+    }
+    expect(isRetiredRoute('/songs/sydney-sweeney-bond-girl-casting-rumor-funny-song')).toBe(false);
+    expect(isRetiredRoute('/songs/gene-simmons-ace-frehley-death-comments-funny-song')).toBe(false);
+  });
   it.each([
     '/ai/chat',
     '/zh/docs/intro',
