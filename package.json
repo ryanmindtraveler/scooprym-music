@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.18.3",
   "scripts": {
     "dev": "node scripts/dev-with-queue.cjs",
-    "prebuild": "node scripts/check-vercel-hobby.cjs && node scripts/verify-public-release.mjs --source-only",
+    "prebuild": "node scripts/ensure-build-env.cjs && node scripts/check-vercel-hobby.cjs && node scripts/verify-public-release.mjs --source-only",
     "build": "next build",
     "build:cf": "opennextjs-cloudflare build",
     "start": "next start",
