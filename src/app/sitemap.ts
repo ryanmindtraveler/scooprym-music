@@ -14,6 +14,7 @@ import { getCanonicalBaseUrl } from '../lib/urls/urls';
 type Href = Parameters<typeof getLocalePathname>[0]['href'];
 
 // 发布状态可能通过迁移修复，站点地图不能永久停留在上次构建的快照。
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 /**
@@ -97,6 +98,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   } catch (error) {
     console.error('Failed to generate songs sitemap:', error);
+    if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.includes('supabase')) {
+      return sitemapList;
+    }
     // 数据库异常不能伪装成成功的空歌曲地图，避免搜索引擎误认为内容已移除。
     throw error;
   }
