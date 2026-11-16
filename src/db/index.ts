@@ -18,7 +18,12 @@ export function getDb() {
   if (globalForDb.conn) return globalForDb.conn;
 
   const connectionString = process.env.DATABASE_URL!;
-  const client = postgres(connectionString, { prepare: false });
+  const client = postgres(connectionString, {
+    prepare: false,
+    max: 10,
+    connect_timeout: 10,
+    idle_timeout: 10,
+  });
   db = drizzle(client, { schema });
 
   if (process.env.NODE_ENV !== 'production') {

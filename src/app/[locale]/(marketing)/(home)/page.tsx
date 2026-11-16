@@ -39,28 +39,40 @@ export async function generateMetadata({
 }
 
 export default async function HomePage() {
-  const db = await getDb();
-  // 首页只传 Gallery 第一页的 20 首卡片数据；累计播放榜与播放队列使用精简字段。
-  const [galleryPage, chartCandidates, allTimeChartSongs] = await Promise.all([
-    getHomeGalleryPage(1),
-    getHomeChartCandidates(),
-    getAllTimeChartCandidates(),
-  ]);
+  let galleryPage = { songs: [] as Song[], total: 0 };
+  let chartCandidates: Song[] = [];
+  let allTimeChartSongs: Song[] = [];
+  let reactionRows: { songId: string; reactionType: string; count: unknown }[] = [];
+
+  try {
+    const db = await getDb();
+    // 首页只传 Gallery 第一页的 20 首卡片数据；累计播放榜与播放队列使用精简字段。
+    const [galleryRes, chartRes, allTimeRes] = await Promise.all([
+      getHomeGalleryPage(1),
+      getHomeChartCandidates(),
+      getAllTimeChartCandidates(),
+    ]);
+    galleryPage = galleryRes;
+    chartCandidates = chartRes;
+    allTimeChartSongs = allTimeRes;
+
+    const songIds = chartCandidates.map((song) => song.id);
+    if (songIds.length > 0) {
+      reactionRows = await db
+        .select({
+          songId: songReaction.songId,
+          reactionType: songReaction.reactionType,
+          count: count(),
+        })
+        .from(songReaction)
+        .where(inArray(songReaction.songId, songIds))
+        .groupBy(songReaction.songId, songReaction.reactionType);
+    }
+  } catch (error) {
+    console.error('Failed to load home page data from database:', error);
+  }
 
   const now = new Date();
-  const songIds = chartCandidates.map((song) => song.id);
-  const reactionRows =
-    chartCandidates.length > 0
-      ? await db
-          .select({
-            songId: songReaction.songId,
-            reactionType: songReaction.reactionType,
-            count: count(),
-          })
-          .from(songReaction)
-          .where(inArray(songReaction.songId, songIds))
-          .groupBy(songReaction.songId, songReaction.reactionType)
-      : [];
 
   const topReactionBySong = new Map<string, { type: SongReactionType; count: number }>();
   for (const row of reactionRows) {

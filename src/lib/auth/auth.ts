@@ -22,7 +22,12 @@ import { getBaseUrl, getUrlWithLocaleInCallbackUrl } from '../urls/urls';
  */
 export const auth = betterAuth({
   appName: defaultMessages.Metadata.name,
-  trustedOrigins: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+  trustedOrigins: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://scooprym.app',
+    'https://www.scooprym.app',
+  ],
   trustedProxyHeaders: true,
   database: drizzleAdapter(getDb(), {
     provider: 'pg', // or "mysql", "sqlite"

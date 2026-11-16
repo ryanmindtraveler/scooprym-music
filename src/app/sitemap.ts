@@ -98,7 +98,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     );
   } catch (error) {
     console.error('Failed to generate songs sitemap:', error);
-    if (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.includes('supabase')) {
+    if (
+      process.env.NEXT_PHASE === 'phase-production-build' ||
+      (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL?.includes('supabase'))
+    ) {
       return sitemapList;
     }
     // 数据库异常不能伪装成成功的空歌曲地图，避免搜索引擎误认为内容已移除。
