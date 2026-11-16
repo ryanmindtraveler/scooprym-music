@@ -45,6 +45,9 @@ certificates/
 # vercel
 .vercel
 
+# open-next
+.open-next
+
 # claude code
 .claude
 tmpclaude-*
